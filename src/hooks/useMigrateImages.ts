@@ -1,12 +1,54 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export function useMigrateImages() {
   const { toast } = useToast();
   const isPausedRef = useRef(false);
   const [progress, setProgress] = useState({ migrated: 0, total: 0, percentage: 0 });
+
+  // Fetch current migration status on mount
+  const { data: migrationStatus } = useQuery({
+    queryKey: ['migration-status'],
+    queryFn: async () => {
+      // Count total images
+      const { count: totalCollections } = await supabase
+        .from('categories')
+        .select('id', { count: 'exact', head: true })
+        .not('image_url', 'is', null);
+      
+      const { count: totalProducts } = await supabase
+        .from('product_images')
+        .select('id', { count: 'exact', head: true });
+      
+      // Count migrated images (not from Shopify CDN)
+      const { count: migratedCollections } = await supabase
+        .from('categories')
+        .select('id', { count: 'exact', head: true })
+        .not('image_url', 'is', null)
+        .not('image_url', 'like', '%cdn.shopify.com%');
+      
+      const { count: migratedProducts } = await supabase
+        .from('product_images')
+        .select('id', { count: 'exact', head: true })
+        .not('image_url', 'like', '%cdn.shopify.com%');
+      
+      const total = (totalCollections || 0) + (totalProducts || 0);
+      const migrated = (migratedCollections || 0) + (migratedProducts || 0);
+      const percentage = total > 0 ? Math.round((migrated / total) * 100) : 0;
+      
+      return { migrated, total, percentage };
+    },
+    refetchInterval: 5000, // Refetch every 5 seconds
+  });
+
+  // Update progress state when query data changes
+  useEffect(() => {
+    if (migrationStatus) {
+      setProgress(migrationStatus);
+    }
+  }, [migrationStatus]);
 
   const pause = () => {
     isPausedRef.current = true;
