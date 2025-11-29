@@ -225,8 +225,8 @@ export function AdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <button className="w-full flex items-center gap-2">
-                <SidebarTrigger className="-ml-2 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
-                {!collapsed && <span className="ml-1">Collapse</span>}
+                <SidebarTrigger className="hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
+                {!collapsed && <span>Collapse</span>}
               </button>
             </SidebarMenuButton>
           </SidebarMenuItem>
