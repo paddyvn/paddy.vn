@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import paddyLogoFull from "@/assets/paddy-logo-full.avif";
@@ -202,6 +202,17 @@ export function AdminSidebar() {
               >
                 <Settings className="h-4 w-4" />
                 {!collapsed && <span>Settings</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to="/"
+                className="hover:bg-muted/50"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {!collapsed && <span>Back to Site</span>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
