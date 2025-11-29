@@ -6,6 +6,8 @@ import { ShopifySync } from "@/components/ShopifySync";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut } from "lucide-react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/AdminSidebar";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -48,29 +50,40 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Manage your Paddy.vn store</p>
-          </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </header>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-primary/5">
+        <AdminSidebar />
+        
+        <div className="flex-1 flex flex-col">
+          <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <div>
+                  <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                  <p className="text-sm text-muted-foreground">Manage your Paddy.vn store</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <ShopifySync />
-          
-          <div className="text-center text-sm text-muted-foreground">
-            <p>More admin features coming soon...</p>
-          </div>
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto px-4 py-8">
+              <div className="max-w-3xl mx-auto space-y-8">
+                <ShopifySync />
+                
+                <div className="text-center text-sm text-muted-foreground">
+                  <p>More admin features coming soon...</p>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
