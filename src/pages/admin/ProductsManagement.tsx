@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export default function ProductsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
+  const navigate = useNavigate();
   const syncProducts = useSyncProducts();
 
   const { data: products, isLoading, refetch } = useQuery({
@@ -262,7 +264,7 @@ export default function ProductsManagement() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-background">
-                        <DropdownMenuItem onClick={() => toast({ title: "Edit feature coming soon" })}>
+                        <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}/edit`)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
