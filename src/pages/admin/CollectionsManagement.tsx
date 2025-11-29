@@ -35,11 +35,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
 import { useSyncCollections } from "@/hooks/useSyncCollections";
+
+const ITEMS_PER_PAGE = 20;
 
 type Collection = {
   id: string;
@@ -62,6 +64,7 @@ const collectionSchema = z.object({
 export default function CollectionsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [formData, setFormData] = useState({
@@ -74,16 +77,36 @@ export default function CollectionsManagement() {
   const { toast } = useToast();
   const syncCollections = useSyncCollections();
 
-  const { data: collections, isLoading, refetch } = useQuery({
-    queryKey: ["admin-collections", searchQuery, statusFilter],
+  const { data: collectionsData, isLoading, refetch } = useQuery({
+    queryKey: ["admin-collections", searchQuery, statusFilter, currentPage],
     queryFn: async () => {
+      // First get the total count
+      let countQuery = supabase
+        .from("categories")
+        .select("*", { count: "exact", head: true });
+
+      if (searchQuery) {
+        countQuery = countQuery.ilike("name", `%${searchQuery}%`);
+      }
+
+      if (statusFilter !== "all") {
+        countQuery = countQuery.eq("is_active", statusFilter === "active");
+      }
+
+      const { count } = await countQuery;
+
+      // Then get the paginated data
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
       let query = supabase
         .from("categories")
         .select(`
           *,
           products(id)
         `)
-        .order("display_order", { ascending: true });
+        .order("display_order", { ascending: true })
+        .range(from, to);
 
       if (searchQuery) {
         query = query.ilike("name", `%${searchQuery}%`);
@@ -95,9 +118,19 @@ export default function CollectionsManagement() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Collection[];
+      
+      return {
+        collections: data as Collection[],
+        totalCount: count || 0,
+      };
     },
   });
+
+  const collections = collectionsData?.collections;
+  const totalCount = collectionsData?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalCount);
 
   const generateSlug = (name: string) => {
     return name
@@ -281,11 +314,20 @@ export default function CollectionsManagement() {
           <Input
             placeholder="Search collections..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select 
+          value={statusFilter} 
+          onValueChange={(value) => {
+            setStatusFilter(value);
+            setCurrentPage(1);
+          }}
+        >
           <SelectTrigger className="w-[180px]">
             <Filter className="mr-2 h-4 w-4" />
             <SelectValue placeholder="Status" />
@@ -401,8 +443,61 @@ export default function CollectionsManagement() {
       </div>
 
       {collections && collections.length > 0 && (
-        <div className="text-sm text-muted-foreground text-center">
-          Showing {collections.length} collection{collections.length !== 1 ? "s" : ""}
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {startItem} to {endItem} of {totalCount} collection{totalCount !== 1 ? "s" : ""}
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
