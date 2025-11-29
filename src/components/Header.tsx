@@ -209,7 +209,7 @@ export const Header = () => {
       </div>
 
       {/* Announcement Bar */}
-      <div className="bg-background border-t border-b border-border/20">
+      <div className="border-t border-b border-border/20" style={{ backgroundColor: '#F3F3F3' }}>
         <div className="container mx-auto px-4 py-3 text-center">
           <p className="text-sm md:text-base font-medium">
             Miễn phí giao hàng cho đơn hàng đầu tiên trên 500.000đ 🎉
