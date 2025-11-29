@@ -1,4 +1,4 @@
-import { ShoppingCart, Search, Heart, Menu, User } from "lucide-react";
+import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import paddyLogo from "@/assets/paddy-logo.avif";
@@ -6,18 +6,49 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 export const Header = () => {
   const [userId, setUserId] = useState<string | undefined>();
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Signed out successfully",
+      });
+      navigate("/");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -47,14 +78,41 @@ export const Header = () => {
               <Heart className="h-5 w-5" />
             </Button>
             
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="hidden md:inline-flex rounded-full transition-bounce hover:scale-110"
-              onClick={() => navigate('/auth')}
-            >
-              <User className="h-5 w-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="hidden md:inline-flex rounded-full transition-bounce hover:scale-110"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-background">
+                {userId ? (
+                  <>
+                    <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
+                      <Package className="mr-2 h-4 w-4" />
+                      My Orders
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Profile Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Sign In / Sign Up
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button variant="ghost" size="icon" className="relative rounded-full transition-bounce hover:scale-110">
               <ShoppingCart className="h-5 w-5" />
