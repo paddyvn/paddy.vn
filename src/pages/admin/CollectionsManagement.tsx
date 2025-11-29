@@ -133,6 +133,8 @@ export default function CollectionsManagement() {
       const { data, error } = await query;
       if (error) throw error;
       
+      console.log('Collections data sample:', data?.[0]);
+      
       return {
         collections: data as Collection[],
         totalCount: count || 0,
