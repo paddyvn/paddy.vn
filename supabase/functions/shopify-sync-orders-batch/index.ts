@@ -53,8 +53,9 @@ serve(async (req) => {
     const batchSize = 50; // Process 50 orders at a time
     
     // Build Shopify API URL
+    // Note: When using page_info, we cannot include status parameter
     const url: string = continueFrom
-      ? `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}&status=any`
+      ? `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`
       : `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any`;
 
     console.log('Fetching batch of orders...');
