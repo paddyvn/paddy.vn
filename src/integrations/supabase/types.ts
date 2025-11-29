@@ -698,6 +698,7 @@ export type Database = {
           short_description: string | null
           slug: string
           updated_at: string
+          vendor: string | null
         }
         Insert: {
           base_price: number
@@ -713,6 +714,7 @@ export type Database = {
           short_description?: string | null
           slug: string
           updated_at?: string
+          vendor?: string | null
         }
         Update: {
           base_price?: number
@@ -728,6 +730,7 @@ export type Database = {
           short_description?: string | null
           slug?: string
           updated_at?: string
+          vendor?: string | null
         }
         Relationships: [
           {
