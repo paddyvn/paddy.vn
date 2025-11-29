@@ -18,6 +18,9 @@ export interface Product {
   shopify_created_at: string | null;
   shopify_updated_at: string | null;
   published_at: string | null;
+  option1_name: string | null;
+  option2_name: string | null;
+  option3_name: string | null;
   product_images: Array<{
     image_url: string;
     alt_text: string | null;
