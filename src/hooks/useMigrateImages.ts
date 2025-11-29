@@ -7,15 +7,37 @@ export function useMigrateImages() {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('migrate-images-to-storage');
+      let totalMigrated = 0;
+      let hasMore = true;
       
-      if (error) throw error;
-      return data;
+      // Keep calling the function until all images are migrated
+      while (hasMore) {
+        const { data, error } = await supabase.functions.invoke('migrate-images-to-storage', {
+          body: { batchSize: 50 }
+        });
+        
+        if (error) throw error;
+        
+        totalMigrated += data.stats.migrated;
+        hasMore = data.hasMore;
+        
+        console.log(`Batch completed: ${data.stats.migrated} migrated, ${data.remaining} remaining`);
+        
+        // Show progress toast for each batch
+        if (hasMore) {
+          toast({
+            title: "Migration in progress...",
+            description: `Migrated ${totalMigrated} images so far. ${data.remaining} remaining.`,
+          });
+        }
+      }
+      
+      return { totalMigrated };
     },
     onSuccess: (data) => {
       toast({
-        title: "Images migrated successfully",
-        description: `Migrated ${data.stats.migrated} images in ${data.stats.duration}`,
+        title: "Migration completed!",
+        description: `Successfully migrated ${data.totalMigrated} images to Supabase Storage.`,
       });
     },
     onError: (error) => {
