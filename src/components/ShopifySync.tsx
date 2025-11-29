@@ -8,6 +8,7 @@ export const ShopifySync = () => {
   const [syncing, setSyncing] = useState(false);
   const [syncingCollections, setSyncingCollections] = useState(false);
   const [syncingOrders, setSyncingOrders] = useState(false);
+  const [syncingOlderOrders, setSyncingOlderOrders] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
 
@@ -164,6 +165,92 @@ export const ShopifySync = () => {
     }
   };
 
+  const syncOlderOrders = async () => {
+    setSyncingOlderOrders(true);
+    setProgress({ current: 0, total: 0 });
+    
+    try {
+      // Get the oldest order we currently have
+      const { data: oldestOrder } = await supabase
+        .from('orders')
+        .select('created_at')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!oldestOrder) {
+        toast({
+          title: "No Orders Found",
+          description: "No existing orders in database. Use 'Sync All Orders' first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      let nextBatch: string | null = null;
+      const createdAtMax = oldestOrder.created_at;
+      let totalSynced = 0;
+      let totalItems = 0;
+      let batchCount = 0;
+
+      console.log(`Syncing older orders before: ${createdAtMax}`);
+      toast({
+        title: "Syncing Older Orders",
+        description: `Fetching orders older than ${new Date(createdAtMax).toLocaleDateString()}...`,
+      });
+
+      do {
+        batchCount++;
+        console.log(`Syncing older orders batch ${batchCount}...`);
+        
+        const body: any = {};
+        if (nextBatch) {
+          body.continueFrom = nextBatch;
+        } else {
+          body.createdAtMax = createdAtMax;
+        }
+
+        const { data, error } = await supabase.functions.invoke('shopify-sync-orders-batch', {
+          body,
+        });
+
+        if (error) throw error;
+
+        if (data) {
+          totalSynced += data.stats.syncedOrders;
+          totalItems += data.stats.syncedItems;
+          setProgress({ current: totalSynced, total: totalSynced });
+          
+          nextBatch = data.hasMore ? data.nextBatch : null;
+          
+          console.log(`Batch ${batchCount}: ${data.stats.syncedOrders} orders, ${data.stats.syncedItems} items (Total: ${totalSynced} orders)`);
+        }
+
+        // Small delay between batches
+        if (nextBatch) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } while (nextBatch);
+
+      toast({
+        title: "Older Orders Sync Complete!",
+        description: totalSynced > 0 
+          ? `Successfully synced ${totalSynced} older orders with ${totalItems} items.`
+          : "No older orders found to sync.",
+      });
+    } catch (error) {
+      console.error('Older orders sync error:', error);
+      toast({
+        title: "Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingOlderOrders(false);
+      setProgress({ current: 0, total: 0 });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
@@ -182,7 +269,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAllProducts} 
-          disabled={syncing || syncingCollections || syncingOrders}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
           className="w-full"
         >
           {syncing ? (
@@ -206,7 +293,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCollections} 
-          disabled={syncing || syncingCollections || syncingOrders}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
           className="w-full"
         >
           {syncingCollections ? (
@@ -224,30 +311,48 @@ export const ShopifySync = () => {
         <div>
           <h3 className="text-lg font-semibold">Shopify Orders Sync</h3>
           <p className="text-sm text-muted-foreground">
-            Sync all orders and order history from your Shopify store.
+            Sync new orders and older order history from your Shopify store.
           </p>
         </div>
         
-        {syncingOrders && progress.current > 0 && (
+        {(syncingOrders || syncingOlderOrders) && progress.current > 0 && (
           <div className="text-sm text-muted-foreground">
             Synced {progress.current} orders...
           </div>
         )}
         
-        <Button 
-          onClick={syncOrders} 
-          disabled={syncing || syncingCollections || syncingOrders}
-          className="w-full"
-        >
-          {syncingOrders ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Syncing Orders...
-            </>
-          ) : (
-            'Sync All Orders'
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={syncOrders} 
+            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
+            className="flex-1"
+          >
+            {syncingOrders ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Syncing New...
+              </>
+            ) : (
+              'Sync New Orders'
+            )}
+          </Button>
+          
+          <Button 
+            onClick={syncOlderOrders} 
+            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
+            variant="outline"
+            className="flex-1"
+          >
+            {syncingOlderOrders ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Syncing Older...
+              </>
+            ) : (
+              'Sync Older Orders'
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

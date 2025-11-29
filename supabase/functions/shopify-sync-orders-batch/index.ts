@@ -48,19 +48,23 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { continueFrom, createdAtMin } = await req.json();
+    const { continueFrom, createdAtMin, createdAtMax } = await req.json();
 
     const batchSize = 50; // Process 50 orders at a time
     
     // Build Shopify API URL
-    // Note: When using page_info, we cannot include other parameters like status or created_at_min
+    // Note: When using page_info, we cannot include other parameters
     let url: string;
     if (continueFrom) {
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`;
     } else if (createdAtMin) {
-      // Incremental sync - only fetch orders created after the most recent one we have
+      // Incremental sync - fetch orders created after the most recent one we have
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_min=${createdAtMin}`;
+    } else if (createdAtMax) {
+      // Backward sync - fetch orders created before the oldest one we have
+      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_max=${createdAtMax}`;
     } else {
+      // Full sync from the beginning
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any`;
     }
 
