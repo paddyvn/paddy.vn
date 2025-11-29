@@ -42,9 +42,11 @@ type Product = {
   shopify_product_id: string | null;
   category_id: string | null;
   vendor: string | null;
-  categories: { name: string } | null;
   product_images: Array<{ image_url: string; is_primary: boolean }>;
   product_variants: Array<{ stock_quantity: number }>;
+  product_collections: Array<{
+    categories: { name: string } | null;
+  }>;
 };
 
 export default function ProductsManagement() {
@@ -97,9 +99,11 @@ export default function ProductsManagement() {
         .from("products")
         .select(`
           *,
-          categories(name),
           product_images(image_url, is_primary),
-          product_variants(stock_quantity)
+          product_variants(stock_quantity),
+          product_collections(
+            categories(name)
+          )
         `)
         .order("created_at", { ascending: false });
 
@@ -176,6 +180,15 @@ export default function ProductsManagement() {
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }>) => {
     const primary = images.find((img) => img.is_primary);
     return primary?.image_url || images[0]?.image_url || "/placeholder.svg";
+  };
+
+  const getCollectionNames = (product_collections: Array<{ categories: { name: string } | null }>) => {
+    const names = product_collections
+      .map(pc => pc.categories?.name)
+      .filter(Boolean);
+    if (names.length === 0) return "—";
+    if (names.length === 1) return names[0];
+    return `${names[0]} +${names.length - 1}`;
   };
 
   return (
@@ -347,7 +360,7 @@ export default function ProductsManagement() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {product.categories?.name || "—"}
+                      {getCollectionNames(product.product_collections)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-medium">
