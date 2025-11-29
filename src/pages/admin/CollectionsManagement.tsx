@@ -41,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
 import { useSyncCollections } from "@/hooks/useSyncCollections";
 import { useSyncProductCollections } from "@/hooks/useSyncProductCollections";
+import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -78,6 +79,7 @@ export default function CollectionsManagement() {
   const { toast } = useToast();
   const syncCollections = useSyncCollections();
   const syncProductCollections = useSyncProductCollections();
+  const navigate = useNavigate();
 
   const { data: collectionsData, isLoading, refetch } = useQuery({
     queryKey: ["admin-collections", searchQuery, statusFilter, currentPage],
@@ -397,7 +399,12 @@ export default function CollectionsManagement() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{collection.name}</div>
+                    <div 
+                      className="font-medium cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => navigate(`/admin/collections/${collection.id}`)}
+                    >
+                      {collection.name}
+                    </div>
                     <div className="text-sm text-muted-foreground">{collection.slug}</div>
                   </TableCell>
                   <TableCell>
