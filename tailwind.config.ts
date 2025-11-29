@@ -57,6 +57,12 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        paddy: {
+          blue: "hsl(var(--paddy-blue))",
+          yellow: "hsl(var(--paddy-yellow))",
+          lavender: "hsl(var(--paddy-lavender))",
+          light: "hsl(var(--paddy-light))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
