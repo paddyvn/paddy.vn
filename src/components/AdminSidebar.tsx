@@ -222,10 +222,15 @@ export function AdminSidebar() {
               {!collapsed && <span>Sign Out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button className="w-full flex items-center gap-2">
+                <SidebarTrigger className="-ml-2" />
+                {!collapsed && <span className="ml-1">Collapse</span>}
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
-        <div className="px-2 py-2">
-          <SidebarTrigger className="hover:bg-muted/50 data-[state=open]:bg-transparent data-[state=closed]:bg-transparent" />
-        </div>
       </SidebarFooter>
     </Sidebar>
   );
