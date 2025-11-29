@@ -490,6 +490,51 @@ export type Database = {
           },
         ]
       }
+      pages: {
+        Row: {
+          author: string | null
+          body_html: string | null
+          created_at: string
+          handle: string
+          id: string
+          published: boolean | null
+          shopify_created_at: string | null
+          shopify_page_id: string | null
+          shopify_updated_at: string | null
+          template_suffix: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          body_html?: string | null
+          created_at?: string
+          handle: string
+          id?: string
+          published?: boolean | null
+          shopify_created_at?: string | null
+          shopify_page_id?: string | null
+          shopify_updated_at?: string | null
+          template_suffix?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          body_html?: string | null
+          created_at?: string
+          handle?: string
+          id?: string
+          published?: boolean | null
+          shopify_created_at?: string | null
+          shopify_page_id?: string | null
+          shopify_updated_at?: string | null
+          template_suffix?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           alt_text: string | null
