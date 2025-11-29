@@ -223,7 +223,7 @@ export function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="px-3 py-2">
+        <div className="px-3 py-2 flex justify-start">
           <SidebarTrigger />
         </div>
       </SidebarFooter>
