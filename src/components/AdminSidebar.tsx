@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft, FileCode } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import paddyLogoFull from "@/assets/paddy-logo-full.avif";
@@ -66,8 +66,18 @@ const mainItems = [
   },
   {
     title: "Content",
-    url: "/admin/content",
     icon: FileText,
+    subItems: [
+      { title: "Metaobjects", url: "/admin/content/metaobjects" },
+      { title: "Files", url: "/admin/content/files" },
+      { title: "Menus", url: "/admin/content/menus" },
+      { title: "Blog posts", url: "/admin/content/blog" },
+    ],
+  },
+  {
+    title: "Pages",
+    url: "/admin/pages",
+    icon: FileCode,
   },
   {
     title: "Analytics",
