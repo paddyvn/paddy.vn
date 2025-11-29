@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 export const ShopifySync = () => {
   const [syncing, setSyncing] = useState(false);
   const [syncingCollections, setSyncingCollections] = useState(false);
+  const [syncingOrders, setSyncingOrders] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
 
@@ -84,6 +85,30 @@ export const ShopifySync = () => {
     }
   };
 
+  const syncOrders = async () => {
+    setSyncingOrders(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('shopify-sync-orders');
+
+      if (error) throw error;
+
+      toast({
+        title: "Orders Sync Complete!",
+        description: `Successfully synced ${data.stats.syncedOrders} orders with ${data.stats.syncedItems} items from Shopify.`,
+      });
+    } catch (error) {
+      console.error('Orders sync error:', error);
+      toast({
+        title: "Orders Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingOrders(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
@@ -102,7 +127,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAllProducts} 
-          disabled={syncing || syncingCollections}
+          disabled={syncing || syncingCollections || syncingOrders}
           className="w-full"
         >
           {syncing ? (
@@ -126,7 +151,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCollections} 
-          disabled={syncing || syncingCollections}
+          disabled={syncing || syncingCollections || syncingOrders}
           className="w-full"
         >
           {syncingCollections ? (
@@ -136,6 +161,30 @@ export const ShopifySync = () => {
             </>
           ) : (
             'Sync All Collections'
+          )}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Shopify Orders Sync</h3>
+          <p className="text-sm text-muted-foreground">
+            Sync all orders and order history from your Shopify store.
+          </p>
+        </div>
+        
+        <Button 
+          onClick={syncOrders} 
+          disabled={syncing || syncingCollections || syncingOrders}
+          className="w-full"
+        >
+          {syncingOrders ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Orders...
+            </>
+          ) : (
+            'Sync All Orders'
           )}
         </Button>
       </div>
