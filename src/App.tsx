@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsManagement from "./pages/admin/ProductsManagement";
+import ProductEdit from "./pages/admin/ProductEdit";
 import CollectionsManagement from "./pages/admin/CollectionsManagement";
 import OrdersManagement from "./pages/admin/OrdersManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
+            <Route path="products/:id/edit" element={<ProductEdit />} />
             <Route path="collections" element={<CollectionsManagement />} />
             <Route path="orders" element={<OrdersManagement />} />
             <Route path="abandoned-checkouts" element={<AbandonedCheckouts />} />
