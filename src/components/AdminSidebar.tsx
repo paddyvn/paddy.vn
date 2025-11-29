@@ -222,14 +222,10 @@ export function AdminSidebar() {
               {!collapsed && <span>Sign Out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <div className="w-full">
-                <SidebarTrigger />
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
+        <div className="px-2 py-2">
+          <SidebarTrigger />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
