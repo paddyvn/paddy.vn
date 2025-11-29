@@ -3,7 +3,6 @@ import { Hero } from "@/components/Hero";
 import { Categories } from "@/components/Categories";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
 import { Footer } from "@/components/Footer";
-import { ShopifySync } from "@/components/ShopifySync";
 
 const Index = () => {
   return (
@@ -11,9 +10,6 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <Hero />
-        <div className="container mx-auto px-4 py-8">
-          <ShopifySync />
-        </div>
         <Categories />
         <FeaturedProducts />
       </main>
