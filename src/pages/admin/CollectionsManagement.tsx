@@ -107,7 +107,16 @@ export default function CollectionsManagement() {
       let query = supabase
         .from("categories")
         .select(`
-          *,
+          id,
+          name,
+          slug,
+          description,
+          image_url,
+          is_active,
+          display_order,
+          collection_type,
+          rules,
+          rules_match_type,
           product_collections(id)
         `)
         .order("display_order", { ascending: true })
@@ -413,7 +422,7 @@ export default function CollectionsManagement() {
                     <div className="text-sm text-muted-foreground">{collection.slug}</div>
                   </TableCell>
                   <TableCell>
-                    {collection.rules && collection.rules.length > 0 ? (
+                    {collection.rules && Array.isArray(collection.rules) && collection.rules.length > 0 ? (
                       <span className="text-sm text-muted-foreground">
                         {collection.rules.length} condition{collection.rules.length > 1 ? 's' : ''}
                       </span>
