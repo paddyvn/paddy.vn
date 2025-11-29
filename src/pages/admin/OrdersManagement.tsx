@@ -36,8 +36,9 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, Package, Truck, CheckCircle, XCircle } from "lucide-react";
+import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
@@ -62,6 +63,7 @@ export default function OrdersManagement() {
   const { data: orderItems } = useOrderItems(selectedOrder || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const syncOrders = useSyncOrders();
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -127,11 +129,21 @@ export default function OrdersManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Orders</h2>
-        <p className="text-muted-foreground">
-          Manage and track all your orders from Shopify
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Orders</h2>
+          <p className="text-muted-foreground">
+            Manage and track all your orders from Shopify
+          </p>
+        </div>
+        <Button
+          onClick={() => syncOrders.mutate()}
+          disabled={syncOrders.isPending}
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${syncOrders.isPending ? "animate-spin" : ""}`} />
+          {syncOrders.isPending ? "Syncing..." : "Sync Orders"}
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">

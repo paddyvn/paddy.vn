@@ -38,8 +38,10 @@ import {
   XCircle,
   Tag,
   FileText,
-  User
+  User,
+  RefreshCw
 } from "lucide-react";
+import { useSyncCustomers } from "@/hooks/useSyncCustomers";
 import {
   Select,
   SelectContent,
@@ -57,6 +59,7 @@ const CUSTOMERS_PER_PAGE = 50;
 export default function CustomersManagement() {
   const { data: customers, isLoading } = useCustomers();
   const updateCustomer = useUpdateCustomer();
+  const syncCustomers = useSyncCustomers();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [marketingFilter, setMarketingFilter] = useState<string>("all");
@@ -129,6 +132,14 @@ export default function CustomersManagement() {
               Manage your customer database
             </p>
           </div>
+          <Button
+            onClick={() => syncCustomers.mutate()}
+            disabled={syncCustomers.isPending}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
+            {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
+          </Button>
         </div>
 
         <div className="flex gap-4 items-center">

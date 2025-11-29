@@ -35,10 +35,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
+import { useSyncCollections } from "@/hooks/useSyncCollections";
 
 type Collection = {
   id: string;
@@ -71,6 +72,7 @@ export default function CollectionsManagement() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const syncCollections = useSyncCollections();
 
   const { data: collections, isLoading, refetch } = useQuery({
     queryKey: ["admin-collections", searchQuery, statusFilter],
@@ -256,10 +258,21 @@ export default function CollectionsManagement() {
           <h2 className="text-3xl font-bold tracking-tight">Collections</h2>
           <p className="text-muted-foreground">Organize products into collections</p>
         </div>
-        <Button onClick={handleAddNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Collection
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => syncCollections.mutate()}
+            disabled={syncCollections.isPending}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncCollections.isPending ? "animate-spin" : ""}`} />
+            {syncCollections.isPending ? "Syncing..." : "Sync Collections"}
+          </Button>
+          <Button onClick={handleAddNew}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Collection
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4 items-center bg-card p-4 rounded-lg border">
