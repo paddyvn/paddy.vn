@@ -10,6 +10,7 @@ export const ShopifySync = () => {
   const [syncingOrders, setSyncingOrders] = useState(false);
   const [syncingOlderOrders, setSyncingOlderOrders] = useState(false);
   const [syncingCustomers, setSyncingCustomers] = useState(false);
+  const [syncingAbandonedCheckouts, setSyncingAbandonedCheckouts] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
 
@@ -310,6 +311,64 @@ export const ShopifySync = () => {
     }
   };
 
+  const syncAbandonedCheckouts = async () => {
+    setSyncingAbandonedCheckouts(true);
+    setProgress({ current: 0, total: 0 });
+    
+    try {
+      let nextBatch: string | null = null;
+      let totalSynced = 0;
+      let batchCount = 0;
+
+      do {
+        batchCount++;
+        console.log(`Syncing abandoned checkouts batch ${batchCount}...`);
+        
+        const body: any = {};
+        if (nextBatch) {
+          body.continueFrom = nextBatch;
+        }
+
+        const { data, error } = await supabase.functions.invoke('shopify-sync-abandoned-checkouts', {
+          body,
+        });
+
+        if (error) throw error;
+
+        if (data) {
+          totalSynced += data.stats.syncedCheckouts;
+          setProgress({ current: totalSynced, total: totalSynced });
+          
+          nextBatch = data.hasMore ? data.continueFrom : null;
+          
+          console.log(`Batch ${batchCount}: ${data.stats.syncedCheckouts} checkouts (Total: ${totalSynced})`);
+        }
+
+        // Small delay between batches
+        if (nextBatch) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } while (nextBatch);
+
+      toast({
+        title: "Abandoned Checkouts Sync Complete!",
+        description: totalSynced > 0 
+          ? `Successfully synced ${totalSynced} abandoned checkouts from Shopify.`
+          : "No abandoned checkouts to sync.",
+      });
+    } catch (error) {
+      console.error('Abandoned checkouts sync error:', error);
+      toast({
+        title: "Abandoned Checkouts Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingAbandonedCheckouts(false);
+      setProgress({ current: 0, total: 0 });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
@@ -328,7 +387,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAllProducts} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncing ? (
@@ -352,7 +411,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCollections} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncingCollections ? (
@@ -383,7 +442,7 @@ export const ShopifySync = () => {
         <div className="flex gap-2">
           <Button 
             onClick={syncOrders} 
-            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
+            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
             className="flex-1"
           >
             {syncingOrders ? (
@@ -398,7 +457,7 @@ export const ShopifySync = () => {
           
           <Button 
             onClick={syncOlderOrders} 
-            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
+            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
             variant="outline"
             className="flex-1"
           >
@@ -430,7 +489,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCustomers} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncingCustomers ? (
@@ -440,6 +499,36 @@ export const ShopifySync = () => {
             </>
           ) : (
             'Sync All Customers'
+          )}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Abandoned Checkouts Sync</h3>
+          <p className="text-sm text-muted-foreground">
+            Sync abandoned checkouts from your Shopify store for recovery.
+          </p>
+        </div>
+        
+        {syncingAbandonedCheckouts && progress.current > 0 && (
+          <div className="text-sm text-muted-foreground">
+            Synced {progress.current} abandoned checkouts...
+          </div>
+        )}
+        
+        <Button 
+          onClick={syncAbandonedCheckouts} 
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          className="w-full"
+        >
+          {syncingAbandonedCheckouts ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Checkouts...
+            </>
+          ) : (
+            'Sync Abandoned Checkouts'
           )}
         </Button>
       </div>
