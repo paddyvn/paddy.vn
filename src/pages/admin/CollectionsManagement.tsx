@@ -35,13 +35,12 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight, Upload } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
 import { useSyncCollections } from "@/hooks/useSyncCollections";
 import { useSyncProductCollections } from "@/hooks/useSyncProductCollections";
-import { useMigrateImages } from "@/hooks/useMigrateImages";
 import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
@@ -81,7 +80,6 @@ export default function CollectionsManagement() {
   const { toast } = useToast();
   const syncCollections = useSyncCollections();
   const syncProductCollections = useSyncProductCollections();
-  const migrateImages = useMigrateImages();
   const navigate = useNavigate();
 
   const { data: collectionsData, isLoading, refetch } = useQuery({
@@ -310,15 +308,6 @@ export default function CollectionsManagement() {
           <p className="text-muted-foreground">Organize products into collections</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={() => migrateImages.mutate()}
-            disabled={migrateImages.isPending}
-            variant="outline"
-            className="gap-2"
-          >
-            <Upload className={`h-4 w-4 ${migrateImages.isPending ? "animate-spin" : ""}`} />
-            {migrateImages.isPending ? "Migrating..." : "Migrate Images"}
-          </Button>
           <Button
             onClick={() => syncCollections.mutate()}
             disabled={syncCollections.isPending}
