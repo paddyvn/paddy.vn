@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Upload } from "lucide-react";
 import { useMigrateImages } from "@/hooks/useMigrateImages";
 
@@ -45,6 +46,19 @@ export default function ContentFiles() {
               This will give you full control and independence from Shopify.
             </p>
           </div>
+
+          {(migrateImages.isPending || migrateImages.progress.total > 0) && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium">
+                  {migrateImages.progress.migrated} / {migrateImages.progress.total} images ({migrateImages.progress.percentage}%)
+                </span>
+              </div>
+              <Progress value={migrateImages.progress.percentage} className="h-2" />
+            </div>
+          )}
+
           <div className="text-sm text-muted-foreground">
             <p className="font-medium mb-2">What happens during migration:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
