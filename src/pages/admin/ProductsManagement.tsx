@@ -41,6 +41,7 @@ type Product = {
   is_featured: boolean;
   shopify_product_id: string | null;
   category_id: string | null;
+  vendor: string | null;
   categories: { name: string } | null;
   product_images: Array<{ image_url: string; is_primary: boolean }>;
   product_variants: Array<{ stock_quantity: number }>;
@@ -181,6 +182,7 @@ export default function ProductsManagement() {
               <TableHead>Product</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Inventory</TableHead>
+              <TableHead>Vendor</TableHead>
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -206,6 +208,9 @@ export default function ProductsManagement() {
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-4 w-16" />
                   </TableCell>
                   <TableCell>
@@ -215,7 +220,7 @@ export default function ProductsManagement() {
               ))
             ) : products?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No products found. Try adjusting your search or filters.
                 </TableCell>
               </TableRow>
@@ -246,6 +251,11 @@ export default function ProductsManagement() {
                           ({product.product_variants.length} variants)
                         </span>
                       )}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">
+                      {product.vendor || "—"}
                     </span>
                   </TableCell>
                   <TableCell>
