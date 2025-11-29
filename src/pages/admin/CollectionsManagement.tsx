@@ -52,7 +52,7 @@ type Collection = {
   image_url: string | null;
   is_active: boolean;
   display_order: number | null;
-  products: Array<{ id: string }>;
+  product_collections: Array<{ id: string }>;
 };
 
 const collectionSchema = z.object({
@@ -105,7 +105,7 @@ export default function CollectionsManagement() {
         .from("categories")
         .select(`
           *,
-          products(id)
+          product_collections(id)
         `)
         .order("display_order", { ascending: true })
         .range(from, to);
@@ -407,7 +407,7 @@ export default function CollectionsManagement() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {collection.products.length} product{collection.products.length !== 1 ? "s" : ""}
+                      {collection.product_collections.length} product{collection.product_collections.length !== 1 ? "s" : ""}
                     </span>
                   </TableCell>
                   <TableCell>
