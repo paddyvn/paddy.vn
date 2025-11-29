@@ -220,6 +220,66 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          accepts_marketing: boolean | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          marketing_opt_in_level: string | null
+          note: string | null
+          orders_count: number | null
+          phone: string | null
+          shopify_created_at: string | null
+          shopify_customer_id: string | null
+          shopify_updated_at: string | null
+          tags: string | null
+          total_spent: number | null
+          updated_at: string
+          verified_email: boolean | null
+        }
+        Insert: {
+          accepts_marketing?: boolean | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          marketing_opt_in_level?: string | null
+          note?: string | null
+          orders_count?: number | null
+          phone?: string | null
+          shopify_created_at?: string | null
+          shopify_customer_id?: string | null
+          shopify_updated_at?: string | null
+          tags?: string | null
+          total_spent?: number | null
+          updated_at?: string
+          verified_email?: boolean | null
+        }
+        Update: {
+          accepts_marketing?: boolean | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          marketing_opt_in_level?: string | null
+          note?: string | null
+          orders_count?: number | null
+          phone?: string | null
+          shopify_created_at?: string | null
+          shopify_customer_id?: string | null
+          shopify_updated_at?: string | null
+          tags?: string | null
+          total_spent?: number | null
+          updated_at?: string
+          verified_email?: boolean | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
