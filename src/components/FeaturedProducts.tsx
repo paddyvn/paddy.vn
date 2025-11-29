@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
 
 export const FeaturedProducts = () => {
-  const { data: products, isLoading } = useProducts(true);
+  const { data: products, isLoading } = useProducts();
   const [userId, setUserId] = useState<string | undefined>();
   const { addToCart } = useCart(userId);
 
