@@ -18,6 +18,12 @@ interface ShopifyProduct {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  options: Array<{
+    id: number;
+    name: string;
+    position: number;
+    values: string[];
+  }>;
   images: Array<{
     id: number;
     src: string;
@@ -119,6 +125,11 @@ serve(async (req) => {
         const basePrice = shopifyProduct.variants[0]?.price || '0';
         const compareAtPrice = shopifyProduct.variants[0]?.compare_at_price;
 
+        // Extract option names from Shopify options array
+        const option1Name = shopifyProduct.options?.[0]?.name || null;
+        const option2Name = shopifyProduct.options?.[1]?.name || null;
+        const option3Name = shopifyProduct.options?.[2]?.name || null;
+
         // Upsert product
         const { data: product, error: productError } = await supabase
           .from('products')
@@ -138,6 +149,9 @@ serve(async (req) => {
             shopify_created_at: shopifyProduct.created_at,
             shopify_updated_at: shopifyProduct.updated_at,
             published_at: shopifyProduct.published_at,
+            option1_name: option1Name,
+            option2_name: option2Name,
+            option3_name: option3Name,
           }, {
             onConflict: 'shopify_product_id',
             ignoreDuplicates: false,

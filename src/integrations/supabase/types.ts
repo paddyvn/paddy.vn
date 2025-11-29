@@ -757,6 +757,9 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           name: string
+          option1_name: string | null
+          option2_name: string | null
+          option3_name: string | null
           product_type: string | null
           published_at: string | null
           shopify_created_at: string | null
@@ -778,6 +781,9 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           name: string
+          option1_name?: string | null
+          option2_name?: string | null
+          option3_name?: string | null
           product_type?: string | null
           published_at?: string | null
           shopify_created_at?: string | null
@@ -799,6 +805,9 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           name?: string
+          option1_name?: string | null
+          option2_name?: string | null
+          option3_name?: string | null
           product_type?: string | null
           published_at?: string | null
           shopify_created_at?: string | null
