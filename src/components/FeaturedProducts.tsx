@@ -114,6 +114,9 @@ export const FeaturedProducts = () => {
 
                 <div className="p-4 space-y-3">
                   <div>
+                    {product.vendor && (
+                      <p className="text-xs text-muted-foreground mb-1">{product.vendor}</p>
+                    )}
                     <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-smooth">
                       {product.name}
                     </h3>

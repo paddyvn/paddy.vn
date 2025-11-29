@@ -12,6 +12,7 @@ export interface Product {
   is_featured: boolean;
   is_active: boolean;
   category_id: string | null;
+  vendor: string | null;
   product_images: Array<{
     image_url: string;
     alt_text: string | null;
