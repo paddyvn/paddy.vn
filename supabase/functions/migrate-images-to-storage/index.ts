@@ -29,8 +29,11 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Parse batch size from request (default: 50)
+    const { batchSize = 50 } = await req.json().catch(() => ({ batchSize: 50 }));
 
-    console.log('Starting image migration to Supabase Storage...');
+    console.log(`Starting image migration batch (size: ${batchSize})...`);
 
     const stats: MigrationStats = {
       total: 0,
@@ -39,15 +42,16 @@ serve(async (req) => {
       skipped: 0,
     };
 
-    // Migrate collection images
-    console.log('Migrating collection images...');
+    // Migrate collection images (only unmigrated ones)
+    console.log('Checking collection images...');
     const { data: collections } = await supabase
       .from('categories')
       .select('id, name, image_url')
       .not('image_url', 'is', null)
-      .like('image_url', '%cdn.shopify.com%');
+      .like('image_url', '%cdn.shopify.com%')
+      .limit(batchSize);
 
-    if (collections) {
+    if (collections && collections.length > 0) {
       stats.total += collections.length;
       
       for (const collection of collections) {
@@ -79,55 +83,78 @@ serve(async (req) => {
       }
     }
 
-    // Migrate product images
-    console.log('Migrating product images...');
-    const { data: productImages } = await supabase
-      .from('product_images')
-      .select('id, product_id, image_url, alt_text')
-      .not('image_url', 'is', null)
-      .like('image_url', '%cdn.shopify.com%');
+    // Migrate product images (only unmigrated ones, in batches)
+    console.log('Checking product images...');
+    const remainingBatch = batchSize - stats.migrated;
+    
+    if (remainingBatch > 0) {
+      const { data: productImages } = await supabase
+        .from('product_images')
+        .select('id, product_id, image_url, alt_text')
+        .not('image_url', 'is', null)
+        .like('image_url', '%cdn.shopify.com%')
+        .limit(remainingBatch);
 
-    if (productImages) {
-      stats.total += productImages.length;
+      if (productImages && productImages.length > 0) {
+        stats.total += productImages.length;
 
-      for (const image of productImages) {
-        try {
-          const newUrl = await migrateImage(
-            supabase,
-            image.image_url,
-            `products/${image.product_id}/${image.id}`,
-            image.alt_text || 'product-image'
-          );
+        for (const image of productImages) {
+          try {
+            const newUrl = await migrateImage(
+              supabase,
+              image.image_url,
+              `products/${image.product_id}/${image.id}`,
+              image.alt_text || 'product-image'
+            );
 
-          if (newUrl) {
-            const { error } = await supabase
-              .from('product_images')
-              .update({ image_url: newUrl })
-              .eq('id', image.id);
+            if (newUrl) {
+              const { error } = await supabase
+                .from('product_images')
+                .update({ image_url: newUrl })
+                .eq('id', image.id);
 
-            if (error) throw error;
-            
-            stats.migrated++;
-            console.log(`Migrated product image: ${image.id}`);
-          } else {
-            stats.skipped++;
+              if (error) throw error;
+              
+              stats.migrated++;
+              console.log(`Migrated product image: ${image.id}`);
+            } else {
+              stats.skipped++;
+            }
+          } catch (error) {
+            stats.failed++;
+            console.error(`Failed to migrate product image ${image.id}:`, error);
           }
-        } catch (error) {
-          stats.failed++;
-          console.error(`Failed to migrate product image ${image.id}:`, error);
         }
       }
     }
 
+    // Check remaining images
+    const { count: remainingCollections } = await supabase
+      .from('categories')
+      .select('id', { count: 'exact', head: true })
+      .not('image_url', 'is', null)
+      .like('image_url', '%cdn.shopify.com%');
+
+    const { count: remainingProducts } = await supabase
+      .from('product_images')
+      .select('id', { count: 'exact', head: true })
+      .not('image_url', 'is', null)
+      .like('image_url', '%cdn.shopify.com%');
+
+    const totalRemaining = (remainingCollections || 0) + (remainingProducts || 0);
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log('Image migration completed!');
-    console.log(`Total: ${stats.total}, Migrated: ${stats.migrated}, Failed: ${stats.failed}, Skipped: ${stats.skipped}`);
+    
+    console.log('Image migration batch completed!');
+    console.log(`Migrated: ${stats.migrated}, Failed: ${stats.failed}, Skipped: ${stats.skipped}`);
+    console.log(`Remaining: ${totalRemaining} images`);
     console.log(`Duration: ${duration}s`);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: `Successfully migrated ${stats.migrated} images`,
+        hasMore: totalRemaining > 0,
+        remaining: totalRemaining,
         stats: {
           ...stats,
           duration: `${duration}s`,
