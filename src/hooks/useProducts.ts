@@ -37,6 +37,11 @@ export const useProducts = (featured?: boolean) => {
         .select(`
           *,
           product_images (image_url, alt_text, is_primary),
+          product_collections (
+            collection_id,
+            position,
+            categories (id, name, slug)
+          ),
           reviews (rating)
         `)
         .eq("is_active", true)

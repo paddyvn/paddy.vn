@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 export const ShopifySync = () => {
   const [syncing, setSyncing] = useState(false);
   const [syncingCollections, setSyncingCollections] = useState(false);
+  const [syncingProductCollections, setSyncingProductCollections] = useState(false);
   const [syncingOrders, setSyncingOrders] = useState(false);
   const [syncingOlderOrders, setSyncingOlderOrders] = useState(false);
   const [syncingCustomers, setSyncingCustomers] = useState(false);
@@ -85,6 +86,30 @@ export const ShopifySync = () => {
       });
     } finally {
       setSyncingCollections(false);
+    }
+  };
+
+  const syncProductCollections = async () => {
+    setSyncingProductCollections(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('shopify-sync-product-collections');
+
+      if (error) throw error;
+
+      toast({
+        title: "Product-Collection Sync Complete!",
+        description: `Successfully synced ${data.stats.insertedCount} product-collection relationships.`,
+      });
+    } catch (error) {
+      console.error('Product-collection sync error:', error);
+      toast({
+        title: "Product-Collection Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingProductCollections(false);
     }
   };
 
@@ -387,7 +412,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAllProducts} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncing ? (
@@ -411,7 +436,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCollections} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncingCollections ? (
@@ -421,6 +446,30 @@ export const ShopifySync = () => {
             </>
           ) : (
             'Sync All Collections'
+          )}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Product-Collection Relationships</h3>
+          <p className="text-sm text-muted-foreground">
+            Link products to their collections. Run this after syncing collections and products.
+          </p>
+        </div>
+        
+        <Button 
+          onClick={syncProductCollections} 
+          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          className="w-full"
+        >
+          {syncingProductCollections ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Relationships...
+            </>
+          ) : (
+            'Sync Product-Collection Links'
           )}
         </Button>
       </div>
@@ -442,7 +491,7 @@ export const ShopifySync = () => {
         <div className="flex gap-2">
           <Button 
             onClick={syncOrders} 
-            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+            disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
             className="flex-1"
           >
             {syncingOrders ? (
@@ -457,7 +506,7 @@ export const ShopifySync = () => {
           
           <Button 
             onClick={syncOlderOrders} 
-            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+            disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
             variant="outline"
             className="flex-1"
           >
@@ -489,7 +538,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCustomers} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncingCustomers ? (
@@ -519,7 +568,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAbandonedCheckouts} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
           className="w-full"
         >
           {syncingAbandonedCheckouts ? (
