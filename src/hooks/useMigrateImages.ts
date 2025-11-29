@@ -1,17 +1,28 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRef } from "react";
 
 export function useMigrateImages() {
   const { toast } = useToast();
+  const isPausedRef = useRef(false);
 
-  return useMutation({
+  const pause = () => {
+    isPausedRef.current = true;
+  };
+
+  const resume = () => {
+    isPausedRef.current = false;
+  };
+
+  const mutation = useMutation({
     mutationFn: async () => {
+      isPausedRef.current = false;
       let totalMigrated = 0;
       let hasMore = true;
       
-      // Keep calling the function until all images are migrated
-      while (hasMore) {
+      // Keep calling the function until all images are migrated or paused
+      while (hasMore && !isPausedRef.current) {
         const { data, error } = await supabase.functions.invoke('migrate-images-to-storage', {
           body: { batchSize: 50 }
         });
@@ -32,13 +43,22 @@ export function useMigrateImages() {
         }
       }
       
+      if (isPausedRef.current) {
+        toast({
+          title: "Migration paused",
+          description: `Migrated ${totalMigrated} images before pausing. Click Resume to continue.`,
+        });
+      }
+      
       return { totalMigrated };
     },
     onSuccess: (data) => {
-      toast({
-        title: "Migration completed!",
-        description: `Successfully migrated ${data.totalMigrated} images to Supabase Storage.`,
-      });
+      if (!isPausedRef.current) {
+        toast({
+          title: "Migration completed!",
+          description: `Successfully migrated ${data.totalMigrated} images to Supabase Storage.`,
+        });
+      }
     },
     onError: (error) => {
       toast({
@@ -48,4 +68,10 @@ export function useMigrateImages() {
       });
     },
   });
+
+  return {
+    ...mutation,
+    pause,
+    resume,
+  };
 }
