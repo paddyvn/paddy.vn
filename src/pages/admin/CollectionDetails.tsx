@@ -15,6 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ArrowLeft, Upload, X, Save, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +33,8 @@ const collectionSchema = z.object({
   slug: z.string().trim().min(1, "Slug is required").max(100),
   description: z.string().max(5000).optional(),
   image_url: z.string().url("Invalid URL").max(500).optional().or(z.literal("")),
+  meta_title: z.string().max(70).optional(),
+  meta_description: z.string().max(160).optional(),
 });
 
 export default function CollectionDetails() {
@@ -32,12 +42,20 @@ export default function CollectionDetails() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isSeoDialogOpen, setIsSeoDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     description: "",
     image_url: "",
     is_active: true,
+    meta_title: "",
+    meta_description: "",
+  });
+  const [seoFormData, setSeoFormData] = useState({
+    meta_title: "",
+    meta_description: "",
+    slug: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -78,6 +96,13 @@ export default function CollectionDetails() {
         description: collection.description || "",
         image_url: collection.image_url || "",
         is_active: collection.is_active,
+        meta_title: collection.meta_title || "",
+        meta_description: collection.meta_description || "",
+      });
+      setSeoFormData({
+        meta_title: collection.meta_title || "",
+        meta_description: collection.meta_description || "",
+        slug: collection.slug,
       });
     }
   }, [collection]);
@@ -134,6 +159,8 @@ export default function CollectionDetails() {
           description: formData.description.trim() || null,
           image_url: formData.image_url.trim() || null,
           is_active: formData.is_active,
+          meta_title: formData.meta_title.trim() || null,
+          meta_description: formData.meta_description.trim() || null,
         })
         .eq("id", id);
 
@@ -147,6 +174,43 @@ export default function CollectionDetails() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save changes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSeoSave = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({
+          meta_title: seoFormData.meta_title.trim() || null,
+          meta_description: seoFormData.meta_description.trim() || null,
+          slug: seoFormData.slug.trim(),
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setFormData({
+        ...formData,
+        meta_title: seoFormData.meta_title,
+        meta_description: seoFormData.meta_description,
+        slug: seoFormData.slug,
+      });
+      setIsSeoDialogOpen(false);
+
+      toast({
+        title: "SEO settings updated",
+        description: "Your search engine listing has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save SEO settings",
         variant: "destructive",
       });
     } finally {
@@ -320,18 +384,31 @@ export default function CollectionDetails() {
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Search engine listing</h3>
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setSeoFormData({
+                    meta_title: formData.meta_title || formData.name,
+                    meta_description: formData.meta_description || formData.description || "",
+                    slug: formData.slug,
+                  });
+                  setIsSeoDialogOpen(true);
+                }}
+              >
                 Edit
               </Button>
             </div>
             <div className="space-y-2">
-              <h4 className="text-primary text-lg">{collection.name}</h4>
+              <h4 className="text-primary text-lg">
+                {formData.meta_title || formData.name}
+              </h4>
               <p className="text-sm text-muted-foreground">
-                https://paddy.vn › collections › {collection.slug}
+                https://paddy.vn › collections › {formData.slug}
               </p>
-              {collection.description && (
+              {(formData.meta_description || formData.description) && (
                 <p className="text-sm line-clamp-2">
-                  {collection.description}
+                  {formData.meta_description || formData.description}
                 </p>
               )}
             </div>
@@ -430,6 +507,89 @@ export default function CollectionDetails() {
           </Card>
         </div>
       </div>
+
+      {/* SEO Edit Dialog */}
+      <Dialog open={isSeoDialogOpen} onOpenChange={setIsSeoDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Search engine listing</DialogTitle>
+            <DialogDescription>
+              Add a title and description to see how this collection might appear in a search engine listing
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Preview */}
+            <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+              <h4 className="text-primary text-lg font-medium">
+                {seoFormData.meta_title || formData.name}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                https://paddy.vn › collections › {seoFormData.slug}
+              </p>
+              {seoFormData.meta_description && (
+                <p className="text-sm">
+                  {seoFormData.meta_description}
+                </p>
+              )}
+            </div>
+
+            {/* Page Title */}
+            <div className="space-y-2">
+              <Label htmlFor="seo-title">Page title</Label>
+              <Input
+                id="seo-title"
+                value={seoFormData.meta_title}
+                onChange={(e) => setSeoFormData({ ...seoFormData, meta_title: e.target.value })}
+                placeholder={formData.name}
+                maxLength={70}
+              />
+              <p className="text-sm text-muted-foreground">
+                {seoFormData.meta_title.length} of 70 characters used
+              </p>
+            </div>
+
+            {/* Meta Description */}
+            <div className="space-y-2">
+              <Label htmlFor="seo-description">Meta description</Label>
+              <Textarea
+                id="seo-description"
+                value={seoFormData.meta_description}
+                onChange={(e) => setSeoFormData({ ...seoFormData, meta_description: e.target.value })}
+                placeholder="Enter a description..."
+                rows={4}
+                maxLength={160}
+              />
+              <p className="text-sm text-muted-foreground">
+                {seoFormData.meta_description.length} of 160 characters used
+              </p>
+            </div>
+
+            {/* URL Handle */}
+            <div className="space-y-2">
+              <Label htmlFor="seo-slug">URL handle</Label>
+              <Input
+                id="seo-slug"
+                value={seoFormData.slug}
+                onChange={(e) => setSeoFormData({ ...seoFormData, slug: e.target.value })}
+                maxLength={100}
+              />
+              <p className="text-sm text-muted-foreground">
+                https://paddy.vn/collections/{seoFormData.slug}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSeoDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSeoSave} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
