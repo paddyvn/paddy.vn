@@ -72,7 +72,7 @@ export const FeaturedProducts = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
           {products.slice(0, 10).map((product, index) => (
             <Card
               key={product.id}
