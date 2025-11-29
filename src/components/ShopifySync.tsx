@@ -90,17 +90,41 @@ export const ShopifySync = () => {
     setProgress({ current: 0, total: 0 });
     
     try {
+      // Check for the most recent order in the database
+      const { data: mostRecentOrder } = await supabase
+        .from('orders')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
       let nextBatch: string | null = null;
+      let createdAtMin: string | null = mostRecentOrder?.created_at || null;
       let totalSynced = 0;
       let totalItems = 0;
       let batchCount = 0;
+
+      if (createdAtMin) {
+        console.log(`Continuing sync from: ${createdAtMin}`);
+        toast({
+          title: "Incremental Sync",
+          description: "Syncing only new orders since last sync...",
+        });
+      }
 
       do {
         batchCount++;
         console.log(`Syncing orders batch ${batchCount}...`);
         
+        const body: any = {};
+        if (nextBatch) {
+          body.continueFrom = nextBatch;
+        } else if (createdAtMin) {
+          body.createdAtMin = createdAtMin;
+        }
+
         const { data, error } = await supabase.functions.invoke('shopify-sync-orders-batch', {
-          body: nextBatch ? { continueFrom: nextBatch } : {},
+          body,
         });
 
         if (error) throw error;
@@ -123,7 +147,9 @@ export const ShopifySync = () => {
 
       toast({
         title: "Orders Sync Complete!",
-        description: `Successfully synced ${totalSynced} orders with ${totalItems} items from Shopify.`,
+        description: totalSynced > 0 
+          ? `Successfully synced ${totalSynced} orders with ${totalItems} items from Shopify.`
+          : "No new orders to sync.",
       });
     } catch (error) {
       console.error('Orders sync error:', error);
