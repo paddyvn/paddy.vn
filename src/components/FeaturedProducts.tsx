@@ -76,7 +76,7 @@ export const FeaturedProducts = () => {
           {products.slice(0, 10).map((product, index) => (
             <Card
               key={product.id}
-              className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover animate-in fade-in zoom-in duration-500 rounded-md border-0"
+              className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover animate-in fade-in zoom-in duration-500 rounded-sm border-0"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <CardContent className="p-0">
