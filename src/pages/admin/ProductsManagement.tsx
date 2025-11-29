@@ -25,10 +25,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
+import { useSyncProducts } from "@/hooks/useSyncProducts";
 
 type Product = {
   id: string;
@@ -48,6 +49,7 @@ export default function ProductsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
+  const syncProducts = useSyncProducts();
 
   const { data: products, isLoading, refetch } = useQuery({
     queryKey: ["admin-products", searchQuery, statusFilter],
@@ -136,9 +138,13 @@ export default function ProductsManagement() {
           <h2 className="text-3xl font-bold tracking-tight">Products</h2>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
+        <Button
+          onClick={() => syncProducts.mutate()}
+          disabled={syncProducts.isPending}
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
+          {syncProducts.isPending ? "Syncing..." : "Sync Products"}
         </Button>
       </div>
 
