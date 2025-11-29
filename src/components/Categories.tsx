@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useCategories } from "@/hooks/useCategories";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
@@ -27,60 +28,65 @@ export const Categories = () => {
   const displayCategories = categories && categories.length > 0 ? categories : [];
 
   return (
-    <section className="py-16 md:py-24 bg-background">
+    <section className="py-12 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom duration-700">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold">
             Shop by Category
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Find exactly what your pets need, from food to toys to accessories
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {displayCategories.map((category, index) => (
-            <Card
-              key={category.id}
-              className="group relative overflow-hidden border-2 hover:border-primary transition-smooth cursor-pointer shadow-card hover:shadow-hover animate-in fade-in zoom-in duration-500"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={category.image_url || fallbackImages[index % fallbackImages.length]}
-                  alt={category.name}
-                  className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-                />
-              </div>
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-2xl font-bold text-foreground mb-2 transition-smooth group-hover:text-primary">
-                  {category.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {category.description || `Browse our ${category.name.toLowerCase()} collection`}
-                </p>
-                
-                <div className="flex items-center gap-2 text-primary font-semibold transition-smooth group-hover:translate-x-2">
-                  Shop Now
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-4">
+            {displayCategories.map((category, index) => (
+              <CarouselItem key={category.id} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                <Card className="group relative overflow-hidden border-2 hover:border-primary transition-smooth cursor-pointer shadow-card hover:shadow-hover">
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src={category.image_url || fallbackImages[index % fallbackImages.length]}
+                      alt={category.name}
+                      className="w-full h-full object-cover transition-smooth group-hover:scale-110"
                     />
-                  </svg>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  </div>
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent flex flex-col justify-end p-4">
+                    <h3 className="text-xl font-bold text-foreground mb-1 transition-smooth group-hover:text-primary">
+                      {category.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {category.description || `Browse our ${category.name.toLowerCase()} collection`}
+                    </p>
+                    
+                    <div className="flex items-center gap-2 text-primary text-sm font-semibold transition-smooth group-hover:translate-x-2">
+                      Shop Now
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </Card>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-0" />
+          <CarouselNext className="right-0" />
+        </Carousel>
       </div>
     </section>
   );
