@@ -2,10 +2,20 @@ import { ShoppingCart, Search, Heart, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import paddyLogo from "@/assets/paddy-logo.avif";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useCart } from "@/hooks/useCart";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Header = () => {
-  const [cartCount] = useState(3);
+  const [userId, setUserId] = useState<string | undefined>();
+  const { cart } = useCart(userId);
+  const cartCount = cart.length;
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id);
+    });
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
