@@ -1,5 +1,8 @@
 project_id = "fexafkqzpbzjcupvbfhe"
 
+[functions.shopify-customers-count]
+verify_jwt = false
+
 [functions.shopify-orders-count]
 verify_jwt = false
 
