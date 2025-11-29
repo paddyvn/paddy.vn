@@ -57,7 +57,7 @@ serve(async (req) => {
 
   try {
     const shopifyDomain = Deno.env.get('SHOPIFY_STORE_DOMAIN');
-    const shopifyToken = Deno.env.get('SHOPIFY_ACCESS_TOKEN');
+    const shopifyToken = Deno.env.get('SHOPIFY_ADMIN_API_TOKEN');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
