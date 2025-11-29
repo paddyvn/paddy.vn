@@ -18,6 +18,7 @@ import {
   useSidebar,
   SidebarFooter,
   SidebarHeader,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -78,20 +79,22 @@ export function AdminSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarHeader className="border-b border-border">
-        <div className="flex items-center justify-center h-16 px-4">
-          {collapsed ? (
-            <img 
-              src={paddyFavicon} 
-              alt="Paddy.vn" 
-              className="h-8 w-8 object-contain"
-            />
-          ) : (
-            <img 
-              src={paddyLogoFull} 
-              alt="Paddy.vn" 
-              className="h-10 w-auto object-contain"
-            />
-          )}
+        <div className="flex items-center justify-between h-16 px-4">
+          <div className="flex items-center justify-center flex-1">
+            {collapsed ? (
+              <img 
+                src={paddyFavicon} 
+                alt="Paddy.vn" 
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <img 
+                src={paddyLogoFull} 
+                alt="Paddy.vn" 
+                className="h-10 w-auto object-contain"
+              />
+            )}
+          </div>
         </div>
       </SidebarHeader>
       
@@ -169,7 +172,7 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
@@ -184,6 +187,9 @@ export function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <div className="px-3 py-2">
+          <SidebarTrigger />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

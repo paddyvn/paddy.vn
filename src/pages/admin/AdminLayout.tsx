@@ -57,7 +57,7 @@ export default function AdminLayout() {
           <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-4">
-                <SidebarTrigger />
+                <h1 className="text-xl font-semibold">Admin</h1>
               </div>
               <Button variant="outline" onClick={handleSignOut} size="sm">
                 <LogOut className="mr-2 h-4 w-4" />
