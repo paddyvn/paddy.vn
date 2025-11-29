@@ -42,6 +42,7 @@ type Product = {
   shopify_product_id: string | null;
   category_id: string | null;
   vendor: string | null;
+  product_type: string | null;
   product_images: Array<{ image_url: string; is_primary: boolean }>;
   product_variants: Array<{ stock_quantity: number }>;
   product_collections: Array<{
@@ -360,7 +361,7 @@ export default function ProductsManagement() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {getCollectionNames(product.product_collections)}
+                      {product.product_type || "—"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-medium">
