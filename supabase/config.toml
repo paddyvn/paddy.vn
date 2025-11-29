@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.shopify-sync-orders-batch]
 verify_jwt = false
+
+[functions.migrate-images-to-storage]
+verify_jwt = false
+
+[functions.shopify-sync-product-collections]
+verify_jwt = false
