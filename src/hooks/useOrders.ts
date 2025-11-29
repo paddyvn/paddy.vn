@@ -36,6 +36,7 @@ export const useOrders = () => {
       const { data, error } = await supabase
         .from("orders")
         .select("*")
+        .order("shopify_order_id", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
