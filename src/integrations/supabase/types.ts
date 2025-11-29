@@ -220,6 +220,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_segments: {
+        Row: {
+          created_at: string | null
+          customer_count: number | null
+          description: string | null
+          filters: Json
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_count?: number | null
+          description?: string | null
+          filters?: Json
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_count?: number | null
+          description?: string | null
+          filters?: Json
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           accepts_marketing: boolean | null
