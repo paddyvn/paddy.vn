@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 
 export const ShopifySync = () => {
   const [syncing, setSyncing] = useState(false);
+  const [syncingCollections, setSyncingCollections] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
 
@@ -59,35 +60,85 @@ export const ShopifySync = () => {
     }
   };
 
+  const syncCollections = async () => {
+    setSyncingCollections(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('shopify-sync-collections');
+
+      if (error) throw error;
+
+      toast({
+        title: "Collections Sync Complete!",
+        description: `Successfully synced ${data.stats.syncedCollections} collections from Shopify.`,
+      });
+    } catch (error) {
+      console.error('Collections sync error:', error);
+      toast({
+        title: "Collections Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingCollections(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
-      <div>
-        <h3 className="text-lg font-semibold">Shopify Product Sync</h3>
-        <p className="text-sm text-muted-foreground">
-          Sync all products, variants, and images from your Shopify store.
-        </p>
-      </div>
-      
-      {syncing && progress.current > 0 && (
-        <div className="text-sm text-muted-foreground">
-          Synced {progress.current} products...
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Shopify Product Sync</h3>
+          <p className="text-sm text-muted-foreground">
+            Sync all products, variants, and images from your Shopify store.
+          </p>
         </div>
-      )}
-      
-      <Button 
-        onClick={syncAllProducts} 
-        disabled={syncing}
-        className="w-full"
-      >
-        {syncing ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Syncing...
-          </>
-        ) : (
-          'Sync All Products'
+        
+        {syncing && progress.current > 0 && (
+          <div className="text-sm text-muted-foreground">
+            Synced {progress.current} products...
+          </div>
         )}
-      </Button>
+        
+        <Button 
+          onClick={syncAllProducts} 
+          disabled={syncing || syncingCollections}
+          className="w-full"
+        >
+          {syncing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Products...
+            </>
+          ) : (
+            'Sync All Products'
+          )}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Shopify Collections Sync</h3>
+          <p className="text-sm text-muted-foreground">
+            Sync all collections (categories) from your Shopify store.
+          </p>
+        </div>
+        
+        <Button 
+          onClick={syncCollections} 
+          disabled={syncing || syncingCollections}
+          className="w-full"
+        >
+          {syncingCollections ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Collections...
+            </>
+          ) : (
+            'Sync All Collections'
+          )}
+        </Button>
+      </div>
     </div>
   );
 };
