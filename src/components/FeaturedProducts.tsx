@@ -32,7 +32,7 @@ export const FeaturedProducts = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 md:py-24 bg-muted/30">
+      <section className="py-16 md:py-24" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -46,7 +46,7 @@ export const FeaturedProducts = () => {
 
   if (!products || products.length === 0) {
     return (
-      <section className="py-16 md:py-24 bg-muted/30">
+      <section className="py-16 md:py-24" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Products</h2>
           <p className="text-lg text-muted-foreground">No featured products available yet.</p>
@@ -56,7 +56,7 @@ export const FeaturedProducts = () => {
   }
 
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
+    <section className="py-16 md:py-24" style={{ backgroundColor: '#fefefe' }}>
       <div className="container mx-auto px-4">
         <div className="flex items-end justify-between mb-12 animate-in fade-in slide-in-from-bottom duration-700">
           <div>
