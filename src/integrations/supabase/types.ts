@@ -247,6 +247,7 @@ export type Database = {
       }
       categories: {
         Row: {
+          collection_type: string | null
           created_at: string
           description: string | null
           display_order: number | null
@@ -255,10 +256,12 @@ export type Database = {
           is_active: boolean | null
           name: string
           parent_id: string | null
+          shopify_collection_id: string | null
           slug: string
           updated_at: string
         }
         Insert: {
+          collection_type?: string | null
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -267,10 +270,12 @@ export type Database = {
           is_active?: boolean | null
           name: string
           parent_id?: string | null
+          shopify_collection_id?: string | null
           slug: string
           updated_at?: string
         }
         Update: {
+          collection_type?: string | null
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -279,6 +284,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           parent_id?: string | null
+          shopify_collection_id?: string | null
           slug?: string
           updated_at?: string
         }
@@ -594,6 +600,45 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      product_collections: {
+        Row: {
+          collection_id: string
+          created_at: string | null
+          id: string
+          position: number | null
+          product_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          product_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string | null
+          id?: string
+          position?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_collections_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_collections_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_images: {
         Row: {

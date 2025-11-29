@@ -78,8 +78,11 @@ serve(async (req) => {
     const smartCollectionsData = await smartCollectionsResponse.json();
     const smartCollections: ShopifyCollection[] = smartCollectionsData.smart_collections || [];
 
-    // Combine all collections
-    const allCollections = [...customCollections, ...smartCollections];
+    // Combine all collections with type tracking
+    const allCollections = [
+      ...customCollections.map(c => ({ ...c, type: 'custom' })),
+      ...smartCollections.map(c => ({ ...c, type: 'smart' }))
+    ];
     console.log(`Total collections to sync: ${allCollections.length}`);
 
     let syncedCollections = 0;
@@ -93,7 +96,7 @@ serve(async (req) => {
           ? collection.body_html.replace(/<[^>]*>/g, '').substring(0, 500)
           : null;
 
-        // Upsert category
+        // Upsert category with Shopify collection ID and type
         const { error: categoryError } = await supabase
           .from('categories')
           .upsert({
@@ -103,6 +106,8 @@ serve(async (req) => {
             image_url: collection.image?.src || null,
             is_active: true,
             display_order: syncedCollections,
+            shopify_collection_id: collection.id.toString(),
+            collection_type: collection.type,
           }, {
             onConflict: 'slug',
             ignoreDuplicates: false,
