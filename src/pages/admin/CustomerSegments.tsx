@@ -43,6 +43,7 @@ import {
 } from "@/hooks/useSegments";
 import { SegmentFilterBuilder } from "@/components/SegmentFilterBuilder";
 import { useCustomers } from "@/hooks/useCustomers";
+import { formatCurrency } from "@/lib/utils";
 
 export default function CustomerSegments() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -414,7 +415,7 @@ export default function CustomerSegments() {
                       <TableCell>{customer.email || "—"}</TableCell>
                       <TableCell>{customer.orders_count}</TableCell>
                       <TableCell>
-                        {customer.total_spent?.toLocaleString("vi-VN")}₫
+                        {formatCurrency(customer.total_spent)}
                       </TableCell>
                     </TableRow>
                   ))}

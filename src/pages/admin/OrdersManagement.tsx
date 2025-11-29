@@ -31,6 +31,7 @@ import { Search, Eye, Package, Truck, CheckCircle, XCircle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 const statusConfig = {
   pending: { label: "Pending", variant: "secondary" as const, icon: Package },
@@ -194,7 +195,7 @@ export default function OrdersManagement() {
                       {order.shipping_address?.last_name}
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${Number(order.total).toFixed(2)}
+                      {formatCurrency(order.total)}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -282,11 +283,11 @@ export default function OrdersManagement() {
                           </p>
                         )}
                         <p className="text-sm text-muted-foreground">
-                          ${Number(item.price).toFixed(2)} × {item.quantity}
+                          {formatCurrency(item.price)} × {item.quantity}
                         </p>
                       </div>
                       <p className="font-medium">
-                        ${Number(item.subtotal).toFixed(2)}
+                        {formatCurrency(item.subtotal)}
                       </p>
                     </div>
                   ))}
@@ -297,25 +298,25 @@ export default function OrdersManagement() {
               <div className="border rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${Number(selectedOrderData.subtotal).toFixed(2)}</span>
+                  <span>{formatCurrency(selectedOrderData.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>
-                    ${Number(selectedOrderData.shipping_fee || 0).toFixed(2)}
+                    {formatCurrency(selectedOrderData.shipping_fee || 0)}
                   </span>
                 </div>
                 {selectedOrderData.discount && selectedOrderData.discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Discount</span>
                     <span className="text-destructive">
-                      -${Number(selectedOrderData.discount).toFixed(2)}
+                      -{formatCurrency(selectedOrderData.discount)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold pt-2 border-t">
                   <span>Total</span>
-                  <span>${Number(selectedOrderData.total).toFixed(2)}</span>
+                  <span>{formatCurrency(selectedOrderData.total)}</span>
                 </div>
               </div>
 

@@ -28,6 +28,7 @@ import {
 import { Search, MoreVertical, Pencil, Trash2, Plus, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/utils";
 
 type Product = {
   id: string;
@@ -245,7 +246,7 @@ export default function ProductsManagement() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${product.base_price.toFixed(2)}
+                    {formatCurrency(product.base_price)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
