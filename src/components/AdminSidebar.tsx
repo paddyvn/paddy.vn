@@ -78,24 +78,24 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="border-b border-border">
-        <div className="flex items-center justify-between h-16 px-4">
-          <div className="flex items-center justify-center flex-1">
-            {collapsed ? (
-              <img 
-                src={paddyFavicon} 
-                alt="Paddy.vn" 
-                className="h-8 w-8 object-contain"
-              />
-            ) : (
-              <img 
-                src={paddyLogoFull} 
-                alt="Paddy.vn" 
-                className="h-10 w-auto object-contain"
-              />
-            )}
+      <SidebarHeader className="border-b border-border p-4">
+        {collapsed ? (
+          <div className="flex items-center justify-center">
+            <img 
+              src={paddyFavicon} 
+              alt="Paddy.vn" 
+              className="h-8 w-8 object-contain"
+            />
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-center h-16">
+            <img 
+              src={paddyLogoFull} 
+              alt="Paddy.vn" 
+              className="h-10 w-auto object-contain max-w-full"
+            />
+          </div>
+        )}
       </SidebarHeader>
       
       <SidebarContent>
