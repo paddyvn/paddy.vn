@@ -1,4 +1,4 @@
-import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut } from "lucide-react";
+import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut, ChevronDown, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import paddyLogo from "@/assets/paddy-logo.avif";
@@ -51,122 +51,160 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container mx-auto px-4">
-        {/* Top Bar */}
-        <div className="flex h-16 items-center justify-between gap-4">
-          {/* Logo */}
-          <a href="/" className="flex items-center transition-smooth hover:opacity-80">
-            <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto" />
-          </a>
+    <header className="sticky top-0 z-50 w-full bg-primary">
+      {/* Top Header Bar */}
+      <div className="bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between gap-6">
+            {/* Logo */}
+            <a href="/" className="flex-shrink-0">
+              <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto brightness-0 invert" />
+            </a>
 
-          {/* Search Bar - Desktop */}
-          <div className="hidden flex-1 max-w-xl md:flex">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search for products..."
-                className="w-full pl-10 pr-4 h-11 rounded-full border-2 focus-visible:border-primary focus-visible:ring-0"
-              />
+            {/* Search Bar - Centered */}
+            <div className="hidden md:flex flex-1 max-w-lg">
+              <div className="relative w-full">
+                <Input
+                  type="search"
+                  placeholder="Search"
+                  className="w-full pr-12 h-11 bg-background text-foreground rounded-md"
+                />
+                <Button 
+                  size="icon" 
+                  variant="ghost"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="text-sm">24/7 Help</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="hidden md:inline text-sm">
+                      {userId ? 'Account' : 'Sign In'}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-background">
+                  {userId ? (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
+                        <Package className="mr-2 h-4 w-4" />
+                        My Orders
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Profile Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Sign In / Sign Up
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button 
+                variant="ghost" 
+                className="relative text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10 px-3"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground">
+                    {cartCount}
+                  </span>
+                )}
+                <span className="hidden md:inline ml-1 text-sm">Cart</span>
+                <ChevronDown className="hidden md:inline h-4 w-4 ml-1" />
+              </Button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="hidden md:inline-flex rounded-full transition-bounce hover:scale-110">
-              <Heart className="h-5 w-5" />
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="hidden md:inline-flex rounded-full transition-bounce hover:scale-110"
-                >
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-background">
-                {userId ? (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
-                      <Package className="mr-2 h-4 w-4" />
-                      My Orders
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Profile Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    Sign In / Sign Up
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+      {/* Navigation Bar */}
+      <div className="bg-primary-foreground text-foreground border-t border-border/20">
+        <div className="container mx-auto px-4">
+          <nav className="hidden md:flex h-12 items-center justify-between text-sm font-medium">
+            <div className="flex items-center gap-6">
+              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+                Dog
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+                Cat
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+                Other Animals
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+                Pharmacy
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+                Services
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <a href="#" className="hover:text-primary transition-smooth">
+                Today's Deals
+              </a>
+            </div>
+            <div className="text-secondary font-semibold text-sm">
+              Free delivery on first-time orders over 500k VND
+            </div>
+          </nav>
 
-            <Button variant="ghost" size="icon" className="relative rounded-full transition-bounce hover:scale-110">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground animate-in fade-in zoom-in">
-                  {cartCount}
-                </span>
-              )}
-            </Button>
-
-            <Button variant="ghost" size="icon" className="md:hidden rounded-full">
+          {/* Mobile Menu Button */}
+          <div className="flex md:hidden h-12 items-center justify-between">
+            <Button variant="ghost" size="icon" className="text-foreground">
               <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Navigation - Desktop */}
-        <nav className="hidden md:flex h-14 items-center justify-center gap-8 text-sm font-medium border-t border-border/50">
-          <a href="#" className="transition-smooth hover:text-primary relative group">
-            Dogs
-            <span className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
-          </a>
-          <a href="#" className="transition-smooth hover:text-primary relative group">
-            Cats
-            <span className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
-          </a>
-          <a href="#" className="transition-smooth hover:text-primary relative group">
-            Food
-            <span className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
-          </a>
-          <a href="#" className="transition-smooth hover:text-primary relative group">
-            Toys
-            <span className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
-          </a>
-          <a href="#" className="transition-smooth hover:text-primary relative group">
-            Accessories
-            <span className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
-          </a>
-          <a href="#" className="text-secondary transition-smooth hover:text-secondary/80 relative group font-semibold">
-            Sale 🎉
-            <span className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-secondary scale-x-0 group-hover:scale-x-100 transition-transform" />
-          </a>
-        </nav>
-
-        {/* Search Bar - Mobile */}
-        <div className="flex md:hidden pb-3">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="w-full pl-9 pr-4 h-10 rounded-full border-2 focus-visible:border-primary focus-visible:ring-0"
-            />
-          </div>
+      {/* Mobile Search */}
+      <div className="md:hidden bg-primary-foreground border-t border-border/20 px-4 py-3">
+        <div className="relative">
+          <Input
+            type="search"
+            placeholder="Search"
+            className="w-full pr-12 h-10"
+          />
+          <Button 
+            size="icon" 
+            variant="ghost"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>
