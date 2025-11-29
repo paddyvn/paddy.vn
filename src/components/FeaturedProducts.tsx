@@ -6,6 +6,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { formatPrice } from "@/lib/utils";
 
 export const FeaturedProducts = () => {
   const { data: products, isLoading } = useProducts(true);
@@ -17,10 +18,6 @@ export const FeaturedProducts = () => {
       setUserId(session?.user?.id);
     });
   }, []);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN").format(price);
-  };
 
   const calculateAverageRating = (reviews: Array<{ rating: number }>) => {
     if (!reviews || reviews.length === 0) return 0;

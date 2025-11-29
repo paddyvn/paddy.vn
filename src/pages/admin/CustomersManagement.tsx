@@ -41,6 +41,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/lib/utils";
 
 export default function CustomersManagement() {
   const { data: customers, isLoading } = useCustomers();
@@ -70,13 +71,6 @@ export default function CustomersManagement() {
       return matchesSearch && matchesMarketing;
     });
   }, [customers, searchQuery, marketingFilter]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
