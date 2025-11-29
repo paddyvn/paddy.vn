@@ -1,6 +1,8 @@
 import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import paddyLogoFull from "@/assets/paddy-logo-full.avif";
+import paddyFavicon from "@/assets/paddy-favicon.png";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +17,7 @@ import {
   SidebarMenuSubButton,
   useSidebar,
   SidebarFooter,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -74,6 +77,24 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
+      <SidebarHeader className="border-b border-border">
+        <div className="flex items-center justify-center h-16 px-4">
+          {collapsed ? (
+            <img 
+              src={paddyFavicon} 
+              alt="Paddy.vn" 
+              className="h-8 w-8 object-contain"
+            />
+          ) : (
+            <img 
+              src={paddyLogoFull} 
+              alt="Paddy.vn" 
+              className="h-10 w-auto object-contain"
+            />
+          )}
+        </div>
+      </SidebarHeader>
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground">
