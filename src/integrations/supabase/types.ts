@@ -258,6 +258,8 @@ export type Database = {
           meta_title: string | null
           name: string
           parent_id: string | null
+          rules: Json | null
+          rules_match_type: string | null
           shopify_collection_id: string | null
           slug: string
           updated_at: string
@@ -274,6 +276,8 @@ export type Database = {
           meta_title?: string | null
           name: string
           parent_id?: string | null
+          rules?: Json | null
+          rules_match_type?: string | null
           shopify_collection_id?: string | null
           slug: string
           updated_at?: string
@@ -290,6 +294,8 @@ export type Database = {
           meta_title?: string | null
           name?: string
           parent_id?: string | null
+          rules?: Json | null
+          rules_match_type?: string | null
           shopify_collection_id?: string | null
           slug?: string
           updated_at?: string
