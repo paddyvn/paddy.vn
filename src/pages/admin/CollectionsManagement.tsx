@@ -54,6 +54,7 @@ type Collection = {
   is_active: boolean;
   display_order: number | null;
   product_collections: Array<{ id: string }>;
+  rules: any;
 };
 
 const collectionSchema = z.object({
@@ -350,6 +351,7 @@ export default function CollectionsManagement() {
             <TableRow>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Collection</TableHead>
+              <TableHead>Conditions</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Products</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -366,6 +368,9 @@ export default function CollectionsManagement() {
                     <Skeleton className="h-4 w-[250px]" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-6 w-16" />
                   </TableCell>
                   <TableCell>
@@ -378,7 +383,7 @@ export default function CollectionsManagement() {
               ))
             ) : collections?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No collections found. Create your first collection to get started.
                 </TableCell>
               </TableRow>
@@ -406,6 +411,15 @@ export default function CollectionsManagement() {
                       {collection.name}
                     </div>
                     <div className="text-sm text-muted-foreground">{collection.slug}</div>
+                  </TableCell>
+                  <TableCell>
+                    {collection.rules && collection.rules.length > 0 ? (
+                      <span className="text-sm text-muted-foreground">
+                        {collection.rules.length} condition{collection.rules.length > 1 ? 's' : ''}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant={collection.is_active ? "default" : "secondary"}>
