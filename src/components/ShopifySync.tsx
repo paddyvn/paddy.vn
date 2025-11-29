@@ -87,33 +87,43 @@ export const ShopifySync = () => {
 
   const syncOrders = async () => {
     setSyncingOrders(true);
+    setProgress({ current: 0, total: 0 });
     
     try {
-      toast({
-        title: "Orders Sync Started",
-        description: "This may take several minutes for large order histories. The sync will continue in the background.",
-      });
+      let nextBatch: string | null = null;
+      let totalSynced = 0;
+      let totalItems = 0;
+      let batchCount = 0;
 
-      const { data, error } = await supabase.functions.invoke('shopify-sync-orders', {
-        body: {},
-      });
+      do {
+        batchCount++;
+        console.log(`Syncing orders batch ${batchCount}...`);
+        
+        const { data, error } = await supabase.functions.invoke('shopify-sync-orders-batch', {
+          body: nextBatch ? { continueFrom: nextBatch } : {},
+        });
 
-      if (error) {
-        // Check if it's a timeout error (function is still running)
-        if (error.message.includes('Failed to fetch') || error.message.includes('timeout')) {
-          toast({
-            title: "Sync Running in Background",
-            description: "The orders sync is taking longer than expected and continues in the background. Check back in a few minutes.",
-            variant: "default",
-          });
-          return;
+        if (error) throw error;
+
+        if (data) {
+          totalSynced += data.stats.syncedOrders;
+          totalItems += data.stats.syncedItems;
+          setProgress({ current: totalSynced, total: totalSynced });
+          
+          nextBatch = data.hasMore ? data.nextBatch : null;
+          
+          console.log(`Batch ${batchCount}: ${data.stats.syncedOrders} orders, ${data.stats.syncedItems} items (Total: ${totalSynced} orders)`);
         }
-        throw error;
-      }
+
+        // Small delay between batches
+        if (nextBatch) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } while (nextBatch);
 
       toast({
         title: "Orders Sync Complete!",
-        description: `Successfully synced ${data.stats.syncedOrders} orders with ${data.stats.syncedItems} items from Shopify.`,
+        description: `Successfully synced ${totalSynced} orders with ${totalItems} items from Shopify.`,
       });
     } catch (error) {
       console.error('Orders sync error:', error);
@@ -124,6 +134,7 @@ export const ShopifySync = () => {
       });
     } finally {
       setSyncingOrders(false);
+      setProgress({ current: 0, total: 0 });
     }
   };
 
@@ -187,9 +198,15 @@ export const ShopifySync = () => {
         <div>
           <h3 className="text-lg font-semibold">Shopify Orders Sync</h3>
           <p className="text-sm text-muted-foreground">
-            Sync all orders and order history from your Shopify store. Large order histories may take several minutes.
+            Sync all orders and order history from your Shopify store.
           </p>
         </div>
+        
+        {syncingOrders && progress.current > 0 && (
+          <div className="text-sm text-muted-foreground">
+            Synced {progress.current} orders...
+          </div>
+        )}
         
         <Button 
           onClick={syncOrders} 
@@ -199,7 +216,7 @@ export const ShopifySync = () => {
           {syncingOrders ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Syncing Orders (This may take a while)...
+              Syncing Orders...
             </>
           ) : (
             'Sync All Orders'
