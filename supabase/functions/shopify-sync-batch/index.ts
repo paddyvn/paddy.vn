@@ -14,11 +14,16 @@ interface ShopifyProduct {
   product_type: string;
   handle: string;
   status: string;
+  tags: string;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
   images: Array<{
     id: number;
     src: string;
     alt: string | null;
     position: number;
+    variant_ids: number[];
   }>;
   variants: Array<{
     id: number;
@@ -28,6 +33,11 @@ interface ShopifyProduct {
     sku: string | null;
     inventory_quantity: number;
     weight: number | null;
+    option1: string | null;
+    option2: string | null;
+    option3: string | null;
+    barcode: string | null;
+    image_id: number | null;
   }>;
 }
 
@@ -122,6 +132,12 @@ serve(async (req) => {
             compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
             is_active: shopifyProduct.status === 'active',
             is_featured: false,
+            vendor: shopifyProduct.vendor,
+            product_type: shopifyProduct.product_type,
+            tags: shopifyProduct.tags,
+            shopify_created_at: shopifyProduct.created_at,
+            shopify_updated_at: shopifyProduct.updated_at,
+            published_at: shopifyProduct.published_at,
           }, {
             onConflict: 'shopify_product_id',
             ignoreDuplicates: false,
@@ -150,6 +166,8 @@ serve(async (req) => {
               alt_text: image.alt || shopifyProduct.title,
               is_primary: image.position === 1,
               display_order: image.position,
+              shopify_image_id: image.id.toString(),
+              variant_ids: image.variant_ids || [],
             });
 
           if (!imageError) syncedImages++;
@@ -168,6 +186,10 @@ serve(async (req) => {
               sku: variant.sku || null,
               stock_quantity: variant.inventory_quantity,
               weight: variant.weight,
+              option1: variant.option1,
+              option2: variant.option2,
+              option3: variant.option3,
+              barcode: variant.barcode,
             });
 
           if (!variantError) syncedVariants++;

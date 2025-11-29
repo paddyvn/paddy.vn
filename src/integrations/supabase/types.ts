@@ -604,6 +604,8 @@ export type Database = {
           image_url: string
           is_primary: boolean | null
           product_id: string
+          shopify_image_id: string | null
+          variant_ids: Json | null
         }
         Insert: {
           alt_text?: string | null
@@ -613,6 +615,8 @@ export type Database = {
           image_url: string
           is_primary?: boolean | null
           product_id: string
+          shopify_image_id?: string | null
+          variant_ids?: Json | null
         }
         Update: {
           alt_text?: string | null
@@ -622,6 +626,8 @@ export type Database = {
           image_url?: string
           is_primary?: boolean | null
           product_id?: string
+          shopify_image_id?: string | null
+          variant_ids?: Json | null
         }
         Relationships: [
           {
@@ -635,10 +641,14 @@ export type Database = {
       }
       product_variants: {
         Row: {
+          barcode: string | null
           compare_at_price: number | null
           created_at: string
           id: string
           name: string
+          option1: string | null
+          option2: string | null
+          option3: string | null
           price: number
           product_id: string
           shopify_variant_id: string | null
@@ -648,10 +658,14 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
           id?: string
           name: string
+          option1?: string | null
+          option2?: string | null
+          option3?: string | null
           price: number
           product_id: string
           shopify_variant_id?: string | null
@@ -661,10 +675,14 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
           id?: string
           name?: string
+          option1?: string | null
+          option2?: string | null
+          option3?: string | null
           price?: number
           product_id?: string
           shopify_variant_id?: string | null
@@ -694,9 +712,14 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           name: string
+          product_type: string | null
+          published_at: string | null
+          shopify_created_at: string | null
           shopify_product_id: string | null
+          shopify_updated_at: string | null
           short_description: string | null
           slug: string
+          tags: string | null
           updated_at: string
           vendor: string | null
         }
@@ -710,9 +733,14 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           name: string
+          product_type?: string | null
+          published_at?: string | null
+          shopify_created_at?: string | null
           shopify_product_id?: string | null
+          shopify_updated_at?: string | null
           short_description?: string | null
           slug: string
+          tags?: string | null
           updated_at?: string
           vendor?: string | null
         }
@@ -726,9 +754,14 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           name?: string
+          product_type?: string | null
+          published_at?: string | null
+          shopify_created_at?: string | null
           shopify_product_id?: string | null
+          shopify_updated_at?: string | null
           short_description?: string | null
           slug?: string
+          tags?: string | null
           updated_at?: string
           vendor?: string | null
         }
