@@ -3,6 +3,15 @@ import { useCustomers, useUpdateCustomer, Customer } from "@/hooks/useCustomers"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Table,
   TableBody,
   TableCell,
@@ -43,6 +52,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 
+const CUSTOMERS_PER_PAGE = 50;
+
 export default function CustomersManagement() {
   const { data: customers, isLoading } = useCustomers();
   const updateCustomer = useUpdateCustomer();
@@ -52,6 +63,7 @@ export default function CustomersManagement() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingNote, setEditingNote] = useState(false);
   const [note, setNote] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
@@ -71,6 +83,17 @@ export default function CustomersManagement() {
       return matchesSearch && matchesMarketing;
     });
   }, [customers, searchQuery, marketingFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE);
+  const startIndex = (currentPage - 1) * CUSTOMERS_PER_PAGE;
+  const endIndex = startIndex + CUSTOMERS_PER_PAGE;
+  const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery, marketingFilter]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -137,7 +160,7 @@ export default function CustomersManagement() {
             <Skeleton key={i} className="h-16 w-full" />
           ))}
         </div>
-      ) : filteredCustomers.length === 0 ? (
+      ) : paginatedCustomers.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-border rounded-lg">
           <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No customers found</h3>
@@ -161,7 +184,7 @@ export default function CustomersManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCustomers.map((customer) => (
+              {paginatedCustomers.map((customer) => (
                 <TableRow
                   key={customer.id}
                   className="cursor-pointer hover:bg-muted/50"
@@ -219,6 +242,90 @@ export default function CustomersManagement() {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && filteredCustomers.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredCustomers.length)} of{" "}
+            {filteredCustomers.length} customers
+          </p>
+          
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {/* First page */}
+                {currentPage > 3 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationLink onClick={() => setCurrentPage(1)} className="cursor-pointer">
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    {currentPage > 4 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                  </>
+                )}
+
+                {/* Page numbers around current page */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    return Math.abs(page - currentPage) <= 1;
+                  })
+                  .map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                {/* Last page */}
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(totalPages)}
+                        className="cursor-pointer"
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    className={
+                      currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       )}
 
