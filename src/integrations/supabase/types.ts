@@ -254,6 +254,8 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          meta_description: string | null
+          meta_title: string | null
           name: string
           parent_id: string | null
           shopify_collection_id: string | null
@@ -268,6 +270,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           parent_id?: string | null
           shopify_collection_id?: string | null
@@ -282,6 +286,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           parent_id?: string | null
           shopify_collection_id?: string | null
