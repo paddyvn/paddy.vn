@@ -10,6 +10,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import ProductsManagement from "./pages/admin/ProductsManagement";
 import CollectionsManagement from "./pages/admin/CollectionsManagement";
 import OrdersManagement from "./pages/admin/OrdersManagement";
+import CustomersManagement from "./pages/admin/CustomersManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="products" element={<ProductsManagement />} />
             <Route path="collections" element={<CollectionsManagement />} />
             <Route path="orders" element={<OrdersManagement />} />
+            <Route path="customers" element={<CustomersManagement />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
