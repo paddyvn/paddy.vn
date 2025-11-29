@@ -26,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
@@ -50,12 +50,48 @@ type Product = {
 export default function ProductsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [vendorFilter, setVendorFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const { toast } = useToast();
   const navigate = useNavigate();
   const syncProducts = useSyncProducts();
 
+  // Fetch unique vendors
+  const { data: vendors } = useQuery({
+    queryKey: ["vendors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("vendor")
+        .not("vendor", "is", null)
+        .order("vendor");
+      if (error) throw error;
+      const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean);
+      return uniqueVendors as string[];
+    },
+  });
+
+  // Fetch unique tags
+  const { data: tags } = useQuery({
+    queryKey: ["product-tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("tags")
+        .not("tags", "is", null);
+      if (error) throw error;
+      const allTags = new Set<string>();
+      data.forEach(p => {
+        if (p.tags) {
+          p.tags.split(",").forEach(tag => allTags.add(tag.trim()));
+        }
+      });
+      return Array.from(allTags).sort();
+    },
+  });
+
   const { data: products, isLoading, refetch } = useQuery({
-    queryKey: ["admin-products", searchQuery, statusFilter],
+    queryKey: ["admin-products", searchQuery, statusFilter, vendorFilter, tagFilter],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -73,6 +109,14 @@ export default function ProductsManagement() {
 
       if (statusFilter !== "all") {
         query = query.eq("is_active", statusFilter === "active");
+      }
+
+      if (vendorFilter !== "all") {
+        query = query.eq("vendor", vendorFilter);
+      }
+
+      if (tagFilter !== "all") {
+        query = query.ilike("tags", `%${tagFilter}%`);
       }
 
       const { data, error } = await query;
@@ -151,8 +195,8 @@ export default function ProductsManagement() {
         </Button>
       </div>
 
-      <div className="flex gap-4 items-center bg-card p-4 rounded-lg border">
-        <div className="relative flex-1">
+      <div className="flex gap-4 items-center bg-card p-4 rounded-lg border flex-wrap">
+        <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search products..."
@@ -161,17 +205,60 @@ export default function ProductsManagement() {
             className="pl-10"
           />
         </div>
+        
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
-            <Filter className="mr-2 h-4 w-4" />
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Products</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={vendorFilter} onValueChange={setVendorFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Vendor" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Vendors</SelectItem>
+            {vendors?.map((vendor) => (
+              <SelectItem key={vendor} value={vendor}>
+                {vendor}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={tagFilter} onValueChange={setTagFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tags" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            <SelectItem value="all">All Tags</SelectItem>
+            {tags?.map((tag) => (
+              <SelectItem key={tag} value={tag}>
+                {tag}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {(statusFilter !== "all" || vendorFilter !== "all" || tagFilter !== "all") && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setStatusFilter("all");
+              setVendorFilter("all");
+              setTagFilter("all");
+            }}
+            className="gap-2"
+          >
+            Clear Filters
+          </Button>
+        )}
       </div>
 
       <div className="rounded-lg border bg-card">
