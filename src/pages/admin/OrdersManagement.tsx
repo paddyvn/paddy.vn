@@ -211,7 +211,7 @@ export default function OrdersManagement() {
                       {order.order_number}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(order.created_at), "MMM d, yyyy")}
+                      {format(new Date(order.created_at), "MMM d, yyyy HH:mm")}
                     </TableCell>
                     <TableCell>
                       {order.shipping_address?.first_name}{" "}
