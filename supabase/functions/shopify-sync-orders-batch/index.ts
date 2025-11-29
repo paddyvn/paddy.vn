@@ -86,6 +86,32 @@ serve(async (req) => {
       return 'pending';
     };
 
+    // Collect all unique Shopify product and variant IDs
+    const productIds = new Set<string>();
+    const variantIds = new Set<string>();
+    
+    orders.forEach(order => {
+      order.line_items.forEach(item => {
+        productIds.add(item.product_id.toString());
+        variantIds.add(item.variant_id.toString());
+      });
+    });
+
+    // Batch fetch all products and variants
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, shopify_product_id')
+      .in('shopify_product_id', Array.from(productIds));
+
+    const { data: variants } = await supabase
+      .from('product_variants')
+      .select('id, product_id, shopify_variant_id')
+      .in('shopify_variant_id', Array.from(variantIds));
+
+    // Create lookup maps
+    const productMap = new Map(products?.map(p => [p.shopify_product_id, p.id]) || []);
+    const variantMap = new Map(variants?.map(v => [v.shopify_variant_id, v.id]) || []);
+
     let syncedOrders = 0;
     let syncedItems = 0;
 
@@ -130,42 +156,31 @@ serve(async (req) => {
           .delete()
           .eq('order_id', order.id);
 
-        // Insert order items
-        for (const lineItem of shopifyOrder.line_items) {
-          const { data: product } = await supabase
-            .from('products')
-            .select('id')
-            .eq('shopify_product_id', lineItem.product_id.toString())
-            .maybeSingle();
+        // Batch insert order items
+        const orderItems = shopifyOrder.line_items.map(lineItem => {
+          const productId = productMap.get(lineItem.product_id.toString()) || null;
+          const variantId = variantMap.get(lineItem.variant_id.toString()) || null;
 
-          let variantId = null;
-          if (product) {
-            const { data: variant } = await supabase
-              .from('product_variants')
-              .select('id')
-              .eq('product_id', product.id)
-              .eq('shopify_variant_id', lineItem.variant_id.toString())
-              .maybeSingle();
-            
-            if (variant) variantId = variant.id;
-          }
+          return {
+            order_id: order.id,
+            product_id: productId,
+            product_name: lineItem.title,
+            variant_id: variantId,
+            variant_name: lineItem.variant_title,
+            price: parseFloat(lineItem.price),
+            quantity: lineItem.quantity,
+            subtotal: parseFloat(lineItem.price) * lineItem.quantity,
+          };
+        });
 
-          const { error: itemError } = await supabase
-            .from('order_items')
-            .insert({
-              order_id: order.id,
-              product_id: product?.id || null,
-              product_name: lineItem.title,
-              variant_id: variantId,
-              variant_name: lineItem.variant_title,
-              price: parseFloat(lineItem.price),
-              quantity: lineItem.quantity,
-              subtotal: parseFloat(lineItem.price) * lineItem.quantity,
-            });
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
 
-          if (!itemError) {
-            syncedItems++;
-          }
+        if (!itemsError) {
+          syncedItems += orderItems.length;
+        } else {
+          console.error(`Error inserting items for order ${shopifyOrder.name}:`, itemsError);
         }
       } catch (error) {
         console.error(`Error processing order ${shopifyOrder.name}:`, error);
