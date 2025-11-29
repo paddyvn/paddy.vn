@@ -13,6 +13,11 @@ import OrdersManagement from "./pages/admin/OrdersManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
 import CustomerSegments from "./pages/admin/CustomerSegments";
 import AbandonedCheckouts from "./pages/admin/AbandonedCheckouts";
+import ContentMetaobjects from "./pages/admin/ContentMetaobjects";
+import ContentFiles from "./pages/admin/ContentFiles";
+import ContentMenus from "./pages/admin/ContentMenus";
+import ContentBlog from "./pages/admin/ContentBlog";
+import Pages from "./pages/admin/Pages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +39,11 @@ const App = () => (
             <Route path="abandoned-checkouts" element={<AbandonedCheckouts />} />
             <Route path="customers" element={<CustomersManagement />} />
             <Route path="customers/segments" element={<CustomerSegments />} />
+            <Route path="content/metaobjects" element={<ContentMetaobjects />} />
+            <Route path="content/files" element={<ContentFiles />} />
+            <Route path="content/menus" element={<ContentMenus />} />
+            <Route path="content/blog" element={<ContentBlog />} />
+            <Route path="pages" element={<Pages />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
