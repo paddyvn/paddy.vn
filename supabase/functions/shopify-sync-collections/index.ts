@@ -6,6 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ShopifyRule {
+  column: string;
+  relation: string;
+  condition: string;
+}
+
 interface ShopifyCollection {
   id: number;
   title: string;
@@ -17,6 +23,8 @@ interface ShopifyCollection {
   } | null;
   sort_order: string;
   updated_at: string;
+  rules?: ShopifyRule[];
+  disjunctive?: boolean;
 }
 
 serve(async (req) => {
@@ -96,6 +104,19 @@ serve(async (req) => {
           ? collection.body_html.replace(/<[^>]*>/g, '').substring(0, 500)
           : null;
 
+        // Map Shopify rules to our format
+        let rules = null;
+        let rulesMatchType = 'all';
+        
+        if (collection.type === 'smart' && collection.rules && collection.rules.length > 0) {
+          rules = collection.rules.map(rule => ({
+            field: rule.column === 'title' ? 'name' : rule.column,
+            operator: rule.relation,
+            value: rule.condition,
+          }));
+          rulesMatchType = collection.disjunctive ? 'any' : 'all';
+        }
+
         // Upsert category with Shopify collection ID and type
         const { error: categoryError } = await supabase
           .from('categories')
@@ -108,6 +129,8 @@ serve(async (req) => {
             display_order: syncedCollections,
             shopify_collection_id: collection.id.toString(),
             collection_type: collection.type,
+            rules: rules,
+            rules_match_type: rulesMatchType,
           }, {
             onConflict: 'slug',
             ignoreDuplicates: false,
