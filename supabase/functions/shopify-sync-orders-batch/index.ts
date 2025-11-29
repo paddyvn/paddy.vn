@@ -102,8 +102,8 @@ serve(async (req) => {
     
     orders.forEach(order => {
       order.line_items.forEach(item => {
-        productIds.add(item.product_id.toString());
-        variantIds.add(item.variant_id.toString());
+        if (item.product_id) productIds.add(item.product_id.toString());
+        if (item.variant_id) variantIds.add(item.variant_id.toString());
       });
     });
 
@@ -168,8 +168,12 @@ serve(async (req) => {
 
         // Batch insert order items
         const orderItems = shopifyOrder.line_items.map(lineItem => {
-          const productId = productMap.get(lineItem.product_id.toString()) || null;
-          const variantId = variantMap.get(lineItem.variant_id.toString()) || null;
+          const productId = lineItem.product_id 
+            ? productMap.get(lineItem.product_id.toString()) || null 
+            : null;
+          const variantId = lineItem.variant_id 
+            ? variantMap.get(lineItem.variant_id.toString()) || null 
+            : null;
 
           return {
             order_id: order.id,
