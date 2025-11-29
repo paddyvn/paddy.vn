@@ -223,9 +223,11 @@ export function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <div className="px-2">
-              <SidebarTrigger />
-            </div>
+            <SidebarMenuButton asChild>
+              <div className="w-full">
+                <SidebarTrigger />
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
