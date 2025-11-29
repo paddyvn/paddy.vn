@@ -1,8 +1,10 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import paddyLogoFull from "@/assets/paddy-logo-full.avif";
 import paddyFavicon from "@/assets/paddy-favicon.png";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   Sidebar,
   SidebarContent,
@@ -69,12 +71,23 @@ const mainItems = [
 export function AdminSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
   const isActive = (url: string) => currentPath === url;
   const hasActiveChild = (subItems?: Array<{ url: string }>) => 
     subItems?.some((item) => isActive(item.url));
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
+    navigate("/");
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -184,6 +197,12 @@ export function AdminSidebar() {
                 <Settings className="h-4 w-4" />
                 {!collapsed && <span>Settings</span>}
               </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
+              {!collapsed && <span>Sign Out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
