@@ -50,67 +50,62 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('Starting Shopify product sync...');
+    // Get batch parameters from request
+    const { batchSize = 50, continueFrom = null } = await req.json().catch(() => ({}));
 
-    // Fetch all products from Shopify with cursor-based pagination
-    let allProducts: ShopifyProduct[] = [];
-    let nextPageUrl: string | null = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/products.json?limit=250`;
+    console.log(`Starting batch sync (batch size: ${batchSize}, continue from: ${continueFrom || 'start'})...`);
 
-    while (nextPageUrl) {
-      console.log('Fetching products...');
-      const response: Response = await fetch(nextPageUrl, {
-        headers: {
-          'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      });
+    // Build URL with pagination
+    let url = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/products.json?limit=${batchSize}`;
+    if (continueFrom) {
+      url = continueFrom;
+    }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
-      }
+    const response: Response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_TOKEN,
+        'Content-Type': 'application/json',
+      },
+    });
 
-      const data = await response.json();
-      const products = data.products || [];
-      
-      allProducts = allProducts.concat(products);
-      console.log(`Fetched ${products.length} products (total: ${allProducts.length})`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
+    }
 
-      // Check for next page in Link header
-      const linkHeader: string | null = response.headers.get('Link');
-      nextPageUrl = null;
-      
-      if (linkHeader) {
-        const links: string[] = linkHeader.split(',');
-        for (const link of links) {
-          if (link.includes('rel="next"')) {
-            const match: RegExpMatchArray | null = link.match(/<([^>]+)>/);
-            if (match) {
-              nextPageUrl = match[1];
-            }
+    const data = await response.json();
+    const products: ShopifyProduct[] = data.products || [];
+    
+    console.log(`Fetched ${products.length} products from Shopify`);
+
+    // Get next page URL from Link header
+    const linkHeader: string | null = response.headers.get('Link');
+    let nextPageUrl: string | null = null;
+    
+    if (linkHeader) {
+      const links: string[] = linkHeader.split(',');
+      for (const link of links) {
+        if (link.includes('rel="next"')) {
+          const match: RegExpMatchArray | null = link.match(/<([^>]+)>/);
+          if (match) {
+            nextPageUrl = match[1];
           }
         }
       }
     }
 
-    console.log(`Total products to sync: ${allProducts.length}`);
+    let syncedProducts = 0;
+    let syncedImages = 0;
+    let syncedVariants = 0;
+    const errors: string[] = [];
 
-    // Start sync in background and return immediately
-    const syncPromise = (async () => {
-      let syncedProducts = 0;
-      let syncedImages = 0;
-      let syncedVariants = 0;
-      const errors: string[] = [];
-
-      // Sync each product
-    for (const shopifyProduct of allProducts) {
+    // Sync each product in this batch
+    for (const shopifyProduct of products) {
       try {
-        // Extract short description from body_html (first 200 chars without HTML)
         const shortDescription = shopifyProduct.body_html
           ? shopifyProduct.body_html.replace(/<[^>]*>/g, '').substring(0, 200)
           : null;
 
-        // Get the base price from the first variant
         const basePrice = shopifyProduct.variants[0]?.price || '0';
         const compareAtPrice = shopifyProduct.variants[0]?.compare_at_price;
 
@@ -136,20 +131,16 @@ serve(async (req) => {
 
         if (productError) {
           errors.push(`Product ${shopifyProduct.title}: ${productError.message}`);
-          console.error('Product sync error:', productError);
           continue;
         }
 
         syncedProducts++;
-        console.log(`Synced product: ${product.name} (${product.id})`);
 
-        // Delete existing images for this product
-        await supabase
-          .from('product_images')
-          .delete()
-          .eq('product_id', product.id);
+        // Delete existing images and variants for clean sync
+        await supabase.from('product_images').delete().eq('product_id', product.id);
+        await supabase.from('product_variants').delete().eq('product_id', product.id);
 
-        // Sync product images
+        // Sync images
         for (const image of shopifyProduct.images) {
           const { error: imageError } = await supabase
             .from('product_images')
@@ -161,21 +152,10 @@ serve(async (req) => {
               display_order: image.position,
             });
 
-          if (imageError) {
-            errors.push(`Image for ${shopifyProduct.title}: ${imageError.message}`);
-            console.error('Image sync error:', imageError);
-          } else {
-            syncedImages++;
-          }
+          if (!imageError) syncedImages++;
         }
 
-        // Delete existing variants for this product
-        await supabase
-          .from('product_variants')
-          .delete()
-          .eq('product_id', product.id);
-
-        // Sync product variants
+        // Sync variants
         for (const variant of shopifyProduct.variants) {
           const { error: variantError } = await supabase
             .from('product_variants')
@@ -185,69 +165,49 @@ serve(async (req) => {
               name: variant.title,
               price: parseFloat(variant.price),
               compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
-              sku: variant.sku,
+              sku: variant.sku || null,
               stock_quantity: variant.inventory_quantity,
               weight: variant.weight,
             });
 
-          if (variantError) {
-            errors.push(`Variant ${variant.title} for ${shopifyProduct.title}: ${variantError.message}`);
-            console.error('Variant sync error:', variantError);
-          } else {
-            syncedVariants++;
-          }
+          if (!variantError) syncedVariants++;
         }
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         errors.push(`Product ${shopifyProduct.title}: ${errorMessage}`);
-        console.error(`Error syncing product ${shopifyProduct.title}:`, error);
       }
     }
 
-      console.log('Sync completed!');
-      console.log(`Products synced: ${syncedProducts}`);
-      console.log(`Images synced: ${syncedImages}`);
-      console.log(`Variants synced: ${syncedVariants}`);
-      console.log(`Errors: ${errors.length}`);
-      console.log(`Total time: ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
-
-      return {
-        syncedProducts,
-        syncedImages,
-        syncedVariants,
-        errorsCount: errors.length,
-      };
-    })();
-
-    // Wait for sync to complete
-    const result = await syncPromise;
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`Batch sync completed in ${duration}s`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully synced ${result.syncedProducts} products from Shopify`,
+        message: `Synced ${syncedProducts} products in this batch`,
         stats: {
-          totalProducts: allProducts.length,
-          syncedProducts: result.syncedProducts,
-          syncedImages: result.syncedImages,
-          syncedVariants: result.syncedVariants,
-          errors: result.errorsCount,
-          duration: `${((Date.now() - startTime) / 1000).toFixed(2)}s`,
+          batchSize: products.length,
+          syncedProducts,
+          syncedImages,
+          syncedVariants,
+          errors: errors.length,
+          duration: `${duration}s`,
         },
+        hasMore: !!nextPageUrl,
+        nextBatch: nextPageUrl,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('Batch sync error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({
         success: false,
         error: errorMessage,
-        message: 'Failed to sync Shopify products',
       }),
       {
         status: 500,
