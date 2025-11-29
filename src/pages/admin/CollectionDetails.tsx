@@ -358,7 +358,7 @@ export default function CollectionDetails() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe this collection..."
-                rows={6}
+                autoResize
                 maxLength={5000}
               />
               {formErrors.description && (
