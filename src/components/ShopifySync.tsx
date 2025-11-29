@@ -9,6 +9,7 @@ export const ShopifySync = () => {
   const [syncingCollections, setSyncingCollections] = useState(false);
   const [syncingOrders, setSyncingOrders] = useState(false);
   const [syncingOlderOrders, setSyncingOlderOrders] = useState(false);
+  const [syncingCustomers, setSyncingCustomers] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
 
@@ -251,6 +252,64 @@ export const ShopifySync = () => {
     }
   };
 
+  const syncCustomers = async () => {
+    setSyncingCustomers(true);
+    setProgress({ current: 0, total: 0 });
+    
+    try {
+      let nextBatch: string | null = null;
+      let totalSynced = 0;
+      let batchCount = 0;
+
+      do {
+        batchCount++;
+        console.log(`Syncing customers batch ${batchCount}...`);
+        
+        const body: any = {};
+        if (nextBatch) {
+          body.continueFrom = nextBatch;
+        }
+
+        const { data, error } = await supabase.functions.invoke('shopify-sync-customers-batch', {
+          body,
+        });
+
+        if (error) throw error;
+
+        if (data) {
+          totalSynced += data.stats.syncedCustomers;
+          setProgress({ current: totalSynced, total: totalSynced });
+          
+          nextBatch = data.hasMore ? data.nextBatch : null;
+          
+          console.log(`Batch ${batchCount}: ${data.stats.syncedCustomers} customers (Total: ${totalSynced})`);
+        }
+
+        // Small delay between batches
+        if (nextBatch) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } while (nextBatch);
+
+      toast({
+        title: "Customers Sync Complete!",
+        description: totalSynced > 0 
+          ? `Successfully synced ${totalSynced} customers from Shopify.`
+          : "No customers to sync.",
+      });
+    } catch (error) {
+      console.error('Customers sync error:', error);
+      toast({
+        title: "Customers Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingCustomers(false);
+      setProgress({ current: 0, total: 0 });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
@@ -269,7 +328,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAllProducts} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
           className="w-full"
         >
           {syncing ? (
@@ -293,7 +352,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCollections} 
-          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
           className="w-full"
         >
           {syncingCollections ? (
@@ -324,7 +383,7 @@ export const ShopifySync = () => {
         <div className="flex gap-2">
           <Button 
             onClick={syncOrders} 
-            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
+            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
             className="flex-1"
           >
             {syncingOrders ? (
@@ -339,7 +398,7 @@ export const ShopifySync = () => {
           
           <Button 
             onClick={syncOlderOrders} 
-            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders}
+            disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
             variant="outline"
             className="flex-1"
           >
@@ -353,6 +412,36 @@ export const ShopifySync = () => {
             )}
           </Button>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Shopify Customers Sync</h3>
+          <p className="text-sm text-muted-foreground">
+            Sync all customer data from your Shopify store.
+          </p>
+        </div>
+        
+        {syncingCustomers && progress.current > 0 && (
+          <div className="text-sm text-muted-foreground">
+            Synced {progress.current} customers...
+          </div>
+        )}
+        
+        <Button 
+          onClick={syncCustomers} 
+          disabled={syncing || syncingCollections || syncingOrders || syncingOlderOrders || syncingCustomers}
+          className="w-full"
+        >
+          {syncingCustomers ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Customers...
+            </>
+          ) : (
+            'Sync All Customers'
+          )}
+        </Button>
       </div>
     </div>
   );

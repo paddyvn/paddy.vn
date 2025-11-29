@@ -3,6 +3,9 @@ project_id = "fexafkqzpbzjcupvbfhe"
 [functions.shopify-orders-count]
 verify_jwt = false
 
+[functions.shopify-sync-customers-batch]
+verify_jwt = false
+
 [functions.shopify-test]
 verify_jwt = false
 
