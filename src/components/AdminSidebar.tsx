@@ -72,12 +72,8 @@ const mainItems = [
       { title: "Files", url: "/admin/content/files" },
       { title: "Menus", url: "/admin/content/menus" },
       { title: "Blog posts", url: "/admin/content/blog" },
+      { title: "Pages", url: "/admin/content/pages" },
     ],
-  },
-  {
-    title: "Pages",
-    url: "/admin/pages",
-    icon: FileCode,
   },
   {
     title: "Analytics",
