@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import paddyLogoFull from "@/assets/paddy-logo-full.avif";
@@ -25,6 +25,11 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const mainItems = [
+  {
+    title: "Dashboard",
+    url: "/admin",
+    icon: LayoutDashboard,
+  },
   {
     title: "Orders",
     icon: ShoppingCart,
@@ -170,6 +175,7 @@ export function AdminSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={item.url!}
+                        end={item.url === "/admin"}
                         className="hover:bg-muted/50"
                         activeClassName="bg-muted text-primary font-medium"
                       >
