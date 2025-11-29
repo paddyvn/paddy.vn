@@ -21,6 +21,8 @@ export interface Product {
   option1_name: string | null;
   option2_name: string | null;
   option3_name: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   product_images: Array<{
     image_url: string;
     alt_text: string | null;

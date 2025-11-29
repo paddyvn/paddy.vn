@@ -756,6 +756,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_featured: boolean | null
+          meta_description: string | null
+          meta_title: string | null
           name: string
           option1_name: string | null
           option2_name: string | null
@@ -780,6 +782,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           option1_name?: string | null
           option2_name?: string | null
@@ -804,6 +808,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           option1_name?: string | null
           option2_name?: string | null
