@@ -224,7 +224,7 @@ export function AdminSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         <div className="px-2 py-2">
-          <SidebarTrigger />
+          <SidebarTrigger className="hover:bg-muted/50 data-[state=open]:bg-transparent data-[state=closed]:bg-transparent" />
         </div>
       </SidebarFooter>
     </Sidebar>
