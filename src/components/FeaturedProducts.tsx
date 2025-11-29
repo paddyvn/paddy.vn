@@ -139,15 +139,6 @@ export const FeaturedProducts = () => {
                       </span>
                     )}
                   </div>
-
-                  <Button 
-                    className="w-full rounded-full transition-bounce hover:scale-105 group/button"
-                    onClick={() => addToCart({ productId: product.id })}
-                    disabled={!userId}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4 transition-transform group-hover/button:rotate-12" />
-                    {userId ? "Add to Cart" : "Login to Add"}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
