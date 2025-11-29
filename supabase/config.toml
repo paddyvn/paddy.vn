@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.shopify-sync]
 verify_jwt = false
+
+[functions.shopify-sync-batch]
+verify_jwt = false
