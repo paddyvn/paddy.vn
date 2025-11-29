@@ -117,9 +117,6 @@ export const FeaturedProducts = () => {
                     <h3 className="font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-smooth">
                       {product.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {product.short_description || product.description}
-                    </p>
                   </div>
 
                   <div className="flex items-center gap-1">
