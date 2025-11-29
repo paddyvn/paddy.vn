@@ -14,15 +14,26 @@ export default function ContentFiles() {
             Manage images, videos, and other media assets
           </p>
         </div>
-        <Button
-          onClick={() => migrateImages.mutate()}
-          disabled={migrateImages.isPending}
-          variant="default"
-          className="gap-2"
-        >
-          <Upload className={`h-4 w-4 ${migrateImages.isPending ? "animate-spin" : ""}`} />
-          {migrateImages.isPending ? "Migrating..." : "Migrate Images from Shopify"}
-        </Button>
+        <div className="flex gap-2">
+          {migrateImages.isPending ? (
+            <Button
+              onClick={() => migrateImages.pause()}
+              variant="outline"
+              className="gap-2"
+            >
+              Pause Migration
+            </Button>
+          ) : (
+            <Button
+              onClick={() => migrateImages.mutate()}
+              variant="default"
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {migrateImages.isSuccess ? "Resume Migration" : "Migrate Images from Shopify"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card p-6">
