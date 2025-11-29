@@ -3,6 +3,9 @@ project_id = "fexafkqzpbzjcupvbfhe"
 [functions.shopify-sync-pages]
 verify_jwt = false
 
+[functions.shopify-sync-blog-posts]
+verify_jwt = false
+
 [functions.shopify-customers-count]
 verify_jwt = false
 

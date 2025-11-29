@@ -133,6 +133,66 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          author: string | null
+          blog_title: string | null
+          body_html: string | null
+          created_at: string
+          handle: string
+          id: string
+          image_url: string | null
+          published: boolean | null
+          shopify_article_id: string | null
+          shopify_blog_id: string | null
+          shopify_created_at: string | null
+          shopify_published_at: string | null
+          shopify_updated_at: string | null
+          summary_html: string | null
+          tags: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          blog_title?: string | null
+          body_html?: string | null
+          created_at?: string
+          handle: string
+          id?: string
+          image_url?: string | null
+          published?: boolean | null
+          shopify_article_id?: string | null
+          shopify_blog_id?: string | null
+          shopify_created_at?: string | null
+          shopify_published_at?: string | null
+          shopify_updated_at?: string | null
+          summary_html?: string | null
+          tags?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          blog_title?: string | null
+          body_html?: string | null
+          created_at?: string
+          handle?: string
+          id?: string
+          image_url?: string | null
+          published?: boolean | null
+          shopify_article_id?: string | null
+          shopify_blog_id?: string | null
+          shopify_created_at?: string | null
+          shopify_published_at?: string | null
+          shopify_updated_at?: string | null
+          summary_html?: string | null
+          tags?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
