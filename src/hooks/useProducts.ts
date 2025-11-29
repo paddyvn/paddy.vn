@@ -13,6 +13,11 @@ export interface Product {
   is_active: boolean;
   category_id: string | null;
   vendor: string | null;
+  product_type: string | null;
+  tags: string | null;
+  shopify_created_at: string | null;
+  shopify_updated_at: string | null;
+  published_at: string | null;
   product_images: Array<{
     image_url: string;
     alt_text: string | null;
