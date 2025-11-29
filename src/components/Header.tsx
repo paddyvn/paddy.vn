@@ -5,11 +5,13 @@ import paddyLogo from "@/assets/paddy-logo.avif";
 import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const Header = () => {
   const [userId, setUserId] = useState<string | undefined>();
   const { cart } = useCart(userId);
   const cartCount = cart.length;
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,7 +47,12 @@ export const Header = () => {
               <Heart className="h-5 w-5" />
             </Button>
             
-            <Button variant="ghost" size="icon" className="hidden md:inline-flex rounded-full transition-bounce hover:scale-110">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden md:inline-flex rounded-full transition-bounce hover:scale-110"
+              onClick={() => navigate('/auth')}
+            >
               <User className="h-5 w-5" />
             </Button>
 
