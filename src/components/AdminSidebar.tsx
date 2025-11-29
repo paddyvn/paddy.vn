@@ -102,7 +102,7 @@ export function AdminSidebar() {
             <img 
               src={paddyFavicon} 
               alt="Paddy.vn" 
-              className="h-10 w-10 object-contain"
+              className="h-12 w-12 object-contain"
             />
           </div>
         ) : (
