@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_checkouts: {
+        Row: {
+          abandoned_checkout_url: string | null
+          billing_address: Json | null
+          cart_token: string | null
+          completed_at: string | null
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          email: string | null
+          id: string
+          line_items: Json | null
+          phone: string | null
+          shipping_address: Json | null
+          shopify_checkout_id: string | null
+          shopify_created_at: string | null
+          shopify_updated_at: string | null
+          subtotal_price: number | null
+          total_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          abandoned_checkout_url?: string | null
+          billing_address?: Json | null
+          cart_token?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          line_items?: Json | null
+          phone?: string | null
+          shipping_address?: Json | null
+          shopify_checkout_id?: string | null
+          shopify_created_at?: string | null
+          shopify_updated_at?: string | null
+          subtotal_price?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          abandoned_checkout_url?: string | null
+          billing_address?: Json | null
+          cart_token?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          line_items?: Json | null
+          phone?: string | null
+          shipping_address?: Json | null
+          shopify_checkout_id?: string | null
+          shopify_created_at?: string | null
+          shopify_updated_at?: string | null
+          subtotal_price?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
           address_line1: string

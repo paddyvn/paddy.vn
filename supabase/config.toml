@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.shopify-sync-customers-batch]
 verify_jwt = false
 
+[functions.shopify-sync-abandoned-checkouts]
+verify_jwt = false
+
 [functions.shopify-test]
 verify_jwt = false
 

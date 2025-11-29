@@ -12,6 +12,7 @@ import CollectionsManagement from "./pages/admin/CollectionsManagement";
 import OrdersManagement from "./pages/admin/OrdersManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
 import CustomerSegments from "./pages/admin/CustomerSegments";
+import AbandonedCheckouts from "./pages/admin/AbandonedCheckouts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="products" element={<ProductsManagement />} />
             <Route path="collections" element={<CollectionsManagement />} />
             <Route path="orders" element={<OrdersManagement />} />
+            <Route path="abandoned-checkouts" element={<AbandonedCheckouts />} />
             <Route path="customers" element={<CustomersManagement />} />
             <Route path="customers/segments" element={<CustomerSegments />} />
           </Route>
