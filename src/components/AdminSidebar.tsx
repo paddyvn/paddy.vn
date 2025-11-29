@@ -48,8 +48,11 @@ const mainItems = [
   },
   {
     title: "Customers",
-    url: "/admin/customers",
     icon: Users,
+    subItems: [
+      { title: "All Customers", url: "/admin/customers" },
+      { title: "Segments", url: "/admin/customers/segments" },
+    ],
   },
   {
     title: "Marketing",
