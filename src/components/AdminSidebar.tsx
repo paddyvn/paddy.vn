@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import paddyLogoFull from "@/assets/paddy-logo-full.avif";
@@ -74,7 +74,7 @@ const mainItems = [
 ];
 
 export function AdminSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -223,11 +223,9 @@ export function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <button className="w-full flex items-center gap-2">
-                <SidebarTrigger className="hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
-                {!collapsed && <span>Collapse</span>}
-              </button>
+            <SidebarMenuButton onClick={toggleSidebar}>
+              <PanelLeft className="h-4 w-4" />
+              {!collapsed && <span>Collapse</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
