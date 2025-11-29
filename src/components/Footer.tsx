@@ -1,6 +1,7 @@
 import { Facebook, Instagram, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import govSeal from "@/assets/gov-seal.png";
 
 export const Footer = () => {
   return (
@@ -181,16 +182,12 @@ export const Footer = () => {
             <p className="text-sm text-muted-foreground">
               @2024 Paddy VN. All Rights Reserved.
             </p>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md text-xs font-semibold">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-                <div className="text-left">
-                  <div>ĐÃ THÔNG BÁO</div>
-                  <div>BỘ CÔNG THƯƠNG</div>
-                </div>
-              </div>
+            <div className="flex items-center">
+              <img 
+                src={govSeal} 
+                alt="Đã thông báo Bộ Công Thương" 
+                className="h-16 w-auto"
+              />
             </div>
           </div>
         </div>
