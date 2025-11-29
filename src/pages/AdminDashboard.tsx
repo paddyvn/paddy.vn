@@ -19,7 +19,7 @@ export default function AdminDashboard() {
         description: "You need admin privileges to access this page",
         variant: "destructive",
       });
-      navigate("/auth");
+      navigate("/");
     }
   }, [isAdmin, loading, navigate, toast]);
 
