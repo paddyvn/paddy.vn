@@ -45,6 +45,10 @@ interface ShopifyProduct {
     barcode: string | null;
     image_id: number | null;
   }>;
+  seo?: {
+    title: string | null;
+    description: string | null;
+  };
 }
 
 serve(async (req) => {
@@ -130,6 +134,10 @@ serve(async (req) => {
         const option2Name = shopifyProduct.options?.[1]?.name || null;
         const option3Name = shopifyProduct.options?.[2]?.name || null;
 
+        // Extract SEO fields
+        const metaTitle = shopifyProduct.seo?.title || null;
+        const metaDescription = shopifyProduct.seo?.description || null;
+
         // Upsert product
         const { data: product, error: productError } = await supabase
           .from('products')
@@ -152,6 +160,8 @@ serve(async (req) => {
             option1_name: option1Name,
             option2_name: option2Name,
             option3_name: option3Name,
+            meta_title: metaTitle,
+            meta_description: metaDescription,
           }, {
             onConflict: 'shopify_product_id',
             ignoreDuplicates: false,
