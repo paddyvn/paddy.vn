@@ -89,9 +89,27 @@ export const ShopifySync = () => {
     setSyncingOrders(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('shopify-sync-orders');
+      toast({
+        title: "Orders Sync Started",
+        description: "This may take several minutes for large order histories. The sync will continue in the background.",
+      });
 
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('shopify-sync-orders', {
+        body: {},
+      });
+
+      if (error) {
+        // Check if it's a timeout error (function is still running)
+        if (error.message.includes('Failed to fetch') || error.message.includes('timeout')) {
+          toast({
+            title: "Sync Running in Background",
+            description: "The orders sync is taking longer than expected and continues in the background. Check back in a few minutes.",
+            variant: "default",
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Orders Sync Complete!",
@@ -169,7 +187,7 @@ export const ShopifySync = () => {
         <div>
           <h3 className="text-lg font-semibold">Shopify Orders Sync</h3>
           <p className="text-sm text-muted-foreground">
-            Sync all orders and order history from your Shopify store.
+            Sync all orders and order history from your Shopify store. Large order histories may take several minutes.
           </p>
         </div>
         
@@ -181,7 +199,7 @@ export const ShopifySync = () => {
           {syncingOrders ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Syncing Orders...
+              Syncing Orders (This may take a while)...
             </>
           ) : (
             'Sync All Orders'
