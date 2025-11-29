@@ -23,7 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, X, Save, Eye } from "lucide-react";
+import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
@@ -36,6 +37,28 @@ const collectionSchema = z.object({
   meta_title: z.string().max(70).optional(),
   meta_description: z.string().max(160).optional(),
 });
+
+type CollectionRule = {
+  field: string;
+  operator: string;
+  value: string;
+};
+
+const RULE_FIELDS = [
+  { value: "vendor", label: "Vendor" },
+  { value: "name", label: "Title" },
+  { value: "product_type", label: "Product type" },
+  { value: "tags", label: "Tags" },
+];
+
+const RULE_OPERATORS = [
+  { value: "equals", label: "is equal to" },
+  { value: "not_equals", label: "is not equal to" },
+  { value: "contains", label: "contains" },
+  { value: "not_contains", label: "does not contain" },
+  { value: "starts_with", label: "starts with" },
+  { value: "ends_with", label: "ends with" },
+];
 
 export default function CollectionDetails() {
   const { id } = useParams<{ id: string }>();
@@ -51,7 +74,10 @@ export default function CollectionDetails() {
     is_active: true,
     meta_title: "",
     meta_description: "",
+    collection_type: "custom",
+    rules_match_type: "all",
   });
+  const [rules, setRules] = useState<CollectionRule[]>([]);
   const [seoFormData, setSeoFormData] = useState({
     meta_title: "",
     meta_description: "",
@@ -83,7 +109,7 @@ export default function CollectionDetails() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!id,
   });
@@ -98,12 +124,15 @@ export default function CollectionDetails() {
         is_active: collection.is_active,
         meta_title: collection.meta_title || "",
         meta_description: collection.meta_description || "",
+        collection_type: collection.collection_type || "custom",
+        rules_match_type: collection.rules_match_type || "all",
       });
       setSeoFormData({
         meta_title: collection.meta_title || "",
         meta_description: collection.meta_description || "",
         slug: collection.slug,
       });
+      setRules(collection.rules || []);
     }
   }, [collection]);
 
@@ -161,6 +190,9 @@ export default function CollectionDetails() {
           is_active: formData.is_active,
           meta_title: formData.meta_title.trim() || null,
           meta_description: formData.meta_description.trim() || null,
+          collection_type: formData.collection_type,
+          rules: rules.length > 0 ? rules : null,
+          rules_match_type: formData.rules_match_type,
         })
         .eq("id", id);
 
@@ -179,6 +211,20 @@ export default function CollectionDetails() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const addRule = () => {
+    setRules([...rules, { field: "vendor", operator: "equals", value: "" }]);
+  };
+
+  const removeRule = (index: number) => {
+    setRules(rules.filter((_, i) => i !== index));
+  };
+
+  const updateRule = (index: number, field: keyof CollectionRule, value: string) => {
+    const newRules = [...rules];
+    newRules[index] = { ...newRules[index], [field]: value };
+    setRules(newRules);
   };
 
   const handleSeoSave = async () => {
@@ -318,6 +364,92 @@ export default function CollectionDetails() {
               {formErrors.description && (
                 <p className="text-sm text-destructive">{formErrors.description}</p>
               )}
+            </div>
+          </Card>
+
+          {/* Conditions */}
+          <Card className="p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Conditions</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="text-sm">Products must match:</span>
+                <RadioGroup
+                  value={formData.rules_match_type}
+                  onValueChange={(value) => setFormData({ ...formData, rules_match_type: value })}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="all" id="all" />
+                    <Label htmlFor="all" className="font-normal cursor-pointer">all conditions</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="any" id="any" />
+                    <Label htmlFor="any" className="font-normal cursor-pointer">any condition</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {rules.map((rule, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Select
+                    value={rule.field}
+                    onValueChange={(value) => updateRule(index, "field", value)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RULE_FIELDS.map((field) => (
+                        <SelectItem key={field.value} value={field.value}>
+                          {field.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={rule.operator}
+                    onValueChange={(value) => updateRule(index, "operator", value)}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RULE_OPERATORS.map((op) => (
+                        <SelectItem key={op.value} value={op.value}>
+                          {op.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Input
+                    value={rule.value}
+                    onChange={(e) => updateRule(index, "value", e.target.value)}
+                    placeholder="Enter value..."
+                    className="flex-1"
+                  />
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeRule(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addRule}
+                className="w-fit"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add another condition
+              </Button>
             </div>
           </Card>
 
