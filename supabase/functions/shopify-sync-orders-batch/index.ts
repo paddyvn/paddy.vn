@@ -23,8 +23,8 @@ interface ShopifyOrder {
   shipping_address?: any;
   line_items: Array<{
     id: number;
-    product_id: number;
-    variant_id: number;
+    product_id: number | null;
+    variant_id: number | null;
     title: string;
     variant_title: string;
     price: string;
