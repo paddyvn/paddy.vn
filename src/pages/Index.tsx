@@ -1,5 +1,9 @@
 import { Header } from "@/components/Header";
-import { Hero } from "@/components/Hero";
+import { PromoBanner } from "@/components/PromoBanner";
+import { HeroCarousel } from "@/components/HeroCarousel";
+import { QuickActions } from "@/components/QuickActions";
+import { DealsGrid } from "@/components/DealsGrid";
+import { PetSelector } from "@/components/PetSelector";
 import { Categories } from "@/components/Categories";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
 import { Footer } from "@/components/Footer";
@@ -7,9 +11,13 @@ import { Footer } from "@/components/Footer";
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
+      <PromoBanner />
       <Header />
       <main className="flex-1">
-        <Hero />
+        <HeroCarousel />
+        <QuickActions />
+        <DealsGrid />
+        <PetSelector />
         <Categories />
         <FeaturedProducts />
       </main>
