@@ -68,7 +68,7 @@ export function useMigrateImages() {
       // Keep calling the function until all images are migrated or paused
       while (hasMore && !isPausedRef.current) {
         const { data, error } = await supabase.functions.invoke('migrate-images-to-storage', {
-          body: { batchSize: 50 }
+          body: { batchSize: 25 } // Reduced batch size to prevent memory issues
         });
         
         if (error) throw error;
@@ -93,6 +93,11 @@ export function useMigrateImages() {
             title: "Migration in progress...",
             description: `Migrated ${totalMigrated} of ${totalImages} images (${percentage}%)`,
           });
+        }
+        
+        // Add small delay between batches to prevent overwhelming the system
+        if (hasMore && !isPausedRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
         }
       }
       
