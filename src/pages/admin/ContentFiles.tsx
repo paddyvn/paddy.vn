@@ -48,7 +48,7 @@ export default function ContentFiles() {
           </div>
 
           {(migrateImages.isPending || migrateImages.progress.total > 0) && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Progress</span>
                 <span className="font-medium">
@@ -56,6 +56,20 @@ export default function ContentFiles() {
                 </span>
               </div>
               <Progress value={migrateImages.progress.percentage} className="h-2" />
+              
+              {migrateImages.isPending && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="animate-pulse">⏳</div>
+                  <span>Migration in progress... Auto-continuing until complete.</span>
+                </div>
+              )}
+              
+              {migrateImages.progress.percentage === 100 && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <div>✓</div>
+                  <span>All images migrated successfully!</span>
+                </div>
+              )}
             </div>
           )}
 
