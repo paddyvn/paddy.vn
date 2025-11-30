@@ -5,13 +5,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Upload, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useMigrateImages } from "@/hooks/useMigrateImages";
 import { useVerifyImages } from "@/hooks/useVerifyImages";
+import { StorageFileBrowser } from "@/components/StorageFileBrowser";
 import { useState } from "react";
 
 export default function ContentFiles() {
   const migrateImages = useMigrateImages();
   const verifyImages = useVerifyImages();
-  const [isMigrationOpen, setIsMigrationOpen] = useState(true);
-  const [isVerificationOpen, setIsVerificationOpen] = useState(true);
+  const [isMigrationOpen, setIsMigrationOpen] = useState(false);
+  const [isVerificationOpen, setIsVerificationOpen] = useState(false);
+  const [isFileBrowserOpen, setIsFileBrowserOpen] = useState(true);
 
   return (
     <div className="space-y-6">
@@ -211,6 +213,30 @@ export default function ContentFiles() {
                 ))}
               </div>
               )}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      <Collapsible open={isFileBrowserOpen} onOpenChange={setIsFileBrowserOpen}>
+        <div className="rounded-lg border bg-card">
+          <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-colors">
+            <div className="flex-1 text-left">
+              <h3 className="text-lg font-semibold">File Browser</h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                Browse, upload, and manage all files in Supabase Storage
+              </p>
+            </div>
+            {isFileBrowserOpen ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <div className="px-6 pb-6">
+              <StorageFileBrowser />
             </div>
           </CollapsibleContent>
         </div>
