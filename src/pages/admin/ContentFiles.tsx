@@ -1,13 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Upload, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Upload, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useMigrateImages } from "@/hooks/useMigrateImages";
 import { useVerifyImages } from "@/hooks/useVerifyImages";
+import { useState } from "react";
 
 export default function ContentFiles() {
   const migrateImages = useMigrateImages();
   const verifyImages = useVerifyImages();
+  const [isMigrationOpen, setIsMigrationOpen] = useState(true);
+  const [isVerificationOpen, setIsVerificationOpen] = useState(true);
 
   return (
     <div className="space-y-6">
@@ -40,17 +44,25 @@ export default function ContentFiles() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card p-6">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Image Migration</h3>
-            <p className="text-sm text-muted-foreground mt-2">
-              Click the button above to transfer all product and collection images from Shopify CDN to your Supabase Storage. 
-              This will give you full control and independence from Shopify.
-            </p>
-          </div>
-
-          {(migrateImages.isPending || migrateImages.progress.total > 0) && (
+      <Collapsible open={isMigrationOpen} onOpenChange={setIsMigrationOpen}>
+        <div className="rounded-lg border bg-card">
+          <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-colors">
+            <div className="flex-1 text-left">
+              <h3 className="text-lg font-semibold">Image Migration</h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                Transfer all product and collection images from Shopify CDN to your Supabase Storage
+              </p>
+            </div>
+            {isMigrationOpen ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <div className="px-6 pb-6 space-y-4">
+              {(migrateImages.isPending || migrateImages.progress.total > 0) && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Progress</span>
@@ -76,28 +88,39 @@ export default function ContentFiles() {
             </div>
           )}
 
-          <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
             <p className="font-medium mb-2">What happens during migration:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>All collection images will be downloaded and uploaded to Supabase Storage</li>
               <li>All product images will be downloaded and uploaded to Supabase Storage</li>
               <li>Database records will be updated with new Supabase Storage URLs</li>
-              <li>Original Shopify URLs will be replaced</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-card p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Image Verification</h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                Verify that migrated images are accessible and display correctly
-              </p>
+                <li>Original Shopify URLs will be replaced</li>
+              </ul>
+              </div>
             </div>
-            <Button
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      <Collapsible open={isVerificationOpen} onOpenChange={setIsVerificationOpen}>
+        <div className="rounded-lg border bg-card">
+          <div className="p-6 flex items-center justify-between">
+            <CollapsibleTrigger className="flex-1 flex items-center justify-between hover:opacity-80 transition-opacity">
+              <div className="text-left">
+                <h3 className="text-lg font-semibold">Image Verification</h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Verify that migrated images are accessible and display correctly
+                </p>
+              </div>
+              {isVerificationOpen ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground ml-4" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground ml-4" />
+              )}
+            </CollapsibleTrigger>
+            
+            <div className="ml-4">
+              <Button
               onClick={() => verifyImages.verifyImages(20)}
               disabled={verifyImages.verifying}
               variant="outline"
@@ -114,10 +137,13 @@ export default function ContentFiles() {
                   Verify Sample
                 </>
               )}
-            </Button>
+              </Button>
+            </div>
           </div>
-
-          {verifyImages.stats.total > 0 && (
+          
+          <CollapsibleContent>
+            <div className="px-6 pb-6 space-y-4">
+              {verifyImages.stats.total > 0 && (
             <div className="flex gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">Total:</span>
@@ -129,12 +155,12 @@ export default function ContentFiles() {
               </div>
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4 text-destructive" />
-                <span className="font-medium text-destructive">{verifyImages.stats.error}</span>
+                  <span className="font-medium text-destructive">{verifyImages.stats.error}</span>
+                </div>
               </div>
-            </div>
-          )}
+              )}
 
-          {verifyImages.images.length > 0 && (
+              {verifyImages.images.length > 0 && (
             <div className="grid grid-cols-4 gap-4">
               {verifyImages.images.map((image) => (
                 <div
@@ -181,12 +207,14 @@ export default function ContentFiles() {
                     <p className="text-xs truncate">{image.alt || 'Unnamed'}</p>
                     <p className="text-xs text-muted-foreground">{image.type}</p>
                   </div>
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
+              )}
             </div>
-          )}
+          </CollapsibleContent>
         </div>
-      </div>
+      </Collapsible>
     </div>
   );
 }
