@@ -30,8 +30,8 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Parse batch size from request (default: 25 to reduce memory usage)
-    const { batchSize = 25 } = await req.json().catch(() => ({ batchSize: 25 }));
+    // Parse batch size from request (default: 50)
+    const { batchSize = 50 } = await req.json().catch(() => ({ batchSize: 50 }));
 
     console.log(`Starting image migration batch (size: ${batchSize})...`);
 

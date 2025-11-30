@@ -3,10 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRef, useState, useEffect } from "react";
 
+const MIGRATION_STATE_KEY = 'image-migration-state';
+
 export function useMigrateImages() {
   const { toast } = useToast();
   const isPausedRef = useRef(false);
   const [progress, setProgress] = useState({ migrated: 0, total: 0, percentage: 0 });
+  const [autoStarted, setAutoStarted] = useState(false);
 
   // Fetch current migration status on mount
   const { data: migrationStatus } = useQuery({
@@ -47,8 +50,34 @@ export function useMigrateImages() {
   useEffect(() => {
     if (migrationStatus) {
       setProgress(migrationStatus);
+      
+      // Save progress to localStorage
+      localStorage.setItem(MIGRATION_STATE_KEY, JSON.stringify({
+        ...migrationStatus,
+        lastUpdated: new Date().toISOString()
+      }));
     }
   }, [migrationStatus]);
+
+  // Auto-start migration if incomplete
+  useEffect(() => {
+    if (!autoStarted && migrationStatus && migrationStatus.percentage < 100 && migrationStatus.percentage > 0) {
+      const savedState = localStorage.getItem(MIGRATION_STATE_KEY);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        const lastUpdated = new Date(parsed.lastUpdated);
+        const now = new Date();
+        const minutesSinceUpdate = (now.getTime() - lastUpdated.getTime()) / 1000 / 60;
+        
+        // Auto-continue if last update was less than 10 minutes ago
+        if (minutesSinceUpdate < 10) {
+          console.log('Auto-continuing migration from', migrationStatus.percentage, '%');
+          setAutoStarted(true);
+          setTimeout(() => mutation.mutate(), 2000);
+        }
+      }
+    }
+  }, [migrationStatus, autoStarted]);
 
   const pause = () => {
     isPausedRef.current = true;
@@ -68,7 +97,7 @@ export function useMigrateImages() {
       // Keep calling the function until all images are migrated or paused
       while (hasMore && !isPausedRef.current) {
         const { data, error } = await supabase.functions.invoke('migrate-images-to-storage', {
-          body: { batchSize: 25 } // Reduced batch size to prevent memory issues
+          body: { batchSize: 50 } // Increased for better performance
         });
         
         if (error) throw error;
@@ -97,7 +126,7 @@ export function useMigrateImages() {
         
         // Add small delay between batches to prevent overwhelming the system
         if (hasMore && !isPausedRef.current) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
         }
       }
       
@@ -112,6 +141,7 @@ export function useMigrateImages() {
     },
     onSuccess: (data) => {
       if (!isPausedRef.current) {
+        localStorage.removeItem(MIGRATION_STATE_KEY);
         toast({
           title: "Migration completed!",
           description: `Successfully migrated ${data.totalMigrated} images to Supabase Storage.`,
