@@ -59,26 +59,6 @@ export function useMigrateImages() {
     }
   }, [migrationStatus]);
 
-  // Auto-start migration if incomplete
-  useEffect(() => {
-    if (!autoStarted && migrationStatus && migrationStatus.percentage < 100 && migrationStatus.percentage > 0) {
-      const savedState = localStorage.getItem(MIGRATION_STATE_KEY);
-      if (savedState) {
-        const parsed = JSON.parse(savedState);
-        const lastUpdated = new Date(parsed.lastUpdated);
-        const now = new Date();
-        const minutesSinceUpdate = (now.getTime() - lastUpdated.getTime()) / 1000 / 60;
-        
-        // Auto-continue if last update was less than 10 minutes ago
-        if (minutesSinceUpdate < 10) {
-          console.log('Auto-continuing migration from', migrationStatus.percentage, '%');
-          setAutoStarted(true);
-          setTimeout(() => mutation.mutate(), 2000);
-        }
-      }
-    }
-  }, [migrationStatus, autoStarted]);
-
   const pause = () => {
     isPausedRef.current = true;
   };
@@ -97,7 +77,7 @@ export function useMigrateImages() {
       // Keep calling the function until all images are migrated or paused
       while (hasMore && !isPausedRef.current) {
         const { data, error } = await supabase.functions.invoke('migrate-images-to-storage', {
-          body: { batchSize: 50 } // Increased for better performance
+          body: { batchSize: 20 } // Reduced to prevent timeouts
         });
         
         if (error) throw error;
@@ -156,6 +136,26 @@ export function useMigrateImages() {
       });
     },
   });
+
+  // Auto-start migration if incomplete (after mutation is defined)
+  useEffect(() => {
+    if (!autoStarted && migrationStatus && migrationStatus.percentage < 100 && migrationStatus.percentage > 0) {
+      const savedState = localStorage.getItem(MIGRATION_STATE_KEY);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        const lastUpdated = new Date(parsed.lastUpdated);
+        const now = new Date();
+        const minutesSinceUpdate = (now.getTime() - lastUpdated.getTime()) / 1000 / 60;
+        
+        // Auto-continue if last update was less than 10 minutes ago
+        if (minutesSinceUpdate < 10) {
+          console.log('Auto-continuing migration from', migrationStatus.percentage, '%');
+          setAutoStarted(true);
+          setTimeout(() => mutation.mutate(), 2000);
+        }
+      }
+    }
+  }, [migrationStatus, autoStarted, mutation]);
 
   return {
     ...mutation,
