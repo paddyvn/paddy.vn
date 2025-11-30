@@ -30,8 +30,8 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Parse batch size from request (default: 50)
-    const { batchSize = 50 } = await req.json().catch(() => ({ batchSize: 50 }));
+    // Parse batch size from request (default: 25 to reduce memory usage)
+    const { batchSize = 25 } = await req.json().catch(() => ({ batchSize: 25 }));
 
     console.log(`Starting image migration batch (size: ${batchSize})...`);
 
@@ -188,9 +188,14 @@ async function migrateImage(
   imageName: string
 ): Promise<string | null> {
   try {
-    // Download image from Shopify CDN
+    // Download image from Shopify CDN with timeout
     console.log(`Downloading: ${imageUrl}`);
-    const imageResponse = await fetch(imageUrl);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    const imageResponse = await fetch(imageUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
     
     if (!imageResponse.ok) {
       console.error(`Failed to download image: ${imageResponse.statusText}`);
@@ -198,6 +203,13 @@ async function migrateImage(
     }
 
     const imageBlob = await imageResponse.blob();
+    
+    // Check file size (skip if too large, >10MB)
+    if (imageBlob.size > 10 * 1024 * 1024) {
+      console.error(`Image too large: ${imageBlob.size} bytes`);
+      return null;
+    }
+    
     const arrayBuffer = await imageBlob.arrayBuffer();
     const imageData = new Uint8Array(arrayBuffer);
 
@@ -238,7 +250,11 @@ async function migrateImage(
     console.log(`Uploaded successfully: ${urlData.publicUrl}`);
     return urlData.publicUrl;
   } catch (error) {
-    console.error('Error migrating image:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('Download timeout for:', imageUrl);
+    } else {
+      console.error('Error migrating image:', error);
+    }
     return null;
   }
 }
