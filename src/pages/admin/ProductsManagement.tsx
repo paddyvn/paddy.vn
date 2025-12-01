@@ -82,9 +82,10 @@ export default function ProductsManagement() {
   }, [searchQuery, statusFilter, vendorFilter, tagFilter]);
 
   // Fetch unique vendors
-  const { data: vendors } = useQuery({
+  const { data: vendors, isLoading: vendorsLoading, error: vendorsError } = useQuery({
     queryKey: ["vendors"],
     queryFn: async () => {
+      console.log('🔍 Fetching vendors...');
       // Fetch all products with vendors, removing default limit
       const { data, error } = await supabase
         .from("products")
@@ -93,23 +94,49 @@ export default function ProductsManagement() {
         .order("vendor")
         .range(0, 9999); // Explicitly set range to override default limit
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching vendors:', error);
+        throw error;
+      }
+      
+      console.log('📦 Raw data received:', data?.length, 'rows');
       
       // Extract unique vendors
       const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean) as string[];
+      console.log('✅ Unique vendors:', uniqueVendors.length);
+      console.log('📝 Sample vendors:', uniqueVendors.slice(0, 20));
+      console.log('🔤 Vendors with R:', uniqueVendors.filter(v => v.toLowerCase().startsWith('r')));
+      
       return uniqueVendors;
     },
   });
+  
+  console.log('Current vendors state:', { vendors, vendorsLoading, vendorsError });
 
   // Manually filter vendors based on search
   const filteredVendors = useMemo(() => {
-    if (!vendors) return [];
-    if (!vendorSearchText.trim()) return vendors;
+    console.log('🔎 Filtering vendors...', { 
+      vendorsCount: vendors?.length, 
+      searchText: vendorSearchText 
+    });
+    
+    if (!vendors) {
+      console.log('⚠️ No vendors array');
+      return [];
+    }
+    
+    if (!vendorSearchText.trim()) {
+      console.log('✅ No search, returning all', vendors.length, 'vendors');
+      return vendors;
+    }
     
     const searchLower = vendorSearchText.toLowerCase().trim();
-    return vendors.filter(vendor =>
+    const filtered = vendors.filter(vendor =>
       vendor.toLowerCase().startsWith(searchLower)
     );
+    
+    console.log('✅ Filtered to', filtered.length, 'vendors:', filtered);
+    return filtered;
   }, [vendors, vendorSearchText]);
 
   // Fetch unique tags
