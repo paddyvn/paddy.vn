@@ -34,7 +34,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
@@ -64,6 +67,8 @@ export default function ProductsManagement() {
   const [vendorFilter, setVendorFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [vendorOpen, setVendorOpen] = useState(false);
+  const [tagOpen, setTagOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const syncProducts = useSyncProducts();
@@ -285,33 +290,119 @@ export default function ProductsManagement() {
           </SelectContent>
         </Select>
 
-        <Select value={vendorFilter} onValueChange={setVendorFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Vendor" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Vendors</SelectItem>
-            {vendors?.map((vendor) => (
-              <SelectItem key={vendor} value={vendor}>
-                {vendor}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={vendorOpen} onOpenChange={setVendorOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={vendorOpen}
+              className="w-[180px] justify-between"
+            >
+              {vendorFilter === "all" ? "All Vendors" : vendorFilter}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
+            <Command>
+              <CommandInput placeholder="Search vendors..." />
+              <CommandList>
+                <CommandEmpty>No vendor found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="all"
+                    onSelect={() => {
+                      setVendorFilter("all");
+                      setVendorOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        vendorFilter === "all" ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    All Vendors
+                  </CommandItem>
+                  {vendors?.map((vendor) => (
+                    <CommandItem
+                      key={vendor}
+                      value={vendor}
+                      onSelect={(currentValue) => {
+                        setVendorFilter(currentValue);
+                        setVendorOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          vendorFilter === vendor ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {vendor}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
-        <Select value={tagFilter} onValueChange={setTagFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tags" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            <SelectItem value="all">All Tags</SelectItem>
-            {tags?.map((tag) => (
-              <SelectItem key={tag} value={tag}>
-                {tag}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={tagOpen} onOpenChange={setTagOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={tagOpen}
+              className="w-[180px] justify-between"
+            >
+              {tagFilter === "all" ? "All Tags" : tagFilter}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
+            <Command>
+              <CommandInput placeholder="Search tags..." />
+              <CommandList>
+                <CommandEmpty>No tag found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="all"
+                    onSelect={() => {
+                      setTagFilter("all");
+                      setTagOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        tagFilter === "all" ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    All Tags
+                  </CommandItem>
+                  {tags?.map((tag) => (
+                    <CommandItem
+                      key={tag}
+                      value={tag}
+                      onSelect={(currentValue) => {
+                        setTagFilter(currentValue);
+                        setTagOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          tagFilter === tag ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {tag}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         {(statusFilter !== "all" || vendorFilter !== "all" || tagFilter !== "all") && (
           <Button
