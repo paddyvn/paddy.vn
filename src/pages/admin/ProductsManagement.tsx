@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,9 +97,13 @@ export default function ProductsManagement() {
   });
 
   // Manually filter vendors based on search
-  const filteredVendors = vendors?.filter(vendor =>
-    vendor.toLowerCase().includes(vendorSearchText.toLowerCase())
-  ) || [];
+  const filteredVendors = useMemo(() => {
+    if (!vendors) return [];
+    if (!vendorSearchText.trim()) return vendors;
+    return vendors.filter(vendor =>
+      vendor.toLowerCase().includes(vendorSearchText.toLowerCase())
+    );
+  }, [vendors, vendorSearchText]);
 
   // Fetch unique tags
   const { data: tags } = useQuery({
@@ -121,9 +125,13 @@ export default function ProductsManagement() {
   });
 
   // Manually filter tags based on search
-  const filteredTags = tags?.filter(tag =>
-    tag.toLowerCase().includes(tagSearchText.toLowerCase())
-  ) || [];
+  const filteredTags = useMemo(() => {
+    if (!tags) return [];
+    if (!tagSearchText.trim()) return tags;
+    return tags.filter(tag =>
+      tag.toLowerCase().includes(tagSearchText.toLowerCase())
+    );
+  }, [tags, tagSearchText]);
 
   // Get total count
   const { data: totalCount } = useQuery({
