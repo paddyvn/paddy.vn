@@ -36,7 +36,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
     <div className="space-y-4">
       {/* Main Image */}
       <div
-        className="aspect-square rounded-lg overflow-hidden bg-muted cursor-zoom-in border border-border hover:border-primary transition-smooth"
+        className="aspect-square rounded-lg overflow-hidden bg-muted cursor-zoom-in hover:opacity-95 transition-smooth"
         onClick={() => setIsZoomOpen(true)}
       >
         <img
@@ -54,10 +54,10 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
               key={index}
               onClick={() => setSelectedImage(index)}
               className={cn(
-                "flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-smooth",
+                "flex-shrink-0 w-20 h-20 rounded-md overflow-hidden transition-smooth",
                 selectedImage === index
-                  ? "border-primary ring-2 ring-primary/20"
-                  : "border-border hover:border-primary/50"
+                  ? "ring-2 ring-primary opacity-100"
+                  : "opacity-60 hover:opacity-100"
               )}
             >
               <img
