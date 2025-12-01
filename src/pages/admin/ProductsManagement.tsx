@@ -89,9 +89,13 @@ export default function ProductsManagement() {
         .from("products")
         .select("vendor")
         .not("vendor", "is", null)
-        .order("vendor");
+        .order("vendor")
+        .limit(10000);
       if (error) throw error;
       const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean);
+      console.log('Total unique vendors fetched:', uniqueVendors.length);
+      console.log('First 10 vendors:', uniqueVendors.slice(0, 10));
+      console.log('Vendors starting with Q or R:', uniqueVendors.filter(v => v.toLowerCase().startsWith('q') || v.toLowerCase().startsWith('r')));
       return uniqueVendors as string[];
     },
   });
@@ -125,7 +129,8 @@ export default function ProductsManagement() {
       const { data, error } = await supabase
         .from("products")
         .select("tags")
-        .not("tags", "is", null);
+        .not("tags", "is", null)
+        .limit(10000);
       if (error) throw error;
       const allTags = new Set<string>();
       data.forEach(p => {
@@ -133,7 +138,9 @@ export default function ProductsManagement() {
           p.tags.split(",").forEach(tag => allTags.add(tag.trim()));
         }
       });
-      return Array.from(allTags).sort();
+      const sortedTags = Array.from(allTags).sort();
+      console.log('Total unique tags fetched:', sortedTags.length);
+      return sortedTags;
     },
   });
 
