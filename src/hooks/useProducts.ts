@@ -74,6 +74,11 @@ export const useProduct = (slug: string) => {
           *,
           product_images (image_url, alt_text, is_primary, display_order),
           product_variants (*),
+          product_collections (
+            collection_id,
+            position,
+            categories (id, name, slug)
+          ),
           reviews (
             *,
             profiles (full_name, avatar_url)

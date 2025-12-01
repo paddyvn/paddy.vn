@@ -15,6 +15,7 @@ import { ProductReviews } from "@/components/ProductReviews";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ProductBreadcrumb } from "@/components/ProductBreadcrumb";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProductDetail() {
@@ -77,6 +78,9 @@ export default function ProductDetail() {
     ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length
     : 0;
 
+  // Get category from product_collections if available
+  const primaryCategory = product.product_collections?.[0]?.categories;
+
   const handleAddToCart = () => {
     if (!session?.user) {
       toast({
@@ -99,16 +103,14 @@ export default function ProductDetail() {
     <div className="min-h-screen bg-background">
       <Header />
       
+      {/* Breadcrumb Navigation */}
+      <ProductBreadcrumb
+        productName={product.name}
+        categoryName={primaryCategory?.name}
+        categorySlug={primaryCategory?.slug}
+      />
+      
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-6 -ml-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to products
-        </Button>
 
         {/* Main Product Section - Two Column Layout */}
         <div className="grid lg:grid-cols-2 gap-12 mb-12">
