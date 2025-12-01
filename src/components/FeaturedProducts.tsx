@@ -7,8 +7,10 @@ import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export const FeaturedProducts = () => {
+  const navigate = useNavigate();
   const { data: products, isLoading } = useProducts();
   const [userId, setUserId] = useState<string | undefined>();
   const { addToCart } = useCart(userId);
@@ -76,8 +78,9 @@ export const FeaturedProducts = () => {
           {products.slice(0, 10).map((product, index) => (
             <Card
               key={product.id}
-              className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover animate-in fade-in zoom-in duration-500 rounded-sm border-0"
+              className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover animate-in fade-in zoom-in duration-500 rounded-sm border-0 cursor-pointer"
               style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => navigate(`/products/${product.slug}`)}
             >
               <CardContent className="p-0">
                 <div className="relative aspect-square overflow-hidden bg-muted">
