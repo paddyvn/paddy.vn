@@ -120,51 +120,49 @@ export default function ProductDetail() {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-6">
-            {/* Vendor Badge */}
-            {product.vendor && (
-              <Badge variant="secondary" className="font-bold">
-                {product.vendor}
-              </Badge>
-            )}
-
+          <div className="space-y-5">
             {/* Product Name */}
-            <h1 className="text-4xl font-bold text-foreground">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground leading-tight">{product.name}</h1>
 
-            {/* Rating */}
-            {product.reviews?.length > 0 && (
+            {/* Brand and Rating Row */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {product.vendor && (
+                <>
+                  <span className="text-sm text-muted-foreground">Brand -</span>
+                  <span className="text-sm font-semibold text-primary">{product.vendor}</span>
+                  <span className="text-muted-foreground">|</span>
+                </>
+              )}
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className={i < Math.round(averageRating) ? "text-yellow-400" : "text-muted"}>
+                    <span key={i} className={i < Math.round(averageRating) ? "text-yellow-400 text-sm" : "text-muted text-sm"}>
                       ★
                     </span>
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {averageRating.toFixed(1)} ({product.reviews.length} reviews)
+                  ({product.reviews?.length || 0} Review)
                 </span>
               </div>
-            )}
+            </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-primary">
-                {currentPrice.toLocaleString('vi-VN')} ₫
-              </span>
+            <div className="flex items-center gap-3">
               {comparePrice && comparePrice > currentPrice && (
-                <span className="text-xl text-muted-foreground line-through">
+                <span className="text-lg text-muted-foreground line-through">
                   {comparePrice.toLocaleString('vi-VN')} ₫
                 </span>
               )}
+              <span className="text-3xl font-bold text-foreground">
+                {currentPrice.toLocaleString('vi-VN')} ₫
+              </span>
             </div>
 
             {/* Short Description */}
             {product.short_description && (
-              <p className="text-muted-foreground text-lg">{product.short_description}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{product.short_description}</p>
             )}
-
-            <Separator />
 
             {/* Variants Selector */}
             {product.product_variants && product.product_variants.length > 0 && (
@@ -180,49 +178,71 @@ export default function ProductDetail() {
               />
             )}
 
-            {/* Quantity & Add to Cart */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <label className="font-semibold">Quantity:</label>
-                <div className="flex items-center border rounded-md">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3"
-                  >
-                    -
-                  </Button>
-                  <span className="px-4 py-2 min-w-[3rem] text-center">{quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-3"
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
+            {/* Quantity */}
+            <div className="space-y-2">
+              <label className="text-base font-semibold">Quantity</label>
+              <div className="flex items-center gap-3">
                 <Button
-                  size="lg"
-                  className="flex-1"
-                  onClick={handleAddToCart}
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="h-10 w-10 rounded-md"
                 >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Add to Cart
+                  -
                 </Button>
-                <Button size="lg" variant="outline">
-                  <Heart className="h-5 w-5" />
+                <span className="text-lg font-medium min-w-[3rem] text-center">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="h-10 w-10 rounded-md"
+                >
+                  +
                 </Button>
               </div>
             </div>
 
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                className="flex-1 h-12 text-base"
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Add to Cart
+              </Button>
+              <Button 
+                size="lg" 
+                className="flex-1 h-12 text-base bg-yellow-500 hover:bg-yellow-600 text-white"
+              >
+                Buy Now
+              </Button>
+            </div>
+
+            {/* Action Links */}
+            <div className="flex items-center gap-6 pt-2">
+              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Compare
+              </button>
+              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Heart className="h-4 w-4" />
+                Add to Wishlist
+              </button>
+              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Share Now
+              </button>
+            </div>
+
             {/* Stock Status */}
-            {selectedVariant && (
-              <div className="text-sm">
+            {selectedVariant && selectedVariant.stock_quantity !== null && (
+              <div className="text-sm pt-2">
                 {selectedVariant.stock_quantity > 0 ? (
                   <span className="text-green-600 font-medium">
                     In stock ({selectedVariant.stock_quantity} available)
@@ -230,17 +250,6 @@ export default function ProductDetail() {
                 ) : (
                   <span className="text-red-600 font-medium">Out of stock</span>
                 )}
-              </div>
-            )}
-
-            {/* Product Tags */}
-            {product.tags && (
-              <div className="flex flex-wrap gap-2">
-                {product.tags.split(',').map((tag: string, index: number) => (
-                  <Badge key={index} variant="outline">
-                    {tag.trim()}
-                  </Badge>
-                ))}
               </div>
             )}
           </div>
