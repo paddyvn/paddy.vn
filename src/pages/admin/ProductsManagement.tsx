@@ -69,6 +69,8 @@ export default function ProductsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [vendorOpen, setVendorOpen] = useState(false);
   const [tagOpen, setTagOpen] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [tagSearch, setTagSearch] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const syncProducts = useSyncProducts();
@@ -95,6 +97,11 @@ export default function ProductsManagement() {
     },
   });
 
+  // Filter vendors based on search
+  const filteredVendors = vendors?.filter(vendor =>
+    vendor.toLowerCase().includes(vendorSearch.toLowerCase())
+  ) || [];
+
   // Fetch unique tags
   const { data: tags } = useQuery({
     queryKey: ["product-tags"],
@@ -113,6 +120,11 @@ export default function ProductsManagement() {
       return Array.from(allTags).sort();
     },
   });
+
+  // Filter tags based on search
+  const filteredTags = tags?.filter(tag =>
+    tag.toLowerCase().includes(tagSearch.toLowerCase())
+  ) || [];
 
   // Get total count
   const { data: totalCount } = useQuery({
@@ -303,8 +315,12 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command>
-              <CommandInput placeholder="Search vendors..." />
+            <Command shouldFilter={false}>
+              <CommandInput 
+                placeholder="Search vendors..." 
+                value={vendorSearch}
+                onValueChange={setVendorSearch}
+              />
               <CommandList>
                 <CommandEmpty>No vendor found.</CommandEmpty>
                 <CommandGroup>
@@ -313,6 +329,7 @@ export default function ProductsManagement() {
                     onSelect={() => {
                       setVendorFilter("all");
                       setVendorOpen(false);
+                      setVendorSearch("");
                     }}
                   >
                     <Check
@@ -323,13 +340,14 @@ export default function ProductsManagement() {
                     />
                     All Vendors
                   </CommandItem>
-                  {vendors?.map((vendor) => (
+                  {filteredVendors.map((vendor) => (
                     <CommandItem
                       key={vendor}
                       value={vendor}
-                      onSelect={(currentValue) => {
-                        setVendorFilter(currentValue);
+                      onSelect={() => {
+                        setVendorFilter(vendor);
                         setVendorOpen(false);
+                        setVendorSearch("");
                       }}
                     >
                       <Check
@@ -360,8 +378,12 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command>
-              <CommandInput placeholder="Search tags..." />
+            <Command shouldFilter={false}>
+              <CommandInput 
+                placeholder="Search tags..." 
+                value={tagSearch}
+                onValueChange={setTagSearch}
+              />
               <CommandList>
                 <CommandEmpty>No tag found.</CommandEmpty>
                 <CommandGroup>
@@ -370,6 +392,7 @@ export default function ProductsManagement() {
                     onSelect={() => {
                       setTagFilter("all");
                       setTagOpen(false);
+                      setTagSearch("");
                     }}
                   >
                     <Check
@@ -380,13 +403,14 @@ export default function ProductsManagement() {
                     />
                     All Tags
                   </CommandItem>
-                  {tags?.map((tag) => (
+                  {filteredTags.map((tag) => (
                     <CommandItem
                       key={tag}
                       value={tag}
-                      onSelect={(currentValue) => {
-                        setTagFilter(currentValue);
+                      onSelect={() => {
+                        setTagFilter(tag);
                         setTagOpen(false);
+                        setTagSearch("");
                       }}
                     >
                       <Check
