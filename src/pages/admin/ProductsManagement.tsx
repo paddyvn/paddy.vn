@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/pagination";
 import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,20 +97,9 @@ export default function ProductsManagement() {
   });
 
   // Manually filter vendors based on search
-  const filteredVendors = vendors?.filter(vendor => {
-    const matches = vendor.toLowerCase().includes(vendorSearchText.toLowerCase());
-    if (vendorSearchText) {
-      console.log(`Vendor "${vendor}" ${matches ? 'MATCHES' : 'does not match'} search "${vendorSearchText}"`);
-    }
-    return matches;
-  }) || [];
-
-  console.log('Vendor search text:', vendorSearchText);
-  console.log('Total vendors:', vendors?.length);
-  console.log('Filtered vendors count:', filteredVendors.length);
-  if (vendorSearchText) {
-    console.log('Filtered vendors:', filteredVendors);
-  }
+  const filteredVendors = vendors?.filter(vendor =>
+    vendor.toLowerCase().includes(vendorSearchText.toLowerCase())
+  ) || [];
 
   // Fetch unique tags
   const { data: tags } = useQuery({
@@ -326,36 +314,42 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command shouldFilter={false}>
-              <CommandInput 
-                placeholder="Search vendors..." 
-                value={vendorSearchText}
-                onValueChange={setVendorSearchText}
-              />
-              <CommandList>
-                <CommandEmpty>No vendor found.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value="all"
-                    onSelect={() => {
-                      setVendorFilter("all");
-                      setVendorOpen(false);
-                      setVendorSearchText("");
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        vendorFilter === "all" ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    All Vendors
-                  </CommandItem>
-                  {filteredVendors.map((vendor) => (
-                    <CommandItem
+            <div className="flex flex-col">
+              <div className="p-2 border-b">
+                <Input
+                  placeholder="Search vendors..."
+                  value={vendorSearchText}
+                  onChange={(e) => setVendorSearchText(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                <div
+                  className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                  onClick={() => {
+                    setVendorFilter("all");
+                    setVendorOpen(false);
+                    setVendorSearchText("");
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      vendorFilter === "all" ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  All Vendors
+                </div>
+                {filteredVendors.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No vendor found.
+                  </div>
+                ) : (
+                  filteredVendors.map((vendor) => (
+                    <div
                       key={vendor}
-                      value={vendor}
-                      onSelect={() => {
+                      className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                      onClick={() => {
                         setVendorFilter(vendor);
                         setVendorOpen(false);
                         setVendorSearchText("");
@@ -368,11 +362,11 @@ export default function ProductsManagement() {
                         )}
                       />
                       {vendor}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
 
@@ -389,36 +383,42 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command shouldFilter={false}>
-              <CommandInput 
-                placeholder="Search tags..." 
-                value={tagSearchText}
-                onValueChange={setTagSearchText}
-              />
-              <CommandList>
-                <CommandEmpty>No tag found.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value="all"
-                    onSelect={() => {
-                      setTagFilter("all");
-                      setTagOpen(false);
-                      setTagSearchText("");
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        tagFilter === "all" ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    All Tags
-                  </CommandItem>
-                  {filteredTags.map((tag) => (
-                    <CommandItem
+            <div className="flex flex-col">
+              <div className="p-2 border-b">
+                <Input
+                  placeholder="Search tags..."
+                  value={tagSearchText}
+                  onChange={(e) => setTagSearchText(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                <div
+                  className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                  onClick={() => {
+                    setTagFilter("all");
+                    setTagOpen(false);
+                    setTagSearchText("");
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      tagFilter === "all" ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  All Tags
+                </div>
+                {filteredTags.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No tag found.
+                  </div>
+                ) : (
+                  filteredTags.map((tag) => (
+                    <div
                       key={tag}
-                      value={tag}
-                      onSelect={() => {
+                      className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                      onClick={() => {
                         setTagFilter(tag);
                         setTagOpen(false);
                         setTagSearchText("");
@@ -431,11 +431,11 @@ export default function ProductsManagement() {
                         )}
                       />
                       {tag}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
 
