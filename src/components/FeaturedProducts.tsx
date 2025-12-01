@@ -110,6 +110,7 @@ export const FeaturedProducts = () => {
                     size="icon"
                     variant="secondary"
                     className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Heart className="h-4 w-4" />
                   </Button>
