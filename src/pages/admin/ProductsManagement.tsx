@@ -91,6 +91,7 @@ export default function ProductsManagement() {
         .order("vendor");
       if (error) throw error;
       const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean);
+      console.log('Fetched vendors:', uniqueVendors);
       return uniqueVendors as string[];
     },
   });
@@ -305,19 +306,27 @@ export default function ProductsManagement() {
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
             <Command
               filter={(value, search, keywords = []) => {
+                console.log('Filter - value:', value, 'search:', search, 'keywords:', keywords);
                 // Simple case-insensitive substring matching
                 const searchLower = search.toLowerCase();
                 const valueLower = value.toLowerCase();
                 const keywordsLower = keywords.map(k => String(k).toLowerCase());
                 
                 // Check value
-                if (valueLower.includes(searchLower)) return 1;
+                if (valueLower.includes(searchLower)) {
+                  console.log('  Matched on value');
+                  return 1;
+                }
                 
                 // Check keywords
                 for (const keyword of keywordsLower) {
-                  if (keyword.includes(searchLower)) return 1;
+                  if (keyword.includes(searchLower)) {
+                    console.log('  Matched on keyword:', keyword);
+                    return 1;
+                  }
                 }
                 
+                console.log('  No match');
                 return 0;
               }}
             >
@@ -341,25 +350,28 @@ export default function ProductsManagement() {
                     />
                     All Vendors
                   </CommandItem>
-                  {vendors?.map((vendor) => (
-                    <CommandItem
-                      key={vendor}
-                      value={`vendor-${vendor}`}
-                      keywords={[vendor]}
-                      onSelect={() => {
-                        setVendorFilter(vendor);
-                        setVendorOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          vendorFilter === vendor ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {vendor}
-                    </CommandItem>
-                  ))}
+                  {vendors?.map((vendor) => {
+                    console.log('Rendering vendor item:', vendor);
+                    return (
+                      <CommandItem
+                        key={vendor}
+                        value={`vendor-${vendor}`}
+                        keywords={[vendor]}
+                        onSelect={() => {
+                          setVendorFilter(vendor);
+                          setVendorOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            vendorFilter === vendor ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {vendor}
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
               </CommandList>
             </Command>
