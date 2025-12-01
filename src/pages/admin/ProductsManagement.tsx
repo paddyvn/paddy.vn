@@ -85,62 +85,54 @@ export default function ProductsManagement() {
   const { data: vendors } = useQuery({
     queryKey: ["vendors"],
     queryFn: async () => {
+      // Fetch all products with vendors, removing default limit
       const { data, error } = await supabase
         .from("products")
         .select("vendor")
         .not("vendor", "is", null)
         .order("vendor")
-        .limit(10000);
+        .range(0, 9999); // Explicitly set range to override default limit
+      
       if (error) throw error;
-      const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean);
-      console.log('Total unique vendors fetched:', uniqueVendors.length);
-      console.log('First 10 vendors:', uniqueVendors.slice(0, 10));
-      console.log('Vendors starting with Q or R:', uniqueVendors.filter(v => v.toLowerCase().startsWith('q') || v.toLowerCase().startsWith('r')));
-      return uniqueVendors as string[];
+      
+      // Extract unique vendors
+      const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean) as string[];
+      return uniqueVendors;
     },
   });
 
   // Manually filter vendors based on search
   const filteredVendors = useMemo(() => {
-    console.log('=== VENDOR FILTER DEBUG ===');
-    console.log('vendors:', vendors);
-    console.log('vendorSearchText:', vendorSearchText);
+    if (!vendors) return [];
+    if (!vendorSearchText.trim()) return vendors;
     
-    if (!vendors) {
-      console.log('No vendors loaded');
-      return [];
-    }
-    if (!vendorSearchText.trim()) {
-      console.log('No search text, returning all vendors');
-      return vendors;
-    }
-    
-    const filtered = vendors.filter(vendor =>
-      vendor.toLowerCase().startsWith(vendorSearchText.toLowerCase())
+    const searchLower = vendorSearchText.toLowerCase().trim();
+    return vendors.filter(vendor =>
+      vendor.toLowerCase().startsWith(searchLower)
     );
-    console.log('filtered result:', filtered);
-    return filtered;
   }, [vendors, vendorSearchText]);
 
   // Fetch unique tags
   const { data: tags } = useQuery({
     queryKey: ["product-tags"],
     queryFn: async () => {
+      // Fetch all products with tags, removing default limit
       const { data, error } = await supabase
         .from("products")
         .select("tags")
         .not("tags", "is", null)
-        .limit(10000);
+        .range(0, 9999); // Explicitly set range to override default limit
+      
       if (error) throw error;
+      
       const allTags = new Set<string>();
       data.forEach(p => {
         if (p.tags) {
           p.tags.split(",").forEach(tag => allTags.add(tag.trim()));
         }
       });
-      const sortedTags = Array.from(allTags).sort();
-      console.log('Total unique tags fetched:', sortedTags.length);
-      return sortedTags;
+      
+      return Array.from(allTags).sort();
     },
   });
 
@@ -148,8 +140,10 @@ export default function ProductsManagement() {
   const filteredTags = useMemo(() => {
     if (!tags) return [];
     if (!tagSearchText.trim()) return tags;
+    
+    const searchLower = tagSearchText.toLowerCase().trim();
     return tags.filter(tag =>
-      tag.toLowerCase().startsWith(tagSearchText.toLowerCase())
+      tag.toLowerCase().startsWith(searchLower)
     );
   }, [tags, tagSearchText]);
 
