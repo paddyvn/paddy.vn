@@ -101,7 +101,7 @@ export default function ProductsManagement() {
     if (!vendors) return [];
     if (!vendorSearchText.trim()) return vendors;
     return vendors.filter(vendor =>
-      vendor.toLowerCase().includes(vendorSearchText.toLowerCase())
+      vendor.toLowerCase().startsWith(vendorSearchText.toLowerCase())
     );
   }, [vendors, vendorSearchText]);
 
@@ -129,7 +129,7 @@ export default function ProductsManagement() {
     if (!tags) return [];
     if (!tagSearchText.trim()) return tags;
     return tags.filter(tag =>
-      tag.toLowerCase().includes(tagSearchText.toLowerCase())
+      tag.toLowerCase().startsWith(tagSearchText.toLowerCase())
     );
   }, [tags, tagSearchText]);
 
