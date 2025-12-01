@@ -303,7 +303,24 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command>
+            <Command
+              filter={(value, search, keywords = []) => {
+                // Simple case-insensitive substring matching
+                const searchLower = search.toLowerCase();
+                const valueLower = value.toLowerCase();
+                const keywordsLower = keywords.map(k => String(k).toLowerCase());
+                
+                // Check value
+                if (valueLower.includes(searchLower)) return 1;
+                
+                // Check keywords
+                for (const keyword of keywordsLower) {
+                  if (keyword.includes(searchLower)) return 1;
+                }
+                
+                return 0;
+              }}
+            >
               <CommandInput placeholder="Search vendors..." />
               <CommandList>
                 <CommandEmpty>No vendor found.</CommandEmpty>
@@ -327,12 +344,10 @@ export default function ProductsManagement() {
                   {vendors?.map((vendor) => (
                     <CommandItem
                       key={vendor}
-                      value={vendor}
-                      keywords={[vendor.toLowerCase()]}
-                      onSelect={(currentValue) => {
-                        // Find the actual vendor name (case-sensitive)
-                        const selected = vendors.find(v => v.toLowerCase() === currentValue.toLowerCase());
-                        setVendorFilter(selected || currentValue);
+                      value={`vendor-${vendor}`}
+                      keywords={[vendor]}
+                      onSelect={() => {
+                        setVendorFilter(vendor);
                         setVendorOpen(false);
                       }}
                     >
@@ -364,7 +379,24 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command>
+            <Command
+              filter={(value, search, keywords = []) => {
+                // Simple case-insensitive substring matching
+                const searchLower = search.toLowerCase();
+                const valueLower = value.toLowerCase();
+                const keywordsLower = keywords.map(k => String(k).toLowerCase());
+                
+                // Check value
+                if (valueLower.includes(searchLower)) return 1;
+                
+                // Check keywords
+                for (const keyword of keywordsLower) {
+                  if (keyword.includes(searchLower)) return 1;
+                }
+                
+                return 0;
+              }}
+            >
               <CommandInput placeholder="Search tags..." />
               <CommandList>
                 <CommandEmpty>No tag found.</CommandEmpty>
@@ -388,12 +420,10 @@ export default function ProductsManagement() {
                   {tags?.map((tag) => (
                     <CommandItem
                       key={tag}
-                      value={tag}
-                      keywords={[tag.toLowerCase()]}
-                      onSelect={(currentValue) => {
-                        // Find the actual tag name (case-sensitive)
-                        const selected = tags.find(t => t.toLowerCase() === currentValue.toLowerCase());
-                        setTagFilter(selected || currentValue);
+                      value={`tag-${tag}`}
+                      keywords={[tag]}
+                      onSelect={() => {
+                        setTagFilter(tag);
                         setTagOpen(false);
                       }}
                     >
