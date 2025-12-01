@@ -303,19 +303,14 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command
-              filter={(value, search) => {
-                if (value === "all") return 1;
-                if (value.toLowerCase().includes(search.toLowerCase())) return 1;
-                return 0;
-              }}
-            >
+            <Command>
               <CommandInput placeholder="Search vendors..." />
               <CommandList>
                 <CommandEmpty>No vendor found.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
-                    value="all"
+                    value="all-vendors"
+                    keywords={["all", "vendors"]}
                     onSelect={() => {
                       setVendorFilter("all");
                       setVendorOpen(false);
@@ -333,8 +328,11 @@ export default function ProductsManagement() {
                     <CommandItem
                       key={vendor}
                       value={vendor}
-                      onSelect={() => {
-                        setVendorFilter(vendor);
+                      keywords={[vendor.toLowerCase()]}
+                      onSelect={(currentValue) => {
+                        // Find the actual vendor name (case-sensitive)
+                        const selected = vendors.find(v => v.toLowerCase() === currentValue.toLowerCase());
+                        setVendorFilter(selected || currentValue);
                         setVendorOpen(false);
                       }}
                     >
@@ -366,19 +364,14 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command
-              filter={(value, search) => {
-                if (value === "all") return 1;
-                if (value.toLowerCase().includes(search.toLowerCase())) return 1;
-                return 0;
-              }}
-            >
+            <Command>
               <CommandInput placeholder="Search tags..." />
               <CommandList>
                 <CommandEmpty>No tag found.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
-                    value="all"
+                    value="all-tags"
+                    keywords={["all", "tags"]}
                     onSelect={() => {
                       setTagFilter("all");
                       setTagOpen(false);
@@ -396,8 +389,11 @@ export default function ProductsManagement() {
                     <CommandItem
                       key={tag}
                       value={tag}
-                      onSelect={() => {
-                        setTagFilter(tag);
+                      keywords={[tag.toLowerCase()]}
+                      onSelect={(currentValue) => {
+                        // Find the actual tag name (case-sensitive)
+                        const selected = tags.find(t => t.toLowerCase() === currentValue.toLowerCase());
+                        setTagFilter(selected || currentValue);
                         setTagOpen(false);
                       }}
                     >
