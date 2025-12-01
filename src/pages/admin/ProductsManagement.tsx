@@ -98,11 +98,24 @@ export default function ProductsManagement() {
 
   // Manually filter vendors based on search
   const filteredVendors = useMemo(() => {
-    if (!vendors) return [];
-    if (!vendorSearchText.trim()) return vendors;
-    return vendors.filter(vendor =>
+    console.log('=== VENDOR FILTER DEBUG ===');
+    console.log('vendors:', vendors);
+    console.log('vendorSearchText:', vendorSearchText);
+    
+    if (!vendors) {
+      console.log('No vendors loaded');
+      return [];
+    }
+    if (!vendorSearchText.trim()) {
+      console.log('No search text, returning all vendors');
+      return vendors;
+    }
+    
+    const filtered = vendors.filter(vendor =>
       vendor.toLowerCase().startsWith(vendorSearchText.toLowerCase())
     );
+    console.log('filtered result:', filtered);
+    return filtered;
   }, [vendors, vendorSearchText]);
 
   // Fetch unique tags
