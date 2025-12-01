@@ -98,9 +98,20 @@ export default function ProductsManagement() {
   });
 
   // Manually filter vendors based on search
-  const filteredVendors = vendors?.filter(vendor =>
-    vendor.toLowerCase().includes(vendorSearchText.toLowerCase())
-  ) || [];
+  const filteredVendors = vendors?.filter(vendor => {
+    const matches = vendor.toLowerCase().includes(vendorSearchText.toLowerCase());
+    if (vendorSearchText) {
+      console.log(`Vendor "${vendor}" ${matches ? 'MATCHES' : 'does not match'} search "${vendorSearchText}"`);
+    }
+    return matches;
+  }) || [];
+
+  console.log('Vendor search text:', vendorSearchText);
+  console.log('Total vendors:', vendors?.length);
+  console.log('Filtered vendors count:', filteredVendors.length);
+  if (vendorSearchText) {
+    console.log('Filtered vendors:', filteredVendors);
+  }
 
   // Fetch unique tags
   const { data: tags } = useQuery({
