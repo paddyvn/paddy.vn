@@ -36,27 +36,27 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
     <div className="space-y-4">
       {/* Main Image */}
       <div
-        className="aspect-square rounded-lg overflow-hidden bg-muted cursor-zoom-in border-2 border-border hover:border-primary transition-smooth"
+        className="aspect-square rounded-lg overflow-hidden bg-muted cursor-zoom-in border border-border hover:border-primary transition-smooth"
         onClick={() => setIsZoomOpen(true)}
       >
         <img
           src={sortedImages[selectedImage].image_url}
           alt={sortedImages[selectedImage].alt_text || productName}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
 
-      {/* Thumbnail Grid */}
+      {/* Thumbnail Row */}
       {sortedImages.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex gap-3 overflow-x-auto pb-2">
           {sortedImages.map((image, index) => (
             <button
               key={index}
               onClick={() => setSelectedImage(index)}
               className={cn(
-                "aspect-square rounded-md overflow-hidden border-2 transition-smooth",
+                "flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-smooth",
                 selectedImage === index
-                  ? "border-primary"
+                  ? "border-primary ring-2 ring-primary/20"
                   : "border-border hover:border-primary/50"
               )}
             >
