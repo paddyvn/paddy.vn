@@ -81,79 +81,83 @@ export default function ProductsManagement() {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, vendorFilter, tagFilter]);
 
-  // Fetch unique vendors
+  // Fetch unique vendors directly with proper query
   const { data: vendors, isLoading: vendorsLoading, error: vendorsError } = useQuery({
     queryKey: ["vendors"],
     queryFn: async () => {
-      console.log('🔍 Fetching vendors...');
-      // Fetch all products with vendors, removing default limit
-      const { data, error } = await supabase
-        .from("products")
-        .select("vendor")
-        .not("vendor", "is", null)
-        .order("vendor")
-        .range(0, 9999); // Explicitly set range to override default limit
+      // Fetch ALL products without limit to get complete vendor list
+      let allProducts: Array<{ vendor: string }> = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
       
-      if (error) {
-        console.error('❌ Error fetching vendors:', error);
-        throw error;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("vendor")
+          .not("vendor", "is", null)
+          .range(from, from + batchSize - 1);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allProducts = allProducts.concat(data);
+          from += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
       }
       
-      console.log('📦 Raw data received:', data?.length, 'rows');
-      
-      // Extract unique vendors
-      const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean) as string[];
-      console.log('✅ Unique vendors:', uniqueVendors.length);
-      console.log('📝 Sample vendors:', uniqueVendors.slice(0, 20));
-      console.log('🔤 Vendors with R:', uniqueVendors.filter(v => v.toLowerCase().startsWith('r')));
+      // Extract unique vendors and sort
+      const uniqueVendors = [...new Set(allProducts.map(p => p.vendor))].filter(Boolean) as string[];
+      uniqueVendors.sort();
       
       return uniqueVendors;
     },
   });
-  
-  console.log('Current vendors state:', { vendors, vendorsLoading, vendorsError });
 
   // Manually filter vendors based on search
   const filteredVendors = useMemo(() => {
-    console.log('🔎 Filtering vendors...', { 
-      vendorsCount: vendors?.length, 
-      searchText: vendorSearchText 
-    });
-    
-    if (!vendors) {
-      console.log('⚠️ No vendors array');
-      return [];
-    }
-    
-    if (!vendorSearchText.trim()) {
-      console.log('✅ No search, returning all', vendors.length, 'vendors');
-      return vendors;
-    }
+    if (!vendors) return [];
+    if (!vendorSearchText.trim()) return vendors;
     
     const searchLower = vendorSearchText.toLowerCase().trim();
-    const filtered = vendors.filter(vendor =>
+    return vendors.filter(vendor =>
       vendor.toLowerCase().startsWith(searchLower)
     );
-    
-    console.log('✅ Filtered to', filtered.length, 'vendors:', filtered);
-    return filtered;
   }, [vendors, vendorSearchText]);
 
   // Fetch unique tags
   const { data: tags } = useQuery({
     queryKey: ["product-tags"],
     queryFn: async () => {
-      // Fetch all products with tags, removing default limit
-      const { data, error } = await supabase
-        .from("products")
-        .select("tags")
-        .not("tags", "is", null)
-        .range(0, 9999); // Explicitly set range to override default limit
+      // Fetch ALL products to get complete tag list
+      let allProducts: Array<{ tags: string | null }> = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
       
-      if (error) throw error;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("tags")
+          .not("tags", "is", null)
+          .range(from, from + batchSize - 1);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allProducts = allProducts.concat(data);
+          from += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
       
       const allTags = new Set<string>();
-      data.forEach(p => {
+      allProducts.forEach(p => {
         if (p.tags) {
           p.tags.split(",").forEach(tag => allTags.add(tag.trim()));
         }
