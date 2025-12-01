@@ -55,7 +55,23 @@ export function ProductVariantSelector({
 
     return (
       <div className="space-y-3">
-        <Label className="text-base font-semibold">{optionName}</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-base font-semibold">
+            {optionName} : <span className="font-normal text-muted-foreground">{selectedVariant?.[optionKey]}</span>
+          </Label>
+          <button 
+            className="text-sm text-muted-foreground hover:text-primary transition-smooth flex items-center gap-1"
+            onClick={() => {
+              const firstVariant = variants[0];
+              if (firstVariant) onVariantChange(firstVariant);
+            }}
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear
+          </button>
+        </div>
         <RadioGroup
           value={selectedVariant?.[optionKey] || ''}
           onValueChange={(value) => {
@@ -77,18 +93,15 @@ export function ProductVariantSelector({
               <Label
                 key={value}
                 className={cn(
-                  "flex items-center justify-center px-4 py-2 border-2 rounded-md cursor-pointer transition-smooth",
+                  "flex items-center justify-center px-4 py-2.5 border rounded-md cursor-pointer transition-smooth text-sm font-medium min-w-[80px]",
                   selectedVariant?.[optionKey] === value
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50",
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:border-primary/50 bg-background",
                   isOutOfStock && "opacity-50 cursor-not-allowed"
                 )}
               >
                 <RadioGroupItem value={value || ''} className="sr-only" disabled={isOutOfStock} />
-                <span className="font-medium">{value}</span>
-                {isOutOfStock && (
-                  <span className="ml-2 text-xs text-muted-foreground">(Out of stock)</span>
-                )}
+                <span>{value}</span>
               </Label>
             );
           })}
