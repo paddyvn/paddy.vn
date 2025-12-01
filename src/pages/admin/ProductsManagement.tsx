@@ -91,7 +91,13 @@ export default function ProductsManagement() {
         .order("vendor");
       if (error) throw error;
       const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean);
-      console.log('Fetched vendors:', uniqueVendors);
+      console.log('Total vendors fetched:', uniqueVendors.length);
+      console.log('All vendors:', uniqueVendors);
+      const hasRoyalCanin = uniqueVendors.some(v => v.toLowerCase().includes('royal'));
+      console.log('Has Royal Canin?', hasRoyalCanin);
+      if (hasRoyalCanin) {
+        console.log('Royal vendors:', uniqueVendors.filter(v => v.toLowerCase().includes('royal')));
+      }
       return uniqueVendors as string[];
     },
   });
