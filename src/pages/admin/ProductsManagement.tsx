@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,9 +63,17 @@ export default function ProductsManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [vendorFilter, setVendorFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
   const syncProducts = useSyncProducts();
+
+  const ITEMS_PER_PAGE = 50;
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, vendorFilter, tagFilter]);
 
   // Fetch unique vendors
   const { data: vendors } = useQuery({
@@ -93,9 +109,42 @@ export default function ProductsManagement() {
     },
   });
 
-  const { data: products, isLoading, refetch } = useQuery({
-    queryKey: ["admin-products", searchQuery, statusFilter, vendorFilter, tagFilter],
+  // Get total count
+  const { data: totalCount } = useQuery({
+    queryKey: ["admin-products-count", searchQuery, statusFilter, vendorFilter, tagFilter],
     queryFn: async () => {
+      let query = supabase
+        .from("products")
+        .select("*", { count: "exact", head: true });
+
+      if (searchQuery) {
+        query = query.ilike("name", `%${searchQuery}%`);
+      }
+
+      if (statusFilter !== "all") {
+        query = query.eq("is_active", statusFilter === "active");
+      }
+
+      if (vendorFilter !== "all") {
+        query = query.eq("vendor", vendorFilter);
+      }
+
+      if (tagFilter !== "all") {
+        query = query.ilike("tags", `%${tagFilter}%`);
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: products, isLoading, refetch } = useQuery({
+    queryKey: ["admin-products", searchQuery, statusFilter, vendorFilter, tagFilter, currentPage],
+    queryFn: async () => {
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
       let query = supabase
         .from("products")
         .select(`
@@ -106,7 +155,8 @@ export default function ProductsManagement() {
             categories(name)
           )
         `)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (searchQuery) {
         query = query.ilike("name", `%${searchQuery}%`);
@@ -129,6 +179,10 @@ export default function ProductsManagement() {
       return data as Product[];
     },
   });
+
+  const totalPages = totalCount ? Math.ceil(totalCount / ITEMS_PER_PAGE) : 0;
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
@@ -401,9 +455,56 @@ export default function ProductsManagement() {
         </Table>
       </div>
 
-      {products && products.length > 0 && (
-        <div className="text-sm text-muted-foreground text-center">
-          Showing {products.length} product{products.length !== 1 ? "s" : ""}
+      {totalCount !== undefined && totalCount > 0 && (
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground text-center">
+            Showing {startItem} to {endItem} of {totalCount} product{totalCount !== 1 ? "s" : ""}
+          </div>
+
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                        className="cursor-pointer"
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       )}
     </div>
