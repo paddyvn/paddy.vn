@@ -91,13 +91,6 @@ export default function ProductsManagement() {
         .order("vendor");
       if (error) throw error;
       const uniqueVendors = [...new Set(data.map(p => p.vendor))].filter(Boolean);
-      console.log('Total vendors fetched:', uniqueVendors.length);
-      console.log('All vendors:', uniqueVendors);
-      const hasRoyalCanin = uniqueVendors.some(v => v.toLowerCase().includes('royal'));
-      console.log('Has Royal Canin?', hasRoyalCanin);
-      if (hasRoyalCanin) {
-        console.log('Royal vendors:', uniqueVendors.filter(v => v.toLowerCase().includes('royal')));
-      }
       return uniqueVendors as string[];
     },
   });
@@ -310,39 +303,13 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command
-              filter={(value, search, keywords = []) => {
-                console.log('Filter - value:', value, 'search:', search, 'keywords:', keywords);
-                // Simple case-insensitive substring matching
-                const searchLower = search.toLowerCase();
-                const valueLower = value.toLowerCase();
-                const keywordsLower = keywords.map(k => String(k).toLowerCase());
-                
-                // Check value
-                if (valueLower.includes(searchLower)) {
-                  console.log('  Matched on value');
-                  return 1;
-                }
-                
-                // Check keywords
-                for (const keyword of keywordsLower) {
-                  if (keyword.includes(searchLower)) {
-                    console.log('  Matched on keyword:', keyword);
-                    return 1;
-                  }
-                }
-                
-                console.log('  No match');
-                return 0;
-              }}
-            >
+            <Command>
               <CommandInput placeholder="Search vendors..." />
               <CommandList>
                 <CommandEmpty>No vendor found.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
-                    value="all-vendors"
-                    keywords={["all", "vendors"]}
+                    value="all"
                     onSelect={() => {
                       setVendorFilter("all");
                       setVendorOpen(false);
@@ -356,28 +323,25 @@ export default function ProductsManagement() {
                     />
                     All Vendors
                   </CommandItem>
-                  {vendors?.map((vendor) => {
-                    console.log('Rendering vendor item:', vendor);
-                    return (
-                      <CommandItem
-                        key={vendor}
-                        value={`vendor-${vendor}`}
-                        keywords={[vendor]}
-                        onSelect={() => {
-                          setVendorFilter(vendor);
-                          setVendorOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            vendorFilter === vendor ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {vendor}
-                      </CommandItem>
-                    );
-                  })}
+                  {vendors?.map((vendor) => (
+                    <CommandItem
+                      key={vendor}
+                      value={vendor}
+                      onSelect={(value) => {
+                        const selectedVendor = vendors.find(v => v.toLowerCase() === value.toLowerCase()) || value;
+                        setVendorFilter(selectedVendor);
+                        setVendorOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          vendorFilter === vendor ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {vendor}
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </CommandList>
             </Command>
@@ -397,31 +361,13 @@ export default function ProductsManagement() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
-            <Command
-              filter={(value, search, keywords = []) => {
-                // Simple case-insensitive substring matching
-                const searchLower = search.toLowerCase();
-                const valueLower = value.toLowerCase();
-                const keywordsLower = keywords.map(k => String(k).toLowerCase());
-                
-                // Check value
-                if (valueLower.includes(searchLower)) return 1;
-                
-                // Check keywords
-                for (const keyword of keywordsLower) {
-                  if (keyword.includes(searchLower)) return 1;
-                }
-                
-                return 0;
-              }}
-            >
+            <Command>
               <CommandInput placeholder="Search tags..." />
               <CommandList>
                 <CommandEmpty>No tag found.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
-                    value="all-tags"
-                    keywords={["all", "tags"]}
+                    value="all"
                     onSelect={() => {
                       setTagFilter("all");
                       setTagOpen(false);
@@ -438,10 +384,10 @@ export default function ProductsManagement() {
                   {tags?.map((tag) => (
                     <CommandItem
                       key={tag}
-                      value={`tag-${tag}`}
-                      keywords={[tag]}
-                      onSelect={() => {
-                        setTagFilter(tag);
+                      value={tag}
+                      onSelect={(value) => {
+                        const selectedTag = tags.find(t => t.toLowerCase() === value.toLowerCase()) || value;
+                        setTagFilter(selectedTag);
                         setTagOpen(false);
                       }}
                     >
