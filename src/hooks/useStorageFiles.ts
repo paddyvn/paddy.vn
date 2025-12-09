@@ -18,30 +18,61 @@ export function useStorageFiles(bucketName = "product-images") {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const extractFileName = (url: string): string => {
+    try {
+      const parts = url.split("/");
+      return decodeURIComponent(parts[parts.length - 1]) || "Unknown";
+    } catch {
+      return "Unknown";
+    }
+  };
+
+  const fetchAllProductImages = async (): Promise<StorageFile[]> => {
+    const allImages: StorageFile[] = [];
+    const pageSize = 1000;
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("product_images")
+        .select("id, image_url, alt_text, created_at")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + pageSize - 1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        for (const img of data) {
+          if (img.image_url) {
+            allImages.push({
+              id: img.id,
+              name: img.alt_text || extractFileName(img.image_url),
+              source: "product",
+              created_at: img.created_at,
+              publicUrl: img.image_url,
+            });
+          }
+        }
+        offset += pageSize;
+        hasMore = data.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return allImages;
+  };
+
   const fetchFiles = async () => {
     setLoading(true);
     try {
       const allFilesData: StorageFile[] = [];
       
-      // Fetch product images from database
-      const { data: productImages, error: productError } = await supabase
-        .from("product_images")
-        .select("id, image_url, alt_text, created_at")
-        .order("created_at", { ascending: false });
-      
-      if (productError) throw productError;
-      
-      for (const img of productImages || []) {
-        if (img.image_url) {
-          allFilesData.push({
-            id: img.id,
-            name: img.alt_text || extractFileName(img.image_url),
-            source: "product",
-            created_at: img.created_at,
-            publicUrl: img.image_url,
-          });
-        }
-      }
+      // Fetch all product images with pagination
+      const productImages = await fetchAllProductImages();
+      allFilesData.push(...productImages);
       
       // Fetch collection images from database
       const { data: collections, error: collectionError } = await supabase
@@ -93,15 +124,6 @@ export function useStorageFiles(bucketName = "product-images") {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const extractFileName = (url: string): string => {
-    try {
-      const parts = url.split("/");
-      return decodeURIComponent(parts[parts.length - 1]) || "Unknown";
-    } catch {
-      return "Unknown";
     }
   };
 
