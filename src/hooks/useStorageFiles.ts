@@ -21,51 +21,100 @@ export function useStorageFiles(bucketName = "product-images") {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchFilesRecursively = async (path: string): Promise<StorageFile[]> => {
-    const files: StorageFile[] = [];
-    
-    const { data: items, error } = await supabase.storage
-      .from(bucketName)
-      .list(path, { limit: 1000 });
-    
-    if (error) {
-      console.error(`Error listing ${path}:`, error);
-      return files;
-    }
-    
-    for (const item of items || []) {
-      const fullPath = path ? `${path}/${item.name}` : item.name;
-      
-      if (item.id === null) {
-        // This is a folder - recurse into it
-        const nestedFiles = await fetchFilesRecursively(fullPath);
-        files.push(...nestedFiles);
-      } else {
-        // This is a file
-        files.push({
-          id: item.id,
-          name: fullPath,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
-          publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
-        });
-      }
-    }
-    
-    return files;
-  };
-
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      const allFilesData = await fetchFilesRecursively("");
+      const allFilesData: StorageFile[] = [];
       
-      // Sort by created_at descending
+      // List top-level folders
+      const { data: rootItems, error: rootError } = await supabase.storage
+        .from(bucketName)
+        .list("", { limit: 100 });
+      
+      if (rootError) throw rootError;
+      
+      const folders: string[] = [];
+      
+      for (const item of rootItems || []) {
+        if (item.id === null) {
+          folders.push(item.name);
+        } else {
+          allFilesData.push({
+            id: item.id,
+            name: item.name,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
+            publicUrl: supabase.storage.from(bucketName).getPublicUrl(item.name).data.publicUrl,
+          });
+        }
+      }
+      
+      // Fetch files from each top-level folder with 2 levels of depth
+      for (const folder of folders) {
+        const { data: folderItems } = await supabase.storage
+          .from(bucketName)
+          .list(folder, { limit: 200 });
+        
+        for (const item of folderItems || []) {
+          if (item.id === null) {
+            // This is a subfolder - list its contents (level 2)
+            const subPath = `${folder}/${item.name}`;
+            const { data: subItems } = await supabase.storage
+              .from(bucketName)
+              .list(subPath, { limit: 100 });
+            
+            for (const subItem of subItems || []) {
+              if (subItem.id === null) {
+                // Level 3 subfolder
+                const subSubPath = `${subPath}/${subItem.name}`;
+                const { data: subSubItems } = await supabase.storage
+                  .from(bucketName)
+                  .list(subSubPath, { limit: 50 });
+                
+                for (const subSubItem of subSubItems || []) {
+                  if (subSubItem.id !== null) {
+                    const fullPath = `${subSubPath}/${subSubItem.name}`;
+                    allFilesData.push({
+                      id: subSubItem.id,
+                      name: fullPath,
+                      created_at: subSubItem.created_at,
+                      updated_at: subSubItem.updated_at,
+                      metadata: subSubItem.metadata as { size: number; mimetype: string; cacheControl: string },
+                      publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
+                    });
+                  }
+                }
+              } else {
+                const fullPath = `${subPath}/${subItem.name}`;
+                allFilesData.push({
+                  id: subItem.id,
+                  name: fullPath,
+                  created_at: subItem.created_at,
+                  updated_at: subItem.updated_at,
+                  metadata: subItem.metadata as { size: number; mimetype: string; cacheControl: string },
+                  publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
+                });
+              }
+            }
+          } else {
+            const fullPath = `${folder}/${item.name}`;
+            allFilesData.push({
+              id: item.id,
+              name: fullPath,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
+              publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
+            });
+          }
+        }
+      }
+      
       allFilesData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
       setFiles(allFilesData);
     } catch (error) {
+      console.error("Failed to load files:", error);
       toast({
         title: "Failed to load files",
         description: error instanceof Error ? error.message : "Unknown error",
