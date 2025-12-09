@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Wand2, Download, Loader2, Cat, Dog, Sparkles, Settings2 } from "lucide-react";
+import { Upload, Wand2, Download, Loader2, Cat, Dog, Sparkles, Settings2, Save } from "lucide-react";
 
 const IMAGE_SIZES = [
   { value: "1024x1024", label: "1024 × 1024 (Square)" },
@@ -23,6 +23,7 @@ export default function ContentAIGenerator() {
   const [imageSize, setImageSize] = useState("1024x1024");
   const [downloadFormat, setDownloadFormat] = useState<"png" | "jpeg" | "webp">("png");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const petInputRef = useRef<HTMLInputElement>(null);
   const accessoryInputRef = useRef<HTMLInputElement>(null);
@@ -137,6 +138,44 @@ export default function ContentAIGenerator() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+
+  const handleSaveToFiles = async () => {
+    if (!generatedImage) return;
+    
+    setIsSaving(true);
+    try {
+      // Convert base64 to blob
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      
+      // Generate filename
+      const fileName = `ai-generated/pet-${Date.now()}.png`;
+      
+      // Upload to Supabase Storage
+      const { error } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, blob, {
+          contentType: "image/png",
+          cacheControl: "3600",
+        });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Image saved!",
+        description: "Image has been saved to Files storage",
+      });
+    } catch (error) {
+      console.error("Save error:", error);
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "Failed to save image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -361,9 +400,27 @@ export default function ContentAIGenerator() {
                   </Select>
                   <Button onClick={handleDownload} className="flex-1">
                     <Download className="mr-2 h-4 w-4" />
-                    Download Image
+                    Download
                   </Button>
                 </div>
+                <Button 
+                  onClick={handleSaveToFiles} 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save to Files
+                    </>
+                  )}
+                </Button>
               </div>
             ) : (
               <div className="w-full h-80 rounded-lg bg-muted flex flex-col items-center justify-center gap-2 text-muted-foreground">
