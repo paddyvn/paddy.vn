@@ -21,64 +21,45 @@ export function useStorageFiles(bucketName = "product-images") {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const fetchFilesRecursively = async (path: string): Promise<StorageFile[]> => {
+    const files: StorageFile[] = [];
+    
+    const { data: items, error } = await supabase.storage
+      .from(bucketName)
+      .list(path, { limit: 1000 });
+    
+    if (error) {
+      console.error(`Error listing ${path}:`, error);
+      return files;
+    }
+    
+    for (const item of items || []) {
+      const fullPath = path ? `${path}/${item.name}` : item.name;
+      
+      if (item.id === null) {
+        // This is a folder - recurse into it
+        const nestedFiles = await fetchFilesRecursively(fullPath);
+        files.push(...nestedFiles);
+      } else {
+        // This is a file
+        files.push({
+          id: item.id,
+          name: fullPath,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
+          publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
+        });
+      }
+    }
+    
+    return files;
+  };
+
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      // Get all files recursively from folders
-      const allFilesData: StorageFile[] = [];
-      
-      // List root level items first
-      const { data: rootItems, error: rootError } = await supabase.storage
-        .from(bucketName)
-        .list("", { limit: 1000 });
-      
-      if (rootError) throw rootError;
-      
-      // Process root items and identify folders
-      const folders: string[] = [];
-      
-      for (const item of rootItems || []) {
-        if (item.id === null) {
-          // This is a folder - add to list to process
-          folders.push(item.name);
-        } else {
-          // This is a file at root level
-          allFilesData.push({
-            id: item.id,
-            name: item.name,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
-            publicUrl: supabase.storage.from(bucketName).getPublicUrl(item.name).data.publicUrl,
-          });
-        }
-      }
-      
-      // Fetch files from each folder
-      for (const folder of folders) {
-        const { data: folderItems, error: folderError } = await supabase.storage
-          .from(bucketName)
-          .list(folder, { limit: 1000 });
-        
-        if (folderError) {
-          console.error(`Error listing folder ${folder}:`, folderError);
-          continue;
-        }
-        
-        for (const item of folderItems || []) {
-          if (item.id !== null) {
-            const fullPath = `${folder}/${item.name}`;
-            allFilesData.push({
-              id: item.id,
-              name: fullPath,
-              created_at: item.created_at,
-              updated_at: item.updated_at,
-              metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
-              publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
-            });
-          }
-        }
-      }
+      const allFilesData = await fetchFilesRecursively("");
       
       // Sort by created_at descending
       allFilesData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
