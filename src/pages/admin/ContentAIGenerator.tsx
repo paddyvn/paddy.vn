@@ -2,9 +2,17 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Wand2, Download, Loader2, Cat, Dog, Sparkles } from "lucide-react";
+import { Upload, Wand2, Download, Loader2, Cat, Dog, Sparkles, Settings2 } from "lucide-react";
+
+const IMAGE_SIZES = [
+  { value: "1024x1024", label: "1024 × 1024 (Square)" },
+  { value: "1536x1024", label: "1536 × 1024 (Landscape)" },
+  { value: "1024x1536", label: "1024 × 1536 (Portrait)" },
+];
 
 export default function ContentAIGenerator() {
   const { toast } = useToast();
@@ -12,6 +20,7 @@ export default function ContentAIGenerator() {
   const [accessoryImage, setAccessoryImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
+  const [imageSize, setImageSize] = useState("1024x1024");
   const [isGenerating, setIsGenerating] = useState(false);
   
   const petInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +68,7 @@ export default function ContentAIGenerator() {
           petImage,
           accessoryImage,
           prompt: customPrompt || undefined,
+          size: imageSize,
         },
       });
 
@@ -101,6 +111,7 @@ export default function ContentAIGenerator() {
     setAccessoryImage(null);
     setGeneratedImage(null);
     setCustomPrompt("");
+    setImageSize("1024x1024");
   };
 
   return (
@@ -208,6 +219,34 @@ export default function ContentAIGenerator() {
                   <span className="text-muted-foreground">Click to upload accessory/toy image</span>
                 </Button>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Output Settings */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Settings2 className="h-5 w-5" />
+                Output Settings
+              </CardTitle>
+              <CardDescription>Configure the generated image output</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="image-size">Image Size</Label>
+                <Select value={imageSize} onValueChange={setImageSize}>
+                  <SelectTrigger id="image-size">
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {IMAGE_SIZES.map((size) => (
+                      <SelectItem key={size.value} value={size.value}>
+                        {size.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
 
