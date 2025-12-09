@@ -21,6 +21,7 @@ export default function ContentAIGenerator() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [imageSize, setImageSize] = useState("1024x1024");
+  const [downloadFormat, setDownloadFormat] = useState<"png" | "jpeg" | "webp">("png");
   const [isGenerating, setIsGenerating] = useState(false);
   
   const petInputRef = useRef<HTMLInputElement>(null);
@@ -95,15 +96,48 @@ export default function ContentAIGenerator() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!generatedImage) return;
     
-    const link = document.createElement("a");
-    link.href = generatedImage;
-    link.download = `pet-with-accessory-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Create canvas to convert image format
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = generatedImage;
+      });
+      
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      
+      ctx.drawImage(img, 0, 0);
+      
+      const mimeType = `image/${downloadFormat}`;
+      const quality = downloadFormat === "png" ? undefined : 0.92;
+      const dataUrl = canvas.toDataURL(mimeType, quality);
+      
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `pet-with-accessory-${Date.now()}.${downloadFormat}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Download error:", error);
+      // Fallback to direct download
+      const link = document.createElement("a");
+      link.href = generatedImage;
+      link.download = `pet-with-accessory-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const handleClear = () => {
@@ -314,10 +348,22 @@ export default function ContentAIGenerator() {
                   alt="Generated pet with accessory"
                   className="w-full rounded-lg"
                 />
-                <Button onClick={handleDownload} className="w-full">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Image
-                </Button>
+                <div className="flex gap-2">
+                  <Select value={downloadFormat} onValueChange={(v) => setDownloadFormat(v as "png" | "jpeg" | "webp")}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="png">PNG</SelectItem>
+                      <SelectItem value="jpeg">JPEG</SelectItem>
+                      <SelectItem value="webp">WebP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleDownload} className="flex-1">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Image
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="w-full h-80 rounded-lg bg-muted flex flex-col items-center justify-center gap-2 text-muted-foreground">
