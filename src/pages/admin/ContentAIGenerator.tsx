@@ -1,0 +1,294 @@
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload, Wand2, Download, Loader2, Cat, Dog, Sparkles } from "lucide-react";
+
+export default function ContentAIGenerator() {
+  const { toast } = useToast();
+  const [petImage, setPetImage] = useState<string | null>(null);
+  const [accessoryImage, setAccessoryImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const petInputRef = useRef<HTMLInputElement>(null);
+  const accessoryInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    setImage: (image: string | null) => void
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerate = async () => {
+    if (!petImage || !accessoryImage) {
+      toast({
+        title: "Missing images",
+        description: "Please upload both a pet image and an accessory/toy image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratedImage(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-pet-image", {
+        body: {
+          petImage,
+          accessoryImage,
+          prompt: customPrompt || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setGeneratedImage(data.generatedImage);
+      toast({
+        title: "Image generated!",
+        description: data.message || "Your pet image has been created successfully",
+      });
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast({
+        title: "Generation failed",
+        description: error instanceof Error ? error.message : "Failed to generate image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!generatedImage) return;
+    
+    const link = document.createElement("a");
+    link.href = generatedImage;
+    link.download = `pet-with-accessory-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleClear = () => {
+    setPetImage(null);
+    setAccessoryImage(null);
+    setGeneratedImage(null);
+    setCustomPrompt("");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <Sparkles className="h-8 w-8 text-primary" />
+          AI Pet Image Generator
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Upload a pet photo and an accessory/toy to create adorable combined images
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input Section */}
+        <div className="space-y-6">
+          {/* Pet Image Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Dog className="h-5 w-5" />
+                <Cat className="h-5 w-5" />
+                Pet Image
+              </CardTitle>
+              <CardDescription>Upload a photo of your dog or cat</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept="image/*"
+                ref={petInputRef}
+                onChange={(e) => handleImageUpload(e, setPetImage)}
+                className="hidden"
+              />
+              {petImage ? (
+                <div className="relative group">
+                  <img
+                    src={petImage}
+                    alt="Pet"
+                    className="w-full h-48 object-contain rounded-lg bg-muted"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => petInputRef.current?.click()}
+                  >
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full h-48 border-dashed flex flex-col gap-2"
+                  onClick={() => petInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-muted-foreground">Click to upload pet image</span>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Accessory Image Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Sparkles className="h-5 w-5" />
+                Accessory / Toy Image
+              </CardTitle>
+              <CardDescription>Upload the accessory or toy for your pet</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                type="file"
+                accept="image/*"
+                ref={accessoryInputRef}
+                onChange={(e) => handleImageUpload(e, setAccessoryImage)}
+                className="hidden"
+              />
+              {accessoryImage ? (
+                <div className="relative group">
+                  <img
+                    src={accessoryImage}
+                    alt="Accessory"
+                    className="w-full h-48 object-contain rounded-lg bg-muted"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => accessoryInputRef.current?.click()}
+                  >
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full h-48 border-dashed flex flex-col gap-2"
+                  onClick={() => accessoryInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-muted-foreground">Click to upload accessory/toy image</span>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Custom Prompt */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Custom Instructions (Optional)</CardTitle>
+              <CardDescription>
+                Add specific instructions for how the pet should interact with the item
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="e.g., Make the cat wear the bow tie on its neck, looking elegant..."
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                rows={3}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button
+              onClick={handleGenerate}
+              disabled={!petImage || !accessoryImage || isGenerating}
+              className="flex-1"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Generate Image
+                </>
+              )}
+            </Button>
+            <Button variant="outline" onClick={handleClear}>
+              Clear All
+            </Button>
+          </div>
+        </div>
+
+        {/* Output Section */}
+        <Card className="lg:sticky lg:top-6 h-fit">
+          <CardHeader>
+            <CardTitle>Generated Result</CardTitle>
+            <CardDescription>
+              Your AI-generated pet image will appear here
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isGenerating ? (
+              <div className="w-full h-80 rounded-lg bg-muted flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="text-muted-foreground">Creating your adorable pet image...</p>
+              </div>
+            ) : generatedImage ? (
+              <div className="space-y-4">
+                <img
+                  src={generatedImage}
+                  alt="Generated pet with accessory"
+                  className="w-full rounded-lg"
+                />
+                <Button onClick={handleDownload} className="w-full">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Image
+                </Button>
+              </div>
+            ) : (
+              <div className="w-full h-80 rounded-lg bg-muted flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <Sparkles className="h-12 w-12" />
+                <p>Upload images and click generate</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
