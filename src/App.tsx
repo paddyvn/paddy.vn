@@ -20,6 +20,7 @@ import ContentMetaobjects from "./pages/admin/ContentMetaobjects";
 import ContentFiles from "./pages/admin/ContentFiles";
 import ContentMenus from "./pages/admin/ContentMenus";
 import ContentBlog from "./pages/admin/ContentBlog";
+import ContentAIGenerator from "./pages/admin/ContentAIGenerator";
 import Pages from "./pages/admin/Pages";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="content/menus" element={<ContentMenus />} />
             <Route path="content/blog" element={<ContentBlog />} />
             <Route path="content/pages" element={<Pages />} />
+            <Route path="content/ai-generator" element={<ContentAIGenerator />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
