@@ -71,7 +71,11 @@ export function StorageFileBrowser() {
     }
   };
 
-  const isImage = (mimetype: string) => mimetype?.startsWith("image/");
+  const isImage = (url?: string) => {
+    if (!url) return true; // Assume image if no metadata
+    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg'];
+    return imageExts.some(ext => url.toLowerCase().includes(ext));
+  };
 
   return (
     <div className="space-y-4">
@@ -116,10 +120,7 @@ export function StorageFileBrowser() {
           Showing {files.length} of {allFiles.length} files
         </span>
         <span>
-          Total size:{" "}
-          {formatFileSize(
-            allFiles.reduce((acc, file) => acc + (file.metadata?.size || 0), 0)
-          )}
+          {allFiles.length} images
         </span>
       </div>
 
@@ -139,7 +140,7 @@ export function StorageFileBrowser() {
               onClick={() => setSelectedFile(file)}
               className="group relative aspect-square rounded-lg border overflow-hidden bg-muted cursor-pointer hover:border-primary transition-colors"
             >
-              {isImage(file.metadata?.mimetype) ? (
+              {isImage(file.publicUrl) ? (
                 <img
                   src={file.publicUrl}
                   alt={file.name}
@@ -156,9 +157,9 @@ export function StorageFileBrowser() {
                   <p className="text-xs text-white truncate font-medium">
                     {file.name}
                   </p>
-                  <p className="text-xs text-white/80">
-                    {formatFileSize(file.metadata?.size || 0)}
-                  </p>
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    {file.source}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -179,7 +180,7 @@ export function StorageFileBrowser() {
           {selectedFile && (
             <div className="space-y-4">
               <div className="aspect-video rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
-                {isImage(selectedFile.metadata?.mimetype) ? (
+                {isImage(selectedFile.publicUrl) ? (
                   <img
                     src={selectedFile.publicUrl}
                     alt={selectedFile.name}
@@ -198,14 +199,8 @@ export function StorageFileBrowser() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Size:</span>
-                  <Badge variant="outline">
-                    {formatFileSize(selectedFile.metadata?.size || 0)}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Type:</span>
-                  <Badge variant="outline">{selectedFile.metadata?.mimetype}</Badge>
+                  <span className="text-sm font-medium">Source:</span>
+                  <Badge variant="outline">{selectedFile.source}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Created:</span>

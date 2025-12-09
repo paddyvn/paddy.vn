@@ -5,13 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 interface StorageFile {
   id: string;
   name: string;
+  source: "product" | "collection" | "uploaded";
   created_at: string;
-  updated_at: string;
-  metadata: {
-    size: number;
-    mimetype: string;
-    cacheControl: string;
-  };
   publicUrl: string;
 }
 
@@ -26,91 +21,66 @@ export function useStorageFiles(bucketName = "product-images") {
     try {
       const allFilesData: StorageFile[] = [];
       
-      // List top-level folders
-      const { data: rootItems, error: rootError } = await supabase.storage
+      // Fetch product images from database
+      const { data: productImages, error: productError } = await supabase
+        .from("product_images")
+        .select("id, image_url, alt_text, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      
+      if (productError) throw productError;
+      
+      for (const img of productImages || []) {
+        if (img.image_url) {
+          allFilesData.push({
+            id: img.id,
+            name: img.alt_text || extractFileName(img.image_url),
+            source: "product",
+            created_at: img.created_at,
+            publicUrl: img.image_url,
+          });
+        }
+      }
+      
+      // Fetch collection images from database
+      const { data: collections, error: collectionError } = await supabase
+        .from("categories")
+        .select("id, name, image_url, created_at")
+        .not("image_url", "is", null)
+        .order("created_at", { ascending: false });
+      
+      if (collectionError) throw collectionError;
+      
+      for (const col of collections || []) {
+        if (col.image_url) {
+          allFilesData.push({
+            id: col.id,
+            name: col.name || extractFileName(col.image_url),
+            source: "collection",
+            created_at: col.created_at,
+            publicUrl: col.image_url,
+          });
+        }
+      }
+      
+      // Also fetch any files uploaded directly to storage root
+      const { data: rootItems } = await supabase.storage
         .from(bucketName)
         .list("", { limit: 100 });
       
-      if (rootError) throw rootError;
-      
-      const folders: string[] = [];
-      
       for (const item of rootItems || []) {
-        if (item.id === null) {
-          folders.push(item.name);
-        } else {
+        if (item.id !== null) {
           allFilesData.push({
             id: item.id,
             name: item.name,
+            source: "uploaded",
             created_at: item.created_at,
-            updated_at: item.updated_at,
-            metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
             publicUrl: supabase.storage.from(bucketName).getPublicUrl(item.name).data.publicUrl,
           });
         }
       }
       
-      // Fetch files from each top-level folder with 2 levels of depth
-      for (const folder of folders) {
-        const { data: folderItems } = await supabase.storage
-          .from(bucketName)
-          .list(folder, { limit: 200 });
-        
-        for (const item of folderItems || []) {
-          if (item.id === null) {
-            // This is a subfolder - list its contents (level 2)
-            const subPath = `${folder}/${item.name}`;
-            const { data: subItems } = await supabase.storage
-              .from(bucketName)
-              .list(subPath, { limit: 100 });
-            
-            for (const subItem of subItems || []) {
-              if (subItem.id === null) {
-                // Level 3 subfolder
-                const subSubPath = `${subPath}/${subItem.name}`;
-                const { data: subSubItems } = await supabase.storage
-                  .from(bucketName)
-                  .list(subSubPath, { limit: 50 });
-                
-                for (const subSubItem of subSubItems || []) {
-                  if (subSubItem.id !== null) {
-                    const fullPath = `${subSubPath}/${subSubItem.name}`;
-                    allFilesData.push({
-                      id: subSubItem.id,
-                      name: fullPath,
-                      created_at: subSubItem.created_at,
-                      updated_at: subSubItem.updated_at,
-                      metadata: subSubItem.metadata as { size: number; mimetype: string; cacheControl: string },
-                      publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
-                    });
-                  }
-                }
-              } else {
-                const fullPath = `${subPath}/${subItem.name}`;
-                allFilesData.push({
-                  id: subItem.id,
-                  name: fullPath,
-                  created_at: subItem.created_at,
-                  updated_at: subItem.updated_at,
-                  metadata: subItem.metadata as { size: number; mimetype: string; cacheControl: string },
-                  publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
-                });
-              }
-            }
-          } else {
-            const fullPath = `${folder}/${item.name}`;
-            allFilesData.push({
-              id: item.id,
-              name: fullPath,
-              created_at: item.created_at,
-              updated_at: item.updated_at,
-              metadata: item.metadata as { size: number; mimetype: string; cacheControl: string },
-              publicUrl: supabase.storage.from(bucketName).getPublicUrl(fullPath).data.publicUrl,
-            });
-          }
-        }
-      }
-      
+      // Sort by created_at descending
       allFilesData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setFiles(allFilesData);
     } catch (error) {
@@ -122,6 +92,15 @@ export function useStorageFiles(bucketName = "product-images") {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const extractFileName = (url: string): string => {
+    try {
+      const parts = url.split("/");
+      return decodeURIComponent(parts[parts.length - 1]) || "Unknown";
+    } catch {
+      return "Unknown";
     }
   };
 
