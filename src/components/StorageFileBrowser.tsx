@@ -35,14 +35,30 @@ import {
   Image as ImageIcon,
   File,
   Loader2,
+  Package,
+  FolderOpen,
+  FileText,
+  UploadCloud,
 } from "lucide-react";
-import { useStorageFiles } from "@/hooks/useStorageFiles";
+import { useStorageFiles, SourceFilter } from "@/hooks/useStorageFiles";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const SOURCE_TABS: { value: SourceFilter; label: string; icon: React.ReactNode }[] = [
+  { value: "all", label: "All", icon: null },
+  { value: "product", label: "Products", icon: <Package className="h-4 w-4" /> },
+  { value: "collection", label: "Collections", icon: <FolderOpen className="h-4 w-4" /> },
+  { value: "blog", label: "Blog", icon: <FileText className="h-4 w-4" /> },
+  { value: "uploaded", label: "Uploaded", icon: <UploadCloud className="h-4 w-4" /> },
+];
 
 export function StorageFileBrowser() {
   const {
     files,
     allFiles,
     filteredCount,
+    sourceCounts,
+    sourceFilter,
+    setSourceFilter,
     loading,
     searchQuery,
     setSearchQuery,
@@ -128,10 +144,24 @@ export function StorageFileBrowser() {
         />
       </div>
 
+      {/* Source Filter Tabs */}
+      <Tabs value={sourceFilter} onValueChange={(v) => setSourceFilter(v as SourceFilter)}>
+        <TabsList className="w-full justify-start">
+          {SOURCE_TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+              {tab.icon}
+              {tab.label}
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {sourceCounts[tab.value].toLocaleString()}
+              </Badge>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredCount)} of {filteredCount} files
-          {filteredCount !== allFiles.length && ` (${allFiles.length} total)`}
+          Showing {filteredCount > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredCount)} of {filteredCount.toLocaleString()} files
         </span>
         <span>
           Page {currentPage} of {totalPages}
