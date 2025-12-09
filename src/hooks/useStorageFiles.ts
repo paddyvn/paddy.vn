@@ -5,10 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 interface StorageFile {
   id: string;
   name: string;
-  source: "product" | "collection" | "uploaded";
+  source: "product" | "collection" | "blog" | "uploaded";
   created_at: string;
   publicUrl: string;
 }
+
+export type SourceFilter = "all" | "product" | "collection" | "blog" | "uploaded";
 
 const ITEMS_PER_PAGE = 60;
 
@@ -18,6 +20,7 @@ export function useStorageFiles(bucketName = "product-images") {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
 
   const extractFileName = (url: string): string => {
     try {
@@ -91,6 +94,27 @@ export function useStorageFiles(bucketName = "product-images") {
             source: "collection",
             created_at: col.created_at,
             publicUrl: col.image_url,
+          });
+        }
+      }
+
+      // Fetch blog post images from database
+      const { data: blogPosts, error: blogError } = await supabase
+        .from("blog_posts")
+        .select("id, title, image_url, created_at")
+        .not("image_url", "is", null)
+        .order("created_at", { ascending: false });
+      
+      if (blogError) throw blogError;
+      
+      for (const post of blogPosts || []) {
+        if (post.image_url) {
+          allFilesData.push({
+            id: post.id,
+            name: post.title || extractFileName(post.image_url),
+            source: "blog",
+            created_at: post.created_at,
+            publicUrl: post.image_url,
           });
         }
       }
@@ -194,14 +218,25 @@ export function useStorageFiles(bucketName = "product-images") {
     fetchFiles();
   }, []);
 
-  // Reset to page 1 when search query changes
+  // Reset to page 1 when search query or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, sourceFilter]);
 
-  const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredFiles = files.filter((file) => {
+    const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSource = sourceFilter === "all" || file.source === sourceFilter;
+    return matchesSearch && matchesSource;
+  });
+
+  // Count by source
+  const sourceCounts = {
+    all: files.length,
+    product: files.filter(f => f.source === "product").length,
+    collection: files.filter(f => f.source === "collection").length,
+    blog: files.filter(f => f.source === "blog").length,
+    uploaded: files.filter(f => f.source === "uploaded").length,
+  };
 
   const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
   const paginatedFiles = filteredFiles.slice(
@@ -213,6 +248,9 @@ export function useStorageFiles(bucketName = "product-images") {
     files: paginatedFiles,
     allFiles: files,
     filteredCount: filteredFiles.length,
+    sourceCounts,
+    sourceFilter,
+    setSourceFilter,
     loading,
     searchQuery,
     setSearchQuery,
