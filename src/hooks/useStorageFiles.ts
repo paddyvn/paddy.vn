@@ -10,12 +10,14 @@ interface StorageFile {
   publicUrl: string;
 }
 
+const ITEMS_PER_PAGE = 60;
+
 export function useStorageFiles(bucketName = "product-images") {
   const { toast } = useToast();
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [currentPage, setCurrentPage] = useState(1);
   const fetchFiles = async () => {
     setLoading(true);
     try {
@@ -170,16 +172,32 @@ export function useStorageFiles(bucketName = "product-images") {
     fetchFiles();
   }, []);
 
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
+  const paginatedFiles = filteredFiles.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return {
-    files: filteredFiles,
+    files: paginatedFiles,
     allFiles: files,
+    filteredCount: filteredFiles.length,
     loading,
     searchQuery,
     setSearchQuery,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    itemsPerPage: ITEMS_PER_PAGE,
     uploadFile,
     deleteFile,
     copyUrl,

@@ -20,6 +20,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Search,
   Upload,
   Trash2,
@@ -28,15 +36,20 @@ import {
   File,
   Loader2,
 } from "lucide-react";
-import { useStorageFiles, formatFileSize } from "@/hooks/useStorageFiles";
+import { useStorageFiles } from "@/hooks/useStorageFiles";
 
 export function StorageFileBrowser() {
   const {
     files,
     allFiles,
+    filteredCount,
     loading,
     searchQuery,
     setSearchQuery,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    itemsPerPage,
     uploadFile,
     deleteFile,
     copyUrl,
@@ -117,10 +130,11 @@ export function StorageFileBrowser() {
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          Showing {files.length} of {allFiles.length} files
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredCount)} of {filteredCount} files
+          {filteredCount !== allFiles.length && ` (${allFiles.length} total)`}
         </span>
         <span>
-          {allFiles.length} images
+          Page {currentPage} of {totalPages}
         </span>
       </div>
 
@@ -165,6 +179,51 @@ export function StorageFileBrowser() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(pageNum)}
+                    isActive={currentPage === pageNum}
+                    className="cursor-pointer"
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
 
       {/* File Details Dialog */}
