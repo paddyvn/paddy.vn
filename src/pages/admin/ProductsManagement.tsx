@@ -65,11 +65,14 @@ export default function ProductsManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [vendorFilter, setVendorFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [vendorOpen, setVendorOpen] = useState(false);
   const [tagOpen, setTagOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [vendorSearchText, setVendorSearchText] = useState("");
   const [tagSearchText, setTagSearchText] = useState("");
+  const [categorySearchText, setCategorySearchText] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const syncProducts = useSyncProducts();
@@ -79,7 +82,7 @@ export default function ProductsManagement() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, vendorFilter, tagFilter]);
+  }, [searchQuery, statusFilter, vendorFilter, tagFilter, categoryFilter]);
 
   // Fetch unique vendors directly with proper query
   const { data: vendors, isLoading: vendorsLoading, error: vendorsError } = useQuery({
@@ -178,10 +181,47 @@ export default function ProductsManagement() {
     );
   }, [tags, tagSearchText]);
 
+  // Fetch categories (collections)
+  const { data: categories } = useQuery({
+    queryKey: ["product-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Manually filter categories based on search
+  const filteredCategories = useMemo(() => {
+    if (!categories) return [];
+    if (!categorySearchText.trim()) return categories;
+    
+    const searchLower = categorySearchText.toLowerCase().trim();
+    return categories.filter(cat =>
+      cat.name.toLowerCase().startsWith(searchLower)
+    );
+  }, [categories, categorySearchText]);
+
   // Get total count
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-products-count", searchQuery, statusFilter, vendorFilter, tagFilter],
+    queryKey: ["admin-products-count", searchQuery, statusFilter, vendorFilter, tagFilter, categoryFilter],
     queryFn: async () => {
+      // If category filter is applied, we need to get product IDs from product_collections first
+      let productIdsInCategory: string[] | null = null;
+      if (categoryFilter !== "all") {
+        const { data: pcData } = await supabase
+          .from("product_collections")
+          .select("product_id")
+          .eq("collection_id", categoryFilter);
+        productIdsInCategory = pcData?.map(pc => pc.product_id) || [];
+        if (productIdsInCategory.length === 0) return 0;
+      }
+
       let query = supabase
         .from("products")
         .select("*", { count: "exact", head: true });
@@ -202,6 +242,10 @@ export default function ProductsManagement() {
         query = query.ilike("tags", `%${tagFilter}%`);
       }
 
+      if (productIdsInCategory) {
+        query = query.in("id", productIdsInCategory);
+      }
+
       const { count, error } = await query;
       if (error) throw error;
       return count || 0;
@@ -209,10 +253,21 @@ export default function ProductsManagement() {
   });
 
   const { data: products, isLoading, refetch } = useQuery({
-    queryKey: ["admin-products", searchQuery, statusFilter, vendorFilter, tagFilter, currentPage],
+    queryKey: ["admin-products", searchQuery, statusFilter, vendorFilter, tagFilter, categoryFilter, currentPage],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
+
+      // If category filter is applied, we need to get product IDs from product_collections first
+      let productIdsInCategory: string[] | null = null;
+      if (categoryFilter !== "all") {
+        const { data: pcData } = await supabase
+          .from("product_collections")
+          .select("product_id")
+          .eq("collection_id", categoryFilter);
+        productIdsInCategory = pcData?.map(pc => pc.product_id) || [];
+        if (productIdsInCategory.length === 0) return [];
+      }
 
       let query = supabase
         .from("products")
@@ -241,6 +296,10 @@ export default function ProductsManagement() {
 
       if (tagFilter !== "all") {
         query = query.ilike("tags", `%${tagFilter}%`);
+      }
+
+      if (productIdsInCategory) {
+        query = query.in("id", productIdsInCategory);
       }
 
       const { data, error } = await query;
@@ -492,12 +551,84 @@ export default function ProductsManagement() {
           </PopoverContent>
         </Popover>
 
-        {(statusFilter !== "all" || vendorFilter !== "all" || tagFilter !== "all") && (
+        <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={categoryOpen}
+              className="w-[180px] justify-between"
+            >
+              {categoryFilter === "all" 
+                ? "All Categories" 
+                : categories?.find(c => c.id === categoryFilter)?.name || "All Categories"}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
+            <div className="flex flex-col">
+              <div className="p-2 border-b">
+                <Input
+                  placeholder="Search categories..."
+                  value={categorySearchText}
+                  onChange={(e) => setCategorySearchText(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                <div
+                  className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                  onClick={() => {
+                    setCategoryFilter("all");
+                    setCategoryOpen(false);
+                    setCategorySearchText("");
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      categoryFilter === "all" ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  All Categories
+                </div>
+                {filteredCategories.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No category found.
+                  </div>
+                ) : (
+                  filteredCategories.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                      onClick={() => {
+                        setCategoryFilter(cat.id);
+                        setCategoryOpen(false);
+                        setCategorySearchText("");
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          categoryFilter === cat.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {cat.name}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {(statusFilter !== "all" || vendorFilter !== "all" || tagFilter !== "all" || categoryFilter !== "all") && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
               setStatusFilter("all");
+              setCategoryFilter("all");
               setVendorFilter("all");
               setTagFilter("all");
             }}
