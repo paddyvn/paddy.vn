@@ -25,8 +25,7 @@ export function useStorageFiles(bucketName = "product-images") {
       const { data: productImages, error: productError } = await supabase
         .from("product_images")
         .select("id, image_url, alt_text, created_at")
-        .order("created_at", { ascending: false })
-        .limit(500);
+        .order("created_at", { ascending: false });
       
       if (productError) throw productError;
       
