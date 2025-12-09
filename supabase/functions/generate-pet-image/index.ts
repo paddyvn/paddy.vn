@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { petImage, accessoryImage, prompt } = await req.json();
+    const { petImage, accessoryImage, prompt, size } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -20,10 +20,15 @@ serve(async (req) => {
 
     console.log("Starting pet image generation with accessory...");
     console.log("Prompt:", prompt);
+    console.log("Size:", size);
 
+    // Parse size for the prompt
+    const sizeInstruction = size ? `Generate the image at ${size} resolution.` : "";
+    
     const systemPrompt = `You are an expert at compositing images of pets with accessories and toys. 
 Your task is to take the pet image and the accessory/toy image, then create a realistic composite where the pet appears to be wearing or playing with the item.
-Make it look natural and adorable. Maintain the pet's original pose and expression as much as possible while integrating the accessory naturally.`;
+Make it look natural and adorable. Maintain the pet's original pose and expression as much as possible while integrating the accessory naturally.
+${sizeInstruction}`;
 
     const userPrompt = prompt || "Combine these two images: make the pet wear or play with the accessory/toy in a natural, cute way. The result should look realistic and adorable.";
 
