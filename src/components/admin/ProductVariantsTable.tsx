@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, Check } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Plus, Package, Check, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -13,6 +14,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -35,6 +45,30 @@ interface VariantEdit {
   stock_quantity: number;
 }
 
+interface NewVariant {
+  name: string;
+  option1: string;
+  option2: string;
+  option3: string;
+  price: number;
+  compare_at_price: number | null;
+  sku: string;
+  barcode: string;
+  stock_quantity: number;
+}
+
+const defaultNewVariant: NewVariant = {
+  name: "",
+  option1: "",
+  option2: "",
+  option3: "",
+  price: 0,
+  compare_at_price: null,
+  sku: "",
+  barcode: "",
+  stock_quantity: 0,
+};
+
 export function ProductVariantsTable({
   productId,
   option1Name,
@@ -44,6 +78,8 @@ export function ProductVariantsTable({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editedVariants, setEditedVariants] = useState<Record<string, VariantEdit>>({});
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newVariant, setNewVariant] = useState<NewVariant>(defaultNewVariant);
 
   const { data: variants, isLoading } = useQuery({
     queryKey: ["product-variants", productId],
@@ -178,6 +214,73 @@ export function ProductVariantsTable({
     },
   });
 
+  const addVariantMutation = useMutation({
+    mutationFn: async (variant: NewVariant) => {
+      // Generate variant name from options if not provided
+      const variantName = variant.name || [variant.option1, variant.option2, variant.option3]
+        .filter(Boolean)
+        .join(" / ") || "Default";
+
+      const { error } = await supabase
+        .from("product_variants")
+        .insert({
+          product_id: productId,
+          name: variantName,
+          option1: variant.option1 || null,
+          option2: variant.option2 || null,
+          option3: variant.option3 || null,
+          price: variant.price,
+          compare_at_price: variant.compare_at_price || null,
+          sku: variant.sku || null,
+          barcode: variant.barcode || null,
+          stock_quantity: variant.stock_quantity,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
+      setIsAddDialogOpen(false);
+      setNewVariant(defaultNewVariant);
+      toast({
+        title: "Variant added",
+        description: "The new variant has been created successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error adding variant",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteVariantMutation = useMutation({
+    mutationFn: async (variantId: string) => {
+      const { error } = await supabase
+        .from("product_variants")
+        .delete()
+        .eq("id", variantId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
+      toast({
+        title: "Variant deleted",
+        description: "The variant has been removed.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting variant",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handlePriceChange = (variantId: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     setEditedVariants((prev) => ({
@@ -208,6 +311,10 @@ export function ProductVariantsTable({
         stock_quantity: edited.stock_quantity,
       });
     }
+  };
+
+  const handleAddVariant = () => {
+    addVariantMutation.mutate(newVariant);
   };
 
   const totalInventory = Object.values(editedVariants).reduce(
@@ -259,10 +366,163 @@ export function ProductVariantsTable({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Variants</CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary">
-            <Plus className="h-4 w-4 mr-1" />
-            Add variant
-          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-primary">
+                <Plus className="h-4 w-4 mr-1" />
+                Add variant
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Add new variant</DialogTitle>
+                <DialogDescription>
+                  Create a new product variant with its own price and inventory.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                {option1Name && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="option1" className="text-right">
+                      {option1Name}
+                    </Label>
+                    <Input
+                      id="option1"
+                      value={newVariant.option1}
+                      onChange={(e) => setNewVariant(prev => ({ ...prev, option1: e.target.value }))}
+                      className="col-span-3"
+                      placeholder={`Enter ${option1Name}`}
+                    />
+                  </div>
+                )}
+                {option2Name && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="option2" className="text-right">
+                      {option2Name}
+                    </Label>
+                    <Input
+                      id="option2"
+                      value={newVariant.option2}
+                      onChange={(e) => setNewVariant(prev => ({ ...prev, option2: e.target.value }))}
+                      className="col-span-3"
+                      placeholder={`Enter ${option2Name}`}
+                    />
+                  </div>
+                )}
+                {option3Name && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="option3" className="text-right">
+                      {option3Name}
+                    </Label>
+                    <Input
+                      id="option3"
+                      value={newVariant.option3}
+                      onChange={(e) => setNewVariant(prev => ({ ...prev, option3: e.target.value }))}
+                      className="col-span-3"
+                      placeholder={`Enter ${option3Name}`}
+                    />
+                  </div>
+                )}
+                {!option1Name && !option2Name && !option3Name && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="variantName" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="variantName"
+                      value={newVariant.name}
+                      onChange={(e) => setNewVariant(prev => ({ ...prev, name: e.target.value }))}
+                      className="col-span-3"
+                      placeholder="e.g., Small, Medium, Large"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="price" className="text-right">
+                    Price
+                  </Label>
+                  <div className="col-span-3 relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={newVariant.price}
+                      onChange={(e) => setNewVariant(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="compare_at_price" className="text-right">
+                    Compare at
+                  </Label>
+                  <div className="col-span-3 relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
+                    <Input
+                      id="compare_at_price"
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={newVariant.compare_at_price || ""}
+                      onChange={(e) => setNewVariant(prev => ({ ...prev, compare_at_price: e.target.value ? parseFloat(e.target.value) : null }))}
+                      className="pl-7"
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="sku" className="text-right">
+                    SKU
+                  </Label>
+                  <Input
+                    id="sku"
+                    value={newVariant.sku}
+                    onChange={(e) => setNewVariant(prev => ({ ...prev, sku: e.target.value }))}
+                    className="col-span-3"
+                    placeholder="Stock keeping unit"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="barcode" className="text-right">
+                    Barcode
+                  </Label>
+                  <Input
+                    id="barcode"
+                    value={newVariant.barcode}
+                    onChange={(e) => setNewVariant(prev => ({ ...prev, barcode: e.target.value }))}
+                    className="col-span-3"
+                    placeholder="ISBN, UPC, GTIN, etc."
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="stock" className="text-right">
+                    Quantity
+                  </Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    min="0"
+                    value={newVariant.stock_quantity}
+                    onChange={(e) => setNewVariant(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAddVariant}
+                  disabled={addVariantMutation.isPending}
+                >
+                  {addVariantMutation.isPending ? "Adding..." : "Add variant"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -292,9 +552,10 @@ export function ProductVariantsTable({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[40%]">Variant</TableHead>
+                  <TableHead className="w-[35%]">Variant</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Available</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -392,6 +653,18 @@ export function ProductVariantsTable({
                         className="w-20 ml-auto text-right h-8"
                       />
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteVariantMutation.mutate(variant.id)}
+                        disabled={deleteVariantMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                   );
                 })}
@@ -402,6 +675,7 @@ export function ProductVariantsTable({
                   <TableCell className="text-right font-medium">
                     {totalInventory}
                   </TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -409,7 +683,12 @@ export function ProductVariantsTable({
         ) : (
           <div className="border-2 border-dashed rounded-lg p-6 text-center">
             <p className="text-sm text-muted-foreground">No variants configured</p>
-            <Button variant="secondary" size="sm" className="mt-2">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => setIsAddDialogOpen(true)}
+            >
               <Plus className="h-4 w-4 mr-1" />
               Add variant
             </Button>
