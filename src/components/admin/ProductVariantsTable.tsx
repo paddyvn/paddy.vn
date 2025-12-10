@@ -280,7 +280,7 @@ function OptionCard({
                 </div>
               ))}
               {/* Add new value input with suggestions */}
-              <div className="flex items-center gap-2 relative">
+              <div className="flex items-center gap-2">
                 <div className="w-4" /> {/* Spacer for alignment */}
                 <div className="flex-1 relative">
                   <Input
@@ -334,7 +334,19 @@ function OptionCard({
                     </div>
                   )}
                 </div>
-                <div className="w-9" /> {/* Spacer for alignment */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => {
+                    handleAddValue();
+                    setShowValueSuggestions(false);
+                  }}
+                  disabled={!newValue.trim()}
+                >
+                  Add
+                </Button>
               </div>
             </div>
           </div>
