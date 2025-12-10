@@ -188,7 +188,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   return (
     <div className="border rounded-lg overflow-hidden bg-background">
       {/* Toolbar */}
-      <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 flex-wrap">
+      <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 overflow-x-auto">
         {/* Block Type Select */}
         <Select value={getCurrentBlockType()} onValueChange={setBlockType}>
           <SelectTrigger className="h-8 w-[120px] text-xs border-0 bg-transparent hover:bg-muted">
