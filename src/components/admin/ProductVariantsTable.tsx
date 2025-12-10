@@ -760,8 +760,8 @@ export function ProductVariantsTable({
           </div>
         )}
 
-        {/* Add another option - Shopify style dropdown */}
-        {canAddMoreOptions && (
+        {/* Add another option - Shopify style dropdown (only show when there ARE existing options) */}
+        {hasOptions && canAddMoreOptions && (
           <Popover open={showAddOptionMenu} onOpenChange={setShowAddOptionMenu}>
             <PopoverTrigger asChild>
               <Button 
@@ -819,7 +819,7 @@ export function ProductVariantsTable({
           </Popover>
         )}
 
-        {/* No options yet - show add option prompt */}
+        {/* No options yet - show add option prompt (only show when NO options exist) */}
         {!hasOptions && (
           <div className="border-2 border-dashed rounded-lg p-4">
             <p className="text-sm text-muted-foreground mb-2">
