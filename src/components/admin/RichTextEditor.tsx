@@ -5,6 +5,7 @@ import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
 import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [linkOpen, setLinkOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
   const [hexColor, setHexColor] = useState("#000000");
+  const [hexBgColor, setHexBgColor] = useState("#eab308");
 
   const editor = useEditor({
     extensions: [
@@ -77,6 +79,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       }),
       TextStyle,
       Color,
+      Highlight.configure({
+        multicolor: true,
+      }),
     ],
     content: value,
     editorProps: {
@@ -247,8 +252,60 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                   ))}
                 </div>
               </TabsContent>
-              <TabsContent value="background" className="text-center text-sm text-muted-foreground py-4">
-                Background color coming soon
+              <TabsContent value="background" className="space-y-3">
+                {/* Hex Input */}
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="h-8 w-8 rounded border"
+                    style={{ backgroundColor: hexBgColor }}
+                  />
+                  <Input
+                    value={hexBgColor}
+                    onChange={(e) => setHexBgColor(e.target.value)}
+                    onBlur={() => {
+                      if (/^#[0-9A-Fa-f]{6}$/.test(hexBgColor)) {
+                        editor.chain().focus().toggleHighlight({ color: hexBgColor }).run();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && /^#[0-9A-Fa-f]{6}$/.test(hexBgColor)) {
+                        editor.chain().focus().toggleHighlight({ color: hexBgColor }).run();
+                        setColorOpen(false);
+                      }
+                    }}
+                    placeholder="#eab308"
+                    className="h-8"
+                  />
+                </div>
+                {/* Preset Colors */}
+                <div className="grid grid-cols-7 gap-1.5">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className="h-6 w-6 rounded border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: color }}
+                      onClick={() => {
+                        editor.chain().focus().toggleHighlight({ color }).run();
+                        setHexBgColor(color);
+                        setColorOpen(false);
+                      }}
+                    />
+                  ))}
+                </div>
+                {/* Remove highlight button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    editor.chain().focus().unsetHighlight().run();
+                    setColorOpen(false);
+                  }}
+                >
+                  Remove highlight
+                </Button>
               </TabsContent>
             </Tabs>
           </PopoverContent>
