@@ -8,6 +8,10 @@ import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
 import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +30,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Bold,
   Italic,
   Underline as UnderlineIcon,
@@ -42,6 +53,7 @@ import {
   Type,
   ImageIcon,
   Video,
+  Table as TableIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -98,6 +110,23 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       Youtube.configure({
         HTMLAttributes: {
           class: "w-full aspect-video rounded-lg",
+        },
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: "border-collapse border border-border",
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: "border border-border bg-muted font-semibold p-2",
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: "border border-border p-2",
         },
       }),
     ],
@@ -498,6 +527,75 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* Table */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn("h-8 px-2 gap-1", editor.isActive("table") && "bg-muted")}
+            >
+              <TableIcon className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            >
+              Insert table
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              disabled={!editor.can().addRowBefore()}
+            >
+              Insert row above
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              disabled={!editor.can().addRowAfter()}
+            >
+              Insert row below
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              disabled={!editor.can().addColumnBefore()}
+            >
+              Insert column before
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              disabled={!editor.can().addColumnAfter()}
+            >
+              Insert column after
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              disabled={!editor.can().deleteRow()}
+              className="text-destructive"
+            >
+              Delete row
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              disabled={!editor.can().deleteColumn()}
+              className="text-destructive"
+            >
+              Delete column
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              disabled={!editor.can().deleteTable()}
+              className="text-destructive"
+            >
+              Delete table
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
