@@ -50,7 +50,7 @@ import {
   Undo,
   Redo,
   ChevronDown,
-  Type,
+  Baseline,
   ImageIcon,
   Video,
   Table as TableIcon,
@@ -246,7 +246,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               className="h-8 w-8"
             >
               <div className="flex flex-col items-center">
-                <Type className="h-4 w-4" />
+                <Baseline className="h-4 w-4" />
                 <div 
                   className="h-0.5 w-4 mt-0.5 rounded-full" 
                   style={{ backgroundColor: editor.getAttributes("textStyle").color || "#000000" }}
