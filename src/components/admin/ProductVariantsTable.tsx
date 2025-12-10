@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Package } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -22,12 +24,21 @@ interface ProductVariantsTableProps {
   option3Name?: string | null;
 }
 
+interface VariantEdit {
+  price: number;
+  stock_quantity: number;
+}
+
 export function ProductVariantsTable({
   productId,
   option1Name,
   option2Name,
   option3Name,
 }: ProductVariantsTableProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [editedVariants, setEditedVariants] = useState<Record<string, VariantEdit>>({});
+
   const { data: variants, isLoading } = useQuery({
     queryKey: ["product-variants", productId],
     queryFn: async () => {
@@ -42,17 +53,76 @@ export function ProductVariantsTable({
     enabled: !!productId,
   });
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
+  // Initialize editedVariants when variants load
+  useEffect(() => {
+    if (variants) {
+      const initial: Record<string, VariantEdit> = {};
+      variants.forEach((v) => {
+        initial[v.id] = {
+          price: v.price,
+          stock_quantity: v.stock_quantity || 0,
+        };
+      });
+      setEditedVariants(initial);
+    }
+  }, [variants]);
+
+  const updateVariantMutation = useMutation({
+    mutationFn: async ({ variantId, price, stock_quantity }: { variantId: string; price: number; stock_quantity: number }) => {
+      const { error } = await supabase
+        .from("product_variants")
+        .update({ price, stock_quantity })
+        .eq("id", variantId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating variant",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePriceChange = (variantId: string, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    setEditedVariants((prev) => ({
+      ...prev,
+      [variantId]: { ...prev[variantId], price: numValue },
+    }));
   };
 
-  const totalInventory = variants?.reduce(
+  const handleStockChange = (variantId: string, value: string) => {
+    const numValue = parseInt(value) || 0;
+    setEditedVariants((prev) => ({
+      ...prev,
+      [variantId]: { ...prev[variantId], stock_quantity: numValue },
+    }));
+  };
+
+  const handleBlur = (variantId: string) => {
+    const variant = variants?.find((v) => v.id === variantId);
+    const edited = editedVariants[variantId];
+    
+    if (!variant || !edited) return;
+    
+    // Only update if values changed
+    if (variant.price !== edited.price || (variant.stock_quantity || 0) !== edited.stock_quantity) {
+      updateVariantMutation.mutate({
+        variantId,
+        price: edited.price,
+        stock_quantity: edited.stock_quantity,
+      });
+    }
+  };
+
+  const totalInventory = Object.values(editedVariants).reduce(
     (sum, v) => sum + (v.stock_quantity || 0),
     0
-  ) || 0;
+  );
 
   // Get unique option values for display
   const getOptionValues = () => {
@@ -155,17 +225,19 @@ export function ProductVariantsTable({
                     <TableCell className="text-right">
                       <Input
                         type="number"
-                        value={variant.price}
+                        value={editedVariants[variant.id]?.price ?? variant.price}
+                        onChange={(e) => handlePriceChange(variant.id, e.target.value)}
+                        onBlur={() => handleBlur(variant.id)}
                         className="w-32 ml-auto text-right h-8"
-                        readOnly
                       />
                     </TableCell>
                     <TableCell className="text-right">
                       <Input
                         type="number"
-                        value={variant.stock_quantity || 0}
+                        value={editedVariants[variant.id]?.stock_quantity ?? variant.stock_quantity ?? 0}
+                        onChange={(e) => handleStockChange(variant.id, e.target.value)}
+                        onBlur={() => handleBlur(variant.id)}
                         className="w-20 ml-auto text-right h-8"
-                        readOnly
                       />
                     </TableCell>
                   </TableRow>
