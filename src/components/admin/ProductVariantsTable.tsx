@@ -71,30 +71,6 @@ interface VariantEdit {
   stock_quantity: number;
 }
 
-interface NewVariant {
-  name: string;
-  option1: string;
-  option2: string;
-  option3: string;
-  price: number;
-  compare_at_price: number | null;
-  sku: string;
-  barcode: string;
-  stock_quantity: number;
-}
-
-const defaultNewVariant: NewVariant = {
-  name: "",
-  option1: "",
-  option2: "",
-  option3: "",
-  price: 0,
-  compare_at_price: null,
-  sku: "",
-  barcode: "",
-  stock_quantity: 0,
-};
-
 interface OptionTemplate {
   id: string;
   name: string;
@@ -332,8 +308,6 @@ export function ProductVariantsTable({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editedVariants, setEditedVariants] = useState<Record<string, VariantEdit>>({});
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newVariant, setNewVariant] = useState<NewVariant>(defaultNewVariant);
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
   
   // Option management state
@@ -482,35 +456,6 @@ export function ProductVariantsTable({
     },
     onError: (error) => {
       toast({ title: "Error updating variant", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const addVariantMutation = useMutation({
-    mutationFn: async (variant: NewVariant) => {
-      const variantName = variant.name || [variant.option1, variant.option2, variant.option3].filter(Boolean).join(" / ") || "Default";
-      const { error } = await supabase.from("product_variants").insert({
-        product_id: productId,
-        name: variantName,
-        option1: variant.option1 || null,
-        option2: variant.option2 || null,
-        option3: variant.option3 || null,
-        price: variant.price,
-        compare_at_price: variant.compare_at_price || null,
-        sku: variant.sku || null,
-        barcode: variant.barcode || null,
-        stock_quantity: variant.stock_quantity,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
-      setIsAddDialogOpen(false);
-      setNewVariant(defaultNewVariant);
-      toast({ title: "Variant added", description: "The new variant has been created successfully." });
-    },
-    onError: (error) => {
-      toast({ title: "Error adding variant", description: error.message, variant: "destructive" });
     },
   });
 
@@ -884,10 +829,6 @@ export function ProductVariantsTable({
     }
   };
 
-  const handleAddVariant = () => {
-    addVariantMutation.mutate(newVariant);
-  };
-
   const handleSelectAll = (checked: boolean) => {
     if (checked && variants) {
       setSelectedVariants(variants.map(v => v.id));
@@ -968,13 +909,7 @@ export function ProductVariantsTable({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium">Variants</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Add variant
-          </Button>
-        </div>
+        <CardTitle className="text-base font-medium">Variants</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Options Section - Shopify Style */}
@@ -1467,116 +1402,11 @@ export function ProductVariantsTable({
 
         {(!variants || variants.length === 0) && hasOptions && (
           <div className="border-2 border-dashed rounded-lg p-6 text-center">
-            <p className="text-sm text-muted-foreground">No variants configured</p>
-            <Button variant="secondary" size="sm" className="mt-2" onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add variant
-            </Button>
+            <p className="text-sm text-muted-foreground">Add values to your options above to create variants</p>
           </div>
         )}
       </CardContent>
 
-      {/* Add Variant Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Add new variant</DialogTitle>
-            <DialogDescription>Create a new product variant with its own price and inventory.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {option1Name && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-sm">{option1Name}</Label>
-                <div className="col-span-3">
-                  {option1Values.length > 0 && (
-                    <Select value={newVariant.option1} onValueChange={(val) => setNewVariant(prev => ({ ...prev, option1: val }))}>
-                      <SelectTrigger><SelectValue placeholder={`Select ${option1Name}`} /></SelectTrigger>
-                      <SelectContent>
-                        {option1Values.map((val) => (<SelectItem key={val} value={val}>{val}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Input
-                    className={option1Values.length > 0 ? "mt-2" : ""}
-                    placeholder={option1Values.length > 0 ? `Or type new ${option1Name}` : `Enter ${option1Name}`}
-                    value={option1Values.includes(newVariant.option1) ? "" : newVariant.option1}
-                    onChange={(e) => setNewVariant(prev => ({ ...prev, option1: e.target.value }))}
-                  />
-                </div>
-              </div>
-            )}
-            {option2Name && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-sm">{option2Name}</Label>
-                <div className="col-span-3">
-                  {option2Values.length > 0 && (
-                    <Select value={newVariant.option2} onValueChange={(val) => setNewVariant(prev => ({ ...prev, option2: val }))}>
-                      <SelectTrigger><SelectValue placeholder={`Select ${option2Name}`} /></SelectTrigger>
-                      <SelectContent>
-                        {option2Values.map((val) => (<SelectItem key={val} value={val}>{val}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Input
-                    className={option2Values.length > 0 ? "mt-2" : ""}
-                    placeholder={option2Values.length > 0 ? `Or type new ${option2Name}` : `Enter ${option2Name}`}
-                    value={option2Values.includes(newVariant.option2) ? "" : newVariant.option2}
-                    onChange={(e) => setNewVariant(prev => ({ ...prev, option2: e.target.value }))}
-                  />
-                </div>
-              </div>
-            )}
-            {option3Name && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-sm">{option3Name}</Label>
-                <div className="col-span-3">
-                  {option3Values.length > 0 && (
-                    <Select value={newVariant.option3} onValueChange={(val) => setNewVariant(prev => ({ ...prev, option3: val }))}>
-                      <SelectTrigger><SelectValue placeholder={`Select ${option3Name}`} /></SelectTrigger>
-                      <SelectContent>
-                        {option3Values.map((val) => (<SelectItem key={val} value={val}>{val}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Input
-                    className={option3Values.length > 0 ? "mt-2" : ""}
-                    placeholder={option3Values.length > 0 ? `Or type new ${option3Name}` : `Enter ${option3Name}`}
-                    value={option3Values.includes(newVariant.option3) ? "" : newVariant.option3}
-                    onChange={(e) => setNewVariant(prev => ({ ...prev, option3: e.target.value }))}
-                  />
-                </div>
-              </div>
-            )}
-            {!hasOptions && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-sm">Name</Label>
-                <Input value={newVariant.name} onChange={(e) => setNewVariant(prev => ({ ...prev, name: e.target.value }))} className="col-span-3" placeholder="e.g., Small, Medium, Large" />
-              </div>
-            )}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right text-sm">Price</Label>
-              <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
-                <Input type="number" min="0" step="1000" value={newVariant.price} onChange={(e) => setNewVariant(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))} className="pl-7" />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right text-sm">SKU</Label>
-              <Input value={newVariant.sku} onChange={(e) => setNewVariant(prev => ({ ...prev, sku: e.target.value }))} className="col-span-3" placeholder="Stock keeping unit" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right text-sm">Quantity</Label>
-              <Input type="number" min="0" value={newVariant.stock_quantity} onChange={(e) => setNewVariant(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))} className="col-span-3" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddVariant} disabled={addVariantMutation.isPending}>
-              {addVariantMutation.isPending ? "Adding..." : "Add variant"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Option Confirmation Dialog */}
       <AlertDialog open={!!deleteOptionKey} onOpenChange={(open) => !open && setDeleteOptionKey(null)}>
