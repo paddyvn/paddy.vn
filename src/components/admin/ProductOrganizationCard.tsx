@@ -6,7 +6,24 @@ import {
   FormField,
   FormItem,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
+
+const PET_TYPES = [
+  { value: "dog", label: "Chó (Dog)" },
+  { value: "cat", label: "Mèo (Cat)" },
+  { value: "bird", label: "Chim (Bird)" },
+  { value: "fish", label: "Cá (Fish)" },
+  { value: "hamster", label: "Hamster" },
+  { value: "rabbit", label: "Thỏ (Rabbit)" },
+  { value: "other", label: "Khác (Other)" },
+];
 
 interface ProductOrganizationCardProps {
   form: UseFormReturn<any>;
@@ -32,6 +49,30 @@ export function ProductOrganizationCard({ form }: ProductOrganizationCardProps) 
                   value={field.value || ""}
                 />
               </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="pet_type"
+          render={({ field }) => (
+            <FormItem>
+              <Label className="text-sm font-medium">Pet</Label>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select pet type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PET_TYPES.map((pet) => (
+                    <SelectItem key={pet.value} value={pet.value}>
+                      {pet.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </FormItem>
           )}
         />

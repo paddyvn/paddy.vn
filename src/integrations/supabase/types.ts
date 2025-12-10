@@ -774,6 +774,7 @@ export type Database = {
           option1_name: string | null
           option2_name: string | null
           option3_name: string | null
+          pet_type: string | null
           product_type: string | null
           published_at: string | null
           shopify_created_at: string | null
@@ -800,6 +801,7 @@ export type Database = {
           option1_name?: string | null
           option2_name?: string | null
           option3_name?: string | null
+          pet_type?: string | null
           product_type?: string | null
           published_at?: string | null
           shopify_created_at?: string | null
@@ -826,6 +828,7 @@ export type Database = {
           option1_name?: string | null
           option2_name?: string | null
           option3_name?: string | null
+          pet_type?: string | null
           product_type?: string | null
           published_at?: string | null
           shopify_created_at?: string | null
