@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Bold,
   Italic,
@@ -35,9 +36,15 @@ import {
   Undo,
   Redo,
   ChevronDown,
+  Type,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+
+const PRESET_COLORS = [
+  "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#d946ef",
+  "#000000", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f3f4f6",
+];
 
 interface RichTextEditorProps {
   value: string;
@@ -48,6 +55,8 @@ interface RichTextEditorProps {
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
+  const [colorOpen, setColorOpen] = useState(false);
+  const [hexColor, setHexColor] = useState("#000000");
 
   const editor = useEditor({
     extensions: [
@@ -171,6 +180,79 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         >
           <UnderlineIcon className="h-4 w-4" />
         </Button>
+
+        {/* Text Color */}
+        <Popover open={colorOpen} onOpenChange={setColorOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+            >
+              <div className="flex flex-col items-center">
+                <Type className="h-4 w-4" />
+                <div 
+                  className="h-0.5 w-4 mt-0.5 rounded-full" 
+                  style={{ backgroundColor: editor.getAttributes("textStyle").color || "#000000" }}
+                />
+              </div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3" align="start">
+            <Tabs defaultValue="text" className="w-full">
+              <TabsList className="w-full grid grid-cols-2 mb-3">
+                <TabsTrigger value="text">Text</TabsTrigger>
+                <TabsTrigger value="background">Background</TabsTrigger>
+              </TabsList>
+              <TabsContent value="text" className="space-y-3">
+                {/* Hex Input */}
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="h-8 w-8 rounded border"
+                    style={{ backgroundColor: hexColor }}
+                  />
+                  <Input
+                    value={hexColor}
+                    onChange={(e) => setHexColor(e.target.value)}
+                    onBlur={() => {
+                      if (/^#[0-9A-Fa-f]{6}$/.test(hexColor)) {
+                        editor.chain().focus().setColor(hexColor).run();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && /^#[0-9A-Fa-f]{6}$/.test(hexColor)) {
+                        editor.chain().focus().setColor(hexColor).run();
+                        setColorOpen(false);
+                      }
+                    }}
+                    placeholder="#000000"
+                    className="h-8"
+                  />
+                </div>
+                {/* Preset Colors */}
+                <div className="grid grid-cols-7 gap-1.5">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className="h-6 w-6 rounded border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: color }}
+                      onClick={() => {
+                        editor.chain().focus().setColor(color).run();
+                        setHexColor(color);
+                        setColorOpen(false);
+                      }}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              <TabsContent value="background" className="text-center text-sm text-muted-foreground py-4">
+                Background color coming soon
+              </TabsContent>
+            </Tabs>
+          </PopoverContent>
+        </Popover>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
