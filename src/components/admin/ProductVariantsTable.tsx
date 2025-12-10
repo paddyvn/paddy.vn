@@ -282,50 +282,58 @@ function OptionCard({
               {/* Add new value input with suggestions */}
               <div className="flex items-center gap-2 relative">
                 <div className="w-4" /> {/* Spacer for alignment */}
-                <Popover open={showValueSuggestions && availableSuggestions.length > 0} onOpenChange={setShowValueSuggestions}>
-                  <PopoverTrigger asChild>
-                    <Input
-                      value={newValue}
-                      onChange={(e) => setNewValue(e.target.value)}
-                      onFocus={() => setShowValueSuggestions(true)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddValue();
-                          setShowValueSuggestions(false);
-                        }
-                        if (e.key === "Escape") {
-                          setShowValueSuggestions(false);
-                        }
-                      }}
-                      placeholder="Add another value"
-                      className="flex-1"
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                    <Command>
-                      <CommandList>
-                        <CommandGroup heading="Suggested values">
-                          {availableSuggestions
-                            .filter(s => s.toLowerCase().includes(newValue.toLowerCase()))
-                            .slice(0, 8)
-                            .map((suggestion) => (
-                              <CommandItem
-                                key={suggestion}
-                                onSelect={() => {
-                                  onAddValue(suggestion);
-                                  setNewValue("");
-                                  setShowValueSuggestions(false);
-                                }}
-                              >
-                                {suggestion}
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <div className="flex-1 relative">
+                  <Input
+                    value={newValue}
+                    onChange={(e) => {
+                      setNewValue(e.target.value);
+                      setShowValueSuggestions(true);
+                    }}
+                    onFocus={() => setShowValueSuggestions(true)}
+                    onBlur={() => {
+                      // Delay hiding to allow click on suggestions
+                      setTimeout(() => setShowValueSuggestions(false), 200);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddValue();
+                        setShowValueSuggestions(false);
+                      }
+                      if (e.key === "Escape") {
+                        setShowValueSuggestions(false);
+                      }
+                    }}
+                    placeholder="Add another value"
+                  />
+                  {/* Suggestions dropdown */}
+                  {showValueSuggestions && availableSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md">
+                      <Command>
+                        <CommandList>
+                          <CommandGroup heading="Suggested values">
+                            {availableSuggestions
+                              .filter(s => s.toLowerCase().includes(newValue.toLowerCase()))
+                              .slice(0, 8)
+                              .map((suggestion) => (
+                                <CommandItem
+                                  key={suggestion}
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onSelect={() => {
+                                    onAddValue(suggestion);
+                                    setNewValue("");
+                                    setShowValueSuggestions(false);
+                                  }}
+                                >
+                                  {suggestion}
+                                </CommandItem>
+                              ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </div>
+                  )}
+                </div>
                 <div className="w-9" /> {/* Spacer for alignment */}
               </div>
             </div>
