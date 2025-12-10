@@ -700,8 +700,14 @@ export default function ProductsManagement() {
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-muted-foreground">{product.slug}</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                      className="text-left hover:underline cursor-pointer"
+                    >
+                      <div className="font-medium">{product.name}</div>
+                      <div className="text-sm text-muted-foreground">{product.slug}</div>
+                    </button>
                   </TableCell>
                   <TableCell>
                     <Badge variant={product.is_active ? "default" : "secondary"}>
