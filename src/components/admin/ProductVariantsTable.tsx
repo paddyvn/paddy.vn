@@ -58,6 +58,23 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ProductVariantsTableProps {
   productId: string;
@@ -90,6 +107,35 @@ interface OptionCardProps {
   onAddValue: (value: string) => void;
   onDelete: () => void;
   isUpdating: boolean;
+  isDragging?: boolean;
+}
+
+function SortableOptionCard(props: OptionCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.optionKey });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <OptionCard {...props} isDragging={isDragging} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
+interface OptionCardPropsWithDrag extends OptionCardProps {
+  dragHandleProps?: Record<string, unknown>;
 }
 
 function OptionCard({
@@ -105,7 +151,9 @@ function OptionCard({
   onAddValue,
   onDelete,
   isUpdating,
-}: OptionCardProps) {
+  isDragging,
+  dragHandleProps,
+}: OptionCardPropsWithDrag) {
   const [editingName, setEditingName] = useState(optionName);
   const [newValue, setNewValue] = useState("");
   const [editingValues, setEditingValues] = useState<Record<string, string>>({});
@@ -144,11 +192,18 @@ function OptionCard({
     // Collapsed state - show option name with values as badges
     return (
       <div 
-        className="border rounded-lg p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+        className={cn(
+          "border rounded-lg p-4 cursor-pointer hover:bg-muted/30 transition-colors",
+          isDragging && "shadow-lg bg-background"
+        )}
         onClick={onToggleExpand}
       >
         <div className="flex items-center gap-3">
-          <div className="text-muted-foreground">
+          <div 
+            className="text-muted-foreground cursor-grab active:cursor-grabbing"
+            onClick={(e) => e.stopPropagation()}
+            {...dragHandleProps}
+          >
             <GripVertical className="h-5 w-5" />
           </div>
           <div className="flex-1">
@@ -171,10 +226,13 @@ function OptionCard({
 
   // Expanded state - full editing interface
   return (
-    <div className="border rounded-lg p-4 space-y-4">
+    <div className={cn("border rounded-lg p-4 space-y-4", isDragging && "shadow-lg bg-background")}>
       {/* Option Name */}
       <div className="flex items-start gap-3">
-        <div className="mt-2.5 text-muted-foreground cursor-grab">
+        <div 
+          className="mt-2.5 text-muted-foreground cursor-grab active:cursor-grabbing"
+          {...dragHandleProps}
+        >
           <GripVertical className="h-5 w-5" />
         </div>
         <div className="flex-1 space-y-4">
@@ -490,6 +548,64 @@ export function ProductVariantsTable({
     },
     onError: (error) => {
       toast({ title: "Error updating option", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Mutation to reorder options by swapping their positions
+  const reorderOptionsMutation = useMutation({
+    mutationFn: async ({ 
+      fromKey, 
+      toKey 
+    }: { 
+      fromKey: 'option1' | 'option2' | 'option3'; 
+      toKey: 'option1' | 'option2' | 'option3';
+    }) => {
+      if (fromKey === toKey) return;
+      
+      // Get current option names
+      const optionNames = {
+        option1: option1Name,
+        option2: option2Name,
+        option3: option3Name,
+      };
+      
+      const fromName = optionNames[fromKey];
+      const toName = optionNames[toKey];
+      
+      // Swap option names in product
+      const { error: productError } = await supabase
+        .from("products")
+        .update({
+          [`${fromKey}_name`]: toName || null,
+          [`${toKey}_name`]: fromName || null,
+        })
+        .eq("id", productId);
+      if (productError) throw productError;
+      
+      // Also swap option values in all variants
+      if (variants) {
+        for (const variant of variants) {
+          const fromValue = variant[fromKey];
+          const toValue = variant[toKey];
+          
+          const { error: variantError } = await supabase
+            .from("product_variants")
+            .update({
+              [fromKey]: toValue,
+              [toKey]: fromValue,
+            })
+            .eq("id", variant.id);
+          if (variantError) throw variantError;
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-edit", productId] });
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      toast({ title: "Options reordered", description: "The option order has been updated." });
+    },
+    onError: (error) => {
+      toast({ title: "Error reordering options", description: error.message, variant: "destructive" });
     },
   });
 
@@ -893,6 +1009,28 @@ export function ProductVariantsTable({
     return template?.values || [];
   };
 
+  // DnD sensors for option reordering
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleOptionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const fromKey = active.id as 'option1' | 'option2' | 'option3';
+      const toKey = over.id as 'option1' | 'option2' | 'option3';
+      reorderOptionsMutation.mutate({ fromKey, toKey });
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -912,27 +1050,38 @@ export function ProductVariantsTable({
         <CardTitle className="text-base font-medium">Variants</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Options Section - Shopify Style */}
+        {/* Options Section - Shopify Style with Drag & Drop */}
         {optionGroups.length > 0 && (
-          <div className="space-y-3">
-            {optionGroups.map((group) => (
-              <OptionCard
-                key={group.key}
-                optionKey={group.key}
-                optionName={group.name || ""}
-                values={group.values}
-                suggestedValues={getSuggestedValuesForOption(group.name || "")}
-                isExpanded={expandedOption === group.key}
-                onToggleExpand={() => setExpandedOption(expandedOption === group.key ? null : group.key)}
-                onUpdateName={(name) => updateOptionNameMutation.mutate({ optionKey: group.key, name })}
-                onUpdateValue={(oldValue, newValue) => updateOptionValueMutation.mutate({ optionKey: group.key, oldValue, newValue })}
-                onDeleteValue={(value) => deleteOptionValueMutation.mutate({ optionKey: group.key, value })}
-                onAddValue={(value) => addOptionValueMutation.mutate({ optionKey: group.key, value })}
-                onDelete={() => setDeleteOptionKey(group.key)}
-                isUpdating={updateOptionNameMutation.isPending || updateOptionValueMutation.isPending}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleOptionDragEnd}
+          >
+            <SortableContext
+              items={optionGroups.map(g => g.key)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {optionGroups.map((group) => (
+                  <SortableOptionCard
+                    key={group.key}
+                    optionKey={group.key}
+                    optionName={group.name || ""}
+                    values={group.values}
+                    suggestedValues={getSuggestedValuesForOption(group.name || "")}
+                    isExpanded={expandedOption === group.key}
+                    onToggleExpand={() => setExpandedOption(expandedOption === group.key ? null : group.key)}
+                    onUpdateName={(name) => updateOptionNameMutation.mutate({ optionKey: group.key, name })}
+                    onUpdateValue={(oldValue, newValue) => updateOptionValueMutation.mutate({ optionKey: group.key, oldValue, newValue })}
+                    onDeleteValue={(value) => deleteOptionValueMutation.mutate({ optionKey: group.key, value })}
+                    onAddValue={(value) => addOptionValueMutation.mutate({ optionKey: group.key, value })}
+                    onDelete={() => setDeleteOptionKey(group.key)}
+                    isUpdating={updateOptionNameMutation.isPending || updateOptionValueMutation.isPending}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* Add another option - Shopify style dropdown (only show when there ARE existing options) */}
