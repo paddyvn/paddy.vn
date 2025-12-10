@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Package, Check, Trash2, GripVertical, Search, SlidersHorizontal, Pencil, X } from "lucide-react";
+import { Plus, Package, Check, Trash2, GripVertical, Search, SlidersHorizontal, Database, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Popover,
   PopoverContent,
@@ -48,6 +48,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
 interface ProductVariantsTableProps {
@@ -86,6 +95,204 @@ const defaultNewVariant: NewVariant = {
   stock_quantity: 0,
 };
 
+// Recommended option names for pet store
+const RECOMMENDED_OPTIONS = [
+  "Size",
+  "Flavor",
+  "Weight",
+  "Color",
+  "Package Type",
+  "Pet Age Group",
+  "Pet Dietary Requirements",
+  "Pet Food Supplements",
+  "Pet Treat Texture",
+  "Pet Treat Type",
+];
+
+interface OptionCardProps {
+  optionKey: 'option1' | 'option2' | 'option3';
+  optionName: string;
+  values: string[];
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onUpdateName: (name: string) => void;
+  onUpdateValue: (oldValue: string, newValue: string) => void;
+  onDeleteValue: (value: string) => void;
+  onAddValue: (value: string) => void;
+  onDelete: () => void;
+  isUpdating: boolean;
+}
+
+function OptionCard({
+  optionKey,
+  optionName,
+  values,
+  isExpanded,
+  onToggleExpand,
+  onUpdateName,
+  onUpdateValue,
+  onDeleteValue,
+  onAddValue,
+  onDelete,
+  isUpdating,
+}: OptionCardProps) {
+  const [editingName, setEditingName] = useState(optionName);
+  const [newValue, setNewValue] = useState("");
+  const [editingValues, setEditingValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setEditingName(optionName);
+  }, [optionName]);
+
+  useEffect(() => {
+    const initial: Record<string, string> = {};
+    values.forEach((v) => {
+      initial[v] = v;
+    });
+    setEditingValues(initial);
+  }, [values]);
+
+  const handleAddValue = () => {
+    if (newValue.trim() && !values.includes(newValue.trim())) {
+      onAddValue(newValue.trim());
+      setNewValue("");
+    }
+  };
+
+  const handleValueBlur = (originalValue: string) => {
+    const newVal = editingValues[originalValue];
+    if (newVal && newVal !== originalValue && !values.includes(newVal)) {
+      onUpdateValue(originalValue, newVal);
+    }
+  };
+
+  if (!isExpanded) {
+    // Collapsed state - show option name with values as badges
+    return (
+      <div 
+        className="border rounded-lg p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+        onClick={onToggleExpand}
+      >
+        <div className="flex items-center gap-3">
+          <div className="text-muted-foreground">
+            <GripVertical className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-sm mb-2">{optionName}</p>
+            <div className="flex flex-wrap gap-2">
+              {values.map((value) => (
+                <Badge key={value} variant="secondary" className="font-normal px-3 py-1">
+                  {value}
+                </Badge>
+              ))}
+              {values.length === 0 && (
+                <span className="text-sm text-muted-foreground italic">No values</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Expanded state - full editing interface
+  return (
+    <div className="border rounded-lg p-4 space-y-4">
+      {/* Option Name */}
+      <div className="flex items-start gap-3">
+        <div className="mt-2.5 text-muted-foreground cursor-grab">
+          <GripVertical className="h-5 w-5" />
+        </div>
+        <div className="flex-1 space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm text-muted-foreground">Option name</Label>
+              <Database className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <Input
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              onBlur={() => {
+                if (editingName.trim() && editingName !== optionName) {
+                  onUpdateName(editingName.trim());
+                }
+              }}
+              className="w-full"
+            />
+          </div>
+
+          {/* Option Values */}
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">Option values</Label>
+            <div className="space-y-2">
+              {values.map((value) => (
+                <div key={value} className="flex items-center gap-2">
+                  <div className="text-muted-foreground cursor-grab">
+                    <GripVertical className="h-4 w-4" />
+                  </div>
+                  <Input
+                    value={editingValues[value] ?? value}
+                    onChange={(e) => setEditingValues((prev) => ({ ...prev, [value]: e.target.value }))}
+                    onBlur={() => handleValueBlur(value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                    onClick={() => onDeleteValue(value)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {/* Add new value input */}
+              <div className="flex items-center gap-2">
+                <div className="w-4" /> {/* Spacer for alignment */}
+                <Input
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddValue();
+                    }
+                  }}
+                  placeholder="Add another value"
+                  className="flex-1"
+                />
+                <div className="w-9" /> {/* Spacer for alignment */}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer actions */}
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={onDelete}
+            >
+              Delete
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={onToggleExpand}
+              disabled={isUpdating}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProductVariantsTable({
   productId,
   option1Name,
@@ -96,14 +303,13 @@ export function ProductVariantsTable({
   const queryClient = useQueryClient();
   const [editedVariants, setEditedVariants] = useState<Record<string, VariantEdit>>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isAddOptionDialogOpen, setIsAddOptionDialogOpen] = useState(false);
   const [newVariant, setNewVariant] = useState<NewVariant>(defaultNewVariant);
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
   
-  // Option editing state
-  const [editingOption, setEditingOption] = useState<'option1' | 'option2' | 'option3' | null>(null);
-  const [editingOptionName, setEditingOptionName] = useState("");
-  const [newOptionName, setNewOptionName] = useState("");
+  // Option management state
+  const [expandedOption, setExpandedOption] = useState<'option1' | 'option2' | 'option3' | null>(null);
+  const [showAddOptionMenu, setShowAddOptionMenu] = useState(false);
+  const [addOptionSearch, setAddOptionSearch] = useState("");
   const [deleteOptionKey, setDeleteOptionKey] = useState<'option1' | 'option2' | 'option3' | null>(null);
 
   const { data: variants, isLoading } = useQuery({
@@ -259,11 +465,107 @@ export function ProductVariantsTable({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-edit", productId] });
-      setEditingOption(null);
       toast({ title: "Option updated", description: "The option name has been updated." });
     },
     onError: (error) => {
       toast({ title: "Error updating option", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Mutation to update option value across variants
+  const updateOptionValueMutation = useMutation({
+    mutationFn: async ({ 
+      optionKey, 
+      oldValue, 
+      newValue 
+    }: { 
+      optionKey: 'option1' | 'option2' | 'option3'; 
+      oldValue: string; 
+      newValue: string;
+    }) => {
+      if (!variants) return;
+      
+      const variantsToUpdate = variants.filter(v => v[optionKey] === oldValue);
+      for (const variant of variantsToUpdate) {
+        const newName = [
+          optionKey === 'option1' ? newValue : variant.option1,
+          optionKey === 'option2' ? newValue : variant.option2,
+          optionKey === 'option3' ? newValue : variant.option3,
+        ].filter(Boolean).join(" / ") || "Default";
+        
+        const { error } = await supabase
+          .from("product_variants")
+          .update({ [optionKey]: newValue, name: newName })
+          .eq("id", variant.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      toast({ title: "Value updated", description: "The option value has been updated." });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating value", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Mutation to delete option value (deletes variants with that value)
+  const deleteOptionValueMutation = useMutation({
+    mutationFn: async ({ 
+      optionKey, 
+      value 
+    }: { 
+      optionKey: 'option1' | 'option2' | 'option3'; 
+      value: string;
+    }) => {
+      if (!variants) return;
+      
+      const variantsToDelete = variants.filter(v => v[optionKey] === value);
+      for (const variant of variantsToDelete) {
+        const { error } = await supabase
+          .from("product_variants")
+          .delete()
+          .eq("id", variant.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
+      toast({ title: "Value deleted", description: "Variants with this value have been removed." });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting value", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Mutation to add a new option value (creates new variants)
+  const addOptionValueMutation = useMutation({
+    mutationFn: async ({ 
+      optionKey, 
+      value 
+    }: { 
+      optionKey: 'option1' | 'option2' | 'option3'; 
+      value: string;
+    }) => {
+      // Create a new variant with this value
+      const variantName = value;
+      const { error } = await supabase.from("product_variants").insert({
+        product_id: productId,
+        name: variantName,
+        [optionKey]: value,
+        price: 0,
+        stock_quantity: 0,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
+      toast({ title: "Value added", description: "A new variant has been created with this value." });
+    },
+    onError: (error) => {
+      toast({ title: "Error adding value", description: error.message, variant: "destructive" });
     },
   });
 
@@ -302,6 +604,7 @@ export function ProductVariantsTable({
       queryClient.invalidateQueries({ queryKey: ["product-edit", productId] });
       queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
       setDeleteOptionKey(null);
+      setExpandedOption(null);
       toast({ title: "Option deleted", description: "The option has been removed from the product." });
     },
     onError: (error) => {
@@ -328,8 +631,8 @@ export function ProductVariantsTable({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-edit", productId] });
-      setIsAddOptionDialogOpen(false);
-      setNewOptionName("");
+      setShowAddOptionMenu(false);
+      setAddOptionSearch("");
       toast({ title: "Option added", description: "The new option has been added to the product." });
     },
     onError: (error) => {
@@ -376,17 +679,6 @@ export function ProductVariantsTable({
     }
   };
 
-  const startEditingOption = (key: 'option1' | 'option2' | 'option3', currentName: string) => {
-    setEditingOption(key);
-    setEditingOptionName(currentName);
-  };
-
-  const saveOptionName = () => {
-    if (editingOption) {
-      updateOptionNameMutation.mutate({ optionKey: editingOption, name: editingOptionName });
-    }
-  };
-
   const totalInventory = Object.values(editedVariants).reduce((sum, v) => sum + (v.stock_quantity || 0), 0);
 
   const getUniqueOptionValues = (optionKey: 'option1' | 'option2' | 'option3') => {
@@ -406,6 +698,20 @@ export function ProductVariantsTable({
 
   const hasOptions = option1Name || option2Name || option3Name;
   const canAddMoreOptions = !option1Name || !option2Name || !option3Name;
+
+  // Filter recommended options based on search
+  const filteredRecommendedOptions = useMemo(() => {
+    const existingNames = [option1Name, option2Name, option3Name].filter(Boolean).map(n => n?.toLowerCase());
+    return RECOMMENDED_OPTIONS.filter(
+      opt => 
+        !existingNames.includes(opt.toLowerCase()) &&
+        opt.toLowerCase().includes(addOptionSearch.toLowerCase())
+    );
+  }, [addOptionSearch, option1Name, option2Name, option3Name]);
+
+  const showCreateCustomOption = addOptionSearch.trim() && 
+    !RECOMMENDED_OPTIONS.some(opt => opt.toLowerCase() === addOptionSearch.toLowerCase()) &&
+    ![option1Name, option2Name, option3Name].some(n => n?.toLowerCase() === addOptionSearch.toLowerCase());
 
   if (isLoading) {
     return (
@@ -432,101 +738,144 @@ export function ProductVariantsTable({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Options Section - Shopify Style with Edit/Delete */}
+        {/* Options Section - Shopify Style */}
         {optionGroups.length > 0 && (
           <div className="space-y-3">
             {optionGroups.map((group) => (
-              <div key={group.key} className="border rounded-lg p-4 group/option">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 text-muted-foreground cursor-grab">
-                    <GripVertical className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    {editingOption === group.key ? (
-                      <div className="flex items-center gap-2 mb-2">
-                        <Input
-                          value={editingOptionName}
-                          onChange={(e) => setEditingOptionName(e.target.value)}
-                          className="h-8 w-48"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveOptionName();
-                            if (e.key === 'Escape') setEditingOption(null);
-                          }}
-                        />
-                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={saveOptionName}>
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditingOption(null)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 mb-2">
-                        <p className="font-medium text-sm">{group.name}</p>
-                        <div className="opacity-0 group-hover/option:opacity-100 transition-opacity flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0"
-                            onClick={() => startEditingOption(group.key, group.name || "")}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteOptionKey(group.key)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      {group.values.length > 0 ? (
-                        group.values.map((value) => (
-                          <Badge key={value} variant="secondary" className="font-normal px-3 py-1">
-                            {value}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-muted-foreground italic">No values yet - add variants to define values</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <OptionCard
+                key={group.key}
+                optionKey={group.key}
+                optionName={group.name || ""}
+                values={group.values}
+                isExpanded={expandedOption === group.key}
+                onToggleExpand={() => setExpandedOption(expandedOption === group.key ? null : group.key)}
+                onUpdateName={(name) => updateOptionNameMutation.mutate({ optionKey: group.key, name })}
+                onUpdateValue={(oldValue, newValue) => updateOptionValueMutation.mutate({ optionKey: group.key, oldValue, newValue })}
+                onDeleteValue={(value) => deleteOptionValueMutation.mutate({ optionKey: group.key, value })}
+                onAddValue={(value) => addOptionValueMutation.mutate({ optionKey: group.key, value })}
+                onDelete={() => setDeleteOptionKey(group.key)}
+                isUpdating={updateOptionNameMutation.isPending || updateOptionValueMutation.isPending}
+              />
             ))}
-            {canAddMoreOptions && (
+          </div>
+        )}
+
+        {/* Add another option - Shopify style dropdown */}
+        {canAddMoreOptions && (
+          <Popover open={showAddOptionMenu} onOpenChange={setShowAddOptionMenu}>
+            <PopoverTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-muted-foreground"
-                onClick={() => setIsAddOptionDialogOpen(true)}
+                className="text-muted-foreground w-full justify-start"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add another option
               </Button>
-            )}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search" 
+                  value={addOptionSearch}
+                  onValueChange={setAddOptionSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {!showCreateCustomOption && "No options found."}
+                  </CommandEmpty>
+                  {filteredRecommendedOptions.length > 0 && (
+                    <CommandGroup heading="Recommended">
+                      {filteredRecommendedOptions.map((opt) => (
+                        <CommandItem
+                          key={opt}
+                          onSelect={() => {
+                            addOptionMutation.mutate(opt);
+                          }}
+                        >
+                          {opt}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  {showCreateCustomOption && (
+                    <>
+                      <CommandSeparator />
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            addOptionMutation.mutate(addOptionSearch.trim());
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create custom option
+                        </CommandItem>
+                      </CommandGroup>
+                    </>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         )}
 
-        {/* No options yet - show add option button */}
+        {/* No options yet - show add option prompt */}
         {!hasOptions && (
           <div className="border-2 border-dashed rounded-lg p-4">
             <p className="text-sm text-muted-foreground mb-2">
               Add options like size, color, or flavor to create variants.
             </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsAddOptionDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add option
-            </Button>
+            <Popover open={showAddOptionMenu} onOpenChange={setShowAddOptionMenu}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add option
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search" 
+                    value={addOptionSearch}
+                    onValueChange={setAddOptionSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      {!showCreateCustomOption && "No options found."}
+                    </CommandEmpty>
+                    {filteredRecommendedOptions.length > 0 && (
+                      <CommandGroup heading="Recommended">
+                        {filteredRecommendedOptions.map((opt) => (
+                          <CommandItem
+                            key={opt}
+                            onSelect={() => {
+                              addOptionMutation.mutate(opt);
+                            }}
+                          >
+                            {opt}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                    {showCreateCustomOption && (
+                      <>
+                        <CommandSeparator />
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              addOptionMutation.mutate(addOptionSearch.trim());
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create custom option
+                          </CommandItem>
+                        </CommandGroup>
+                      </>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
@@ -771,37 +1120,6 @@ export function ProductVariantsTable({
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleAddVariant} disabled={addVariantMutation.isPending}>
               {addVariantMutation.isPending ? "Adding..." : "Add variant"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Option Dialog */}
-      <Dialog open={isAddOptionDialogOpen} onOpenChange={setIsAddOptionDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Add option</DialogTitle>
-            <DialogDescription>Add an option like size, color, or flavor to create product variants.</DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="optionName" className="text-sm">Option name</Label>
-            <Input
-              id="optionName"
-              value={newOptionName}
-              onChange={(e) => setNewOptionName(e.target.value)}
-              placeholder="e.g., Size, Color, Flavor"
-              className="mt-2"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newOptionName.trim()) {
-                  addOptionMutation.mutate(newOptionName.trim());
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsAddOptionDialogOpen(false); setNewOptionName(""); }}>Cancel</Button>
-            <Button onClick={() => addOptionMutation.mutate(newOptionName.trim())} disabled={!newOptionName.trim() || addOptionMutation.isPending}>
-              {addOptionMutation.isPending ? "Adding..." : "Add option"}
             </Button>
           </DialogFooter>
         </DialogContent>
