@@ -54,6 +54,9 @@ import {
   ImageIcon,
   Video,
   Table as TableIcon,
+  IndentDecrease,
+  IndentIncrease,
+  RemoveFormatting,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -436,6 +439,39 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
         >
           <ListOrdered className="h-4 w-4" />
+        </Button>
+
+        {/* Indent/Outdent */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => editor.chain().focus().liftListItem("listItem").run()}
+          disabled={!editor.can().liftListItem("listItem")}
+        >
+          <IndentDecrease className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => editor.chain().focus().sinkListItem("listItem").run()}
+          disabled={!editor.can().sinkListItem("listItem")}
+        >
+          <IndentIncrease className="h-4 w-4" />
+        </Button>
+
+        {/* Clear Formatting */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
+        >
+          <RemoveFormatting className="h-4 w-4" />
         </Button>
 
         {/* Image */}
