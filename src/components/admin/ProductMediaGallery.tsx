@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Star, Trash2 } from "lucide-react";
+import { Plus, Star, Trash2, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProductMediaGalleryProps {
@@ -10,6 +11,8 @@ interface ProductMediaGalleryProps {
 }
 
 export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const { data: images, isLoading } = useQuery({
     queryKey: ["product-images", productId],
     queryFn: async () => {
@@ -44,10 +47,11 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
   const primaryImage = images?.find((img) => img.is_primary) || images?.[0];
   const otherImages = images?.filter((img) => img.id !== primaryImage?.id) || [];
   
-  // Grid: 6 columns, 2 rows. Primary takes 2x2 = 4 cells. Remaining = 8 cells.
-  // 1 cell for add button = 7 cells for other images max
+  // Grid: 6 columns, 2 rows when collapsed. Primary takes 2x2 = 4 cells. Remaining = 8 cells.
+  // 1 cell for add button = 7 cells for other images max when collapsed
   const maxVisibleOthers = 6;
-  const visibleOtherImages = otherImages.slice(0, maxVisibleOthers);
+  const hasHiddenImages = otherImages.length > maxVisibleOthers;
+  const visibleOtherImages = isExpanded ? otherImages : otherImages.slice(0, maxVisibleOthers);
   const hiddenCount = otherImages.length - maxVisibleOthers;
 
   return (
@@ -99,10 +103,23 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
               </div>
             ))}
             
-            {/* Hidden count indicator */}
-            {hiddenCount > 0 && (
-              <button className="aspect-square rounded-lg border bg-muted/80 backdrop-blur flex items-center justify-center text-foreground font-medium text-lg hover:bg-muted transition-colors">
+            {/* Hidden count indicator / Collapse button */}
+            {hasHiddenImages && !isExpanded && (
+              <button 
+                onClick={() => setIsExpanded(true)}
+                className="aspect-square rounded-lg border bg-muted/80 backdrop-blur flex items-center justify-center text-foreground font-medium text-lg hover:bg-muted transition-colors"
+              >
                 +{hiddenCount}
+              </button>
+            )}
+            
+            {isExpanded && hasHiddenImages && (
+              <button 
+                onClick={() => setIsExpanded(false)}
+                className="aspect-square rounded-lg border bg-muted/80 backdrop-blur flex flex-col items-center justify-center text-foreground hover:bg-muted transition-colors"
+              >
+                <ChevronUp className="h-5 w-5" />
+                <span className="text-xs">Collapse</span>
               </button>
             )}
             
