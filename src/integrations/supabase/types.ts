@@ -613,6 +613,36 @@ export type Database = {
         }
         Relationships: []
       }
+      product_age_ranges: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_collections: {
         Row: {
           collection_id: string
@@ -651,6 +681,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_health_condition_links: {
+        Row: {
+          created_at: string | null
+          health_condition_id: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          health_condition_id: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string | null
+          health_condition_id?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_health_condition_links_health_condition_id_fkey"
+            columns: ["health_condition_id"]
+            isOneToOne: false
+            referencedRelation: "product_health_conditions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_health_condition_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_health_conditions: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       product_images: {
         Row: {
@@ -695,6 +791,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_origins: {
+        Row: {
+          country_code: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string
+          updated_at: string | null
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi: string
+          updated_at?: string | null
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      product_sizes: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       product_variants: {
         Row: {
@@ -774,6 +933,7 @@ export type Database = {
           option1_name: string | null
           option2_name: string | null
           option3_name: string | null
+          origin_id: string | null
           pet_type: string | null
           product_type: string | null
           published_at: string | null
@@ -783,6 +943,8 @@ export type Database = {
           short_description: string | null
           slug: string
           tags: string | null
+          target_age_id: string | null
+          target_size_id: string | null
           updated_at: string
           vendor: string | null
         }
@@ -801,6 +963,7 @@ export type Database = {
           option1_name?: string | null
           option2_name?: string | null
           option3_name?: string | null
+          origin_id?: string | null
           pet_type?: string | null
           product_type?: string | null
           published_at?: string | null
@@ -810,6 +973,8 @@ export type Database = {
           short_description?: string | null
           slug: string
           tags?: string | null
+          target_age_id?: string | null
+          target_size_id?: string | null
           updated_at?: string
           vendor?: string | null
         }
@@ -828,6 +993,7 @@ export type Database = {
           option1_name?: string | null
           option2_name?: string | null
           option3_name?: string | null
+          origin_id?: string | null
           pet_type?: string | null
           product_type?: string | null
           published_at?: string | null
@@ -837,6 +1003,8 @@ export type Database = {
           short_description?: string | null
           slug?: string
           tags?: string | null
+          target_age_id?: string | null
+          target_size_id?: string | null
           updated_at?: string
           vendor?: string | null
         }
@@ -846,6 +1014,27 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_origin_id_fkey"
+            columns: ["origin_id"]
+            isOneToOne: false
+            referencedRelation: "product_origins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_target_age_id_fkey"
+            columns: ["target_age_id"]
+            isOneToOne: false
+            referencedRelation: "product_age_ranges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_target_size_id_fkey"
+            columns: ["target_size_id"]
+            isOneToOne: false
+            referencedRelation: "product_sizes"
             referencedColumns: ["id"]
           },
         ]
