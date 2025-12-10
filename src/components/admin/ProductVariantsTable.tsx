@@ -53,6 +53,38 @@ export function ProductVariantsTable({
     enabled: !!productId,
   });
 
+  const { data: productImages } = useQuery({
+    queryKey: ["product-images", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_images")
+        .select("*")
+        .eq("product_id", productId)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!productId,
+  });
+
+  // Get the image assigned to a variant
+  const getVariantImage = (variantId: string) => {
+    if (!productImages) return null;
+    
+    // Find image that has this variant in its variant_ids array
+    const assignedImage = productImages.find((img) => {
+      const variantIds = img.variant_ids as string[] | null;
+      return variantIds && variantIds.includes(variantId);
+    });
+    
+    // If no specific image assigned, return the primary image
+    if (!assignedImage) {
+      return productImages.find((img) => img.is_primary) || productImages[0] || null;
+    }
+    
+    return assignedImage;
+  };
+
   // Initialize editedVariants when variants load
   useEffect(() => {
     if (variants) {
@@ -207,13 +239,23 @@ export function ProductVariantsTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {variants.map((variant) => (
+                {variants.map((variant) => {
+                  const variantImage = getVariantImage(variant.id);
+                  return (
                   <TableRow key={variant.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                          <Package className="h-4 w-4 text-muted-foreground" />
-                        </div>
+                        {variantImage ? (
+                          <img
+                            src={variantImage.image_url}
+                            alt={variantImage.alt_text || variant.name}
+                            className="h-10 w-10 rounded object-cover bg-muted"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
                         <div>
                           <p className="font-medium text-sm">{variant.name}</p>
                           {variant.sku && (
@@ -241,7 +283,8 @@ export function ProductVariantsTable({
                       />
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 <TableRow className="bg-muted/30">
                   <TableCell colSpan={2} className="font-medium text-sm">
                     Total inventory
