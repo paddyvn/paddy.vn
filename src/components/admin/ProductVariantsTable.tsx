@@ -374,6 +374,8 @@ export function ProductVariantsTable({
   const [addOptionSearch, setAddOptionSearch] = useState("");
   const [deleteOptionKey, setDeleteOptionKey] = useState<'option1' | 'option2' | 'option3' | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [showCustomOptionDialog, setShowCustomOptionDialog] = useState(false);
+  const [customOptionName, setCustomOptionName] = useState("");
 
   const { data: variants, isLoading } = useQuery({
     queryKey: ["product-variants", productId],
@@ -1116,23 +1118,11 @@ export function ProductVariantsTable({
             <PopoverContent className="w-72 p-0" align="start">
               <Command>
                 <CommandInput 
-                  placeholder="Search or type custom name..." 
+                  placeholder="Search..." 
                   value={addOptionSearch}
                   onValueChange={setAddOptionSearch}
                 />
                 <CommandList>
-                  {showCreateCustomOption && (
-                    <CommandGroup heading="Create custom">
-                      <CommandItem
-                        onSelect={() => {
-                          addOptionMutation.mutate(addOptionSearch.trim());
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create "{addOptionSearch.trim()}"
-                      </CommandItem>
-                    </CommandGroup>
-                  )}
                   {filteredRecommendedOptions.length > 0 && (
                     <CommandGroup heading="Recommended">
                       {filteredRecommendedOptions.map((opt) => (
@@ -1147,10 +1137,25 @@ export function ProductVariantsTable({
                       ))}
                     </CommandGroup>
                   )}
-                  {!showCreateCustomOption && filteredRecommendedOptions.length === 0 && (
-                    <CommandEmpty>No options found. Type to create custom.</CommandEmpty>
+                  {filteredRecommendedOptions.length === 0 && addOptionSearch && (
+                    <CommandEmpty>No options found.</CommandEmpty>
                   )}
                 </CommandList>
+                <div className="border-t p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-muted-foreground"
+                    onClick={() => {
+                      setShowAddOptionMenu(false);
+                      setShowCustomOptionDialog(true);
+                      setCustomOptionName("");
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create custom option
+                  </Button>
+                </div>
               </Command>
             </PopoverContent>
           </Popover>
@@ -1173,23 +1178,11 @@ export function ProductVariantsTable({
               <PopoverContent className="w-72 p-0" align="start">
                 <Command>
                   <CommandInput 
-                    placeholder="Search or type custom name..." 
+                    placeholder="Search..." 
                     value={addOptionSearch}
                     onValueChange={setAddOptionSearch}
                   />
                   <CommandList>
-                    {showCreateCustomOption && (
-                      <CommandGroup heading="Create custom">
-                        <CommandItem
-                          onSelect={() => {
-                            addOptionMutation.mutate(addOptionSearch.trim());
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create "{addOptionSearch.trim()}"
-                        </CommandItem>
-                      </CommandGroup>
-                    )}
                     {filteredRecommendedOptions.length > 0 && (
                       <CommandGroup heading="Recommended">
                         {filteredRecommendedOptions.map((opt) => (
@@ -1204,15 +1197,74 @@ export function ProductVariantsTable({
                         ))}
                       </CommandGroup>
                     )}
-                    {!showCreateCustomOption && filteredRecommendedOptions.length === 0 && (
-                      <CommandEmpty>No options found. Type to create custom.</CommandEmpty>
+                    {filteredRecommendedOptions.length === 0 && addOptionSearch && (
+                      <CommandEmpty>No options found.</CommandEmpty>
                     )}
                   </CommandList>
+                  <div className="border-t p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-muted-foreground"
+                      onClick={() => {
+                        setShowAddOptionMenu(false);
+                        setShowCustomOptionDialog(true);
+                        setCustomOptionName("");
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create custom option
+                    </Button>
+                  </div>
                 </Command>
               </PopoverContent>
             </Popover>
           </div>
         )}
+
+        {/* Custom Option Dialog */}
+        <Dialog open={showCustomOptionDialog} onOpenChange={setShowCustomOptionDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create custom option</DialogTitle>
+              <DialogDescription>
+                Enter a name for your custom option (e.g., Style, Design, Character)
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="custom-option-name">Option name</Label>
+                <Input
+                  id="custom-option-name"
+                  value={customOptionName}
+                  onChange={(e) => setCustomOptionName(e.target.value)}
+                  placeholder="e.g., Style, Design, Character"
+                  autoFocus
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCustomOptionDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (customOptionName.trim()) {
+                      addOptionMutation.mutate(customOptionName.trim());
+                      setShowCustomOptionDialog(false);
+                      setCustomOptionName("");
+                    }
+                  }}
+                  disabled={!customOptionName.trim() || addOptionMutation.isPending}
+                >
+                  Create option
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Variants Table - Grouped View */}
         {variants && variants.length > 0 && (
