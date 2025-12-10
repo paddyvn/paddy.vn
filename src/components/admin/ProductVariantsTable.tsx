@@ -1284,27 +1284,57 @@ export function ProductVariantsTable({
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    className="h-10 w-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden"
-                                    onClick={() => {
-                                      setCollapsedGroups(prev => {
-                                        const next = new Set(prev);
-                                        if (next.has(groupValue)) {
-                                          next.delete(groupValue);
-                                        } else {
-                                          next.add(groupValue);
-                                        }
-                                        return next;
-                                      });
-                                    }}
-                                  >
-                                    {groupImage ? (
-                                      <img src={groupImage.image_url} alt={groupValue} className="h-full w-full object-cover" />
-                                    ) : (
-                                      <Package className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </button>
+                                  {/* Image picker for group header */}
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button
+                                        type="button"
+                                        className="h-10 w-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                                      >
+                                        {groupImage ? (
+                                          <img src={groupImage.image_url} alt={groupValue} className="h-full w-full object-cover" />
+                                        ) : (
+                                          <Package className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2 bg-popover" align="start">
+                                      <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Select image for {groupValue} variants</p>
+                                      {productImages && productImages.length > 0 ? (
+                                        <div className="grid grid-cols-4 gap-1.5">
+                                          {productImages.map((img) => {
+                                            // Check if any variant in the group has this image assigned
+                                            const isSelected = groupVariants.some(v => {
+                                              const assignedImage = getVariantImage(v.id);
+                                              return assignedImage?.id === img.id && isImageDirectlyAssigned(v.id);
+                                            });
+                                            return (
+                                              <button
+                                                key={img.id}
+                                                type="button"
+                                                onClick={() => {
+                                                  // Assign image to all variants in the group
+                                                  groupVariants.forEach(v => {
+                                                    assignImageMutation.mutate({ imageId: img.id, variantId: v.id });
+                                                  });
+                                                }}
+                                                className={cn("relative aspect-square rounded overflow-hidden border-2 transition-all hover:border-primary", isSelected ? "border-primary ring-1 ring-primary" : "border-transparent")}
+                                              >
+                                                <img src={img.image_url} alt={img.alt_text || "Product image"} className="h-full w-full object-cover" />
+                                                {isSelected && (
+                                                  <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                    <Check className="h-4 w-4 text-primary" />
+                                                  </div>
+                                                )}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs text-muted-foreground text-center py-4">No images available</p>
+                                      )}
+                                    </PopoverContent>
+                                  </Popover>
                                   <div className="flex items-center gap-2">
                                     <button
                                       type="button"
@@ -1359,45 +1389,14 @@ export function ProductVariantsTable({
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center gap-3 pl-6">
-                                      <Popover>
-                                        <PopoverTrigger asChild>
-                                          <button type="button" className="h-10 w-10 rounded-md bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all overflow-hidden border">
-                                            {variantImage ? (
-                                              <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
-                                            ) : (
-                                              <Package className="h-4 w-4 text-muted-foreground" />
-                                            )}
-                                          </button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-64 p-2 bg-popover" align="start">
-                                          <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Select image for {variant.name}</p>
-                                          {productImages && productImages.length > 0 ? (
-                                            <div className="grid grid-cols-4 gap-1.5">
-                                              {productImages.map((img) => {
-                                                const currentAssigned = getVariantImage(variant.id);
-                                                const isSelected = currentAssigned?.id === img.id && isImageDirectlyAssigned(variant.id);
-                                                return (
-                                                  <button
-                                                    key={img.id}
-                                                    type="button"
-                                                    onClick={() => assignImageMutation.mutate({ imageId: img.id, variantId: variant.id })}
-                                                    className={cn("relative aspect-square rounded overflow-hidden border-2 transition-all hover:border-primary", isSelected ? "border-primary ring-1 ring-primary" : "border-transparent")}
-                                                  >
-                                                    <img src={img.image_url} alt={img.alt_text || "Product image"} className="h-full w-full object-cover" />
-                                                    {isSelected && (
-                                                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                                        <Check className="h-4 w-4 text-primary" />
-                                                      </div>
-                                                    )}
-                                                  </button>
-                                                );
-                                              })}
-                                            </div>
-                                          ) : (
-                                            <p className="text-xs text-muted-foreground text-center py-4">No images available</p>
-                                          )}
-                                        </PopoverContent>
-                                      </Popover>
+                                      {/* Display-only image (inherited from group) */}
+                                      <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
+                                        {variantImage ? (
+                                          <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                          <Package className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                      </div>
                                       <div>
                                         <p className="font-medium text-sm">{displayName}</p>
                                         {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
