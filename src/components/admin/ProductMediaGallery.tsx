@@ -41,6 +41,9 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
     );
   }
 
+  const primaryImage = images?.find((img) => img.is_primary) || images?.[0];
+  const otherImages = images?.filter((img) => img.id !== primaryImage?.id) || [];
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -48,8 +51,29 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
       </CardHeader>
       <CardContent>
         {images && images.length > 0 ? (
-          <div className="grid grid-cols-4 gap-3">
-            {images.map((image) => (
+          <div className="grid grid-cols-5 gap-3">
+            {/* Primary image - spans 2 rows */}
+            {primaryImage && (
+              <div className="col-span-2 row-span-2 relative group rounded-lg border bg-muted overflow-hidden aspect-square">
+                <img
+                  src={primaryImage.image_url}
+                  alt={primaryImage.alt_text || "Product image"}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs flex items-center gap-1">
+                  <Star className="h-3 w-3" />
+                  Primary
+                </div>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button size="icon" variant="secondary" className="h-8 w-8">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Other images - 1 cell each */}
+            {otherImages.map((image) => (
               <div
                 key={image.id}
                 className="relative group aspect-square rounded-lg border bg-muted overflow-hidden"
@@ -59,12 +83,6 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
                   alt={image.alt_text || "Product image"}
                   className="w-full h-full object-cover"
                 />
-                {image.is_primary && (
-                  <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs flex items-center gap-1">
-                    <Star className="h-3 w-3" />
-                    Primary
-                  </div>
-                )}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button size="icon" variant="secondary" className="h-8 w-8">
                     <Trash2 className="h-4 w-4" />
@@ -72,9 +90,10 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
                 </div>
               </div>
             ))}
+            
+            {/* Add button */}
             <button className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
               <Plus className="h-6 w-6" />
-              <span className="text-xs">Add</span>
             </button>
           </div>
         ) : (
