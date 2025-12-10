@@ -186,9 +186,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-background">
-      {/* Toolbar */}
-      <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 overflow-x-auto">
+    <div className="border rounded-lg overflow-hidden bg-background flex flex-col max-h-[400px]">
+      {/* Toolbar - Sticky */}
+      <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 overflow-x-auto flex-shrink-0 sticky top-0 z-10">
         {/* Block Type Select */}
         <Select value={getCurrentBlockType()} onValueChange={setBlockType}>
           <SelectTrigger className="h-8 w-[120px] text-xs border-0 bg-transparent hover:bg-muted">
@@ -672,8 +672,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         </Button>
       </div>
 
-      {/* Editor Content */}
-      <EditorContent editor={editor} />
+      {/* Editor Content - Scrollable */}
+      <div className="overflow-y-auto flex-1">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }
