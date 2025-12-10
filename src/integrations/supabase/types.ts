@@ -792,6 +792,65 @@ export type Database = {
           },
         ]
       }
+      product_option_template_values: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          template_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          template_id: string
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          template_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_option_template_values_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "product_option_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_option_templates: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_origins: {
         Row: {
           country_code: string | null

@@ -95,24 +95,17 @@ const defaultNewVariant: NewVariant = {
   stock_quantity: 0,
 };
 
-// Recommended option names for pet store
-const RECOMMENDED_OPTIONS = [
-  "Size",
-  "Flavor",
-  "Weight",
-  "Color",
-  "Package Type",
-  "Pet Age Group",
-  "Pet Dietary Requirements",
-  "Pet Food Supplements",
-  "Pet Treat Texture",
-  "Pet Treat Type",
-];
+interface OptionTemplate {
+  id: string;
+  name: string;
+  values: string[];
+}
 
 interface OptionCardProps {
   optionKey: 'option1' | 'option2' | 'option3';
   optionName: string;
   values: string[];
+  suggestedValues: string[];
   isExpanded: boolean;
   onToggleExpand: () => void;
   onUpdateName: (name: string) => void;
@@ -127,6 +120,7 @@ function OptionCard({
   optionKey,
   optionName,
   values,
+  suggestedValues,
   isExpanded,
   onToggleExpand,
   onUpdateName,
@@ -139,6 +133,10 @@ function OptionCard({
   const [editingName, setEditingName] = useState(optionName);
   const [newValue, setNewValue] = useState("");
   const [editingValues, setEditingValues] = useState<Record<string, string>>({});
+  const [showValueSuggestions, setShowValueSuggestions] = useState(false);
+
+  // Filter suggested values that are not already in use
+  const availableSuggestions = suggestedValues.filter(sv => !values.includes(sv));
 
   useEffect(() => {
     setEditingName(optionName);
@@ -247,21 +245,53 @@ function OptionCard({
                   </Button>
                 </div>
               ))}
-              {/* Add new value input */}
-              <div className="flex items-center gap-2">
+              {/* Add new value input with suggestions */}
+              <div className="flex items-center gap-2 relative">
                 <div className="w-4" /> {/* Spacer for alignment */}
-                <Input
-                  value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddValue();
-                    }
-                  }}
-                  placeholder="Add another value"
-                  className="flex-1"
-                />
+                <Popover open={showValueSuggestions && availableSuggestions.length > 0} onOpenChange={setShowValueSuggestions}>
+                  <PopoverTrigger asChild>
+                    <Input
+                      value={newValue}
+                      onChange={(e) => setNewValue(e.target.value)}
+                      onFocus={() => setShowValueSuggestions(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddValue();
+                          setShowValueSuggestions(false);
+                        }
+                        if (e.key === "Escape") {
+                          setShowValueSuggestions(false);
+                        }
+                      }}
+                      placeholder="Add another value"
+                      className="flex-1"
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <Command>
+                      <CommandList>
+                        <CommandGroup heading="Suggested values">
+                          {availableSuggestions
+                            .filter(s => s.toLowerCase().includes(newValue.toLowerCase()))
+                            .slice(0, 8)
+                            .map((suggestion) => (
+                              <CommandItem
+                                key={suggestion}
+                                onSelect={() => {
+                                  onAddValue(suggestion);
+                                  setNewValue("");
+                                  setShowValueSuggestions(false);
+                                }}
+                              >
+                                {suggestion}
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <div className="w-9" /> {/* Spacer for alignment */}
               </div>
             </div>
@@ -338,6 +368,51 @@ export function ProductVariantsTable({
       return data;
     },
     enabled: !!productId,
+  });
+
+  // Fetch option templates from database
+  const { data: optionTemplates } = useQuery({
+    queryKey: ["option-templates"],
+    queryFn: async () => {
+      const { data: templates, error: templatesError } = await supabase
+        .from("product_option_templates")
+        .select("id, name, display_order")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (templatesError) throw templatesError;
+
+      const { data: values, error: valuesError } = await supabase
+        .from("product_option_template_values")
+        .select("template_id, value, display_order")
+        .order("display_order", { ascending: true });
+      if (valuesError) throw valuesError;
+
+      // Group values by template
+      const result: OptionTemplate[] = templates.map(t => ({
+        id: t.id,
+        name: t.name,
+        values: values.filter(v => v.template_id === t.id).map(v => v.value)
+      }));
+      return result;
+    },
+  });
+
+  // Also fetch all unique option names used across all products for auto-suggestions
+  const { data: existingOptionNames } = useQuery({
+    queryKey: ["existing-option-names"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("option1_name, option2_name, option3_name");
+      if (error) throw error;
+      const names = new Set<string>();
+      data.forEach(p => {
+        if (p.option1_name) names.add(p.option1_name);
+        if (p.option2_name) names.add(p.option2_name);
+        if (p.option3_name) names.add(p.option3_name);
+      });
+      return Array.from(names);
+    },
   });
 
   const getVariantImage = (variantId: string) => {
@@ -699,19 +774,33 @@ export function ProductVariantsTable({
   const hasOptions = option1Name || option2Name || option3Name;
   const canAddMoreOptions = !option1Name || !option2Name || !option3Name;
 
-  // Filter recommended options based on search
+  // Combine database templates + existing option names from products
+  const allOptionSuggestions = useMemo(() => {
+    const templateNames = optionTemplates?.map(t => t.name) || [];
+    const existingNames = existingOptionNames || [];
+    const combined = [...new Set([...templateNames, ...existingNames])];
+    return combined;
+  }, [optionTemplates, existingOptionNames]);
+
+  // Filter options based on search
   const filteredRecommendedOptions = useMemo(() => {
-    const existingNames = [option1Name, option2Name, option3Name].filter(Boolean).map(n => n?.toLowerCase());
-    return RECOMMENDED_OPTIONS.filter(
+    const currentOptions = [option1Name, option2Name, option3Name].filter(Boolean).map(n => n?.toLowerCase());
+    return allOptionSuggestions.filter(
       opt => 
-        !existingNames.includes(opt.toLowerCase()) &&
+        !currentOptions.includes(opt.toLowerCase()) &&
         opt.toLowerCase().includes(addOptionSearch.toLowerCase())
     );
-  }, [addOptionSearch, option1Name, option2Name, option3Name]);
+  }, [addOptionSearch, option1Name, option2Name, option3Name, allOptionSuggestions]);
 
   const showCreateCustomOption = addOptionSearch.trim() && 
-    !RECOMMENDED_OPTIONS.some(opt => opt.toLowerCase() === addOptionSearch.toLowerCase()) &&
+    !allOptionSuggestions.some(opt => opt.toLowerCase() === addOptionSearch.toLowerCase()) &&
     ![option1Name, option2Name, option3Name].some(n => n?.toLowerCase() === addOptionSearch.toLowerCase());
+
+  // Get suggested values for a given option name from templates or existing products
+  const getSuggestedValuesForOption = (optName: string) => {
+    const template = optionTemplates?.find(t => t.name.toLowerCase() === optName.toLowerCase());
+    return template?.values || [];
+  };
 
   if (isLoading) {
     return (
@@ -747,6 +836,7 @@ export function ProductVariantsTable({
                 optionKey={group.key}
                 optionName={group.name || ""}
                 values={group.values}
+                suggestedValues={getSuggestedValuesForOption(group.name || "")}
                 isExpanded={expandedOption === group.key}
                 onToggleExpand={() => setExpandedOption(expandedOption === group.key ? null : group.key)}
                 onUpdateName={(name) => updateOptionNameMutation.mutate({ optionKey: group.key, name })}
