@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Package, Check, Trash2, GripVertical, Search, SlidersHorizontal, Database, X, Grid3X3 } from "lucide-react";
+import { Plus, Package, Check, Trash2, GripVertical, Search, SlidersHorizontal, Database, X, ChevronDown, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Popover,
   PopoverContent,
@@ -341,8 +341,7 @@ export function ProductVariantsTable({
   const [showAddOptionMenu, setShowAddOptionMenu] = useState(false);
   const [addOptionSearch, setAddOptionSearch] = useState("");
   const [deleteOptionKey, setDeleteOptionKey] = useState<'option1' | 'option2' | 'option3' | null>(null);
-  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-  const [generateDefaultPrice, setGenerateDefaultPrice] = useState(0);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const { data: variants, isLoading } = useQuery({
     queryKey: ["product-variants", productId],
@@ -616,7 +615,7 @@ export function ProductVariantsTable({
     },
   });
 
-  // Mutation to add a new option value (creates new variants)
+  // Mutation to add a new option value (creates new variants with auto-combinations)
   const addOptionValueMutation = useMutation({
     mutationFn: async ({ 
       optionKey, 
@@ -625,21 +624,80 @@ export function ProductVariantsTable({
       optionKey: 'option1' | 'option2' | 'option3'; 
       value: string;
     }) => {
-      // Create a new variant with this value
-      const variantName = value;
-      const { error } = await supabase.from("product_variants").insert({
-        product_id: productId,
-        name: variantName,
-        [optionKey]: value,
-        price: 0,
-        stock_quantity: 0,
-      });
-      if (error) throw error;
+      // Get existing option values
+      const opt1Vals = option1Name && variants ? [...new Set(variants.map(v => v.option1).filter(Boolean))] as string[] : [];
+      const opt2Vals = option2Name && variants ? [...new Set(variants.map(v => v.option2).filter(Boolean))] as string[] : [];
+      const opt3Vals = option3Name && variants ? [...new Set(variants.map(v => v.option3).filter(Boolean))] as string[] : [];
+      
+      const variantsToCreate: { name: string; option1: string | null; option2: string | null; option3: string | null }[] = [];
+      
+      if (optionKey === 'option1') {
+        // Adding a new main variant value - create combinations with all option2 and option3 values
+        if (opt2Vals.length > 0 && opt3Vals.length > 0) {
+          for (const o2 of opt2Vals) {
+            for (const o3 of opt3Vals) {
+              variantsToCreate.push({ name: `${value} / ${o2} / ${o3}`, option1: value, option2: o2, option3: o3 });
+            }
+          }
+        } else if (opt2Vals.length > 0) {
+          for (const o2 of opt2Vals) {
+            variantsToCreate.push({ name: `${value} / ${o2}`, option1: value, option2: o2, option3: null });
+          }
+        } else {
+          variantsToCreate.push({ name: value, option1: value, option2: null, option3: null });
+        }
+      } else if (optionKey === 'option2') {
+        // Adding a sub-variant value - create combinations with all option1 values
+        if (opt1Vals.length > 0 && opt3Vals.length > 0) {
+          for (const o1 of opt1Vals) {
+            for (const o3 of opt3Vals) {
+              variantsToCreate.push({ name: `${o1} / ${value} / ${o3}`, option1: o1, option2: value, option3: o3 });
+            }
+          }
+        } else if (opt1Vals.length > 0) {
+          for (const o1 of opt1Vals) {
+            variantsToCreate.push({ name: `${o1} / ${value}`, option1: o1, option2: value, option3: null });
+          }
+        } else {
+          variantsToCreate.push({ name: value, option1: null, option2: value, option3: null });
+        }
+      } else if (optionKey === 'option3') {
+        // Adding a third-level value - create combinations with all option1 and option2 values
+        if (opt1Vals.length > 0 && opt2Vals.length > 0) {
+          for (const o1 of opt1Vals) {
+            for (const o2 of opt2Vals) {
+              variantsToCreate.push({ name: `${o1} / ${o2} / ${value}`, option1: o1, option2: o2, option3: value });
+            }
+          }
+        } else if (opt1Vals.length > 0) {
+          for (const o1 of opt1Vals) {
+            variantsToCreate.push({ name: `${o1} / ${value}`, option1: o1, option2: null, option3: value });
+          }
+        } else {
+          variantsToCreate.push({ name: value, option1: null, option2: null, option3: value });
+        }
+      }
+      
+      // Insert all new variants
+      for (const variant of variantsToCreate) {
+        const { error } = await supabase.from("product_variants").insert({
+          product_id: productId,
+          name: variant.name,
+          option1: variant.option1,
+          option2: variant.option2,
+          option3: variant.option3,
+          price: 0,
+          stock_quantity: 0,
+        });
+        if (error) throw error;
+      }
+      
+      return variantsToCreate.length;
     },
-    onSuccess: () => {
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
       queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
-      toast({ title: "Value added", description: "A new variant has been created with this value." });
+      toast({ title: "Value added", description: `Created ${count} new variant${count > 1 ? 's' : ''}.` });
     },
     onError: (error) => {
       toast({ title: "Error adding value", description: error.message, variant: "destructive" });
@@ -785,7 +843,6 @@ export function ProductVariantsTable({
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
       queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
-      setShowGenerateDialog(false);
       toast({ 
         title: "Combinations generated", 
         description: `Created ${result.inserted} new variants (${result.total - result.inserted} already existed).` 
@@ -1002,18 +1059,6 @@ export function ProductVariantsTable({
           </Popover>
         )}
 
-        {/* Generate Combinations Button - show when multiple options exist */}
-        {optionGroups.length >= 2 && getExpectedCombinationsCount() > 0 && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            onClick={() => setShowGenerateDialog(true)}
-          >
-            <Grid3X3 className="h-4 w-4 mr-2" />
-            Generate all combinations ({getExpectedCombinationsCount()} variants)
-          </Button>
-        )}
 
         {/* No options yet - show add option prompt (only show when NO options exist) */}
         {!hasOptions && (
@@ -1075,23 +1120,32 @@ export function ProductVariantsTable({
           </div>
         )}
 
-        {/* Variants Table */}
+        {/* Variants Table - Grouped View */}
         {variants && variants.length > 0 && (
           <>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" className="h-8">
-                <Search className="h-4 w-4 mr-1" />
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-[140px] h-8">
-                  <SelectValue placeholder="All locations" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All locations</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Group by selector and controls */}
+            {option1Name && option2Name && (
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Group by</span>
+                  <Badge variant="secondary">{option1Name}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="h-8">
+                    <Search className="h-4 w-4 mr-1" />
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </Button>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[140px] h-8">
+                      <SelectValue placeholder="All locations" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All locations</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -1100,104 +1154,307 @@ export function ProductVariantsTable({
                     <TableHead className="w-[40px]">
                       <Checkbox checked={selectedVariants.length === variants.length} onCheckedChange={handleSelectAll} />
                     </TableHead>
-                    <TableHead className="font-medium">Variant</TableHead>
+                    <TableHead className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>Variant</span>
+                        {option1Name && option2Name && (
+                          <button 
+                            type="button"
+                            className="text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => setCollapsedGroups(new Set())}
+                          >
+                            · Expand all
+                          </button>
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="font-medium">Price</TableHead>
                     <TableHead className="font-medium text-right">Available</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {variants.map((variant) => {
-                    const variantImage = getVariantImage(variant.id);
-                    return (
-                      <TableRow key={variant.id} className="group">
-                        <TableCell>
-                          <Checkbox checked={selectedVariants.includes(variant.id)} onCheckedChange={(checked) => handleSelectVariant(variant.id, checked === true)} />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button type="button" className="h-12 w-12 rounded-md bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all overflow-hidden border">
-                                  {variantImage ? (
-                                    <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
-                                  ) : (
-                                    <Package className="h-5 w-5 text-muted-foreground" />
-                                  )}
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-64 p-2 bg-popover" align="start">
-                                <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Select image for {variant.name}</p>
-                                {productImages && productImages.length > 0 ? (
-                                  <div className="grid grid-cols-4 gap-1.5">
-                                    {productImages.map((img) => {
-                                      const currentAssigned = getVariantImage(variant.id);
-                                      const isSelected = currentAssigned?.id === img.id && isImageDirectlyAssigned(variant.id);
-                                      return (
-                                        <button
-                                          key={img.id}
-                                          type="button"
-                                          onClick={() => assignImageMutation.mutate({ imageId: img.id, variantId: variant.id })}
-                                          className={cn("relative aspect-square rounded overflow-hidden border-2 transition-all hover:border-primary", isSelected ? "border-primary ring-1 ring-primary" : "border-transparent")}
-                                        >
-                                          <img src={img.image_url} alt={img.alt_text || "Product image"} className="h-full w-full object-cover" />
-                                          {isSelected && (
-                                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                              <Check className="h-4 w-4 text-primary" />
-                                            </div>
-                                          )}
-                                        </button>
-                                      );
-                                    })}
+                  {option1Name && option2Name ? (
+                    // Grouped display
+                    <>
+                      {option1Values.map((groupValue) => {
+                        const groupVariants = variants.filter(v => v.option1 === groupValue);
+                        const isCollapsed = collapsedGroups.has(groupValue);
+                        const groupImage = groupVariants.length > 0 ? getVariantImage(groupVariants[0].id) : null;
+                        
+                        return (
+                          <React.Fragment key={groupValue}>
+                            {/* Group Header Row */}
+                            <TableRow className="bg-muted/20 hover:bg-muted/30">
+                              <TableCell>
+                                <Checkbox 
+                                  checked={groupVariants.every(v => selectedVariants.includes(v.id))}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedVariants(prev => [...new Set([...prev, ...groupVariants.map(v => v.id)])]);
+                                    } else {
+                                      setSelectedVariants(prev => prev.filter(id => !groupVariants.some(v => v.id === id)));
+                                    }
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    type="button"
+                                    className="h-10 w-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden"
+                                    onClick={() => {
+                                      setCollapsedGroups(prev => {
+                                        const next = new Set(prev);
+                                        if (next.has(groupValue)) {
+                                          next.delete(groupValue);
+                                        } else {
+                                          next.add(groupValue);
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    {groupImage ? (
+                                      <img src={groupImage.image_url} alt={groupValue} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <Package className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      className="flex items-center gap-1 hover:text-primary"
+                                      onClick={() => {
+                                        setCollapsedGroups(prev => {
+                                          const next = new Set(prev);
+                                          if (next.has(groupValue)) {
+                                            next.delete(groupValue);
+                                          } else {
+                                            next.add(groupValue);
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                    >
+                                      {isCollapsed ? (
+                                        <ChevronRight className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronDown className="h-4 w-4" />
+                                      )}
+                                      <span className="font-medium">{groupValue}</span>
+                                    </button>
+                                    <span className="text-xs text-muted-foreground">
+                                      {groupVariants.length} variant{groupVariants.length > 1 ? 's' : ''}
+                                    </span>
                                   </div>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground text-center py-4">No images available</p>
-                                )}
-                              </PopoverContent>
-                            </Popover>
-                            <div>
-                              <p className="font-medium text-sm">{variant.name}</p>
-                              {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">—</span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="text-sm text-muted-foreground">
+                                  {groupVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)}
+                                </span>
+                              </TableCell>
+                              <TableCell></TableCell>
+                            </TableRow>
+                            
+                            {/* Sub-variants */}
+                            {!isCollapsed && groupVariants.map((variant) => {
+                              const variantImage = getVariantImage(variant.id);
+                              const displayName = variant.option2 || variant.name;
+                              return (
+                                <TableRow key={variant.id} className="group">
+                                  <TableCell className="pl-8">
+                                    <Checkbox 
+                                      checked={selectedVariants.includes(variant.id)} 
+                                      onCheckedChange={(checked) => handleSelectVariant(variant.id, checked === true)} 
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-3 pl-6">
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <button type="button" className="h-10 w-10 rounded-md bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all overflow-hidden border">
+                                            {variantImage ? (
+                                              <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                              <Package className="h-4 w-4 text-muted-foreground" />
+                                            )}
+                                          </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-64 p-2 bg-popover" align="start">
+                                          <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Select image for {variant.name}</p>
+                                          {productImages && productImages.length > 0 ? (
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                              {productImages.map((img) => {
+                                                const currentAssigned = getVariantImage(variant.id);
+                                                const isSelected = currentAssigned?.id === img.id && isImageDirectlyAssigned(variant.id);
+                                                return (
+                                                  <button
+                                                    key={img.id}
+                                                    type="button"
+                                                    onClick={() => assignImageMutation.mutate({ imageId: img.id, variantId: variant.id })}
+                                                    className={cn("relative aspect-square rounded overflow-hidden border-2 transition-all hover:border-primary", isSelected ? "border-primary ring-1 ring-primary" : "border-transparent")}
+                                                  >
+                                                    <img src={img.image_url} alt={img.alt_text || "Product image"} className="h-full w-full object-cover" />
+                                                    {isSelected && (
+                                                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                        <Check className="h-4 w-4 text-primary" />
+                                                      </div>
+                                                    )}
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          ) : (
+                                            <p className="text-xs text-muted-foreground text-center py-4">No images available</p>
+                                          )}
+                                        </PopoverContent>
+                                      </Popover>
+                                      <div>
+                                        <p className="font-medium text-sm">{displayName}</p>
+                                        {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="relative w-36">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
+                                      <Input
+                                        type="text"
+                                        value={editedVariants[variant.id]?.price?.toLocaleString() ?? variant.price?.toLocaleString()}
+                                        onChange={(e) => { const value = e.target.value.replace(/,/g, ''); handlePriceChange(variant.id, value); }}
+                                        onBlur={() => handleBlur(variant.id)}
+                                        className="pl-7 h-9"
+                                      />
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Input
+                                      type="number"
+                                      value={editedVariants[variant.id]?.stock_quantity ?? variant.stock_quantity ?? 0}
+                                      onChange={(e) => handleStockChange(variant.id, e.target.value)}
+                                      onBlur={() => handleBlur(variant.id)}
+                                      className="w-20 ml-auto text-right h-9 bg-muted/50"
+                                      disabled
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                                      onClick={() => deleteVariantMutation.mutate(variant.id)}
+                                      disabled={deleteVariantMutation.isPending}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </React.Fragment>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    // Flat display (single option or no grouping)
+                    variants.map((variant) => {
+                      const variantImage = getVariantImage(variant.id);
+                      return (
+                        <TableRow key={variant.id} className="group">
+                          <TableCell>
+                            <Checkbox checked={selectedVariants.includes(variant.id)} onCheckedChange={(checked) => handleSelectVariant(variant.id, checked === true)} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button type="button" className="h-12 w-12 rounded-md bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all overflow-hidden border">
+                                    {variantImage ? (
+                                      <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <Package className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64 p-2 bg-popover" align="start">
+                                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Select image for {variant.name}</p>
+                                  {productImages && productImages.length > 0 ? (
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                      {productImages.map((img) => {
+                                        const currentAssigned = getVariantImage(variant.id);
+                                        const isSelected = currentAssigned?.id === img.id && isImageDirectlyAssigned(variant.id);
+                                        return (
+                                          <button
+                                            key={img.id}
+                                            type="button"
+                                            onClick={() => assignImageMutation.mutate({ imageId: img.id, variantId: variant.id })}
+                                            className={cn("relative aspect-square rounded overflow-hidden border-2 transition-all hover:border-primary", isSelected ? "border-primary ring-1 ring-primary" : "border-transparent")}
+                                          >
+                                            <img src={img.image_url} alt={img.alt_text || "Product image"} className="h-full w-full object-cover" />
+                                            {isSelected && (
+                                              <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                <Check className="h-4 w-4 text-primary" />
+                                              </div>
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground text-center py-4">No images available</p>
+                                  )}
+                                </PopoverContent>
+                              </Popover>
+                              <div>
+                                <p className="font-medium text-sm">{variant.name}</p>
+                                {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="relative w-36">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative w-36">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
+                              <Input
+                                type="text"
+                                value={editedVariants[variant.id]?.price?.toLocaleString() ?? variant.price?.toLocaleString()}
+                                onChange={(e) => { const value = e.target.value.replace(/,/g, ''); handlePriceChange(variant.id, value); }}
+                                onBlur={() => handleBlur(variant.id)}
+                                className="pl-7 h-9"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
                             <Input
-                              type="text"
-                              value={editedVariants[variant.id]?.price?.toLocaleString() ?? variant.price?.toLocaleString()}
-                              onChange={(e) => { const value = e.target.value.replace(/,/g, ''); handlePriceChange(variant.id, value); }}
+                              type="number"
+                              value={editedVariants[variant.id]?.stock_quantity ?? variant.stock_quantity ?? 0}
+                              onChange={(e) => handleStockChange(variant.id, e.target.value)}
                               onBlur={() => handleBlur(variant.id)}
-                              className="pl-7 h-9"
+                              className="w-20 ml-auto text-right h-9 bg-muted/50"
+                              disabled
                             />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Input
-                            type="number"
-                            value={editedVariants[variant.id]?.stock_quantity ?? variant.stock_quantity ?? 0}
-                            onChange={(e) => handleStockChange(variant.id, e.target.value)}
-                            onBlur={() => handleBlur(variant.id)}
-                            className="w-20 ml-auto text-right h-9 bg-muted/50"
-                            disabled
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                            onClick={() => deleteVariantMutation.mutate(variant.id)}
-                            disabled={deleteVariantMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                              onClick={() => deleteVariantMutation.mutate(variant.id)}
+                              disabled={deleteVariantMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -1341,60 +1598,6 @@ export function ProductVariantsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Generate Combinations Dialog */}
-      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate variant combinations</DialogTitle>
-            <DialogDescription>
-              This will create all possible combinations from your option values.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              {optionGroups.map((group) => (
-                <div key={group.key} className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">{group.name}:</span>
-                  <span className="text-muted-foreground">{group.values.join(", ")}</span>
-                </div>
-              ))}
-              <div className="pt-2 border-t mt-2">
-                <span className="text-sm font-medium">
-                  Total: {getExpectedCombinationsCount()} variants will be generated
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right text-sm">Default price</Label>
-              <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
-                <Input 
-                  type="number" 
-                  min="0" 
-                  step="1000" 
-                  value={generateDefaultPrice} 
-                  onChange={(e) => setGenerateDefaultPrice(parseFloat(e.target.value) || 0)} 
-                  className="pl-7" 
-                  placeholder="0"
-                />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Existing variants will be preserved. Only new combinations will be created.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={() => generateCombinationsMutation.mutate(generateDefaultPrice)} 
-              disabled={generateCombinationsMutation.isPending}
-            >
-              {generateCombinationsMutation.isPending ? "Generating..." : "Generate variants"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }
