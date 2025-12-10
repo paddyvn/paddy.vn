@@ -6,6 +6,8 @@ import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
+import Youtube from "@tiptap/extension-youtube";
 import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +40,8 @@ import {
   Redo,
   ChevronDown,
   Type,
+  ImageIcon,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -59,6 +63,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [colorOpen, setColorOpen] = useState(false);
   const [hexColor, setHexColor] = useState("#000000");
   const [hexBgColor, setHexBgColor] = useState("#eab308");
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
 
   const editor = useEditor({
     extensions: [
@@ -81,6 +89,16 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       Color,
       Highlight.configure({
         multicolor: true,
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: "max-w-full h-auto rounded-lg",
+        },
+      }),
+      Youtube.configure({
+        HTMLAttributes: {
+          class: "w-full aspect-video rounded-lg",
+        },
       }),
     ],
     content: value,
@@ -390,6 +408,96 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         >
           <ListOrdered className="h-4 w-4" />
         </Button>
+
+        {/* Image */}
+        <Popover open={imageOpen} onOpenChange={setImageOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+            >
+              <ImageIcon className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="start">
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Insert Image</p>
+              <Input
+                placeholder="Enter image URL..."
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && imageUrl) {
+                    editor.chain().focus().setImage({ src: imageUrl }).run();
+                    setImageUrl("");
+                    setImageOpen(false);
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  if (imageUrl) {
+                    editor.chain().focus().setImage({ src: imageUrl }).run();
+                    setImageUrl("");
+                    setImageOpen(false);
+                  }
+                }}
+              >
+                Insert Image
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Video */}
+        <Popover open={videoOpen} onOpenChange={setVideoOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+            >
+              <Video className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="start">
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Insert YouTube Video</p>
+              <Input
+                placeholder="Enter YouTube URL..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && videoUrl) {
+                    editor.commands.setYoutubeVideo({ src: videoUrl });
+                    setVideoUrl("");
+                    setVideoOpen(false);
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  if (videoUrl) {
+                    editor.commands.setYoutubeVideo({ src: videoUrl });
+                    setVideoUrl("");
+                    setVideoOpen(false);
+                  }
+                }}
+              >
+                Insert Video
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
