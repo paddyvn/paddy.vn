@@ -215,7 +215,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className={cn("h-8 w-8", editor.isActive("bold") && "bg-muted")}
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
-          <Bold className="h-4 w-4" />
+          <Bold className="h-4 w-4" strokeWidth={3} />
         </Button>
         <Button
           type="button"
