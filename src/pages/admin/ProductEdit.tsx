@@ -310,6 +310,18 @@ export default function ProductEdit() {
               Preview
             </Button>
             <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                form.reset();
+                navigate("/admin/products");
+              }}
+              disabled={form.formState.isSubmitting}
+            >
+              Discard
+            </Button>
+            <Button
               type="submit"
               size="sm"
               disabled={form.formState.isSubmitting}
