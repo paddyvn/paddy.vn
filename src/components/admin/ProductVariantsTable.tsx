@@ -709,6 +709,22 @@ export function ProductVariantsTable({
         }
       } else if (optionKey === 'option2') {
         // Adding a sub-variant value - create combinations with all option1 values
+        // Also delete old option1-only variants that don't have option2
+        if (opt1Vals.length > 0 && variants) {
+          // Check if this is the FIRST option2 value being added (opt2Vals is empty)
+          if (opt2Vals.length === 0) {
+            // Delete old option1-only variants (they have option1 but no option2)
+            const incompleteVariants = variants.filter(v => v.option1 && !v.option2);
+            for (const variant of incompleteVariants) {
+              const { error } = await supabase
+                .from("product_variants")
+                .delete()
+                .eq("id", variant.id);
+              if (error) throw error;
+            }
+          }
+        }
+        
         if (opt1Vals.length > 0 && opt3Vals.length > 0) {
           for (const o1 of opt1Vals) {
             for (const o3 of opt3Vals) {
