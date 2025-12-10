@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -57,6 +57,9 @@ const productFormSchema = z.object({
   option1_name: z.string().max(50, "Option name must be less than 50 characters").nullable(),
   option2_name: z.string().max(50, "Option name must be less than 50 characters").nullable(),
   option3_name: z.string().max(50, "Option name must be less than 50 characters").nullable(),
+  target_age_id: z.string().nullable(),
+  target_size_id: z.string().nullable(),
+  origin_id: z.string().nullable(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -65,6 +68,8 @@ export default function ProductEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedHealthConditions, setSelectedHealthConditions] = useState<string[]>([]);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product-edit", id],
@@ -95,6 +100,28 @@ export default function ProductEdit() {
     enabled: !!id,
   });
 
+  // Fetch product's health conditions
+  const { data: productHealthConditions = [] } = useQuery({
+    queryKey: ["product-health-conditions", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("product_health_condition_links")
+        .select("health_condition_id")
+        .eq("product_id", id);
+      if (error) throw error;
+      return data.map(d => d.health_condition_id);
+    },
+    enabled: !!id,
+  });
+
+  // Sync health conditions from query to state
+  useEffect(() => {
+    if (productHealthConditions.length > 0) {
+      setSelectedHealthConditions(productHealthConditions);
+    }
+  }, [productHealthConditions]);
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -116,6 +143,9 @@ export default function ProductEdit() {
       option1_name: "",
       option2_name: "",
       option3_name: "",
+      target_age_id: null,
+      target_size_id: null,
+      origin_id: null,
     },
   });
 
@@ -131,7 +161,7 @@ export default function ProductEdit() {
         category_id: product.category_id,
         vendor: product.vendor || "",
         product_type: product.product_type || "",
-        pet_type: (product as any).pet_type || "",
+        pet_type: product.pet_type || "",
         tags: product.tags || "",
         is_active: product.is_active ?? true,
         is_featured: product.is_featured ?? false,
@@ -140,6 +170,9 @@ export default function ProductEdit() {
         option1_name: product.option1_name || "",
         option2_name: product.option2_name || "",
         option3_name: product.option3_name || "",
+        target_age_id: product.target_age_id || null,
+        target_size_id: product.target_size_id || null,
+        origin_id: product.origin_id || null,
       });
     }
   }, [product, form]);
@@ -148,6 +181,7 @@ export default function ProductEdit() {
     if (!id) return;
 
     try {
+      // Update product
       const { error } = await supabase
         .from("products")
         .update({
@@ -169,10 +203,33 @@ export default function ProductEdit() {
           option1_name: values.option1_name || null,
           option2_name: values.option2_name || null,
           option3_name: values.option3_name || null,
+          target_age_id: values.target_age_id || null,
+          target_size_id: values.target_size_id || null,
+          origin_id: values.origin_id || null,
         })
         .eq("id", id);
 
       if (error) throw error;
+
+      // Update health conditions - delete existing and insert new
+      await supabase
+        .from("product_health_condition_links")
+        .delete()
+        .eq("product_id", id);
+
+      if (selectedHealthConditions.length > 0) {
+        const { error: healthError } = await supabase
+          .from("product_health_condition_links")
+          .insert(
+            selectedHealthConditions.map(conditionId => ({
+              product_id: id,
+              health_condition_id: conditionId,
+            }))
+          );
+        if (healthError) throw healthError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["product-health-conditions", id] });
 
       toast({
         title: "Product updated",
@@ -415,7 +472,11 @@ export default function ProductEdit() {
               <ProductStatusCard form={form} />
 
               {/* Product Organization */}
-              <ProductOrganizationCard form={form} />
+              <ProductOrganizationCard 
+                form={form} 
+                selectedHealthConditions={selectedHealthConditions}
+                onHealthConditionsChange={setSelectedHealthConditions}
+              />
 
               {/* Collections */}
               {id && <ProductCollectionTags productId={id} />}
