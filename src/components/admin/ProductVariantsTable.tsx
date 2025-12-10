@@ -1389,14 +1389,6 @@ export function ProductVariantsTable({
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center gap-3 pl-6">
-                                      {/* Display-only image (inherited from group) */}
-                                      <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
-                                        {variantImage ? (
-                                          <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
-                                        ) : (
-                                          <Package className="h-4 w-4 text-muted-foreground" />
-                                        )}
-                                      </div>
                                       <div>
                                         <p className="font-medium text-sm">{displayName}</p>
                                         {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
