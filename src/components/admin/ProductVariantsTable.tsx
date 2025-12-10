@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Package, Check, Trash2, GripVertical, Search, SlidersHorizontal, Database, X } from "lucide-react";
+import { Plus, Package, Check, Trash2, GripVertical, Search, SlidersHorizontal, Database, X, Grid3X3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useMemo } from "react";
@@ -341,6 +341,8 @@ export function ProductVariantsTable({
   const [showAddOptionMenu, setShowAddOptionMenu] = useState(false);
   const [addOptionSearch, setAddOptionSearch] = useState("");
   const [deleteOptionKey, setDeleteOptionKey] = useState<'option1' | 'option2' | 'option3' | null>(null);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [generateDefaultPrice, setGenerateDefaultPrice] = useState(0);
 
   const { data: variants, isLoading } = useQuery({
     queryKey: ["product-variants", productId],
@@ -715,6 +717,97 @@ export function ProductVariantsTable({
     },
   });
 
+  // Generate all combinations from option values
+  const generateCombinationsMutation = useMutation({
+    mutationFn: async (defaultPrice: number) => {
+      // Get all option values
+      const opt1Vals = option1Name ? getUniqueOptionValues('option1') : [];
+      const opt2Vals = option2Name ? getUniqueOptionValues('option2') : [];
+      const opt3Vals = option3Name ? getUniqueOptionValues('option3') : [];
+
+      // Generate all combinations
+      const combinations: { option1: string | null; option2: string | null; option3: string | null }[] = [];
+      
+      if (opt1Vals.length > 0 && opt2Vals.length > 0 && opt3Vals.length > 0) {
+        // 3 options
+        for (const o1 of opt1Vals) {
+          for (const o2 of opt2Vals) {
+            for (const o3 of opt3Vals) {
+              combinations.push({ option1: o1, option2: o2, option3: o3 });
+            }
+          }
+        }
+      } else if (opt1Vals.length > 0 && opt2Vals.length > 0) {
+        // 2 options
+        for (const o1 of opt1Vals) {
+          for (const o2 of opt2Vals) {
+            combinations.push({ option1: o1, option2: o2, option3: null });
+          }
+        }
+      } else if (opt1Vals.length > 0) {
+        // 1 option
+        for (const o1 of opt1Vals) {
+          combinations.push({ option1: o1, option2: null, option3: null });
+        }
+      }
+
+      if (combinations.length === 0) {
+        throw new Error("No option values defined to generate combinations");
+      }
+
+      // Check which combinations already exist
+      const existingCombos = new Set(
+        variants?.map(v => `${v.option1 || ''}|${v.option2 || ''}|${v.option3 || ''}`) || []
+      );
+
+      // Insert only new combinations
+      let insertedCount = 0;
+      for (const combo of combinations) {
+        const comboKey = `${combo.option1 || ''}|${combo.option2 || ''}|${combo.option3 || ''}`;
+        if (!existingCombos.has(comboKey)) {
+          const variantName = [combo.option1, combo.option2, combo.option3].filter(Boolean).join(" / ");
+          const { error } = await supabase.from("product_variants").insert({
+            product_id: productId,
+            name: variantName,
+            option1: combo.option1,
+            option2: combo.option2,
+            option3: combo.option3,
+            price: defaultPrice,
+            stock_quantity: 0,
+          });
+          if (error) throw error;
+          insertedCount++;
+        }
+      }
+
+      return { total: combinations.length, inserted: insertedCount };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["product-variants", productId] });
+      queryClient.invalidateQueries({ queryKey: ["product-variants-count", productId] });
+      setShowGenerateDialog(false);
+      toast({ 
+        title: "Combinations generated", 
+        description: `Created ${result.inserted} new variants (${result.total - result.inserted} already existed).` 
+      });
+    },
+    onError: (error) => {
+      toast({ title: "Error generating combinations", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Calculate expected combinations count
+  const getExpectedCombinationsCount = () => {
+    const opt1Count = option1Name ? getUniqueOptionValues('option1').length : 0;
+    const opt2Count = option2Name ? getUniqueOptionValues('option2').length : 0;
+    const opt3Count = option3Name ? getUniqueOptionValues('option3').length : 0;
+    
+    if (opt1Count > 0 && opt2Count > 0 && opt3Count > 0) return opt1Count * opt2Count * opt3Count;
+    if (opt1Count > 0 && opt2Count > 0) return opt1Count * opt2Count;
+    if (opt1Count > 0) return opt1Count;
+    return 0;
+  };
+
   const handlePriceChange = (variantId: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     setEditedVariants((prev) => ({ ...prev, [variantId]: { ...prev[variantId], price: numValue } }));
@@ -907,6 +1000,19 @@ export function ProductVariantsTable({
               </Command>
             </PopoverContent>
           </Popover>
+        )}
+
+        {/* Generate Combinations Button - show when multiple options exist */}
+        {optionGroups.length >= 2 && getExpectedCombinationsCount() > 0 && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full"
+            onClick={() => setShowGenerateDialog(true)}
+          >
+            <Grid3X3 className="h-4 w-4 mr-2" />
+            Generate all combinations ({getExpectedCombinationsCount()} variants)
+          </Button>
         )}
 
         {/* No options yet - show add option prompt (only show when NO options exist) */}
@@ -1235,6 +1341,60 @@ export function ProductVariantsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Generate Combinations Dialog */}
+      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate variant combinations</DialogTitle>
+            <DialogDescription>
+              This will create all possible combinations from your option values.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              {optionGroups.map((group) => (
+                <div key={group.key} className="flex items-center gap-2 text-sm">
+                  <span className="font-medium">{group.name}:</span>
+                  <span className="text-muted-foreground">{group.values.join(", ")}</span>
+                </div>
+              ))}
+              <div className="pt-2 border-t mt-2">
+                <span className="text-sm font-medium">
+                  Total: {getExpectedCombinationsCount()} variants will be generated
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right text-sm">Default price</Label>
+              <div className="col-span-3 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
+                <Input 
+                  type="number" 
+                  min="0" 
+                  step="1000" 
+                  value={generateDefaultPrice} 
+                  onChange={(e) => setGenerateDefaultPrice(parseFloat(e.target.value) || 0)} 
+                  className="pl-7" 
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Existing variants will be preserved. Only new combinations will be created.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => generateCombinationsMutation.mutate(generateDefaultPrice)} 
+              disabled={generateCombinationsMutation.isPending}
+            >
+              {generateCombinationsMutation.isPending ? "Generating..." : "Generate variants"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
