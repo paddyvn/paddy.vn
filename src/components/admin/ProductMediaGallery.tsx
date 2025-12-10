@@ -43,6 +43,12 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
 
   const primaryImage = images?.find((img) => img.is_primary) || images?.[0];
   const otherImages = images?.filter((img) => img.id !== primaryImage?.id) || [];
+  
+  // Grid: 6 columns, 2 rows. Primary takes 2x2 = 4 cells. Remaining = 8 cells.
+  // 1 cell for add button = 7 cells for other images max
+  const maxVisibleOthers = 6;
+  const visibleOtherImages = otherImages.slice(0, maxVisibleOthers);
+  const hiddenCount = otherImages.length - maxVisibleOthers;
 
   return (
     <Card>
@@ -51,15 +57,17 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
       </CardHeader>
       <CardContent>
         {images && images.length > 0 ? (
-          <div className="grid grid-cols-5 gap-3">
-            {/* Primary image - spans 2 rows */}
+          <div className="grid grid-cols-6 gap-3">
+            {/* Primary image - spans 2 columns and 2 rows */}
             {primaryImage && (
-              <div className="col-span-2 row-span-2 relative group rounded-lg border bg-muted overflow-hidden aspect-square">
-                <img
-                  src={primaryImage.image_url}
-                  alt={primaryImage.alt_text || "Product image"}
-                  className="w-full h-full object-cover"
-                />
+              <div className="col-span-2 row-span-2 relative group rounded-lg border bg-muted overflow-hidden">
+                <div className="aspect-square">
+                  <img
+                    src={primaryImage.image_url}
+                    alt={primaryImage.alt_text || "Product image"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs flex items-center gap-1">
                   <Star className="h-3 w-3" />
                   Primary
@@ -72,8 +80,8 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
               </div>
             )}
             
-            {/* Other images - 1 cell each */}
-            {otherImages.map((image) => (
+            {/* Other images - max 6 visible */}
+            {visibleOtherImages.map((image) => (
               <div
                 key={image.id}
                 className="relative group aspect-square rounded-lg border bg-muted overflow-hidden"
@@ -90,6 +98,13 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
                 </div>
               </div>
             ))}
+            
+            {/* Hidden count indicator */}
+            {hiddenCount > 0 && (
+              <button className="aspect-square rounded-lg border bg-muted/80 backdrop-blur flex items-center justify-center text-foreground font-medium text-lg hover:bg-muted transition-colors">
+                +{hiddenCount}
+              </button>
+            )}
             
             {/* Add button */}
             <button className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
