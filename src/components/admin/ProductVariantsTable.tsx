@@ -4,10 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package } from "lucide-react";
+import { Plus, Package, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -16,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 interface ProductVariantsTableProps {
   productId: string;
@@ -84,6 +90,59 @@ export function ProductVariantsTable({
     
     return assignedImage;
   };
+
+  // Check if a specific image is directly assigned to a variant (not fallback)
+  const isImageDirectlyAssigned = (variantId: string) => {
+    if (!productImages) return false;
+    return productImages.some((img) => {
+      const variantIds = img.variant_ids as string[] | null;
+      return variantIds && variantIds.includes(variantId);
+    });
+  };
+
+  const assignImageMutation = useMutation({
+    mutationFn: async ({ imageId, variantId }: { imageId: string; variantId: string }) => {
+      // First, remove this variant from all other images
+      if (productImages) {
+        for (const img of productImages) {
+          const variantIds = (img.variant_ids as string[] | null) || [];
+          if (variantIds.includes(variantId)) {
+            const newVariantIds = variantIds.filter((id) => id !== variantId);
+            await supabase
+              .from("product_images")
+              .update({ variant_ids: newVariantIds })
+              .eq("id", img.id);
+          }
+        }
+      }
+
+      // Then add this variant to the selected image
+      const selectedImage = productImages?.find((img) => img.id === imageId);
+      const currentVariantIds = (selectedImage?.variant_ids as string[] | null) || [];
+      const newVariantIds = [...currentVariantIds, variantId];
+      
+      const { error } = await supabase
+        .from("product_images")
+        .update({ variant_ids: newVariantIds })
+        .eq("id", imageId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-images", productId] });
+      toast({
+        title: "Image assigned",
+        description: "The image has been assigned to the variant.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error assigning image",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Initialize editedVariants when variants load
   useEffect(() => {
@@ -245,17 +304,68 @@ export function ProductVariantsTable({
                   <TableRow key={variant.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {variantImage ? (
-                          <img
-                            src={variantImage.image_url}
-                            alt={variantImage.alt_text || variant.name}
-                            className="h-10 w-10 rounded object-cover bg-muted"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        )}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="h-10 w-10 rounded bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all overflow-hidden"
+                            >
+                              {variantImage ? (
+                                <img
+                                  src={variantImage.image_url}
+                                  alt={variantImage.alt_text || variant.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
+                              Select image for {variant.name}
+                            </p>
+                            {productImages && productImages.length > 0 ? (
+                              <div className="grid grid-cols-4 gap-1.5">
+                                {productImages.map((img) => {
+                                  const currentAssigned = getVariantImage(variant.id);
+                                  const isSelected = currentAssigned?.id === img.id && isImageDirectlyAssigned(variant.id);
+                                  return (
+                                    <button
+                                      key={img.id}
+                                      type="button"
+                                      onClick={() => {
+                                        assignImageMutation.mutate({
+                                          imageId: img.id,
+                                          variantId: variant.id,
+                                        });
+                                      }}
+                                      className={cn(
+                                        "relative aspect-square rounded overflow-hidden border-2 transition-all hover:border-primary",
+                                        isSelected ? "border-primary ring-1 ring-primary" : "border-transparent"
+                                      )}
+                                    >
+                                      <img
+                                        src={img.image_url}
+                                        alt={img.alt_text || "Product image"}
+                                        className="h-full w-full object-cover"
+                                      />
+                                      {isSelected && (
+                                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                          <Check className="h-4 w-4 text-primary" />
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground text-center py-4">
+                                No images available
+                              </p>
+                            )}
+                          </PopoverContent>
+                        </Popover>
                         <div>
                           <p className="font-medium text-sm">{variant.name}</p>
                           {variant.sku && (
