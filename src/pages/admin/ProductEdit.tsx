@@ -208,48 +208,62 @@ export default function ProductEdit() {
   const isActive = form.watch("is_active");
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/admin/products")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold">{product.name}</h2>
-            <Badge variant={isActive ? "default" : "secondary"}>
-              {isActive ? "Active" : "Draft"}
-            </Badge>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/admin/products")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-semibold">{product.name}</h2>
+              <Badge variant={isActive ? "default" : "secondary"}>
+                {isActive ? "Active" : "Draft"}
+              </Badge>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm">
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem>View on store</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem>View on store</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content - Left Column */}
             <div className="lg:col-span-2 space-y-6">
@@ -388,26 +402,9 @@ export default function ProductEdit() {
 
               {/* Tags */}
               <ProductTagsInput form={form} />
-
-              {/* Save Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save"
-                )}
-              </Button>
             </div>
           </div>
         </form>
       </Form>
-    </div>
   );
 }
