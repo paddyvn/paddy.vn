@@ -136,7 +136,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     content: value,
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none",
+        class: "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
       },
     },
     onUpdate: ({ editor }) => {
