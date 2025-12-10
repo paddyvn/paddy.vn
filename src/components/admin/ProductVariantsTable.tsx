@@ -1116,14 +1116,23 @@ export function ProductVariantsTable({
             <PopoverContent className="w-72 p-0" align="start">
               <Command>
                 <CommandInput 
-                  placeholder="Search" 
+                  placeholder="Search or type custom name..." 
                   value={addOptionSearch}
                   onValueChange={setAddOptionSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>
-                    {!showCreateCustomOption && "No options found."}
-                  </CommandEmpty>
+                  {showCreateCustomOption && (
+                    <CommandGroup heading="Create custom">
+                      <CommandItem
+                        onSelect={() => {
+                          addOptionMutation.mutate(addOptionSearch.trim());
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create "{addOptionSearch.trim()}"
+                      </CommandItem>
+                    </CommandGroup>
+                  )}
                   {filteredRecommendedOptions.length > 0 && (
                     <CommandGroup heading="Recommended">
                       {filteredRecommendedOptions.map((opt) => (
@@ -1138,20 +1147,8 @@ export function ProductVariantsTable({
                       ))}
                     </CommandGroup>
                   )}
-                  {showCreateCustomOption && (
-                    <>
-                      <CommandSeparator />
-                      <CommandGroup>
-                        <CommandItem
-                          onSelect={() => {
-                            addOptionMutation.mutate(addOptionSearch.trim());
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create custom option
-                        </CommandItem>
-                      </CommandGroup>
-                    </>
+                  {!showCreateCustomOption && filteredRecommendedOptions.length === 0 && (
+                    <CommandEmpty>No options found. Type to create custom.</CommandEmpty>
                   )}
                 </CommandList>
               </Command>
@@ -1176,14 +1173,23 @@ export function ProductVariantsTable({
               <PopoverContent className="w-72 p-0" align="start">
                 <Command>
                   <CommandInput 
-                    placeholder="Search" 
+                    placeholder="Search or type custom name..." 
                     value={addOptionSearch}
                     onValueChange={setAddOptionSearch}
                   />
                   <CommandList>
-                    <CommandEmpty>
-                      {!showCreateCustomOption && "No options found."}
-                    </CommandEmpty>
+                    {showCreateCustomOption && (
+                      <CommandGroup heading="Create custom">
+                        <CommandItem
+                          onSelect={() => {
+                            addOptionMutation.mutate(addOptionSearch.trim());
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create "{addOptionSearch.trim()}"
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
                     {filteredRecommendedOptions.length > 0 && (
                       <CommandGroup heading="Recommended">
                         {filteredRecommendedOptions.map((opt) => (
@@ -1198,20 +1204,8 @@ export function ProductVariantsTable({
                         ))}
                       </CommandGroup>
                     )}
-                    {showCreateCustomOption && (
-                      <>
-                        <CommandSeparator />
-                        <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              addOptionMutation.mutate(addOptionSearch.trim());
-                            }}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create custom option
-                          </CommandItem>
-                        </CommandGroup>
-                      </>
+                    {!showCreateCustomOption && filteredRecommendedOptions.length === 0 && (
+                      <CommandEmpty>No options found. Type to create custom.</CommandEmpty>
                     )}
                   </CommandList>
                 </Command>
