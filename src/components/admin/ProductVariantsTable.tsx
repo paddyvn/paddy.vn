@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Plus, Package, Check, Trash2 } from "lucide-react";
+import { Plus, Package, Check, Trash2, ChevronsUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -23,6 +23,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Table,
   TableBody,
@@ -68,6 +76,102 @@ const defaultNewVariant: NewVariant = {
   barcode: "",
   stock_quantity: 0,
 };
+
+// Combobox component for selecting or typing option values
+interface OptionComboboxProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  existingValues: string[];
+}
+
+function OptionCombobox({ label, value, onChange, existingValues }: OptionComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value);
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  const handleSelect = (selectedValue: string) => {
+    onChange(selectedValue);
+    setInputValue(selectedValue);
+    setOpen(false);
+  };
+
+  const handleInputChange = (newValue: string) => {
+    setInputValue(newValue);
+    onChange(newValue);
+  };
+
+  return (
+    <div className="grid grid-cols-4 items-center gap-4">
+      <Label className="text-right">{label}</Label>
+      <div className="col-span-3">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between font-normal"
+            >
+              {inputValue || `Select or type ${label}...`}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0" align="start">
+            <Command>
+              <CommandInput 
+                placeholder={`Search or type new ${label}...`} 
+                value={inputValue}
+                onValueChange={handleInputChange}
+              />
+              <CommandList>
+                <CommandEmpty>
+                  <div className="py-2 px-3 text-sm">
+                    {inputValue ? (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-start"
+                        onClick={() => handleSelect(inputValue)}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Use "{inputValue}"
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">Type to add new value</span>
+                    )}
+                  </div>
+                </CommandEmpty>
+                {existingValues.length > 0 && (
+                  <CommandGroup heading="Existing values">
+                    {existingValues.map((val) => (
+                      <CommandItem
+                        key={val}
+                        value={val}
+                        onSelect={() => handleSelect(val)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === val ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {val}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+  );
+}
 
 export function ProductVariantsTable({
   productId,
@@ -322,27 +426,37 @@ export function ProductVariantsTable({
     0
   );
 
+  // Get unique option values for display and selection
+  const getUniqueOptionValues = (optionKey: 'option1' | 'option2' | 'option3') => {
+    if (!variants) return [];
+    return [...new Set(variants.map(v => v[optionKey]).filter(Boolean))] as string[];
+  };
+
+  const option1Values = getUniqueOptionValues('option1');
+  const option2Values = getUniqueOptionValues('option2');
+  const option3Values = getUniqueOptionValues('option3');
+
   // Get unique option values for display
   const getOptionValues = () => {
     const options: { name: string; values: string[] }[] = [];
     
-    if (option1Name && variants) {
-      const values = [...new Set(variants.map(v => v.option1).filter(Boolean))] as string[];
-      if (values.length > 0) options.push({ name: option1Name, values });
+    if (option1Name && option1Values.length > 0) {
+      options.push({ name: option1Name, values: option1Values });
     }
-    if (option2Name && variants) {
-      const values = [...new Set(variants.map(v => v.option2).filter(Boolean))] as string[];
-      if (values.length > 0) options.push({ name: option2Name, values });
+    if (option2Name && option2Values.length > 0) {
+      options.push({ name: option2Name, values: option2Values });
     }
-    if (option3Name && variants) {
-      const values = [...new Set(variants.map(v => v.option3).filter(Boolean))] as string[];
-      if (values.length > 0) options.push({ name: option3Name, values });
+    if (option3Name && option3Values.length > 0) {
+      options.push({ name: option3Name, values: option3Values });
     }
 
     return options;
   };
 
   const optionGroups = getOptionValues();
+
+  // Check if product has any options defined
+  const hasOptions = option1Name || option2Name || option3Name;
 
   if (isLoading) {
     return (
@@ -381,49 +495,32 @@ export function ProductVariantsTable({
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                {/* Option fields with comboboxes */}
                 {option1Name && (
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="option1" className="text-right">
-                      {option1Name}
-                    </Label>
-                    <Input
-                      id="option1"
-                      value={newVariant.option1}
-                      onChange={(e) => setNewVariant(prev => ({ ...prev, option1: e.target.value }))}
-                      className="col-span-3"
-                      placeholder={`Enter ${option1Name}`}
-                    />
-                  </div>
+                  <OptionCombobox
+                    label={option1Name}
+                    value={newVariant.option1}
+                    onChange={(val) => setNewVariant(prev => ({ ...prev, option1: val }))}
+                    existingValues={option1Values}
+                  />
                 )}
                 {option2Name && (
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="option2" className="text-right">
-                      {option2Name}
-                    </Label>
-                    <Input
-                      id="option2"
-                      value={newVariant.option2}
-                      onChange={(e) => setNewVariant(prev => ({ ...prev, option2: e.target.value }))}
-                      className="col-span-3"
-                      placeholder={`Enter ${option2Name}`}
-                    />
-                  </div>
+                  <OptionCombobox
+                    label={option2Name}
+                    value={newVariant.option2}
+                    onChange={(val) => setNewVariant(prev => ({ ...prev, option2: val }))}
+                    existingValues={option2Values}
+                  />
                 )}
                 {option3Name && (
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="option3" className="text-right">
-                      {option3Name}
-                    </Label>
-                    <Input
-                      id="option3"
-                      value={newVariant.option3}
-                      onChange={(e) => setNewVariant(prev => ({ ...prev, option3: e.target.value }))}
-                      className="col-span-3"
-                      placeholder={`Enter ${option3Name}`}
-                    />
-                  </div>
+                  <OptionCombobox
+                    label={option3Name}
+                    value={newVariant.option3}
+                    onChange={(val) => setNewVariant(prev => ({ ...prev, option3: val }))}
+                    existingValues={option3Values}
+                  />
                 )}
-                {!option1Name && !option2Name && !option3Name && (
+                {!hasOptions && (
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="variantName" className="text-right">
                       Name
