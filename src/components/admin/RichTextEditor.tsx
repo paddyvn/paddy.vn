@@ -242,16 +242,17 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="sm"
+              className="h-8 px-1.5 gap-0.5"
             >
-              <div className="flex flex-col items-center">
-                <Baseline className="h-4 w-4" />
+              <div className="flex flex-col items-center justify-center">
+                <span className="text-sm font-semibold leading-none">A</span>
                 <div 
-                  className="h-0.5 w-4 mt-0.5 rounded-full" 
+                  className="h-0.5 w-4 rounded-full" 
                   style={{ backgroundColor: editor.getAttributes("textStyle").color || "#000000" }}
                 />
               </div>
+              <ChevronDown className="h-3 w-3" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3" align="start">
