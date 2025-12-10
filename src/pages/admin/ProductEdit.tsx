@@ -36,6 +36,7 @@ import { ProductCollectionTags } from "@/components/admin/ProductCollectionTags"
 import { ProductTagsInput } from "@/components/admin/ProductTagsInput";
 import { ProductStatusCard } from "@/components/admin/ProductStatusCard";
 import { ProductOrganizationCard } from "@/components/admin/ProductOrganizationCard";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 const productFormSchema = z.object({
   name: z.string().trim().min(1, "Product name is required").max(255, "Name must be less than 255 characters"),
@@ -291,11 +292,10 @@ export default function ProductEdit() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Add a description for this product..."
-                            className="min-h-[200px] resize-y"
-                            {...field}
+                          <RichTextEditor
                             value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Add a description for this product..."
                           />
                         </FormControl>
                         <FormMessage />
