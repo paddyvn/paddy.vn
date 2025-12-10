@@ -81,6 +81,20 @@ export default function ProductEdit() {
     enabled: !!id,
   });
 
+  const { data: variantsCount = 0 } = useQuery({
+    queryKey: ["product-variants-count", id],
+    queryFn: async () => {
+      if (!id) return 0;
+      const { count, error } = await supabase
+        .from("product_variants")
+        .select("*", { count: "exact", head: true })
+        .eq("product_id", id);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!id,
+  });
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -312,68 +326,70 @@ export default function ProductEdit() {
               {/* Media */}
               {id && <ProductMediaGallery productId={id} />}
 
-              {/* Pricing Card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Pricing</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="base_price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                                ₫
-                              </span>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="1000"
-                                placeholder="0"
-                                className="pl-7"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              {/* Pricing Card - Only show when no variants */}
+              {variantsCount === 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-medium">Pricing</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="base_price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                                  ₫
+                                </span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1000"
+                                  placeholder="0"
+                                  className="pl-7"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="compare_at_price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Compare-at price</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                                ₫
-                              </span>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="1000"
-                                placeholder="0"
-                                className="pl-7"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                      <FormField
+                        control={form.control}
+                        name="compare_at_price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Compare-at price</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                                  ₫
+                                </span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1000"
+                                  placeholder="0"
+                                  className="pl-7"
+                                  {...field}
+                                  value={field.value || ""}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Variants */}
               {id && (
