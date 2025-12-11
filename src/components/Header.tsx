@@ -14,10 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-
+import { MegaMenu, dogMenuColumns, catMenuColumns } from "@/components/MegaMenu";
+import categoryDogs from "@/assets/category-dogs.jpg";
+import categoryCats from "@/assets/category-cats.jpg";
 export const Header = () => {
   const [userId, setUserId] = useState<string | undefined>();
   const [userName, setUserName] = useState<string | null>(null);
+  const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
@@ -176,31 +179,53 @@ export const Header = () => {
       </div>
 
       {/* Navigation Bar */}
-      <div className="bg-primary-foreground text-foreground border-t border-border/20">
+      <div 
+        className="bg-primary-foreground text-foreground border-t border-border/20 relative"
+        onMouseLeave={() => setActiveMegaMenu(null)}
+      >
         <div className="container mx-auto px-4">
           <nav className="hidden md:flex h-12 items-center justify-between text-sm font-medium">
             <div className="flex items-center gap-6">
-              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+              <button 
+                className="flex items-center gap-1 hover:text-primary transition-smooth"
+                onMouseEnter={() => setActiveMegaMenu('dog')}
+              >
                 Dog
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+              <button 
+                className="flex items-center gap-1 hover:text-primary transition-smooth"
+                onMouseEnter={() => setActiveMegaMenu('cat')}
+              >
                 Cat
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+              <button 
+                className="flex items-center gap-1 hover:text-primary transition-smooth"
+                onMouseEnter={() => setActiveMegaMenu(null)}
+              >
                 Other Animals
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+              <button 
+                className="flex items-center gap-1 hover:text-primary transition-smooth"
+                onMouseEnter={() => setActiveMegaMenu(null)}
+              >
                 Pharmacy
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button className="flex items-center gap-1 hover:text-primary transition-smooth">
+              <button 
+                className="flex items-center gap-1 hover:text-primary transition-smooth"
+                onMouseEnter={() => setActiveMegaMenu(null)}
+              >
                 Services
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <a href="#" className="hover:text-primary transition-smooth">
+              <a 
+                href="#" 
+                className="hover:text-primary transition-smooth"
+                onMouseEnter={() => setActiveMegaMenu(null)}
+              >
                 Today's Deals
               </a>
             </div>
@@ -216,6 +241,28 @@ export const Header = () => {
             </Button>
           </div>
         </div>
+
+        {/* Mega Menus */}
+        {activeMegaMenu === 'dog' && (
+          <MegaMenu
+            columns={dogMenuColumns}
+            promoImage={categoryDogs}
+            promoTitle="Summer Collection"
+            promoSubtitle="Get your pup ready for the sunny days ahead."
+            promoBadge="NEW ARRIVALS"
+            promoHref="/collections/dog-new-arrivals"
+          />
+        )}
+        {activeMegaMenu === 'cat' && (
+          <MegaMenu
+            columns={catMenuColumns}
+            promoImage={categoryCats}
+            promoTitle="Cozy Favorites"
+            promoSubtitle="Keep your feline friend comfortable all year."
+            promoBadge="BEST SELLERS"
+            promoHref="/collections/cat-best-sellers"
+          />
+        )}
       </div>
 
       {/* Mobile Search */}
