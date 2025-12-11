@@ -56,12 +56,9 @@ export const Categories = () => {
                   </div>
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent flex flex-col justify-end p-4">
-                    <h3 className="text-xl font-bold text-foreground mb-1 transition-smooth group-hover:text-primary">
+                    <h3 className="text-xl font-bold text-foreground mb-3 transition-smooth group-hover:text-primary">
                       {category.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {category.description || `Browse our ${category.name.toLowerCase()} collection`}
-                    </p>
                     
                     <div className="flex items-center gap-2 text-primary text-sm font-semibold transition-smooth group-hover:translate-x-2">
                       Shop Now
