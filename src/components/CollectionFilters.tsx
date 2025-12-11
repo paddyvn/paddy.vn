@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,7 +10,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X, Search } from "lucide-react";
 
 export interface FilterState {
   vendors: string[];
@@ -25,11 +27,16 @@ interface CollectionFiltersProps {
   maxPrice: number;
 }
 
+const SEARCHABLE_THRESHOLD = 6;
+
 export const CollectionFilters = ({
   filters,
   onFiltersChange,
   maxPrice,
 }: CollectionFiltersProps) => {
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [healthSearch, setHealthSearch] = useState("");
+
   // Fetch vendors
   const { data: vendors } = useQuery({
     queryKey: ["filter-vendors"],
@@ -83,6 +90,17 @@ export const CollectionFilters = ({
       return data || [];
     },
   });
+
+  // Filter vendors by search
+  const filteredVendors = vendors?.filter((vendor) =>
+    vendor.toLowerCase().includes(vendorSearch.toLowerCase())
+  ) || [];
+
+  // Filter health conditions by search
+  const filteredHealthConditions = healthConditions?.filter((condition) =>
+    condition.name_vi.toLowerCase().includes(healthSearch.toLowerCase()) ||
+    condition.name.toLowerCase().includes(healthSearch.toLowerCase())
+  ) || [];
 
   const handleVendorChange = (vendor: string, checked: boolean) => {
     const newVendors = checked
@@ -163,8 +181,19 @@ export const CollectionFilters = ({
               Brand
             </AccordionTrigger>
             <AccordionContent>
+              {vendors.length > SEARCHABLE_THRESHOLD && (
+                <div className="relative mb-3">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search brands..."
+                    value={vendorSearch}
+                    onChange={(e) => setVendorSearch(e.target.value)}
+                    className="pl-8 h-9"
+                  />
+                </div>
+              )}
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {vendors.map((vendor) => (
+                {filteredVendors.map((vendor) => (
                   <label
                     key={vendor}
                     className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
@@ -178,6 +207,9 @@ export const CollectionFilters = ({
                     <span className="text-sm">{vendor}</span>
                   </label>
                 ))}
+                {filteredVendors.length === 0 && vendorSearch && (
+                  <p className="text-sm text-muted-foreground py-2">No brands found</p>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -267,8 +299,19 @@ export const CollectionFilters = ({
               Health Condition
             </AccordionTrigger>
             <AccordionContent>
+              {healthConditions.length > SEARCHABLE_THRESHOLD && (
+                <div className="relative mb-3">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search conditions..."
+                    value={healthSearch}
+                    onChange={(e) => setHealthSearch(e.target.value)}
+                    className="pl-8 h-9"
+                  />
+                </div>
+              )}
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {healthConditions.map((condition) => (
+                {filteredHealthConditions.map((condition) => (
                   <label
                     key={condition.id}
                     className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
@@ -282,6 +325,9 @@ export const CollectionFilters = ({
                     <span className="text-sm">{condition.name_vi}</span>
                   </label>
                 ))}
+                {filteredHealthConditions.length === 0 && healthSearch && (
+                  <p className="text-sm text-muted-foreground py-2">No conditions found</p>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
