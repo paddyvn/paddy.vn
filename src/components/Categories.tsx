@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useCategories } from "@/hooks/useCategories";
+import { ChevronRight } from "lucide-react";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
 import categoryToys from "@/assets/category-toys.jpg";
@@ -30,10 +32,17 @@ export const Categories = () => {
   return (
     <section className="py-12 bg-background">
       <div className="container mx-auto px-4">
-        <div className="mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl font-bold">
             Shop by Category
           </h2>
+          <Link 
+            to="/collections" 
+            className="flex items-center gap-1 text-primary font-semibold hover:underline"
+          >
+            Xem tất cả
+            <ChevronRight className="h-4 w-4" />
+          </Link>
         </div>
 
         <Carousel
