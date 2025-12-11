@@ -57,6 +57,7 @@ export function ImagePickerDialog({
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -193,10 +194,7 @@ export function ImagePickerDialog({
     return matchesSearch && matchesSource;
   });
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast({
         title: "Invalid file",
@@ -228,7 +226,6 @@ export function ImagePickerDialog({
 
       const publicUrl = supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
       
-      // Refresh the file list and auto-select
       await fetchFiles();
       setSelectedUrl(publicUrl);
       
@@ -248,6 +245,28 @@ export function ImagePickerDialog({
         fileInputRef.current.value = "";
       }
     }
+  };
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) uploadFile(file);
   };
 
   const handleDone = () => {
@@ -306,7 +325,15 @@ export function ImagePickerDialog({
           {/* Scrollable content */}
           <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2 space-y-4">
             {/* Upload area */}
-            <div className="border-2 border-dashed rounded-lg p-6 text-center">
+            <div 
+              className={cn(
+                "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+                isDragging ? "border-primary bg-primary/5" : "border-border"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <div className="flex items-center justify-center gap-3">
                 <input
                   ref={fileInputRef}
@@ -334,7 +361,9 @@ export function ImagePickerDialog({
                   )}
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Drag and drop images</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {isDragging ? "Drop image here" : "Drag and drop images"}
+              </p>
             </div>
 
             {/* Image grid */}
