@@ -107,7 +107,7 @@ export function ProductReviews({ productId, reviews, userId }: ProductReviewsPro
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Customer Reviews</h2>
+      <h2 className="text-2xl md:text-3xl font-bold text-primary">Customer Reviews</h2>
       
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Rating Summary */}

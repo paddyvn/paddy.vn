@@ -49,7 +49,7 @@ export function RelatedProducts({ currentProductId, productType, brand }: Relate
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-6">You May Also Like</h2>
+      <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">You May Also Like</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {relatedProducts.map((product: any) => {
           const primaryImage = product.product_images?.find((img: any) => img.is_primary) 

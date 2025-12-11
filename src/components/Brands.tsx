@@ -32,7 +32,7 @@ export const Brands = () => {
     <section className="py-12 bg-background">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold">
+          <h2 className="text-2xl md:text-3xl font-bold text-primary">
             1000+ Thương Hiệu Boss Thích
           </h2>
           <Link 
