@@ -87,7 +87,8 @@ export default function CollectionDetails() {
     rules_match_type: "all",
   });
   const [rules, setRules] = useState<CollectionRule[]>([]);
-  const [showAllProducts, setShowAllProducts] = useState(false);
+  const [productsPage, setProductsPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 20;
   const [seoFormData, setSeoFormData] = useState({
     meta_title: "",
     meta_description: "",
@@ -481,40 +482,67 @@ export default function CollectionDetails() {
                 <p>No products in this collection</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {(showAllProducts ? products : products.slice(0, 15)).map((product: any, index: number) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <span className="text-sm text-muted-foreground w-6">
-                      {index + 1}.
-                    </span>
-                    {getPrimaryImage(product.product_images) ? (
-                      <img
-                        src={getPrimaryImage(product.product_images)}
-                        alt={product.name}
-                        className="w-12 h-12 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded bg-muted" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{product.name}</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  {products
+                    .slice((productsPage - 1) * PRODUCTS_PER_PAGE, productsPage * PRODUCTS_PER_PAGE)
+                    .map((product: any, index: number) => (
+                      <div
+                        key={product.id}
+                        className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <span className="text-sm text-muted-foreground w-6">
+                          {(productsPage - 1) * PRODUCTS_PER_PAGE + index + 1}.
+                        </span>
+                        {getPrimaryImage(product.product_images) ? (
+                          <img
+                            src={getPrimaryImage(product.product_images)}
+                            alt={product.name}
+                            className="w-12 h-12 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-muted" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{product.name}</p>
+                        </div>
+                        <Badge variant={product.is_active ? "default" : "secondary"}>
+                          {product.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    ))}
+                </div>
+                
+                {/* Pagination */}
+                {products.length > PRODUCTS_PER_PAGE && (
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {(productsPage - 1) * PRODUCTS_PER_PAGE + 1} to{" "}
+                      {Math.min(productsPage * PRODUCTS_PER_PAGE, products.length)} of{" "}
+                      {products.length} products
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setProductsPage(p => Math.max(1, p - 1))}
+                        disabled={productsPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm px-2">
+                        Page {productsPage} of {Math.ceil(products.length / PRODUCTS_PER_PAGE)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setProductsPage(p => Math.min(Math.ceil(products.length / PRODUCTS_PER_PAGE), p + 1))}
+                        disabled={productsPage >= Math.ceil(products.length / PRODUCTS_PER_PAGE)}
+                      >
+                        Next
+                      </Button>
                     </div>
-                    <Badge variant={product.is_active ? "default" : "secondary"}>
-                      {product.is_active ? "Active" : "Inactive"}
-                    </Badge>
                   </div>
-                ))}
-                {products.length > 15 && (
-                  <Button 
-                    variant="link" 
-                    className="w-full"
-                    onClick={() => setShowAllProducts(!showAllProducts)}
-                  >
-                    {showAllProducts ? "Show less" : `Show more products (${products.length - 15} more)`}
-                  </Button>
                 )}
               </div>
             )}
