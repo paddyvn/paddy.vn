@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Heart, ShoppingCart, Star, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,7 +61,7 @@ export const FeaturedProducts = () => {
   return (
     <section className="py-16 md:py-24" style={{ backgroundColor: '#fefefe' }}>
       <div className="container mx-auto px-4">
-        <div className="flex items-end justify-between mb-12 animate-in fade-in slide-in-from-bottom duration-700">
+        <div className="flex items-center justify-between mb-12 animate-in fade-in slide-in-from-bottom duration-700">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Featured Products
@@ -69,9 +70,13 @@ export const FeaturedProducts = () => {
               Hand-picked favorites loved by pets everywhere
             </p>
           </div>
-          <Button variant="outline" className="hidden md:inline-flex rounded-full border-2 hover:border-primary hover:bg-primary hover:text-primary-foreground transition-smooth">
-            View All
-          </Button>
+          <Link 
+            to="/collections/featured" 
+            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
+          >
+            Xem tất cả
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -153,9 +158,13 @@ export const FeaturedProducts = () => {
         </div>
 
         <div className="text-center mt-8 md:hidden">
-          <Button variant="outline" className="rounded-full border-2 hover:border-primary hover:bg-primary hover:text-primary-foreground transition-smooth">
-            View All Products
-          </Button>
+          <Link 
+            to="/collections/featured" 
+            className="inline-flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
+          >
+            Xem tất cả
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
