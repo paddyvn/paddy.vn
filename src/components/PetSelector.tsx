@@ -42,7 +42,7 @@ export const PetSelector = () => {
                 <span className="text-2xl font-bold text-foreground">Puppy</span>
               </Link>
             </div>
-            <div className="p-4 flex justify-between">
+            <div className="px-8 py-4 flex justify-evenly">
               {dogCategories.map((cat, index) => (
                 <Link 
                   key={index}
@@ -78,7 +78,7 @@ export const PetSelector = () => {
                 <span className="text-2xl font-bold text-foreground">Kitten</span>
               </Link>
             </div>
-            <div className="p-4 flex justify-between">
+            <div className="px-8 py-4 flex justify-evenly">
               {catCategories.map((cat, index) => (
                 <Link 
                   key={index}
