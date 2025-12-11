@@ -238,15 +238,7 @@ export default function CollectionsManagement() {
   };
 
   const handleEdit = (collection: Collection) => {
-    setEditingCollection(collection);
-    setFormData({
-      name: collection.name,
-      slug: collection.slug,
-      description: collection.description || "",
-      image_url: collection.image_url || "",
-    });
-    setFormErrors({});
-    setIsDialogOpen(true);
+    navigate(`/admin/collections/${collection.id}`);
   };
 
   const handleDelete = async (id: string, name: string) => {
