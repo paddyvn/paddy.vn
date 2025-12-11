@@ -66,6 +66,7 @@ type Collection = {
   image_url: string | null;
   is_active: boolean;
   display_order: number | null;
+  collection_type: string | null;
   product_collections: Array<{ id: string }>;
   rules: any;
 };
@@ -481,6 +482,7 @@ export default function CollectionsManagement() {
               </TableHead>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Collection</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Conditions</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Products</TableHead>
@@ -501,6 +503,9 @@ export default function CollectionsManagement() {
                     <Skeleton className="h-4 w-[250px]" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
                   <TableCell>
@@ -516,7 +521,7 @@ export default function CollectionsManagement() {
               ))
             ) : collections?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No collections found. Create your first collection to get started.
                 </TableCell>
               </TableRow>
@@ -550,6 +555,11 @@ export default function CollectionsManagement() {
                       {collection.name}
                     </div>
                     <div className="text-sm text-muted-foreground">{collection.slug}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm capitalize">
+                      {collection.collection_type ? COLLECTION_TYPES.find(t => t.value === collection.collection_type)?.label || collection.collection_type : "—"}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {collection.rules && Array.isArray(collection.rules) && collection.rules.length > 0 ? (
