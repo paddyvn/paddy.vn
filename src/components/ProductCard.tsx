@@ -13,7 +13,7 @@ interface ProductCardProps {
     base_price: number;
     compare_at_price?: number | null;
     is_featured?: boolean;
-    vendor?: string | null;
+    brand?: string | null;
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
     reviews?: Array<{ rating: number }>;
   };
@@ -82,8 +82,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         <div className="p-4 space-y-3">
           <div>
-            {product.vendor && (
-              <p className="text-xs text-muted-foreground mb-1 font-bold">{product.vendor}</p>
+            {product.brand && (
+              <p className="text-xs text-muted-foreground mb-1 font-bold">{product.brand}</p>
             )}
             <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-smooth">
               {product.name}

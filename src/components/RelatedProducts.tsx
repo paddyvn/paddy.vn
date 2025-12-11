@@ -6,14 +6,14 @@ import { useNavigate } from "react-router-dom";
 interface RelatedProductsProps {
   currentProductId: string;
   productType: string | null;
-  vendor: string | null;
+  brand: string | null;
 }
 
-export function RelatedProducts({ currentProductId, productType, vendor }: RelatedProductsProps) {
+export function RelatedProducts({ currentProductId, productType, brand }: RelatedProductsProps) {
   const navigate = useNavigate();
 
   const { data: relatedProducts } = useQuery({
-    queryKey: ["related-products", currentProductId, productType, vendor],
+    queryKey: ["related-products", currentProductId, productType, brand],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -23,18 +23,18 @@ export function RelatedProducts({ currentProductId, productType, vendor }: Relat
           slug,
           base_price,
           compare_at_price,
-          vendor,
+          brand,
           product_images (image_url, is_primary)
         `)
         .eq("is_active", true)
         .neq("id", currentProductId)
         .limit(4);
 
-      // Prefer same product type, but fall back to same vendor
+      // Prefer same product type, but fall back to same brand
       if (productType) {
         query = query.eq("product_type", productType);
-      } else if (vendor) {
-        query = query.eq("vendor", vendor);
+      } else if (brand) {
+        query = query.eq("brand", brand);
       }
 
       const { data, error } = await query;
@@ -77,8 +77,8 @@ export function RelatedProducts({ currentProductId, productType, vendor }: Relat
                 </div>
                 
                 <div className="p-4 space-y-2">
-                  {product.vendor && (
-                    <p className="text-xs text-muted-foreground font-bold">{product.vendor}</p>
+                  {product.brand && (
+                    <p className="text-xs text-muted-foreground font-bold">{product.brand}</p>
                   )}
                   <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-smooth">
                     {product.name}

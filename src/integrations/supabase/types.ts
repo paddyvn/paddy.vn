@@ -979,6 +979,7 @@ export type Database = {
       products: {
         Row: {
           base_price: number
+          brand: string | null
           category_id: string | null
           compare_at_price: number | null
           created_at: string
@@ -1005,10 +1006,10 @@ export type Database = {
           target_age_id: string | null
           target_size_id: string | null
           updated_at: string
-          vendor: string | null
         }
         Insert: {
           base_price: number
+          brand?: string | null
           category_id?: string | null
           compare_at_price?: number | null
           created_at?: string
@@ -1035,10 +1036,10 @@ export type Database = {
           target_age_id?: string | null
           target_size_id?: string | null
           updated_at?: string
-          vendor?: string | null
         }
         Update: {
           base_price?: number
+          brand?: string | null
           category_id?: string | null
           compare_at_price?: number | null
           created_at?: string
@@ -1065,7 +1066,6 @@ export type Database = {
           target_age_id?: string | null
           target_size_id?: string | null
           updated_at?: string
-          vendor?: string | null
         }
         Relationships: [
           {

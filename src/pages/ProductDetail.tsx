@@ -429,7 +429,7 @@ export default function ProductDetail() {
         <RelatedProducts
           currentProductId={product.id}
           productType={product.product_type}
-          vendor={product.vendor}
+          brand={product.brand}
         />
       </div>
 

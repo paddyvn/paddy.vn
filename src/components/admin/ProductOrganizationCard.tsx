@@ -150,13 +150,13 @@ export function ProductOrganizationCard({
 
         <FormField
           control={form.control}
-          name="vendor"
+          name="brand"
           render={({ field }) => (
             <FormItem>
-              <Label className="text-sm font-medium">Vendor</Label>
+              <Label className="text-sm font-medium">Brand</Label>
               <FormControl>
                 <Input
-                  placeholder="Brand or vendor name"
+                  placeholder="Brand name"
                   {...field}
                   value={field.value || ""}
                 />

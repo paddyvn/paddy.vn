@@ -151,7 +151,7 @@ serve(async (req) => {
             compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
             is_active: shopifyProduct.status === 'active',
             is_featured: false,
-            vendor: shopifyProduct.vendor,
+            brand: shopifyProduct.vendor,
             product_type: shopifyProduct.product_type,
             tags: shopifyProduct.tags,
             shopify_created_at: shopifyProduct.created_at,

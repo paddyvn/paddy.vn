@@ -8,20 +8,20 @@ export const Brands = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('products')
-        .select('vendor')
-        .not('vendor', 'is', null)
-        .not('vendor', 'eq', '');
+        .select('brand')
+        .not('brand', 'is', null)
+        .not('brand', 'eq', '');
       
-      // Get unique vendors and count
-      const vendorCounts = data?.reduce((acc, item) => {
-        if (item.vendor) {
-          acc[item.vendor] = (acc[item.vendor] || 0) + 1;
+      // Get unique brands and count
+      const brandCounts = data?.reduce((acc, item) => {
+        if (item.brand) {
+          acc[item.brand] = (acc[item.brand] || 0) + 1;
         }
         return acc;
       }, {} as Record<string, number>) || {};
 
       // Sort by product count and take top 16
-      return Object.entries(vendorCounts)
+      return Object.entries(brandCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 16)
         .map(([name]) => name);

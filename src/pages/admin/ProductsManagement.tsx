@@ -51,7 +51,7 @@ type Product = {
   is_featured: boolean;
   shopify_product_id: string | null;
   category_id: string | null;
-  vendor: string | null;
+  brand: string | null;
   product_type: string | null;
   product_images: Array<{ image_url: string; is_primary: boolean }>;
   product_variants: Array<{ stock_quantity: number }>;
@@ -63,14 +63,14 @@ type Product = {
 export default function ProductsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [vendorFilter, setVendorFilter] = useState<string>("all");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [vendorOpen, setVendorOpen] = useState(false);
+  const [brandOpen, setBrandOpen] = useState(false);
   const [tagOpen, setTagOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
-  const [vendorSearchText, setVendorSearchText] = useState("");
+  const [brandSearchText, setBrandSearchText] = useState("");
   const [tagSearchText, setTagSearchText] = useState("");
   const [categorySearchText, setCategorySearchText] = useState("");
   const { toast } = useToast();
@@ -82,14 +82,14 @@ export default function ProductsManagement() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, vendorFilter, tagFilter, categoryFilter]);
+  }, [searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter]);
 
-  // Fetch unique vendors directly with proper query
-  const { data: vendors, isLoading: vendorsLoading, error: vendorsError } = useQuery({
-    queryKey: ["vendors"],
+  // Fetch unique brands directly with proper query
+  const { data: brands, isLoading: brandsLoading, error: brandsError } = useQuery({
+    queryKey: ["brands"],
     queryFn: async () => {
-      // Fetch ALL products without limit to get complete vendor list
-      let allProducts: Array<{ vendor: string }> = [];
+      // Fetch ALL products without limit to get complete brand list
+      let allProducts: Array<{ brand: string }> = [];
       let from = 0;
       const batchSize = 1000;
       let hasMore = true;
@@ -97,8 +97,8 @@ export default function ProductsManagement() {
       while (hasMore) {
         const { data, error } = await supabase
           .from("products")
-          .select("vendor")
-          .not("vendor", "is", null)
+          .select("brand")
+          .not("brand", "is", null)
           .range(from, from + batchSize - 1);
         
         if (error) throw error;
@@ -112,24 +112,24 @@ export default function ProductsManagement() {
         }
       }
       
-      // Extract unique vendors and sort
-      const uniqueVendors = [...new Set(allProducts.map(p => p.vendor))].filter(Boolean) as string[];
-      uniqueVendors.sort();
+      // Extract unique brands and sort
+      const uniqueBrands = [...new Set(allProducts.map(p => p.brand))].filter(Boolean) as string[];
+      uniqueBrands.sort();
       
-      return uniqueVendors;
+      return uniqueBrands;
     },
   });
 
-  // Manually filter vendors based on search
-  const filteredVendors = useMemo(() => {
-    if (!vendors) return [];
-    if (!vendorSearchText.trim()) return vendors;
+  // Manually filter brands based on search
+  const filteredBrands = useMemo(() => {
+    if (!brands) return [];
+    if (!brandSearchText.trim()) return brands;
     
-    const searchLower = vendorSearchText.toLowerCase().trim();
-    return vendors.filter(vendor =>
-      vendor.toLowerCase().startsWith(searchLower)
+    const searchLower = brandSearchText.toLowerCase().trim();
+    return brands.filter(brand =>
+      brand.toLowerCase().startsWith(searchLower)
     );
-  }, [vendors, vendorSearchText]);
+  }, [brands, brandSearchText]);
 
   // Fetch unique tags
   const { data: tags } = useQuery({
@@ -209,7 +209,7 @@ export default function ProductsManagement() {
 
   // Get total count
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-products-count", searchQuery, statusFilter, vendorFilter, tagFilter, categoryFilter],
+    queryKey: ["admin-products-count", searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter],
     queryFn: async () => {
       // If category filter is applied, we need to get product IDs from product_collections first
       let productIdsInCategory: string[] | null = null;
@@ -234,8 +234,8 @@ export default function ProductsManagement() {
         query = query.eq("is_active", statusFilter === "active");
       }
 
-      if (vendorFilter !== "all") {
-        query = query.eq("vendor", vendorFilter);
+      if (brandFilter !== "all") {
+        query = query.eq("brand", brandFilter);
       }
 
       if (tagFilter !== "all") {
@@ -253,7 +253,7 @@ export default function ProductsManagement() {
   });
 
   const { data: products, isLoading, refetch } = useQuery({
-    queryKey: ["admin-products", searchQuery, statusFilter, vendorFilter, tagFilter, categoryFilter, currentPage],
+    queryKey: ["admin-products", searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter, currentPage],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -290,8 +290,8 @@ export default function ProductsManagement() {
         query = query.eq("is_active", statusFilter === "active");
       }
 
-      if (vendorFilter !== "all") {
-        query = query.eq("vendor", vendorFilter);
+      if (brandFilter !== "all") {
+        query = query.eq("brand", brandFilter);
       }
 
       if (tagFilter !== "all") {
@@ -413,15 +413,15 @@ export default function ProductsManagement() {
           </SelectContent>
         </Select>
 
-        <Popover open={vendorOpen} onOpenChange={setVendorOpen}>
+        <Popover open={brandOpen} onOpenChange={setBrandOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              aria-expanded={vendorOpen}
+              aria-expanded={brandOpen}
               className="w-[180px] justify-between"
             >
-              {vendorFilter === "all" ? "All Vendors" : vendorFilter}
+              {brandFilter === "all" ? "All Brands" : brandFilter}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -429,9 +429,9 @@ export default function ProductsManagement() {
             <div className="flex flex-col">
               <div className="p-2 border-b">
                 <Input
-                  placeholder="Search vendors..."
-                  value={vendorSearchText}
-                  onChange={(e) => setVendorSearchText(e.target.value)}
+                  placeholder="Search brands..."
+                  value={brandSearchText}
+                  onChange={(e) => setBrandSearchText(e.target.value)}
                   className="h-8"
                 />
               </div>
@@ -439,41 +439,41 @@ export default function ProductsManagement() {
                 <div
                   className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
                   onClick={() => {
-                    setVendorFilter("all");
-                    setVendorOpen(false);
-                    setVendorSearchText("");
+                    setBrandFilter("all");
+                    setBrandOpen(false);
+                    setBrandSearchText("");
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      vendorFilter === "all" ? "opacity-100" : "opacity-0"
+                      brandFilter === "all" ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  All Vendors
+                  All Brands
                 </div>
-                {filteredVendors.length === 0 ? (
+                {filteredBrands.length === 0 ? (
                   <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    No vendor found.
+                    No brand found.
                   </div>
                 ) : (
-                  filteredVendors.map((vendor) => (
+                  filteredBrands.map((brand) => (
                     <div
-                      key={vendor}
+                      key={brand}
                       className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
                       onClick={() => {
-                        setVendorFilter(vendor);
-                        setVendorOpen(false);
-                        setVendorSearchText("");
+                        setBrandFilter(brand);
+                        setBrandOpen(false);
+                        setBrandSearchText("");
                       }}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          vendorFilter === vendor ? "opacity-100" : "opacity-0"
+                          brandFilter === brand ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {vendor}
+                      {brand}
                     </div>
                   ))
                 )}
@@ -622,14 +622,14 @@ export default function ProductsManagement() {
           </PopoverContent>
         </Popover>
 
-        {(statusFilter !== "all" || vendorFilter !== "all" || tagFilter !== "all" || categoryFilter !== "all") && (
+        {(statusFilter !== "all" || brandFilter !== "all" || tagFilter !== "all" || categoryFilter !== "all") && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
               setStatusFilter("all");
               setCategoryFilter("all");
-              setVendorFilter("all");
+              setBrandFilter("all");
               setTagFilter("all");
             }}
             className="gap-2"
@@ -647,7 +647,7 @@ export default function ProductsManagement() {
               <TableHead>Product</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Inventory</TableHead>
-              <TableHead>Vendor</TableHead>
+              <TableHead>Brand</TableHead>
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -726,7 +726,7 @@ export default function ProductsManagement() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {product.vendor || "—"}
+                      {product.brand || "—"}
                     </span>
                   </TableCell>
                   <TableCell>
