@@ -10,7 +10,7 @@ export const Footer = () => {
       <div className="bg-background border-b">
         <div className="container mx-auto px-4 py-12 md:py-16">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Thành viên Paddiers</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">Thành viên Paddiers</h2>
             <p className="text-muted-foreground mb-8">
               Đăng ký thành viên ngay hôm nay để nhận email về sản phẩm mới và chương trình khuyến mãi của Paddy
             </p>

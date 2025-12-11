@@ -33,7 +33,7 @@ export const Categories = () => {
     <section className="py-12 bg-background">
       <div className="container mx-auto px-4">
         <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-bold">
+          <h2 className="text-2xl md:text-3xl font-bold text-primary">
             Shop by Category
           </h2>
           <Link 

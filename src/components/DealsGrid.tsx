@@ -15,7 +15,7 @@ export const DealsGrid = () => {
     <section className="py-8 bg-background">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Year-end Deals at Paddy</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-primary">Year-end Deals at Paddy</h2>
           <Link 
             to="/collections/deals" 
             className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
