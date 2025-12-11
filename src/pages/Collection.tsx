@@ -1,22 +1,32 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
+import { CollectionFilters, FilterState } from "@/components/CollectionFilters";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid } from "lucide-react";
+import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal } from "lucide-react";
 
 const PRODUCTS_PER_PAGE = 20;
+const DEFAULT_MAX_PRICE = 10000000;
 
 const Collection = () => {
   const { slug } = useParams<{ slug: string }>();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("newest");
   const [gridCols, setGridCols] = useState<4 | 5>(5);
+  const [filters, setFilters] = useState<FilterState>({
+    vendors: [],
+    priceRange: [0, DEFAULT_MAX_PRICE],
+    ageRanges: [],
+    sizes: [],
+    healthConditions: [],
+  });
 
   // Fetch collection details
   const { data: collection, isLoading: collectionLoading } = useQuery({
@@ -35,13 +45,13 @@ const Collection = () => {
     enabled: !!slug,
   });
 
-  // Fetch products in collection
+  // Fetch products in collection with related data for filtering
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ["collection-products", collection?.id, sortBy],
     queryFn: async () => {
-      if (!collection?.id) return { products: [], total: 0 };
+      if (!collection?.id) return { products: [], total: 0, maxPrice: DEFAULT_MAX_PRICE };
 
-      let query = supabase
+      const { data, error } = await supabase
         .from("product_collections")
         .select(`
           position,
@@ -55,14 +65,15 @@ const Collection = () => {
             is_active,
             vendor,
             created_at,
+            target_age_id,
+            target_size_id,
             product_images (image_url, alt_text, is_primary),
-            reviews (rating)
+            reviews (rating),
+            product_health_condition_links (health_condition_id)
           )
         `)
         .eq("collection_id", collection.id)
         .eq("products.is_active", true);
-
-      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -70,6 +81,9 @@ const Collection = () => {
         ...item.products,
         position: item.position,
       })) || [];
+
+      // Calculate max price for filter
+      const maxPrice = Math.max(...products.map((p: any) => p.base_price), DEFAULT_MAX_PRICE);
 
       // Sort products
       switch (sortBy) {
@@ -94,15 +108,54 @@ const Collection = () => {
           break;
       }
 
-      return { products, total: products.length };
+      return { products, total: products.length, maxPrice };
     },
     enabled: !!collection?.id,
   });
 
-  const products = productsData?.products || [];
-  const totalProducts = productsData?.total || 0;
+  const allProducts = productsData?.products || [];
+  const maxPrice = productsData?.maxPrice || DEFAULT_MAX_PRICE;
+
+  // Apply filters
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter((product: any) => {
+      // Vendor filter
+      if (filters.vendors.length > 0 && !filters.vendors.includes(product.vendor)) {
+        return false;
+      }
+
+      // Price filter
+      if (product.base_price < filters.priceRange[0] || product.base_price > filters.priceRange[1]) {
+        return false;
+      }
+
+      // Age range filter
+      if (filters.ageRanges.length > 0 && !filters.ageRanges.includes(product.target_age_id)) {
+        return false;
+      }
+
+      // Size filter
+      if (filters.sizes.length > 0 && !filters.sizes.includes(product.target_size_id)) {
+        return false;
+      }
+
+      // Health condition filter
+      if (filters.healthConditions.length > 0) {
+        const productHealthConditions = product.product_health_condition_links?.map(
+          (link: any) => link.health_condition_id
+        ) || [];
+        if (!filters.healthConditions.some((id) => productHealthConditions.includes(id))) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allProducts, filters]);
+
+  const totalProducts = filteredProducts.length;
   const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
-  const paginatedProducts = products.slice(
+  const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * PRODUCTS_PER_PAGE,
     currentPage * PRODUCTS_PER_PAGE
   );
@@ -111,6 +164,18 @@ const Collection = () => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  const activeFilterCount =
+    filters.vendors.length +
+    filters.ageRanges.length +
+    filters.sizes.length +
+    filters.healthConditions.length +
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0);
 
   if (collectionLoading) {
     return (
@@ -185,121 +250,166 @@ const Collection = () => {
           )}
         </div>
 
-        {/* Toolbar */}
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <p className="text-sm text-muted-foreground">
-              {totalProducts} {totalProducts === 1 ? "product" : "products"}
-            </p>
+        {/* Content with Filters */}
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex gap-8">
+            {/* Desktop Filters Sidebar */}
+            <aside className="hidden lg:block w-64 flex-shrink-0">
+              <div className="sticky top-4">
+                <h2 className="font-semibold text-lg mb-4">Filters</h2>
+                <CollectionFilters
+                  filters={filters}
+                  onFiltersChange={handleFiltersChange}
+                  maxPrice={maxPrice}
+                />
+              </div>
+            </aside>
 
-            <div className="flex items-center gap-3">
-              {/* Grid Toggle */}
-              <div className="hidden md:flex items-center gap-1 border rounded-lg p-1">
-                <Button
-                  variant={gridCols === 4 ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setGridCols(4)}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={gridCols === 5 ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setGridCols(5)}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
+            {/* Main Content */}
+            <div className="flex-1">
+              {/* Toolbar */}
+              <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+                <div className="flex items-center gap-3">
+                  {/* Mobile Filter Button */}
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="lg:hidden">
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        Filters
+                        {activeFilterCount > 0 && (
+                          <span className="ml-2 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                            {activeFilterCount}
+                          </span>
+                        )}
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-80">
+                      <SheetHeader>
+                        <SheetTitle>Filters</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-4">
+                        <CollectionFilters
+                          filters={filters}
+                          onFiltersChange={handleFiltersChange}
+                          maxPrice={maxPrice}
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+
+                  <p className="text-sm text-muted-foreground">
+                    {totalProducts} {totalProducts === 1 ? "product" : "products"}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Grid Toggle */}
+                  <div className="hidden md:flex items-center gap-1 border rounded-lg p-1">
+                    <Button
+                      variant={gridCols === 4 ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setGridCols(4)}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={gridCols === 5 ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setGridCols(5)}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Sort */}
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="position">Featured</SelectItem>
+                      <SelectItem value="newest">Newest</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="name-az">Name: A to Z</SelectItem>
+                      <SelectItem value="name-za">Name: Z to A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="position">Featured</SelectItem>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="name-az">Name: A to Z</SelectItem>
-                  <SelectItem value="name-za">Name: Z to A</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+              {/* Products Grid */}
+              {productsLoading ? (
+                <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <Skeleton key={i} className="h-80 rounded-lg" />
+                  ))}
+                </div>
+              ) : paginatedProducts.length > 0 ? (
+                <>
+                  <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
+                    {paginatedProducts.map((product: any) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
 
-        {/* Products Grid */}
-        <div className="container mx-auto px-4 pb-12">
-          {productsLoading ? (
-            <div className={`grid grid-cols-2 md:grid-cols-4 ${gridCols === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-4`}>
-              {Array.from({ length: 10 }).map((_, i) => (
-                <Skeleton key={i} className="h-80 rounded-lg" />
-              ))}
-            </div>
-          ) : paginatedProducts.length > 0 ? (
-            <>
-              <div className={`grid grid-cols-2 md:grid-cols-4 ${gridCols === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-4`}>
-                {paginatedProducts.map((product: any) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-8">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(page => {
+                          if (totalPages <= 7) return true;
+                          if (page === 1 || page === totalPages) return true;
+                          if (Math.abs(page - currentPage) <= 1) return true;
+                          return false;
+                        })
+                        .map((page, index, arr) => {
+                          const showEllipsis = index > 0 && page - arr[index - 1] > 1;
+                          return (
+                            <div key={page} className="flex items-center gap-2">
+                              {showEllipsis && (
+                                <span className="px-2 text-muted-foreground">...</span>
+                              )}
+                              <Button
+                                variant={currentPage === page ? "default" : "outline"}
+                                size="icon"
+                                onClick={() => handlePageChange(page)}
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          );
+                        })}
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => {
-                      if (totalPages <= 7) return true;
-                      if (page === 1 || page === totalPages) return true;
-                      if (Math.abs(page - currentPage) <= 1) return true;
-                      return false;
-                    })
-                    .map((page, index, arr) => {
-                      const showEllipsis = index > 0 && page - arr[index - 1] > 1;
-                      return (
-                        <div key={page} className="flex items-center gap-2">
-                          {showEllipsis && (
-                            <span className="px-2 text-muted-foreground">...</span>
-                          )}
-                          <Button
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="icon"
-                            onClick={() => handlePageChange(page)}
-                          >
-                            {page}
-                          </Button>
-                        </div>
-                      );
-                    })}
-
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground">No products found matching your filters.</p>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">No products found in this collection.</p>
             </div>
-          )}
+          </div>
         </div>
       </main>
       <Footer />
