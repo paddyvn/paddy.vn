@@ -86,6 +86,7 @@ interface ProductVariantsTableProps {
 interface VariantEdit {
   price: number;
   stock_quantity: number;
+  sku: string;
 }
 
 interface OptionTemplate {
@@ -520,15 +521,15 @@ export function ProductVariantsTable({
     if (variants) {
       const initial: Record<string, VariantEdit> = {};
       variants.forEach((v) => {
-        initial[v.id] = { price: v.price, stock_quantity: v.stock_quantity || 0 };
+        initial[v.id] = { price: v.price, stock_quantity: v.stock_quantity || 0, sku: v.sku || "" };
       });
       setEditedVariants(initial);
     }
   }, [variants]);
 
   const updateVariantMutation = useMutation({
-    mutationFn: async ({ variantId, price, stock_quantity }: { variantId: string; price: number; stock_quantity: number }) => {
-      const { error } = await supabase.from("product_variants").update({ price, stock_quantity }).eq("id", variantId);
+    mutationFn: async ({ variantId, price, stock_quantity, sku }: { variantId: string; price: number; stock_quantity: number; sku: string }) => {
+      const { error } = await supabase.from("product_variants").update({ price, stock_quantity, sku: sku || null }).eq("id", variantId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -974,12 +975,16 @@ export function ProductVariantsTable({
     setEditedVariants((prev) => ({ ...prev, [variantId]: { ...prev[variantId], stock_quantity: numValue } }));
   };
 
+  const handleSkuChange = (variantId: string, value: string) => {
+    setEditedVariants((prev) => ({ ...prev, [variantId]: { ...prev[variantId], sku: value } }));
+  };
+
   const handleBlur = (variantId: string) => {
     const variant = variants?.find((v) => v.id === variantId);
     const edited = editedVariants[variantId];
     if (!variant || !edited) return;
-    if (variant.price !== edited.price || (variant.stock_quantity || 0) !== edited.stock_quantity) {
-      updateVariantMutation.mutate({ variantId, price: edited.price, stock_quantity: edited.stock_quantity });
+    if (variant.price !== edited.price || (variant.stock_quantity || 0) !== edited.stock_quantity || (variant.sku || "") !== edited.sku) {
+      updateVariantMutation.mutate({ variantId, price: edited.price, stock_quantity: edited.stock_quantity, sku: edited.sku });
     }
   };
 
@@ -1335,6 +1340,7 @@ export function ProductVariantsTable({
                       </div>
                     </TableHead>
                     <TableHead className="font-medium">Price</TableHead>
+                    <TableHead className="font-medium">SKU</TableHead>
                     <TableHead className="font-medium text-right">Available</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -1449,6 +1455,9 @@ export function ProductVariantsTable({
                               <TableCell>
                                 <span className="text-sm text-muted-foreground">—</span>
                               </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">—</span>
+                              </TableCell>
                               <TableCell className="text-right">
                                 <span className="text-sm text-muted-foreground">
                                   {groupVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)}
@@ -1473,7 +1482,6 @@ export function ProductVariantsTable({
                                     <div className="flex items-center gap-3 pl-6">
                                       <div>
                                         <p className="font-medium text-sm">{displayName}</p>
-                                        {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
                                       </div>
                                     </div>
                                   </TableCell>
@@ -1488,6 +1496,16 @@ export function ProductVariantsTable({
                                         className="pl-7 h-9"
                                       />
                                     </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Input
+                                      type="text"
+                                      value={editedVariants[variant.id]?.sku ?? variant.sku ?? ""}
+                                      onChange={(e) => handleSkuChange(variant.id, e.target.value)}
+                                      onBlur={() => handleBlur(variant.id)}
+                                      placeholder="SKU"
+                                      className="w-28 h-9"
+                                    />
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <Input
@@ -1570,7 +1588,6 @@ export function ProductVariantsTable({
                               </Popover>
                               <div>
                                 <p className="font-medium text-sm">{variant.name}</p>
-                                {variant.sku && <p className="text-xs text-muted-foreground">{variant.sku}</p>}
                               </div>
                             </div>
                           </TableCell>
@@ -1585,6 +1602,16 @@ export function ProductVariantsTable({
                                 className="pl-7 h-9"
                               />
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="text"
+                              value={editedVariants[variant.id]?.sku ?? variant.sku ?? ""}
+                              onChange={(e) => handleSkuChange(variant.id, e.target.value)}
+                              onBlur={() => handleBlur(variant.id)}
+                              placeholder="SKU"
+                              className="w-28 h-9"
+                            />
                           </TableCell>
                           <TableCell className="text-right">
                             <Input
