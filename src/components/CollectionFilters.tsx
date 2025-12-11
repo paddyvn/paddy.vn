@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { X, Search } from "lucide-react";
 
 export interface FilterState {
-  vendors: string[];
+  brands: string[];
   priceRange: [number, number];
   ageRanges: string[];
   sizes: string[];
@@ -25,7 +25,7 @@ interface CollectionFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   maxPrice: number;
-  availableVendors: string[];
+  availableBrands: string[];
   availableAgeRangeIds: string[];
   availableSizeIds: string[];
   availableHealthConditionIds: string[];
@@ -37,12 +37,12 @@ export const CollectionFilters = ({
   filters,
   onFiltersChange,
   maxPrice,
-  availableVendors,
+  availableBrands,
   availableAgeRangeIds,
   availableSizeIds,
   availableHealthConditionIds,
 }: CollectionFiltersProps) => {
-  const [vendorSearch, setVendorSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("");
   const [healthSearch, setHealthSearch] = useState("");
 
   // Fetch age ranges (only those available in collection)
@@ -93,9 +93,9 @@ export const CollectionFilters = ({
     enabled: availableHealthConditionIds.length > 0,
   });
 
-  // Filter vendors by search
-  const filteredVendors = availableVendors.filter((vendor) =>
-    vendor.toLowerCase().includes(vendorSearch.toLowerCase())
+  // Filter brands by search
+  const filteredBrands = availableBrands.filter((brand) =>
+    brand.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
   // Filter health conditions by search
@@ -104,11 +104,11 @@ export const CollectionFilters = ({
     condition.name.toLowerCase().includes(healthSearch.toLowerCase())
   ) || [];
 
-  const handleVendorChange = (vendor: string, checked: boolean) => {
-    const newVendors = checked
-      ? [...filters.vendors, vendor]
-      : filters.vendors.filter((v) => v !== vendor);
-    onFiltersChange({ ...filters, vendors: newVendors });
+  const handleBrandChange = (brand: string, checked: boolean) => {
+    const newBrands = checked
+      ? [...filters.brands, brand]
+      : filters.brands.filter((b) => b !== brand);
+    onFiltersChange({ ...filters, brands: newBrands });
   };
 
   const handleAgeRangeChange = (id: string, checked: boolean) => {
@@ -140,7 +140,7 @@ export const CollectionFilters = ({
   };
 
   const hasActiveFilters =
-    filters.vendors.length > 0 ||
+    filters.brands.length > 0 ||
     filters.ageRanges.length > 0 ||
     filters.sizes.length > 0 ||
     filters.healthConditions.length > 0 ||
@@ -149,7 +149,7 @@ export const CollectionFilters = ({
 
   const clearAllFilters = () => {
     onFiltersChange({
-      vendors: [],
+      brands: [],
       priceRange: [0, maxPrice],
       ageRanges: [],
       sizes: [],
@@ -162,7 +162,7 @@ export const CollectionFilters = ({
   };
 
   // Determine which sections to show based on available data
-  const showBrandFilter = availableVendors.length > 0;
+  const showBrandFilter = availableBrands.length > 0;
   const showLifeStageFilter = ageRanges && ageRanges.length > 0;
   const showSizeFilter = sizes && sizes.length > 0;
   const showHealthFilter = healthConditions && healthConditions.length > 0;
@@ -192,33 +192,33 @@ export const CollectionFilters = ({
               Brand
             </AccordionTrigger>
             <AccordionContent>
-              {availableVendors.length > SEARCHABLE_THRESHOLD && (
+              {availableBrands.length > SEARCHABLE_THRESHOLD && (
                 <div className="relative mb-3">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search brands..."
-                    value={vendorSearch}
-                    onChange={(e) => setVendorSearch(e.target.value)}
+                    value={brandSearch}
+                    onChange={(e) => setBrandSearch(e.target.value)}
                     className="pl-8 h-9"
                   />
                 </div>
               )}
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {filteredVendors.map((vendor) => (
+                {filteredBrands.map((brand) => (
                   <label
-                    key={vendor}
+                    key={brand}
                     className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
                   >
                     <Checkbox
-                      checked={filters.vendors.includes(vendor)}
+                      checked={filters.brands.includes(brand)}
                       onCheckedChange={(checked) =>
-                        handleVendorChange(vendor, checked as boolean)
+                        handleBrandChange(brand, checked as boolean)
                       }
                     />
-                    <span className="text-sm">{vendor}</span>
+                    <span className="text-sm">{brand}</span>
                   </label>
                 ))}
-                {filteredVendors.length === 0 && vendorSearch && (
+                {filteredBrands.length === 0 && brandSearch && (
                   <p className="text-sm text-muted-foreground py-2">No brands found</p>
                 )}
               </div>

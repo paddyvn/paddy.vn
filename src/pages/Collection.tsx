@@ -21,7 +21,7 @@ const Collection = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [gridCols, setGridCols] = useState<4 | 5>(5);
   const [filters, setFilters] = useState<FilterState>({
-    vendors: [],
+    brands: [],
     priceRange: [0, DEFAULT_MAX_PRICE],
     ageRanges: [],
     sizes: [],
@@ -63,7 +63,7 @@ const Collection = () => {
             compare_at_price,
             is_featured,
             is_active,
-            vendor,
+            brand,
             created_at,
             target_age_id,
             target_size_id,
@@ -118,13 +118,13 @@ const Collection = () => {
 
   // Extract available filter options from collection products
   const availableFilterOptions = useMemo(() => {
-    const vendors = new Set<string>();
+    const brands = new Set<string>();
     const ageRangeIds = new Set<string>();
     const sizeIds = new Set<string>();
     const healthConditionIds = new Set<string>();
 
     allProducts.forEach((product: any) => {
-      if (product.vendor) vendors.add(product.vendor);
+      if (product.brand) brands.add(product.brand);
       if (product.target_age_id) ageRangeIds.add(product.target_age_id);
       if (product.target_size_id) sizeIds.add(product.target_size_id);
       product.product_health_condition_links?.forEach((link: any) => {
@@ -133,7 +133,7 @@ const Collection = () => {
     });
 
     return {
-      vendors: Array.from(vendors).sort(),
+      brands: Array.from(brands).sort(),
       ageRangeIds: Array.from(ageRangeIds),
       sizeIds: Array.from(sizeIds),
       healthConditionIds: Array.from(healthConditionIds),
@@ -187,8 +187,8 @@ const Collection = () => {
   // Apply filters
   const filteredProducts = useMemo(() => {
     return allProducts.filter((product: any) => {
-      // Vendor filter
-      if (filters.vendors.length > 0 && !filters.vendors.includes(product.vendor)) {
+      // Brand filter
+      if (filters.brands.length > 0 && !filters.brands.includes(product.brand)) {
         return false;
       }
 
@@ -239,7 +239,7 @@ const Collection = () => {
   };
 
   const activeFilterCount =
-    filters.vendors.length +
+    filters.brands.length +
     filters.ageRanges.length +
     filters.sizes.length +
     filters.healthConditions.length +
@@ -319,7 +319,7 @@ const Collection = () => {
                   filters={filters}
                   onFiltersChange={handleFiltersChange}
                   maxPrice={maxPrice}
-                  availableVendors={availableFilterOptions.vendors}
+                  availableBrands={availableFilterOptions.brands}
                   availableAgeRangeIds={availableFilterOptions.ageRangeIds}
                   availableSizeIds={availableFilterOptions.sizeIds}
                   availableHealthConditionIds={availableFilterOptions.healthConditionIds}
@@ -354,7 +354,7 @@ const Collection = () => {
                           filters={filters}
                           onFiltersChange={handleFiltersChange}
                           maxPrice={maxPrice}
-                          availableVendors={availableFilterOptions.vendors}
+                          availableBrands={availableFilterOptions.brands}
                           availableAgeRangeIds={availableFilterOptions.ageRangeIds}
                           availableSizeIds={availableFilterOptions.sizeIds}
                           availableHealthConditionIds={availableFilterOptions.healthConditionIds}
@@ -409,16 +409,16 @@ const Collection = () => {
               {/* Active Filter Chips */}
               {activeFilterCount > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  {filters.vendors.map((vendor) => (
+                  {filters.brands.map((brand) => (
                     <span
-                      key={`vendor-${vendor}`}
+                      key={`brand-${brand}`}
                       className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full"
                     >
-                      {vendor}
+                      {brand}
                       <button
                         onClick={() => handleFiltersChange({
                           ...filters,
-                          vendors: filters.vendors.filter((v) => v !== vendor),
+                          brands: filters.brands.filter((b) => b !== brand),
                         })}
                         className="ml-1 hover:text-destructive"
                       >
@@ -502,7 +502,7 @@ const Collection = () => {
                   )}
                   <button
                     onClick={() => handleFiltersChange({
-                      vendors: [],
+                      brands: [],
                       priceRange: [0, maxPrice],
                       ageRanges: [],
                       sizes: [],

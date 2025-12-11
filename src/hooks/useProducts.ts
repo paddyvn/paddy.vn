@@ -12,7 +12,7 @@ export interface Product {
   is_featured: boolean;
   is_active: boolean;
   category_id: string | null;
-  vendor: string | null;
+  brand: string | null;
   product_type: string | null;
   tags: string | null;
   shopify_created_at: string | null;
