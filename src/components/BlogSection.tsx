@@ -27,7 +27,7 @@ export const BlogSection = () => {
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">
-            Blog & Tin Tức
+            Paddy's Magazine
           </h2>
           <p className="text-muted-foreground">
             Cập nhật những thông tin hữu ích về chăm sóc thú cưng từ Paddy
