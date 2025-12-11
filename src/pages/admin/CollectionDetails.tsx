@@ -23,16 +23,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const collectionSchema = z.object({
   name: z.string().trim().min(1, "Title is required").max(100),
   slug: z.string().trim().min(1, "Slug is required").max(100),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(50000).optional(),
   image_url: z.string().url("Invalid URL").max(500).optional().or(z.literal("")),
   meta_title: z.string().max(70).optional(),
   meta_description: z.string().max(160).optional(),
@@ -45,7 +52,7 @@ type CollectionRule = {
 };
 
 const RULE_FIELDS = [
-  { value: "vendor", label: "Vendor" },
+  { value: "brand", label: "Brand" },
   { value: "name", label: "Title" },
   { value: "product_type", label: "Product type" },
   { value: "tags", label: "Tags" },
@@ -58,6 +65,12 @@ const RULE_OPERATORS = [
   { value: "not_contains", label: "does not contain" },
   { value: "starts_with", label: "starts with" },
   { value: "ends_with", label: "ends with" },
+];
+
+const COLLECTION_TYPES = [
+  { value: "custom", label: "Custom collection" },
+  { value: "brand", label: "Brand" },
+  { value: "smart", label: "Smart collection" },
 ];
 
 export default function CollectionDetails() {
@@ -321,11 +334,31 @@ export default function CollectionDetails() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
+            <Copy className="h-4 w-4 mr-2" />
+            Duplicate
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.open(`/collection/${formData.slug}`, '_blank')}
+          >
             <Eye className="h-4 w-4 mr-2" />
             View
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                More actions
+                <MoreHorizontal className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="text-destructive">
+                Delete collection
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={handleSave} disabled={isSaving} size="sm">
-            <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Saving..." : "Save"}
           </Button>
         </div>
@@ -352,14 +385,10 @@ export default function CollectionDetails() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
+              <Label>Description</Label>
+              <RichTextEditor
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Describe this collection..."
-                autoResize
-                maxLength={5000}
+                onChange={(value) => setFormData({ ...formData, description: value })}
               />
               {formErrors.description && (
                 <p className="text-sm text-destructive">{formErrors.description}</p>
@@ -552,9 +581,13 @@ export default function CollectionDetails() {
           {/* Publishing */}
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Publishing</h3>
+              <h3 className="font-semibold">Publishing</h3>
+              <Button variant="link" size="sm" className="text-primary p-0 h-auto">
+                Manage
+              </Button>
             </div>
             <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">Sales channels</div>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
                 <span className="text-sm">
@@ -575,7 +608,12 @@ export default function CollectionDetails() {
           {/* Image */}
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Image</h3>
+              <h3 className="font-semibold">Image</h3>
+              {formData.image_url && (
+                <Button variant="link" size="sm" className="text-primary p-0 h-auto">
+                  Edit
+                </Button>
+              )}
             </div>
             
             {formData.image_url ? (
@@ -583,7 +621,7 @@ export default function CollectionDetails() {
                 <img
                   src={formData.image_url}
                   alt={formData.name}
-                  className="w-full h-48 object-cover rounded-lg"
+                  className="w-full aspect-square object-contain rounded-lg bg-muted/30"
                 />
                 <Button
                   variant="destructive"
@@ -595,18 +633,17 @@ export default function CollectionDetails() {
                 </Button>
               </div>
             ) : (
-              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+              <div className="border-2 border-dashed rounded-lg p-6 text-center">
                 <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mb-4">
                   Add an image to showcase this collection
                 </p>
                 <div className="space-y-2">
-                  <Label htmlFor="image_url" className="text-sm">Image URL</Label>
                   <Input
                     id="image_url"
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="Image URL"
                     maxLength={500}
                   />
                   {formErrors.image_url && (
@@ -617,25 +654,31 @@ export default function CollectionDetails() {
             )}
           </Card>
 
-          {/* Collection Details */}
+          {/* Collection Type */}
           <Card className="p-6 space-y-4">
-            <h3 className="text-lg font-semibold">Collection details</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Slug</span>
-                <span className="font-medium">{formData.slug}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Products</span>
-                <span className="font-medium">{products.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
-                <Badge variant={formData.is_active ? "default" : "secondary"}>
-                  {formData.is_active ? "Active" : "Inactive"}
-                </Badge>
-              </div>
-            </div>
+            <h3 className="font-semibold">Collection type</h3>
+            <Select
+              value={formData.collection_type}
+              onValueChange={(value) => setFormData({ ...formData, collection_type: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLLECTION_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {formData.collection_type === 'brand' 
+                ? 'Brand collections appear in the Brands section on the homepage'
+                : formData.collection_type === 'smart'
+                ? 'Smart collections automatically include products based on conditions'
+                : 'Custom collections allow manual product selection'}
+            </p>
           </Card>
         </div>
       </div>
