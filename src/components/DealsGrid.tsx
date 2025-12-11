@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+
 export const DealsGrid = () => {
   const deals = [
     { text: "Buy 2,\nget 3rd\nfree", bgColor: "bg-gradient-to-br from-emerald-400 to-emerald-500" },
@@ -11,7 +14,16 @@ export const DealsGrid = () => {
   return (
     <section className="py-8 bg-background">
       <div className="container mx-auto px-4">
-        <h2 className="text-2xl font-bold mb-6 text-foreground">Year-end Deals at Paddy</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">Year-end Deals at Paddy</h2>
+          <Link 
+            to="/collections/deals" 
+            className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+          >
+            Xem tất cả
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {deals.map((deal, index) => (
             <button
