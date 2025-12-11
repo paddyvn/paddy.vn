@@ -107,7 +107,7 @@ export const MegaMenu = ({
                     <Link
                       key={brand.id}
                       to={`/collections/${brand.slug}`}
-                      className="flex-shrink-0 w-20 h-20 rounded-xl bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors overflow-hidden"
+                      className="flex-shrink-0 w-20 h-20 rounded-xl bg-white border border-border flex items-center justify-center hover:border-primary transition-colors overflow-hidden"
                     >
                       {brand.image_url ? (
                         <img
