@@ -46,7 +46,7 @@ export const Categories = () => {
           <CarouselContent className="-ml-4">
             {displayCategories.map((category, index) => (
               <CarouselItem key={category.id} className="pl-4 basis-1/2 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                <Card className="group relative overflow-hidden border-2 hover:border-primary transition-smooth cursor-pointer shadow-card hover:shadow-hover">
+                <Card className="group relative overflow-hidden border-0 transition-smooth cursor-pointer shadow-card hover:shadow-hover">
                   <div className="aspect-square overflow-hidden">
                     <img
                       src={category.image_url || fallbackImages[index % fallbackImages.length]}
