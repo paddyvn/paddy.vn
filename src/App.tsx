@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import ProductDetail from "./pages/ProductDetail";
 import Collection from "./pages/Collection";
 import Collections from "./pages/Collections";
+import Brands from "./pages/Brands";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsManagement from "./pages/admin/ProductsManagement";
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/collections" element={<Collections />} />
           <Route path="/collections/:slug" element={<Collection />} />
+          <Route path="/brands-thuong-hieu-thu-cung" element={<Brands />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
