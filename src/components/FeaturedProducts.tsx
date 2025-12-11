@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { generateProductUrl } from "@/lib/productUrl";
 
 export const FeaturedProducts = () => {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ export const FeaturedProducts = () => {
               key={product.id}
               className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover animate-in fade-in zoom-in duration-500 rounded-sm border-0 cursor-pointer"
               style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => navigate(`/products/${product.slug}`)}
+              onClick={() => navigate(generateProductUrl(product.slug, product.id))}
             >
               <CardContent className="p-0">
                 <div className="relative aspect-square overflow-hidden bg-muted">
