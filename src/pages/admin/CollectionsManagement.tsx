@@ -67,6 +67,7 @@ const collectionSchema = z.object({
 export default function CollectionsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
@@ -83,7 +84,7 @@ export default function CollectionsManagement() {
   const navigate = useNavigate();
 
   const { data: collectionsData, isLoading, refetch } = useQuery({
-    queryKey: ["admin-collections", searchQuery, statusFilter, currentPage],
+    queryKey: ["admin-collections", searchQuery, statusFilter, typeFilter, currentPage],
     queryFn: async () => {
       // First get the total count
       let countQuery = supabase
@@ -96,6 +97,10 @@ export default function CollectionsManagement() {
 
       if (statusFilter !== "all") {
         countQuery = countQuery.eq("is_active", statusFilter === "active");
+      }
+
+      if (typeFilter !== "all") {
+        countQuery = countQuery.eq("collection_type", typeFilter);
       }
 
       const { count } = await countQuery;
@@ -128,6 +133,10 @@ export default function CollectionsManagement() {
 
       if (statusFilter !== "all") {
         query = query.eq("is_active", statusFilter === "active");
+      }
+
+      if (typeFilter !== "all") {
+        query = query.eq("collection_type", typeFilter);
       }
 
       const { data, error } = await query;
@@ -330,18 +339,41 @@ export default function CollectionsManagement() {
           />
         </div>
         <Select 
+          value={typeFilter} 
+          onValueChange={(value) => {
+            setTypeFilter(value);
+            setCurrentPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Collection Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="custom">Custom</SelectItem>
+            <SelectItem value="smart">Smart</SelectItem>
+            <SelectItem value="brand">Brand</SelectItem>
+            <SelectItem value="featured">Featured</SelectItem>
+            <SelectItem value="sale">Sale</SelectItem>
+            <SelectItem value="seasonal">Seasonal</SelectItem>
+            <SelectItem value="pet-type">Pet Type</SelectItem>
+            <SelectItem value="age-group">Age Group</SelectItem>
+            <SelectItem value="health-condition">Health Condition</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select 
           value={statusFilter} 
           onValueChange={(value) => {
             setStatusFilter(value);
             setCurrentPage(1);
           }}
         >
-          <SelectTrigger className="w-[180px]">
-            <Filter className="mr-2 h-4 w-4" />
+          <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Collections</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
