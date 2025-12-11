@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, Loader2, ImageIcon, Check, ChevronDown } from "lucide-react";
+import { Search, Plus, Loader2, ImageIcon, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,8 @@ export function ImagePickerDialog({
   const [loading, setLoading] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [isDragging, setIsDragging] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 30;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -188,11 +190,22 @@ export function ImagePickerDialog({
     }
   }, [open]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sourceFilter]);
+
   const filteredFiles = files.filter(file => {
     const matchesSearch = !searchQuery || file.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSource = sourceFilter === "all" || file.source === sourceFilter;
     return matchesSearch && matchesSource;
   });
+
+  const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
+  const paginatedFiles = filteredFiles.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -371,47 +384,79 @@ export function ImagePickerDialog({
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : filteredFiles.length > 0 ? (
-              <div className="grid grid-cols-6 gap-4">
-                {filteredFiles.map((file) => (
-                  <button
-                    key={file.id}
-                    type="button"
-                    onClick={() => handleImageClick(file.publicUrl)}
-                    className="text-left group"
-                  >
-                    <div
-                      className={cn(
-                        "relative aspect-square rounded-lg overflow-hidden border-2 transition-all bg-muted",
-                        selectedUrl === file.publicUrl 
-                          ? "border-primary ring-2 ring-primary/20" 
-                          : "border-border hover:border-primary/50"
-                      )}
+            ) : paginatedFiles.length > 0 ? (
+              <>
+                <div className="grid grid-cols-6 gap-4">
+                  {paginatedFiles.map((file) => (
+                    <button
+                      key={file.id}
+                      type="button"
+                      onClick={() => handleImageClick(file.publicUrl)}
+                      className="text-left group"
                     >
-                      <img
-                        src={file.publicUrl}
-                        alt={file.name}
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Checkbox in top-left corner */}
-                      <div className="absolute top-2 left-2">
-                        <div className={cn(
-                          "h-5 w-5 rounded border-2 flex items-center justify-center transition-all",
-                          selectedUrl === file.publicUrl
-                            ? "bg-primary border-primary"
-                            : "bg-background/80 border-muted-foreground/30 group-hover:border-muted-foreground/50"
-                        )}>
-                          {selectedUrl === file.publicUrl && (
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          )}
+                      <div
+                        className={cn(
+                          "relative aspect-square rounded-lg overflow-hidden border-2 transition-all bg-muted",
+                          selectedUrl === file.publicUrl 
+                            ? "border-primary ring-2 ring-primary/20" 
+                            : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <img
+                          src={file.publicUrl}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Checkbox in top-left corner */}
+                        <div className="absolute top-2 left-2">
+                          <div className={cn(
+                            "h-5 w-5 rounded border-2 flex items-center justify-center transition-all",
+                            selectedUrl === file.publicUrl
+                              ? "bg-primary border-primary"
+                              : "bg-background/80 border-muted-foreground/30 group-hover:border-muted-foreground/50"
+                          )}>
+                            {selectedUrl === file.publicUrl && (
+                              <Check className="h-3 w-3 text-primary-foreground" />
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <p className="mt-2 text-xs text-foreground truncate">{file.displayName}</p>
+                      <p className="text-xs text-muted-foreground">{file.ext}</p>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredFiles.length)} of {filteredFiles.length}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="px-3 text-sm">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <p className="mt-2 text-xs text-foreground truncate">{file.displayName}</p>
-                    <p className="text-xs text-muted-foreground">{file.ext}</p>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
                 <ImageIcon className="h-12 w-12 mb-2" />
