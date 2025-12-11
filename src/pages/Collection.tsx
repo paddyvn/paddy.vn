@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal, X } from "lucide-react";
 
 const PRODUCTS_PER_PAGE = 20;
 const DEFAULT_MAX_PRICE = 10000000;
@@ -139,6 +139,50 @@ const Collection = () => {
       healthConditionIds: Array.from(healthConditionIds),
     };
   }, [allProducts]);
+
+  // Fetch filter label data for chips
+  const { data: ageRangesData } = useQuery({
+    queryKey: ["age-ranges-labels", availableFilterOptions.ageRangeIds],
+    queryFn: async () => {
+      if (availableFilterOptions.ageRangeIds.length === 0) return [];
+      const { data } = await supabase
+        .from("product_age_ranges")
+        .select("id, name_vi")
+        .in("id", availableFilterOptions.ageRangeIds);
+      return data || [];
+    },
+    enabled: availableFilterOptions.ageRangeIds.length > 0,
+  });
+
+  const { data: sizesData } = useQuery({
+    queryKey: ["sizes-labels", availableFilterOptions.sizeIds],
+    queryFn: async () => {
+      if (availableFilterOptions.sizeIds.length === 0) return [];
+      const { data } = await supabase
+        .from("product_sizes")
+        .select("id, name_vi")
+        .in("id", availableFilterOptions.sizeIds);
+      return data || [];
+    },
+    enabled: availableFilterOptions.sizeIds.length > 0,
+  });
+
+  const { data: healthConditionsData } = useQuery({
+    queryKey: ["health-conditions-labels", availableFilterOptions.healthConditionIds],
+    queryFn: async () => {
+      if (availableFilterOptions.healthConditionIds.length === 0) return [];
+      const { data } = await supabase
+        .from("product_health_conditions")
+        .select("id, name_vi")
+        .in("id", availableFilterOptions.healthConditionIds);
+      return data || [];
+    },
+    enabled: availableFilterOptions.healthConditionIds.length > 0,
+  });
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("vi-VN").format(price) + "₫";
+  };
 
   // Apply filters
   const filteredProducts = useMemo(() => {
@@ -371,6 +415,115 @@ const Collection = () => {
                   </Select>
                 </div>
               </div>
+
+              {/* Active Filter Chips */}
+              {activeFilterCount > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {filters.vendors.map((vendor) => (
+                    <span
+                      key={`vendor-${vendor}`}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full"
+                    >
+                      {vendor}
+                      <button
+                        onClick={() => handleFiltersChange({
+                          ...filters,
+                          vendors: filters.vendors.filter((v) => v !== vendor),
+                        })}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {filters.ageRanges.map((id) => {
+                    const age = ageRangesData?.find((a) => a.id === id);
+                    return age ? (
+                      <span
+                        key={`age-${id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full"
+                      >
+                        {age.name_vi}
+                        <button
+                          onClick={() => handleFiltersChange({
+                            ...filters,
+                            ageRanges: filters.ageRanges.filter((a) => a !== id),
+                          })}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                  {filters.sizes.map((id) => {
+                    const size = sizesData?.find((s) => s.id === id);
+                    return size ? (
+                      <span
+                        key={`size-${id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full"
+                      >
+                        {size.name_vi}
+                        <button
+                          onClick={() => handleFiltersChange({
+                            ...filters,
+                            sizes: filters.sizes.filter((s) => s !== id),
+                          })}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                  {filters.healthConditions.map((id) => {
+                    const condition = healthConditionsData?.find((h) => h.id === id);
+                    return condition ? (
+                      <span
+                        key={`health-${id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full"
+                      >
+                        {condition.name_vi}
+                        <button
+                          onClick={() => handleFiltersChange({
+                            ...filters,
+                            healthConditions: filters.healthConditions.filter((h) => h !== id),
+                          })}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                  {(filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      {formatPrice(filters.priceRange[0])} - {formatPrice(filters.priceRange[1])}
+                      <button
+                        onClick={() => handleFiltersChange({
+                          ...filters,
+                          priceRange: [0, maxPrice],
+                        })}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleFiltersChange({
+                      vendors: [],
+                      priceRange: [0, maxPrice],
+                      ageRanges: [],
+                      sizes: [],
+                      healthConditions: [],
+                    })}
+                    className="text-sm text-destructive hover:underline"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
 
               {/* Products Grid */}
               {productsLoading ? (
