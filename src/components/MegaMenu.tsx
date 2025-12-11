@@ -49,44 +49,93 @@ export const MegaMenu = ({
   return (
     <div className="absolute left-0 top-full w-full bg-background shadow-lg border-t border-border z-50">
       <div className="container mx-auto px-4 py-6">
-        {/* Main Content */}
         <div className="flex gap-8">
-          {/* Menu Columns */}
-          <div className="flex-1 grid grid-cols-5 gap-8">
-            {columns.map((column, index) => (
-              <div key={index} className="space-y-3">
-                <h3 className="font-bold text-sm uppercase tracking-wide text-foreground">
-                  {column.title}
-                </h3>
-                <ul className="space-y-2">
-                  {column.items.map((item, itemIndex) => (
-                    <li key={itemIndex}>
-                      <Link
-                        to={item.href}
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
+          {/* Left Side - Menu Columns + Bottom Section */}
+          <div className="flex-1 flex flex-col">
+            {/* Menu Columns */}
+            <div className="grid grid-cols-5 gap-8">
+              {columns.map((column, index) => (
+                <div key={index} className="space-y-3">
+                  <h3 className="font-bold text-sm uppercase tracking-wide text-foreground">
+                    {column.title}
+                  </h3>
+                  <ul className="space-y-2">
+                    {column.items.map((item, itemIndex) => (
+                      <li key={itemIndex}>
+                        <Link
+                          to={item.href}
+                          className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    to={column.shopAllHref}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline pt-2"
+                  >
+                    Shop All {column.title}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Section - Gift Cards & Popular Brands */}
+            <div className="mt-6 pt-6 border-t border-border flex items-center gap-8">
+              {/* Gift Cards with Promo Image */}
+              <Link 
+                to="/collections/gift-cards" 
+                className="flex items-center gap-3 group flex-shrink-0"
+              >
+                <img 
+                  src={giftCardPromo} 
+                  alt="Gift Cards" 
+                  className="w-28 h-20 object-cover rounded-lg group-hover:scale-105 transition-transform"
+                />
+                <span className="flex items-center gap-1 text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                  Gift Cards
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </Link>
+
+              {/* Popular Brands */}
+              <div className="flex-1 flex items-center gap-6">
+                <span className="text-sm font-semibold text-foreground flex-shrink-0">
+                  Popular Brands
+                </span>
+                <div className="flex items-center gap-6 overflow-x-auto">
+                  {brands?.map((brand) => (
+                    <Link
+                      key={brand.id}
+                      to={`/collections/${brand.slug}`}
+                      className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                    >
+                      {brand.image_url ? (
+                        <img
+                          src={brand.image_url}
+                          alt={brand.name}
+                          className="h-8 w-auto max-w-[100px] object-contain"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-muted-foreground hover:text-primary">
+                          {brand.name}
+                        </span>
+                      )}
+                    </Link>
                   ))}
-                </ul>
-                <Link
-                  to={column.shopAllHref}
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline pt-2"
-                >
-                  Shop All {column.title}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
 
-          {/* Promo Banner */}
+          {/* Right Side - Promo Banner (full height) */}
           {promoImage && (
             <div className="w-52 flex-shrink-0">
               <Link
                 to={promoHref || "#"}
-                className="block relative rounded-xl overflow-hidden h-full min-h-[240px] group"
+                className="block relative rounded-xl overflow-hidden h-full group"
               >
                 <img
                   src={promoImage}
@@ -116,53 +165,6 @@ export const MegaMenu = ({
               </Link>
             </div>
           )}
-        </div>
-
-        {/* Bottom Section - Gift Cards & Popular Brands */}
-        <div className="mt-6 pt-6 border-t border-border flex items-center gap-8">
-          {/* Gift Cards with Promo Image */}
-          <Link 
-            to="/collections/gift-cards" 
-            className="flex items-center gap-3 group flex-shrink-0"
-          >
-            <img 
-              src={giftCardPromo} 
-              alt="Gift Cards" 
-              className="w-28 h-20 object-cover rounded-lg group-hover:scale-105 transition-transform"
-            />
-            <span className="flex items-center gap-1 text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-              Gift Cards
-              <ChevronRight className="h-4 w-4" />
-            </span>
-          </Link>
-
-          {/* Popular Brands */}
-          <div className="flex-1 flex items-center gap-6">
-            <span className="text-sm font-semibold text-foreground flex-shrink-0">
-              Popular Brands
-            </span>
-            <div className="flex items-center gap-6 overflow-x-auto">
-              {brands?.map((brand) => (
-                <Link
-                  key={brand.id}
-                  to={`/collections/${brand.slug}`}
-                  className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                >
-                  {brand.image_url ? (
-                    <img
-                      src={brand.image_url}
-                      alt={brand.name}
-                      className="h-8 w-auto max-w-[100px] object-contain"
-                    />
-                  ) : (
-                    <span className="text-sm font-medium text-muted-foreground hover:text-primary">
-                      {brand.name}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
