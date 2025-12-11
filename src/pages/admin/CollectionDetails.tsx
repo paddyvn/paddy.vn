@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { ImagePickerDialog } from "@/components/admin/ImagePickerDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +85,7 @@ export default function CollectionDetails() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSeoEditing, setIsSeoEditing] = useState(false);
-  const [isImageEditing, setIsImageEditing] = useState(false);
+  const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -711,8 +712,8 @@ export default function CollectionDetails() {
                       <ChevronDown className="h-4 w-4 ml-1" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsImageEditing(true)}>
+                  <DropdownMenuContent align="end" className="bg-background">
+                    <DropdownMenuItem onClick={() => setIsImagePickerOpen(true)}>
                       Change image
                     </DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive" onClick={() => setFormData({ ...formData, image_url: "" })}>
@@ -723,60 +724,32 @@ export default function CollectionDetails() {
               )}
             </div>
             
-            {isImageEditing ? (
-              <div className="space-y-4">
-                {formData.image_url && (
-                  <img
-                    src={formData.image_url}
-                    alt={formData.name}
-                    className="w-full aspect-square object-contain rounded-lg bg-muted/30"
-                  />
-                )}
-                <div className="space-y-2">
-                  <Label>Image URL</Label>
-                  <Input
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                    maxLength={500}
-                  />
-                  {formErrors.image_url && (
-                    <p className="text-sm text-destructive">{formErrors.image_url}</p>
-                  )}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsImageEditing(false)}>
-                    Done
-                  </Button>
-                </div>
-              </div>
-            ) : formData.image_url ? (
+            {formData.image_url ? (
               <img
                 src={formData.image_url}
                 alt={formData.name}
                 className="w-full aspect-square object-contain rounded-lg bg-muted/30"
               />
             ) : (
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
+              <button
+                type="button"
+                onClick={() => setIsImagePickerOpen(true)}
+                className="w-full border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors"
+              >
                 <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-4">
-                  Add an image to showcase this collection
+                <p className="text-sm text-muted-foreground">
+                  Click to add an image
                 </p>
-                <div className="space-y-2">
-                  <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="Image URL"
-                    maxLength={500}
-                  />
-                  {formErrors.image_url && (
-                    <p className="text-sm text-destructive">{formErrors.image_url}</p>
-                  )}
-                </div>
-              </div>
+              </button>
             )}
           </Card>
+
+          <ImagePickerDialog
+            open={isImagePickerOpen}
+            onOpenChange={setIsImagePickerOpen}
+            onSelect={(url) => setFormData({ ...formData, image_url: url })}
+            currentImage={formData.image_url}
+          />
 
           {/* Collection Type */}
           <Card className="p-6 space-y-4">
