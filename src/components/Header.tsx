@@ -215,7 +215,7 @@ export const Header = () => {
                 Pagazine chăm Boss
               </a>
               <a 
-                href="/pages/brands-thuong-hieu-thu-cung" 
+                href="/brands-thuong-hieu-thu-cung" 
                 className="hover:text-primary transition-smooth"
                 onMouseEnter={() => setActiveMegaMenu(null)}
               >
