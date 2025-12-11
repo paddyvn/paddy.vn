@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MenuColumn {
   title: string;
@@ -14,6 +16,7 @@ interface MegaMenuProps {
   promoSubtitle?: string;
   promoBadge?: string;
   promoHref?: string;
+  giftCardImage?: string;
 }
 
 export const MegaMenu = ({
@@ -23,10 +26,29 @@ export const MegaMenu = ({
   promoSubtitle,
   promoBadge,
   promoHref,
+  giftCardImage,
 }: MegaMenuProps) => {
+  // Fetch popular brands from database
+  const { data: brands } = useQuery({
+    queryKey: ["mega-menu-brands"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, slug, image_url")
+        .eq("collection_type", "brand")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .limit(6);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="absolute left-0 top-full w-full bg-background shadow-lg border-t border-border z-50">
       <div className="container mx-auto px-4 py-6">
+        {/* Main Content */}
         <div className="flex gap-8">
           {/* Menu Columns */}
           <div className="flex-1 grid grid-cols-5 gap-8">
@@ -93,6 +115,46 @@ export const MegaMenu = ({
               </Link>
             </div>
           )}
+        </div>
+
+        {/* Bottom Section - Gift Cards & Popular Brands */}
+        <div className="mt-6 pt-6 border-t border-border flex items-center gap-8">
+          {/* Gift Cards */}
+          <Link 
+            to="/collections/gift-cards" 
+            className="flex items-center gap-1 text-sm font-semibold text-foreground hover:text-primary transition-colors flex-shrink-0"
+          >
+            Gift Cards
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+
+          {/* Popular Brands */}
+          <div className="flex-1 flex items-center gap-6">
+            <span className="text-sm font-semibold text-foreground flex-shrink-0">
+              Popular Brands
+            </span>
+            <div className="flex items-center gap-6 overflow-x-auto">
+              {brands?.map((brand) => (
+                <Link
+                  key={brand.id}
+                  to={`/collections/${brand.slug}`}
+                  className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                >
+                  {brand.image_url ? (
+                    <img
+                      src={brand.image_url}
+                      alt={brand.name}
+                      className="h-8 w-auto max-w-[100px] object-contain"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-muted-foreground hover:text-primary">
+                      {brand.name}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
