@@ -263,12 +263,12 @@ export function ImagePickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle>Select image</DialogTitle>
         </DialogHeader>
 
-        <div className="px-6 py-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+        <div className="px-6 py-4 space-y-4 flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Search bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -336,13 +336,14 @@ export function ImagePickerDialog({
           </div>
 
           {/* Image grid */}
-          <ScrollArea className="flex-1 min-h-0 -mx-2">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredFiles.length > 0 ? (
-              <div className="grid grid-cols-6 gap-4 p-2">
+          <div className="flex-1 min-h-0 overflow-hidden -mx-2">
+            <ScrollArea className="h-full">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : filteredFiles.length > 0 ? (
+                <div className="grid grid-cols-6 gap-4 p-2">
                 {filteredFiles.map((file) => (
                   <button
                     key={file.id}
@@ -388,11 +389,12 @@ export function ImagePickerDialog({
                 <p>No images found</p>
               </div>
             )}
-          </ScrollArea>
+            </ScrollArea>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
+        <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30 shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
