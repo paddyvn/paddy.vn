@@ -236,7 +236,7 @@ const Blog = () => {
                         to={`/blogs/${post.handle}`}
                         className="group"
                       >
-                        <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-muted">
+                        <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
                           {post.image_url ? (
                             <img
                               src={post.image_url}
