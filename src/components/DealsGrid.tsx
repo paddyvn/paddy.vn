@@ -18,7 +18,7 @@ export const DealsGrid = () => {
           <h2 className="text-2xl font-bold text-foreground">Year-end Deals at Paddy</h2>
           <Link 
             to="/collections/deals" 
-            className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
           >
             Xem tất cả
             <ArrowRight className="h-4 w-4" />

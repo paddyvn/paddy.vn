@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ArrowRight } from "lucide-react";
 
 interface BrandCollection {
   id: string;
@@ -36,9 +37,10 @@ export const Brands = () => {
           </h2>
           <Link 
             to="/brands-thuong-hieu-thu-cung" 
-            className="text-primary hover:underline text-sm font-medium"
+            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
           >
             Xem tất cả
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 

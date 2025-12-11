@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useCategories } from "@/hooks/useCategories";
-import { ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
 import categoryToys from "@/assets/category-toys.jpg";
@@ -38,10 +38,10 @@ export const Categories = () => {
           </h2>
           <Link 
             to="/collections" 
-            className="flex items-center gap-1 text-primary font-semibold hover:underline"
+            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
           >
             Xem tất cả
-            <ChevronRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
