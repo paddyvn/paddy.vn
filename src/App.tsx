@@ -10,6 +10,7 @@ import Collection from "./pages/Collection";
 import Collections from "./pages/Collections";
 import Brands from "./pages/Brands";
 import Blog from "./pages/Blog";
+import BlogPostDetail from "./pages/BlogPostDetail";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsManagement from "./pages/admin/ProductsManagement";
@@ -45,6 +46,8 @@ const App = () => (
           <Route path="/collections/:slug" element={<Collection />} />
           <Route path="/brands-thuong-hieu-thu-cung" element={<Brands />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:handle" element={<BlogPostDetail />} />
+          <Route path="/blogs/cham-soc-thu-cung/:handle" element={<BlogPostDetail />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
