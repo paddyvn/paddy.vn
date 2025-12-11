@@ -191,28 +191,28 @@ const Blog = () => {
           <>
             {/* Hero Section */}
             {!isFiltering && featuredPost && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-12">
                 {/* Left Column - Featured text + 3 secondary articles */}
-                <div className="lg:col-span-3 flex flex-col">
+                <div className="lg:col-span-4 flex flex-col gap-4">
                   {/* Featured Article Text */}
-                  <Link to={`/blogs/${featuredPost.handle}`} className="group mb-6">
-                    <h2 className="text-xl font-bold text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
+                  <Link to={`/blogs/${featuredPost.handle}`} className="group">
+                    <h2 className="text-lg font-bold text-foreground leading-tight mb-2 group-hover:text-primary transition-colors">
                       {featuredPost.title}
                     </h2>
-                    <p className="text-sm text-muted-foreground line-clamp-3">
+                    <p className="text-sm text-muted-foreground line-clamp-4">
                       {stripHtml(featuredPost.summary_html || featuredPost.body_html)}
                     </p>
                   </Link>
 
                   {/* 3 Secondary Articles */}
-                  <div className="grid grid-cols-3 gap-3 mt-auto">
+                  <div className="grid grid-cols-3 gap-2 mt-auto">
                     {secondaryPosts.map((post) => (
                       <Link
                         key={post.id}
                         to={`/blogs/${post.handle}`}
                         className="group"
                       >
-                        <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-2 bg-muted">
+                        <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-muted">
                           {post.image_url ? (
                             <img
                               src={post.image_url}
@@ -223,10 +223,10 @@ const Blog = () => {
                             <div className="w-full h-full bg-muted" />
                           )}
                         </div>
-                        <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                           {post.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                           {stripHtml(post.summary_html || post.body_html)}
                         </p>
                       </Link>
@@ -235,9 +235,9 @@ const Blog = () => {
                 </div>
 
                 {/* Center - Large Featured Image */}
-                <div className="lg:col-span-6">
+                <div className="lg:col-span-5">
                   <Link to={`/blogs/${featuredPost.handle}`} className="block h-full">
-                    <div className="relative h-full min-h-[300px] lg:min-h-full rounded-2xl overflow-hidden bg-muted">
+                    <div className="relative h-full min-h-[280px] rounded-2xl overflow-hidden bg-muted">
                       {featuredPost.image_url ? (
                         <img
                           src={featuredPost.image_url}
@@ -254,9 +254,9 @@ const Blog = () => {
                 </div>
 
                 {/* Right Column - Popular Articles */}
-                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-5">
-                  <h3 className="text-lg font-bold text-foreground mb-4">Popular articles</h3>
-                  <div className="space-y-4">
+                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-4">
+                  <h3 className="text-base font-bold text-foreground mb-3">Popular articles</h3>
+                  <div className="space-y-3">
                     {popularPosts.map((post, index) => (
                       <Link
                         key={post.id}
@@ -266,7 +266,7 @@ const Blog = () => {
                         <span className="text-sm font-bold text-foreground shrink-0">
                           {index + 1}.
                         </span>
-                        <h4 className="text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        <h4 className="text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                           {post.title}
                         </h4>
                       </Link>
