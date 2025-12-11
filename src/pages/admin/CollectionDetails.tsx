@@ -87,6 +87,7 @@ export default function CollectionDetails() {
     rules_match_type: "all",
   });
   const [rules, setRules] = useState<CollectionRule[]>([]);
+  const [showAllProducts, setShowAllProducts] = useState(false);
   const [seoFormData, setSeoFormData] = useState({
     meta_title: "",
     meta_description: "",
@@ -481,7 +482,7 @@ export default function CollectionDetails() {
               </div>
             ) : (
               <div className="space-y-2">
-                {products.slice(0, 15).map((product: any, index: number) => (
+                {(showAllProducts ? products : products.slice(0, 15)).map((product: any, index: number) => (
                   <div
                     key={product.id}
                     className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
@@ -507,8 +508,12 @@ export default function CollectionDetails() {
                   </div>
                 ))}
                 {products.length > 15 && (
-                  <Button variant="link" className="w-full">
-                    Show more products
+                  <Button 
+                    variant="link" 
+                    className="w-full"
+                    onClick={() => setShowAllProducts(!showAllProducts)}
+                  >
+                    {showAllProducts ? "Show less" : `Show more products (${products.length - 15} more)`}
                   </Button>
                 )}
               </div>
