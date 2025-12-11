@@ -259,7 +259,7 @@ const Blog = () => {
                 </div>
 
                 {/* Right Column - Popular Articles */}
-                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-5 h-fit">
+                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-5 self-stretch">
                   <h3 className="text-lg font-bold text-foreground mb-4">Popular articles</h3>
                   <div className="space-y-4">
                     {popularPosts.map((post, index) => (
