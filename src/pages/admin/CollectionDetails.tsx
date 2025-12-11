@@ -71,6 +71,11 @@ const COLLECTION_TYPES = [
   { value: "custom", label: "Custom collection" },
   { value: "brand", label: "Brand" },
   { value: "smart", label: "Smart collection" },
+  { value: "category", label: "Category" },
+  { value: "sale", label: "Sale / Promotion" },
+  { value: "new", label: "New Arrivals" },
+  { value: "featured", label: "Featured" },
+  { value: "pet_type", label: "Pet Type" },
 ];
 
 export default function CollectionDetails() {
