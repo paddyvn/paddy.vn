@@ -83,43 +83,40 @@ export const MegaMenu = ({
             </div>
 
             {/* Bottom Section - Gift Cards & Popular Brands */}
-            <div className="mt-6 pt-6 border-t border-border flex items-center gap-8">
-              {/* Gift Cards with Promo Image */}
-              <Link 
-                to="/collections/gift-cards" 
-                className="flex items-center gap-3 group flex-shrink-0"
-              >
-                <img 
-                  src={giftCardPromo} 
-                  alt="Gift Cards" 
-                  className="w-28 h-20 object-cover rounded-lg group-hover:scale-105 transition-transform"
-                />
-                <span className="flex items-center gap-1 text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                  Gift Cards
-                  <ChevronRight className="h-4 w-4" />
-                </span>
-              </Link>
+            <div className="mt-6 pt-6 border-t border-border flex gap-10">
+              {/* Gift Cards */}
+              <div className="flex-shrink-0">
+                <h4 className="text-sm font-bold text-foreground mb-3">Gift Cards</h4>
+                <Link 
+                  to="/collections/gift-cards" 
+                  className="block group"
+                >
+                  <img 
+                    src={giftCardPromo} 
+                    alt="Gift Cards" 
+                    className="w-44 h-24 object-cover rounded-xl group-hover:scale-105 transition-transform"
+                  />
+                </Link>
+              </div>
 
               {/* Popular Brands */}
-              <div className="flex-1 flex items-center gap-6">
-                <span className="text-sm font-semibold text-foreground flex-shrink-0">
-                  Popular Brands
-                </span>
-                <div className="flex items-center gap-6 overflow-x-auto">
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-foreground mb-3">Popular Brands</h4>
+                <div className="flex items-center gap-4">
                   {brands?.map((brand) => (
                     <Link
                       key={brand.id}
                       to={`/collections/${brand.slug}`}
-                      className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                      className="flex-shrink-0 w-20 h-20 rounded-xl bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors overflow-hidden"
                     >
                       {brand.image_url ? (
                         <img
                           src={brand.image_url}
                           alt={brand.name}
-                          className="h-8 w-auto max-w-[100px] object-contain"
+                          className="w-full h-full object-contain p-2"
                         />
                       ) : (
-                        <span className="text-sm font-medium text-muted-foreground hover:text-primary">
+                        <span className="text-xs font-medium text-muted-foreground text-center px-1">
                           {brand.name}
                         </span>
                       )}
