@@ -45,8 +45,8 @@ const App = () => (
           <Route path="/collections" element={<Collections />} />
           <Route path="/collections/:slug" element={<Collection />} />
           <Route path="/brands-thuong-hieu-thu-cung" element={<Brands />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:handle" element={<BlogPostDetail />} />
+          <Route path="/blogs" element={<Blog />} />
+          <Route path="/blogs/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/cham-soc-thu-cung/:handle" element={<BlogPostDetail />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />

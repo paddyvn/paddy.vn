@@ -62,7 +62,7 @@ const Blog = () => {
               {/* Featured Article Info */}
               <div className="lg:col-span-3 flex flex-col justify-center">
                 {featuredPost && (
-                  <Link to={`/blog/${featuredPost.handle}`} className="group">
+                  <Link to={`/blogs/${featuredPost.handle}`} className="group">
                     <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground leading-tight mb-4 group-hover:text-primary transition-colors">
                       {featuredPost.title}
                     </h2>
@@ -76,7 +76,7 @@ const Blog = () => {
               {/* Featured Image */}
               <div className="lg:col-span-6">
                 {featuredPost?.image_url && (
-                  <Link to={`/blog/${featuredPost.handle}`}>
+                  <Link to={`/blogs/${featuredPost.handle}`}>
                     <div className="relative aspect-video rounded-2xl overflow-hidden">
                       <img
                         src={featuredPost.image_url}
@@ -95,7 +95,7 @@ const Blog = () => {
                   {popularPosts.map((post, index) => (
                     <Link
                       key={post.id}
-                      to={`/blog/${post.handle}`}
+                      to={`/blogs/${post.handle}`}
                       className="flex gap-3 group"
                     >
                       <span className="text-2xl font-bold text-primary">
@@ -122,7 +122,7 @@ const Blog = () => {
               {gridPosts.map((post) => (
                 <Link
                   key={post.id}
-                  to={`/blog/${post.handle}`}
+                  to={`/blogs/${post.handle}`}
                   className="group"
                 >
                   <div className="relative aspect-video rounded-xl overflow-hidden mb-4">
@@ -158,7 +158,7 @@ const Blog = () => {
                   {posts.slice(7).map((post) => (
                     <Link
                       key={post.id}
-                      to={`/blog/${post.handle}`}
+                      to={`/blogs/${post.handle}`}
                       className="group"
                     >
                       <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
