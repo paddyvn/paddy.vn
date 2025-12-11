@@ -67,10 +67,8 @@ const Blog = () => {
   const isFiltering = selectedCategory || selectedTag;
   
   // When filtering, show all filtered posts; otherwise use original layout
-  const featuredPost = isFiltering ? null : filteredPosts?.[0];
-  const popularPosts = isFiltering ? [] : filteredPosts?.slice(1, 6) || [];
-  const gridPosts = isFiltering ? [] : filteredPosts?.slice(1, 7) || [];
-  const allPosts = isFiltering ? filteredPosts : filteredPosts?.slice(7) || [];
+  const featuredPosts = isFiltering ? [] : filteredPosts?.slice(0, 3) || [];
+  const allPosts = isFiltering ? filteredPosts : filteredPosts?.slice(3) || [];
 
   // Pagination calculations
   const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
@@ -189,72 +187,10 @@ const Blog = () => {
           </div>
         ) : (
           <>
-            {/* Hero Section - Only show when not filtering */}
-            {!isFiltering && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
-                {/* Featured Article Info */}
-                <div className="lg:col-span-3 flex flex-col justify-center">
-                  {featuredPost && (
-                    <Link to={`/blogs/${featuredPost.handle}`} className="group">
-                      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground leading-tight mb-4 group-hover:text-primary transition-colors">
-                        {featuredPost.title}
-                      </h2>
-                      <p className="text-muted-foreground text-sm md:text-base">
-                        {stripHtml(featuredPost.summary_html || featuredPost.body_html)}
-                      </p>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Featured Image */}
-                <div className="lg:col-span-6">
-                  {featuredPost?.image_url && (
-                    <Link to={`/blogs/${featuredPost.handle}`}>
-                      <div className="relative aspect-video rounded-2xl overflow-hidden">
-                        <img
-                          src={featuredPost.image_url}
-                          alt={featuredPost.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Popular Sidebar */}
-                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-foreground mb-4">Phổ biến</h3>
-                  <div className="space-y-4">
-                    {popularPosts.map((post, index) => (
-                      <Link
-                        key={post.id}
-                        to={`/blogs/${post.handle}`}
-                        className="flex gap-3 group"
-                      >
-                        <span className="text-2xl font-bold text-primary">
-                          {index + 1}
-                        </span>
-                        <div>
-                          <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                            {post.title}
-                          </h4>
-                          {post.author && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {post.author}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Articles Grid - Only show when not filtering */}
-            {!isFiltering && gridPosts.length > 0 && (
+            {/* Featured Articles - 3 column grid */}
+            {!isFiltering && featuredPosts.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                {gridPosts.map((post) => (
+                {featuredPosts.map((post) => (
                   <Link
                     key={post.id}
                     to={`/blogs/${post.handle}`}
