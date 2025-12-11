@@ -5,6 +5,7 @@ import { DealsGrid } from "@/components/DealsGrid";
 import { PetSelector } from "@/components/PetSelector";
 import { Categories } from "@/components/Categories";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
+import { Brands } from "@/components/Brands";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -18,6 +19,7 @@ const Index = () => {
         <PetSelector />
         <Categories />
         <FeaturedProducts />
+        <Brands />
       </main>
       <Footer />
     </div>
