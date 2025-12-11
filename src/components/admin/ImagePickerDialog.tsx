@@ -336,7 +336,7 @@ export function ImagePickerDialog({
           </div>
 
           {/* Image grid */}
-          <ScrollArea className="flex-1 -mx-2">
+          <ScrollArea className="flex-1 min-h-0 -mx-2">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
