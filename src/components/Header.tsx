@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export const Header = () => {
   const [userId, setUserId] = useState<string | undefined>();
+  const [userName, setUserName] = useState<string | null>(null);
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
@@ -25,14 +26,36 @@ export const Header = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id);
+      if (session?.user?.id) {
+        fetchUserName(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id);
+      if (session?.user?.id) {
+        setTimeout(() => {
+          fetchUserName(session.user.id);
+        }, 0);
+      } else {
+        setUserName(null);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserName = async (id: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', id)
+      .single();
+    
+    if (data?.full_name) {
+      setUserName(data.full_name);
+    }
+  };
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -97,9 +120,14 @@ export const Header = () => {
                     className="flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
                   >
                     <User className="h-4 w-4" />
-                    <span className="hidden md:inline text-sm">
-                      {userId ? 'Account' : 'Sign In'}
-                    </span>
+                    <div className="hidden md:flex flex-col items-start text-left">
+                      {userId && userName && (
+                        <span className="text-xs opacity-80">Hi, {userName.split(' ')[0]}</span>
+                      )}
+                      <span className="text-sm">
+                        {userId ? 'Account' : 'Sign In'}
+                      </span>
+                    </div>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
