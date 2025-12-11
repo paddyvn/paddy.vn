@@ -25,6 +25,10 @@ interface CollectionFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   maxPrice: number;
+  availableVendors: string[];
+  availableAgeRangeIds: string[];
+  availableSizeIds: string[];
+  availableHealthConditionIds: string[];
 }
 
 const SEARCHABLE_THRESHOLD = 6;
@@ -33,68 +37,66 @@ export const CollectionFilters = ({
   filters,
   onFiltersChange,
   maxPrice,
+  availableVendors,
+  availableAgeRangeIds,
+  availableSizeIds,
+  availableHealthConditionIds,
 }: CollectionFiltersProps) => {
   const [vendorSearch, setVendorSearch] = useState("");
   const [healthSearch, setHealthSearch] = useState("");
 
-  // Fetch vendors
-  const { data: vendors } = useQuery({
-    queryKey: ["filter-vendors"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("vendor")
-        .eq("is_active", true)
-        .not("vendor", "is", null);
-      
-      const uniqueVendors = [...new Set(data?.map(p => p.vendor).filter(Boolean))];
-      return uniqueVendors.sort() as string[];
-    },
-  });
-
-  // Fetch age ranges
+  // Fetch age ranges (only those available in collection)
   const { data: ageRanges } = useQuery({
-    queryKey: ["filter-age-ranges"],
+    queryKey: ["filter-age-ranges", availableAgeRangeIds],
     queryFn: async () => {
+      if (availableAgeRangeIds.length === 0) return [];
       const { data } = await supabase
         .from("product_age_ranges")
         .select("id, name, name_vi")
+        .in("id", availableAgeRangeIds)
         .eq("is_active", true)
         .order("display_order");
       return data || [];
     },
+    enabled: availableAgeRangeIds.length > 0,
   });
 
-  // Fetch sizes
+  // Fetch sizes (only those available in collection)
   const { data: sizes } = useQuery({
-    queryKey: ["filter-sizes"],
+    queryKey: ["filter-sizes", availableSizeIds],
     queryFn: async () => {
+      if (availableSizeIds.length === 0) return [];
       const { data } = await supabase
         .from("product_sizes")
         .select("id, name, name_vi")
+        .in("id", availableSizeIds)
         .eq("is_active", true)
         .order("display_order");
       return data || [];
     },
+    enabled: availableSizeIds.length > 0,
   });
 
-  // Fetch health conditions
+  // Fetch health conditions (only those available in collection)
   const { data: healthConditions } = useQuery({
-    queryKey: ["filter-health-conditions"],
+    queryKey: ["filter-health-conditions", availableHealthConditionIds],
     queryFn: async () => {
+      if (availableHealthConditionIds.length === 0) return [];
       const { data } = await supabase
         .from("product_health_conditions")
         .select("id, name, name_vi")
+        .in("id", availableHealthConditionIds)
         .eq("is_active", true)
         .order("display_order");
       return data || [];
     },
+    enabled: availableHealthConditionIds.length > 0,
   });
 
   // Filter vendors by search
-  const filteredVendors = vendors?.filter((vendor) =>
+  const filteredVendors = availableVendors.filter((vendor) =>
     vendor.toLowerCase().includes(vendorSearch.toLowerCase())
-  ) || [];
+  );
 
   // Filter health conditions by search
   const filteredHealthConditions = healthConditions?.filter((condition) =>
@@ -159,6 +161,15 @@ export const CollectionFilters = ({
     return new Intl.NumberFormat("vi-VN").format(price) + "₫";
   };
 
+  // Determine which sections to show based on available data
+  const showBrandFilter = availableVendors.length > 0;
+  const showLifeStageFilter = ageRanges && ageRanges.length > 0;
+  const showSizeFilter = sizes && sizes.length > 0;
+  const showHealthFilter = healthConditions && healthConditions.length > 0;
+
+  const defaultOpenSections = ["price"];
+  if (showBrandFilter) defaultOpenSections.unshift("brand");
+
   return (
     <div className="w-full">
       {hasActiveFilters && (
@@ -173,15 +184,15 @@ export const CollectionFilters = ({
         </Button>
       )}
 
-      <Accordion type="multiple" defaultValue={["brand", "price"]} className="w-full">
+      <Accordion type="multiple" defaultValue={defaultOpenSections} className="w-full">
         {/* Brand Filter */}
-        {vendors && vendors.length > 0 && (
+        {showBrandFilter && (
           <AccordionItem value="brand">
             <AccordionTrigger className="text-base font-semibold">
               Brand
             </AccordionTrigger>
             <AccordionContent>
-              {vendors.length > SEARCHABLE_THRESHOLD && (
+              {availableVendors.length > SEARCHABLE_THRESHOLD && (
                 <div className="relative mb-3">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -239,7 +250,7 @@ export const CollectionFilters = ({
         </AccordionItem>
 
         {/* Life Stage Filter */}
-        {ageRanges && ageRanges.length > 0 && (
+        {showLifeStageFilter && (
           <AccordionItem value="life-stage">
             <AccordionTrigger className="text-base font-semibold">
               Life Stage
@@ -266,7 +277,7 @@ export const CollectionFilters = ({
         )}
 
         {/* Breed Size Filter */}
-        {sizes && sizes.length > 0 && (
+        {showSizeFilter && (
           <AccordionItem value="breed-size">
             <AccordionTrigger className="text-base font-semibold">
               Breed Size
@@ -293,7 +304,7 @@ export const CollectionFilters = ({
         )}
 
         {/* Health Condition Filter */}
-        {healthConditions && healthConditions.length > 0 && (
+        {showHealthFilter && (
           <AccordionItem value="health-condition">
             <AccordionTrigger className="text-base font-semibold">
               Health Condition

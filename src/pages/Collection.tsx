@@ -116,6 +116,30 @@ const Collection = () => {
   const allProducts = productsData?.products || [];
   const maxPrice = productsData?.maxPrice || DEFAULT_MAX_PRICE;
 
+  // Extract available filter options from collection products
+  const availableFilterOptions = useMemo(() => {
+    const vendors = new Set<string>();
+    const ageRangeIds = new Set<string>();
+    const sizeIds = new Set<string>();
+    const healthConditionIds = new Set<string>();
+
+    allProducts.forEach((product: any) => {
+      if (product.vendor) vendors.add(product.vendor);
+      if (product.target_age_id) ageRangeIds.add(product.target_age_id);
+      if (product.target_size_id) sizeIds.add(product.target_size_id);
+      product.product_health_condition_links?.forEach((link: any) => {
+        if (link.health_condition_id) healthConditionIds.add(link.health_condition_id);
+      });
+    });
+
+    return {
+      vendors: Array.from(vendors).sort(),
+      ageRangeIds: Array.from(ageRangeIds),
+      sizeIds: Array.from(sizeIds),
+      healthConditionIds: Array.from(healthConditionIds),
+    };
+  }, [allProducts]);
+
   // Apply filters
   const filteredProducts = useMemo(() => {
     return allProducts.filter((product: any) => {
@@ -261,6 +285,10 @@ const Collection = () => {
                   filters={filters}
                   onFiltersChange={handleFiltersChange}
                   maxPrice={maxPrice}
+                  availableVendors={availableFilterOptions.vendors}
+                  availableAgeRangeIds={availableFilterOptions.ageRangeIds}
+                  availableSizeIds={availableFilterOptions.sizeIds}
+                  availableHealthConditionIds={availableFilterOptions.healthConditionIds}
                 />
               </div>
             </aside>
@@ -292,6 +320,10 @@ const Collection = () => {
                           filters={filters}
                           onFiltersChange={handleFiltersChange}
                           maxPrice={maxPrice}
+                          availableVendors={availableFilterOptions.vendors}
+                          availableAgeRangeIds={availableFilterOptions.ageRangeIds}
+                          availableSizeIds={availableFilterOptions.sizeIds}
+                          availableHealthConditionIds={availableFilterOptions.healthConditionIds}
                         />
                       </div>
                     </SheetContent>
