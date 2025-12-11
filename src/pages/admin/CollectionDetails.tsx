@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -36,6 +36,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ConditionFieldSelector,
+  ConditionOperatorSelector,
+  getFieldType,
+} from "@/components/admin/ConditionFieldSelector";
 
 const collectionSchema = z.object({
   name: z.string().trim().min(1, "Title is required").max(100),
@@ -51,22 +56,6 @@ type CollectionRule = {
   operator: string;
   value: string;
 };
-
-const RULE_FIELDS = [
-  { value: "brand", label: "Brand" },
-  { value: "name", label: "Title" },
-  { value: "product_type", label: "Product type" },
-  { value: "tags", label: "Tags" },
-];
-
-const RULE_OPERATORS = [
-  { value: "equals", label: "is equal to" },
-  { value: "not_equals", label: "is not equal to" },
-  { value: "contains", label: "contains" },
-  { value: "not_contains", label: "does not contain" },
-  { value: "starts_with", label: "starts with" },
-  { value: "ends_with", label: "ends with" },
-];
 
 const COLLECTION_TYPES = [
   { value: "custom", label: "Custom collection" },
@@ -234,7 +223,7 @@ export default function CollectionDetails() {
   };
 
   const addRule = () => {
-    setRules([...rules, { field: "vendor", operator: "equals", value: "" }]);
+    setRules([...rules, { field: "brand", operator: "equals", value: "" }]);
   };
 
   const removeRule = (index: number) => {
@@ -427,37 +416,16 @@ export default function CollectionDetails() {
 
               {rules.map((rule, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <Select
+                  <ConditionFieldSelector
                     value={rule.field}
                     onValueChange={(value) => updateRule(index, "field", value)}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RULE_FIELDS.map((field) => (
-                        <SelectItem key={field.value} value={field.value}>
-                          {field.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
 
-                  <Select
+                  <ConditionOperatorSelector
                     value={rule.operator}
                     onValueChange={(value) => updateRule(index, "operator", value)}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RULE_OPERATORS.map((op) => (
-                        <SelectItem key={op.value} value={op.value}>
-                          {op.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    fieldType={getFieldType(rule.field)}
+                  />
 
                   <Input
                     value={rule.value}
