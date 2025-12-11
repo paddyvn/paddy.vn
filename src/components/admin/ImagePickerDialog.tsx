@@ -336,14 +336,13 @@ export function ImagePickerDialog({
           </div>
 
           {/* Image grid */}
-          <div className="flex-1 min-h-0 overflow-hidden -mx-2">
-            <ScrollArea className="h-full">
-              {loading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : filteredFiles.length > 0 ? (
-                <div className="grid grid-cols-6 gap-4 p-2">
+          <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredFiles.length > 0 ? (
+              <div className="grid grid-cols-6 gap-4">
                 {filteredFiles.map((file) => (
                   <button
                     key={file.id}
@@ -389,7 +388,6 @@ export function ImagePickerDialog({
                 <p>No images found</p>
               </div>
             )}
-            </ScrollArea>
           </div>
         </div>
 
