@@ -270,7 +270,7 @@ export function ImagePickerDialog({
 
         <div className="px-6 py-4 space-y-4 flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Search bar */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search files"
@@ -281,7 +281,7 @@ export function ImagePickerDialog({
           </div>
 
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8">
@@ -303,40 +303,41 @@ export function ImagePickerDialog({
             </DropdownMenu>
           </div>
 
-          {/* Upload area */}
-          <div className="border-2 border-dashed rounded-lg p-6 text-center">
-            <div className="flex items-center justify-center gap-3">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleUpload}
-                className="hidden"
-                id="image-upload"
-              />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add files
-                  </>
-                )}
-              </Button>
+          {/* Scrollable content */}
+          <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2 space-y-4">
+            {/* Upload area */}
+            <div className="border-2 border-dashed rounded-lg p-6 text-center">
+              <div className="flex items-center justify-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add files
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">Drag and drop images</p>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Drag and drop images</p>
-          </div>
 
-          {/* Image grid */}
-          <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
+            {/* Image grid */}
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
