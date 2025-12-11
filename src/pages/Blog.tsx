@@ -69,8 +69,7 @@ const Blog = () => {
   // When filtering, show all filtered posts; otherwise use original layout
   const featuredPost = isFiltering ? null : filteredPosts?.[0];
   const secondaryPosts = isFiltering ? [] : filteredPosts?.slice(1, 4) || [];
-  const popularPosts = isFiltering ? [] : filteredPosts?.slice(4, 9) || [];
-  const allPosts = isFiltering ? filteredPosts : filteredPosts?.slice(9) || [];
+  const allPosts = isFiltering ? filteredPosts : filteredPosts?.slice(4) || [];
 
   // Pagination calculations
   const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
@@ -191,87 +190,68 @@ const Blog = () => {
           <>
             {/* Hero Section */}
             {!isFiltering && featuredPost && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-12">
-                {/* Left Column - Featured text + 3 secondary articles */}
-                <div className="lg:col-span-4 flex flex-col gap-4">
+              <div className="mb-12">
+                {/* Row 1: Featured text + Large image */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                   {/* Featured Article Text */}
-                  <Link to={`/blogs/${featuredPost.handle}`} className="group">
-                    <h2 className="text-lg font-bold text-foreground leading-tight mb-2 group-hover:text-primary transition-colors">
-                      {featuredPost.title}
-                    </h2>
-                    <p className="text-sm text-muted-foreground line-clamp-4">
-                      {stripHtml(featuredPost.summary_html || featuredPost.body_html)}
-                    </p>
-                  </Link>
+                  <div className="flex items-center">
+                    <Link to={`/blogs/${featuredPost.handle}`} className="group">
+                      <h2 className="text-xl lg:text-2xl font-bold text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
+                        {featuredPost.title}
+                      </h2>
+                      <p className="text-sm text-muted-foreground line-clamp-4">
+                        {stripHtml(featuredPost.summary_html || featuredPost.body_html)}
+                      </p>
+                    </Link>
+                  </div>
 
-                  {/* 3 Secondary Articles */}
-                  <div className="grid grid-cols-3 gap-2 mt-auto">
-                    {secondaryPosts.map((post) => (
-                      <Link
-                        key={post.id}
-                        to={`/blogs/${post.handle}`}
-                        className="group"
-                      >
-                        <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-muted">
-                          {post.image_url ? (
-                            <img
-                              src={post.image_url}
-                              alt={post.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-muted" />
-                          )}
-                        </div>
-                        <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                          {post.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                          {stripHtml(post.summary_html || post.body_html)}
-                        </p>
-                      </Link>
-                    ))}
+                  {/* Large Featured Image */}
+                  <div className="lg:col-span-2">
+                    <Link to={`/blogs/${featuredPost.handle}`} className="block">
+                      <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-muted">
+                        {featuredPost.image_url ? (
+                          <img
+                            src={featuredPost.image_url}
+                            alt={featuredPost.title}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <span className="text-muted-foreground">No image</span>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
                   </div>
                 </div>
 
-                {/* Center - Large Featured Image */}
-                <div className="lg:col-span-5 flex items-center">
-                  <Link to={`/blogs/${featuredPost.handle}`} className="block w-full">
-                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
-                      {featuredPost.image_url ? (
-                        <img
-                          src={featuredPost.image_url}
-                          alt={featuredPost.title}
-                          className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">No image</span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                </div>
-
-                {/* Right Column - Popular Articles */}
-                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-4">
-                  <h3 className="text-base font-bold text-foreground mb-3">Popular articles</h3>
-                  <div className="space-y-3">
-                    {popularPosts.map((post, index) => (
-                      <Link
-                        key={post.id}
-                        to={`/blogs/${post.handle}`}
-                        className="flex gap-2 group"
-                      >
-                        <span className="text-sm font-bold text-foreground shrink-0">
-                          {index + 1}.
-                        </span>
-                        <h4 className="text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                          {post.title}
-                        </h4>
-                      </Link>
-                    ))}
-                  </div>
+                {/* Row 2: 3 Secondary Articles */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {secondaryPosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/blogs/${post.handle}`}
+                      className="group"
+                    >
+                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-muted">
+                        {post.image_url ? (
+                          <img
+                            src={post.image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted" />
+                        )}
+                      </div>
+                      <h3 className="font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {stripHtml(post.summary_html || post.body_html)}
+                      </p>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}
