@@ -235,14 +235,14 @@ const Blog = () => {
                 </div>
 
                 {/* Center - Large Featured Image */}
-                <div className="lg:col-span-5">
-                  <Link to={`/blogs/${featuredPost.handle}`} className="block h-full">
-                    <div className="relative h-full min-h-[280px] rounded-2xl overflow-hidden bg-muted">
+                <div className="lg:col-span-5 flex items-center">
+                  <Link to={`/blogs/${featuredPost.handle}`} className="block w-full">
+                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
                       {featuredPost.image_url ? (
                         <img
                           src={featuredPost.image_url}
                           alt={featuredPost.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center">
