@@ -57,16 +57,10 @@ type CollectionRule = {
   value: string;
 };
 
-const COLLECTION_TYPES = [
-  { value: "custom", label: "Custom collection" },
-  { value: "brand", label: "Brand" },
-  { value: "smart", label: "Smart collection" },
-  { value: "category", label: "Category" },
-  { value: "sale", label: "Sale / Promotion" },
-  { value: "new", label: "New Arrivals" },
-  { value: "featured", label: "Featured" },
-  { value: "pet_type", label: "Pet Type" },
-];
+import {
+  CollectionTypeSelector,
+  getCollectionTypeDescription,
+} from "@/components/admin/CollectionTypeSelector";
 
 export default function CollectionDetails() {
   const { id } = useParams<{ id: string }>();
@@ -755,27 +749,12 @@ export default function CollectionDetails() {
           {/* Collection Type */}
           <Card className="p-6 space-y-4">
             <h3 className="font-semibold">Collection type</h3>
-            <Select
+            <CollectionTypeSelector
               value={formData.collection_type}
               onValueChange={(value) => setFormData({ ...formData, collection_type: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COLLECTION_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             <p className="text-xs text-muted-foreground">
-              {formData.collection_type === 'brand' 
-                ? 'Brand collections appear in the Brands section on the homepage'
-                : formData.collection_type === 'smart'
-                ? 'Smart collections automatically include products based on conditions'
-                : 'Custom collections allow manual product selection'}
+              {getCollectionTypeDescription(formData.collection_type)}
             </p>
           </Card>
         </div>
