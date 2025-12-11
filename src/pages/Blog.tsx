@@ -259,21 +259,27 @@ const Blog = () => {
                 </div>
 
                 {/* Right Column - Popular Articles */}
-                <div className="lg:col-span-3 bg-secondary/30 rounded-2xl p-5 self-stretch">
-                  <h3 className="text-lg font-bold text-foreground mb-4">Popular articles</h3>
-                  <div className="space-y-4">
+                <div className="lg:col-span-3 self-stretch">
+                  <div className="divide-y divide-border">
                     {popularPosts.map((post, index) => (
                       <Link
                         key={post.id}
                         to={`/blogs/${post.handle}`}
-                        className="flex gap-2 group"
+                        className="flex gap-4 py-5 group first:pt-0"
                       >
-                        <span className="text-sm font-bold text-foreground shrink-0">
-                          {index + 1}.
+                        <span className="text-3xl font-bold text-amber-500 shrink-0">
+                          {index + 1}
                         </span>
-                        <h4 className="text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                          {post.title}
-                        </h4>
+                        <div>
+                          <h4 className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+                            {post.title}
+                          </h4>
+                          {post.author && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              {post.author}
+                            </p>
+                          )}
+                        </div>
                       </Link>
                     ))}
                   </div>
