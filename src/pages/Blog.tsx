@@ -275,9 +275,9 @@ const Blog = () => {
                           <h4 className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
                             {post.title}
                           </h4>
-                          {post.author && (
-                            <p className="text-sm text-muted-foreground mt-2">
-                              {post.author}
+                          {post.blog_title && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {post.blog_title}
                             </p>
                           )}
                         </div>
