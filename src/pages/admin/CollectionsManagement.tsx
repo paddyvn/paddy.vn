@@ -563,7 +563,7 @@ export default function CollectionsManagement() {
                           setTypeFilter(collection.collection_type || "all");
                           setCurrentPage(1);
                         }}
-                        className="text-sm capitalize hover:underline hover:text-primary transition-colors"
+                        className="text-sm capitalize text-primary cursor-pointer hover:underline transition-colors"
                       >
                         {COLLECTION_TYPES.find(t => t.value === collection.collection_type)?.label || collection.collection_type}
                       </button>
