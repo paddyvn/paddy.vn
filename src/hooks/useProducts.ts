@@ -64,41 +64,9 @@ export const useProducts = (featured?: boolean) => {
   });
 };
 
-export const useProductById = (id: string) => {
+export const useProduct = (slug: string) => {
   return useQuery({
-    queryKey: ["product", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select(`
-          *,
-          product_images (image_url, alt_text, is_primary, display_order),
-          product_variants (*),
-          product_collections (
-            collection_id,
-            position,
-            categories (id, name, slug)
-          ),
-          reviews (
-            *,
-            profiles (full_name, avatar_url)
-          )
-        `)
-        .eq("id", id)
-        .eq("is_active", true)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-};
-
-// Legacy hook for backward compatibility with slug-only URLs
-export const useProductBySlug = (slug: string) => {
-  return useQuery({
-    queryKey: ["product-by-slug", slug],
+    queryKey: ["product", slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
@@ -123,9 +91,5 @@ export const useProductBySlug = (slug: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!slug,
   });
 };
-
-// Deprecated: Use useProductById instead
-export const useProduct = useProductBySlug;

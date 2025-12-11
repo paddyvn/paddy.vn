@@ -475,7 +475,6 @@ export default function ProductEdit() {
                 form={form}
                 productName={product.name}
                 basePrice={product.base_price}
-                productId={product.id}
               />
             </div>
 

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useProductById, useProductBySlug } from "@/hooks/useProducts";
+import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -17,27 +17,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductBreadcrumb } from "@/components/ProductBreadcrumb";
 import { useToast } from "@/hooks/use-toast";
-import { parseProductIdFromUrl, parseProductSlugFromUrl, isNewUrlFormat, generateProductUrl } from "@/lib/productUrl";
 
 export default function ProductDetail() {
-  const { slugId } = useParams<{ slugId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Parse URL to get ID and slug
-  const isNewFormat = slugId ? isNewUrlFormat(slugId) : false;
-  const productId = slugId ? parseProductIdFromUrl(slugId) : "";
-  const urlSlug = slugId ? parseProductSlugFromUrl(slugId) : "";
-  
-  // Use ID-based lookup for new URLs, slug-based for legacy
-  const { data: productById, isLoading: loadingById, error: errorById } = useProductById(isNewFormat ? productId : "");
-  const { data: productBySlug, isLoading: loadingBySlug, error: errorBySlug } = useProductBySlug(!isNewFormat ? slugId || "" : "");
-  
-  // Determine which product data to use
-  const product = isNewFormat ? productById : productBySlug;
-  const isLoading = isNewFormat ? loadingById : loadingBySlug;
-  const error = isNewFormat ? errorById : errorBySlug;
-  
+  const { data: product, isLoading, error } = useProduct(slug || "");
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
 
@@ -50,19 +35,6 @@ export default function ProductDetail() {
   });
 
   const { addToCart } = useCart(session?.user?.id);
-
-  // Redirect legacy URLs to new format (301-like behavior for SEO)
-  useEffect(() => {
-    if (!isNewFormat && product && product.id && product.slug) {
-      // Redirect old slug-only URL to new slug-id URL
-      const newUrl = generateProductUrl(product.slug, product.id);
-      navigate(newUrl, { replace: true });
-    } else if (isNewFormat && product && product.slug !== urlSlug) {
-      // Redirect if slug doesn't match (slug was updated)
-      const newUrl = generateProductUrl(product.slug, product.id);
-      navigate(newUrl, { replace: true });
-    }
-  }, [product, isNewFormat, urlSlug, navigate]);
 
   useEffect(() => {
     if (product?.product_variants?.[0]) {

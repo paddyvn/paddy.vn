@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { generateProductUrl } from "@/lib/productUrl";
 
 interface RelatedProductsProps {
   currentProductId: string;
@@ -60,7 +59,7 @@ export function RelatedProducts({ currentProductId, productType, vendor }: Relat
             <Card
               key={product.id}
               className="group cursor-pointer hover:shadow-hover transition-smooth"
-              onClick={() => navigate(generateProductUrl(product.slug, product.id))}
+              onClick={() => navigate(`/products/${product.slug}`)}
             >
               <CardContent className="p-0">
                 <div className="aspect-square bg-muted overflow-hidden rounded-t-lg">

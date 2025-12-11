@@ -14,16 +14,12 @@ interface ProductSEOPreviewProps {
   form: UseFormReturn<any>;
   productName: string;
   basePrice: number;
-  productId?: string;
 }
 
-export function ProductSEOPreview({ form, productName, basePrice, productId }: ProductSEOPreviewProps) {
+export function ProductSEOPreview({ form, productName, basePrice }: ProductSEOPreviewProps) {
   const metaTitle = form.watch("meta_title") || productName;
   const metaDescription = form.watch("meta_description") || "";
   const slug = form.watch("slug") || "";
-  
-  // Show the new URL format with ID appended
-  const displayUrl = productId ? `${slug}-${productId}` : slug || "product-handle";
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -44,7 +40,7 @@ export function ProductSEOPreview({ form, productName, basePrice, productId }: P
         {/* SEO Preview */}
         <div className="p-4 bg-muted/50 rounded-lg space-y-1">
           <p className="text-xs text-muted-foreground truncate">
-            paddy.vn › products › {displayUrl}
+            paddy.vn › products › {slug || "product-handle"}
           </p>
           <p className="text-primary font-medium text-lg truncate hover:underline cursor-pointer">
             {metaTitle || "Product Title"} - {formatPrice(basePrice)}
