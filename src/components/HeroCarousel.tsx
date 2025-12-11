@@ -33,60 +33,62 @@ export const HeroCarousel = () => {
   }, [emblaApi, onSelect]);
 
   return (
-    <section className="relative bg-muted/30">
-      {/* Carousel */}
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex">
-          {banners.map((banner) => (
-            <div key={banner.id} className="flex-[0_0_100%] min-w-0">
-              <img
-                src={banner.image}
-                alt={banner.alt}
-                className="w-full h-[300px] sm:h-[400px] md:h-[450px] lg:h-[500px] object-cover"
-              />
-            </div>
-          ))}
+    <section className="container mx-auto px-4 py-4">
+      <div className="relative rounded-2xl overflow-hidden bg-muted/30">
+        {/* Carousel */}
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex">
+            {banners.map((banner) => (
+              <div key={banner.id} className="flex-[0_0_100%] min-w-0">
+                <img
+                  src={banner.image}
+                  alt={banner.alt}
+                  className="w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px] object-cover"
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={scrollPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
-        aria-label="Previous banner"
-      >
-        <ChevronLeft className="h-5 w-5 text-foreground" />
-      </button>
-      <button
-        onClick={scrollNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
-        aria-label="Next banner"
-      >
-        <ChevronRight className="h-5 w-5 text-foreground" />
-      </button>
-
-      {/* Dots Navigation */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-full bg-foreground/60">
-        <ChevronLeft 
-          className="h-4 w-4 text-background cursor-pointer hover:opacity-80" 
+        {/* Navigation Arrows */}
+        <button
           onClick={scrollPrev}
-        />
-        {banners.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => scrollTo(index)}
-            className={`w-2.5 h-2.5 rounded-full transition-colors ${
-              index === selectedIndex
-                ? "bg-background"
-                : "bg-background/40 hover:bg-background/60"
-            }`}
-            aria-label={`Go to banner ${index + 1}`}
-          />
-        ))}
-        <ChevronRight 
-          className="h-4 w-4 text-background cursor-pointer hover:opacity-80" 
+          className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
+          aria-label="Previous banner"
+        >
+          <ChevronLeft className="h-5 w-5 text-foreground" />
+        </button>
+        <button
           onClick={scrollNext}
-        />
+          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
+          aria-label="Next banner"
+        >
+          <ChevronRight className="h-5 w-5 text-foreground" />
+        </button>
+
+        {/* Dots Navigation */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-full bg-foreground/60">
+          <ChevronLeft 
+            className="h-4 w-4 text-background cursor-pointer hover:opacity-80" 
+            onClick={scrollPrev}
+          />
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollTo(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                index === selectedIndex
+                  ? "bg-background"
+                  : "bg-background/40 hover:bg-background/60"
+              }`}
+              aria-label={`Go to banner ${index + 1}`}
+            />
+          ))}
+          <ChevronRight 
+            className="h-4 w-4 text-background cursor-pointer hover:opacity-80" 
+            onClick={scrollNext}
+          />
+        </div>
       </div>
     </section>
   );
