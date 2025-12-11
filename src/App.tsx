@@ -22,6 +22,7 @@ import ContentMenus from "./pages/admin/ContentMenus";
 import ContentBlog from "./pages/admin/ContentBlog";
 import ContentAIGenerator from "./pages/admin/ContentAIGenerator";
 import Pages from "./pages/admin/Pages";
+import MarketingBanners from "./pages/admin/MarketingBanners";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="content/blog" element={<ContentBlog />} />
             <Route path="content/pages" element={<Pages />} />
             <Route path="content/ai-generator" element={<ContentAIGenerator />} />
+            <Route path="marketing/banners" element={<MarketingBanners />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

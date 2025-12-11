@@ -56,8 +56,10 @@ const mainItems = [
   },
   {
     title: "Marketing",
-    url: "/admin/marketing",
     icon: Megaphone,
+    subItems: [
+      { title: "Banners", url: "/admin/marketing/banners" },
+    ],
   },
   {
     title: "Promotions",
