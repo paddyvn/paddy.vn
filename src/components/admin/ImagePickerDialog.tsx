@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,11 +9,17 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, Loader2, ImageIcon, Check } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
+
+interface StorageFile {
+  id: string;
+  name: string;
+  displayName: string;
+  ext: string;
+  publicUrl: string;
+}
 
 interface ImagePickerDialogProps {
   open: boolean;
@@ -31,35 +37,137 @@ export function ImagePickerDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [files, setFiles] = useState<StorageFile[]>([]);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: files, isLoading } = useQuery({
-    queryKey: ["storage-images-picker", searchQuery],
-    queryFn: async () => {
-      const { data, error } = await supabase.storage
+  const extractFileName = (url: string): string => {
+    try {
+      const parts = url.split("/");
+      return decodeURIComponent(parts[parts.length - 1]) || "Unknown";
+    } catch {
+      return "Unknown";
+    }
+  };
+
+  const getFileExt = (name: string): string => {
+    const ext = name.split('.').pop()?.toUpperCase() || 'IMG';
+    return ext;
+  };
+
+  const truncateName = (name: string): string => {
+    return name.length > 18 ? name.substring(0, 15) + '...' : name;
+  };
+
+  const fetchFiles = async () => {
+    setLoading(true);
+    try {
+      const allFilesData: StorageFile[] = [];
+      
+      // Fetch product images from database
+      const { data: productImages, error: productError } = await supabase
+        .from("product_images")
+        .select("id, image_url, alt_text")
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (productError) throw productError;
+
+      for (const img of productImages || []) {
+        if (img.image_url) {
+          const name = img.alt_text || extractFileName(img.image_url);
+          allFilesData.push({
+            id: img.id,
+            name,
+            displayName: truncateName(name),
+            ext: getFileExt(img.image_url),
+            publicUrl: img.image_url,
+          });
+        }
+      }
+      
+      // Fetch collection images
+      const { data: collections, error: collectionError } = await supabase
+        .from("categories")
+        .select("id, name, image_url")
+        .not("image_url", "is", null);
+      
+      if (collectionError) throw collectionError;
+      
+      for (const col of collections || []) {
+        if (col.image_url) {
+          const name = col.name || extractFileName(col.image_url);
+          allFilesData.push({
+            id: col.id,
+            name,
+            displayName: truncateName(name),
+            ext: getFileExt(col.image_url),
+            publicUrl: col.image_url,
+          });
+        }
+      }
+
+      // Fetch blog post images
+      const { data: blogPosts, error: blogError } = await supabase
+        .from("blog_posts")
+        .select("id, title, image_url")
+        .not("image_url", "is", null);
+      
+      if (blogError) throw blogError;
+      
+      for (const post of blogPosts || []) {
+        if (post.image_url) {
+          const name = post.title || extractFileName(post.image_url);
+          allFilesData.push({
+            id: post.id,
+            name,
+            displayName: truncateName(name),
+            ext: getFileExt(post.image_url),
+            publicUrl: post.image_url,
+          });
+        }
+      }
+      
+      // Fetch files from storage root
+      const { data: rootItems } = await supabase.storage
         .from("product-images")
-        .list("", { limit: 100, sortBy: { column: "created_at", order: "desc" } });
-
-      if (error) throw error;
-
-      const imageFiles = data
-        .filter(file => file.name.match(/\.(jpg|jpeg|png|webp|gif|avif)$/i))
-        .filter(file => !searchQuery || file.name.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      return imageFiles.map(file => {
-        const ext = file.name.split('.').pop()?.toUpperCase() || 'IMG';
-        return {
-          name: file.name,
-          displayName: file.name.length > 18 ? file.name.substring(0, 15) + '...' : file.name,
-          ext,
-          url: `https://fexafkqzpbzjcupvbfhe.supabase.co/storage/v1/object/public/product-images/${file.name}`,
-        };
+        .list("", { limit: 100 });
+      
+      for (const item of rootItems || []) {
+        if (item.id !== null && item.name.match(/\.(jpg|jpeg|png|webp|gif|avif)$/i)) {
+          allFilesData.push({
+            id: item.id,
+            name: item.name,
+            displayName: truncateName(item.name),
+            ext: getFileExt(item.name),
+            publicUrl: supabase.storage.from("product-images").getPublicUrl(item.name).data.publicUrl,
+          });
+        }
+      }
+      
+      setFiles(allFilesData);
+    } catch (error) {
+      console.error("Failed to load files:", error);
+      toast({
+        title: "Failed to load files",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
       });
-    },
-    enabled: open,
-  });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchFiles();
+    }
+  }, [open]);
+
+  const filteredFiles = files.filter(file => 
+    !searchQuery || file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -94,12 +202,10 @@ export function ImagePickerDialog({
 
       if (uploadError) throw uploadError;
 
-      const publicUrl = `https://fexafkqzpbzjcupvbfhe.supabase.co/storage/v1/object/public/product-images/${fileName}`;
+      const publicUrl = supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
       
-      // Refresh the file list
-      queryClient.invalidateQueries({ queryKey: ["storage-images-picker"] });
-      
-      // Auto-select the newly uploaded image
+      // Refresh the file list and auto-select
+      await fetchFiles();
       setSelectedUrl(publicUrl);
       
       toast({
@@ -184,29 +290,29 @@ export function ImagePickerDialog({
 
           {/* Image grid */}
           <ScrollArea className="flex-1 -mx-2">
-            {isLoading ? (
+            {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : files && files.length > 0 ? (
+            ) : filteredFiles.length > 0 ? (
               <div className="grid grid-cols-6 gap-4 p-2">
-                {files.map((file) => (
+                {filteredFiles.map((file) => (
                   <button
-                    key={file.name}
+                    key={file.id}
                     type="button"
-                    onClick={() => handleImageClick(file.url)}
+                    onClick={() => handleImageClick(file.publicUrl)}
                     className="text-left group"
                   >
                     <div
                       className={cn(
                         "relative aspect-square rounded-lg overflow-hidden border-2 transition-all bg-muted",
-                        selectedUrl === file.url 
+                        selectedUrl === file.publicUrl 
                           ? "border-primary ring-2 ring-primary/20" 
                           : "border-border hover:border-primary/50"
                       )}
                     >
                       <img
-                        src={file.url}
+                        src={file.publicUrl}
                         alt={file.name}
                         className="w-full h-full object-cover"
                       />
@@ -214,11 +320,11 @@ export function ImagePickerDialog({
                       <div className="absolute top-2 left-2">
                         <div className={cn(
                           "h-5 w-5 rounded border-2 flex items-center justify-center transition-all",
-                          selectedUrl === file.url
+                          selectedUrl === file.publicUrl
                             ? "bg-primary border-primary"
                             : "bg-background/80 border-muted-foreground/30 group-hover:border-muted-foreground/50"
                         )}>
-                          {selectedUrl === file.url && (
+                          {selectedUrl === file.publicUrl && (
                             <Check className="h-3 w-3 text-primary-foreground" />
                           )}
                         </div>
