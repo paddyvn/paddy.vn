@@ -557,9 +557,19 @@ export default function CollectionsManagement() {
                     <div className="text-sm text-muted-foreground">{collection.slug}</div>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm capitalize">
-                      {collection.collection_type ? COLLECTION_TYPES.find(t => t.value === collection.collection_type)?.label || collection.collection_type : "—"}
-                    </span>
+                    {collection.collection_type ? (
+                      <button
+                        onClick={() => {
+                          setTypeFilter(collection.collection_type || "all");
+                          setCurrentPage(1);
+                        }}
+                        className="text-sm capitalize hover:underline hover:text-primary transition-colors"
+                      >
+                        {COLLECTION_TYPES.find(t => t.value === collection.collection_type)?.label || collection.collection_type}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {collection.rules && Array.isArray(collection.rules) && collection.rules.length > 0 ? (
