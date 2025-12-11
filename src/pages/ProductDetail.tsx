@@ -5,10 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, Heart, CheckCircle, Leaf, Truck, Award } from "lucide-react";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { ProductReviews } from "@/components/ProductReviews";
@@ -25,6 +24,7 @@ export default function ProductDetail() {
   const { data: product, isLoading, error } = useProduct(slug || "");
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
+  const [subscribeEnabled, setSubscribeEnabled] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -71,15 +71,19 @@ export default function ProductDetail() {
     );
   }
 
-  const primaryImage = product.product_images?.find((img: any) => img.is_primary) || product.product_images?.[0];
   const currentPrice = selectedVariant?.price || product.base_price;
   const comparePrice = selectedVariant?.compare_at_price || product.compare_at_price;
   const averageRating = product.reviews?.length > 0
     ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length
     : 0;
+  
+  const discountPercentage = comparePrice && comparePrice > currentPrice 
+    ? Math.round((1 - currentPrice / comparePrice) * 100) 
+    : 0;
 
-  // Get category from product_collections if available
   const primaryCategory = product.product_collections?.[0]?.categories;
+  
+  const isInStock = selectedVariant?.stock_quantity == null || selectedVariant?.stock_quantity > 0;
 
   const handleAddToCart = () => {
     if (!session?.user) {
@@ -103,65 +107,79 @@ export default function ProductDetail() {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Breadcrumb Navigation */}
       <ProductBreadcrumb
         productName={product.name}
         categoryName={primaryCategory?.name}
         categorySlug={primaryCategory?.slug}
       />
       
-      <div className="container mx-auto px-4 py-8">
-
-        {/* Main Product Section - Two Column Layout */}
-        <div className="grid lg:grid-cols-2 gap-12 mb-12">
+      <div className="container mx-auto px-4 py-6">
+        {/* Main Product Section */}
+        <div className="grid lg:grid-cols-2 gap-10 mb-16">
           {/* Left Column - Images */}
-          <div>
-            <ProductImageGallery images={product.product_images || []} productName={product.name} />
-          </div>
+          <ProductImageGallery 
+            images={product.product_images || []} 
+            productName={product.name}
+            isFeatured={product.is_featured}
+          />
 
           {/* Right Column - Product Info */}
           <div className="space-y-5">
             {/* Product Name */}
-            <h1 className="text-3xl font-bold text-foreground leading-tight">{product.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+              {product.name}
+            </h1>
 
-            {/* Brand and Rating Row */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {product.vendor && (
-                <>
-                  <span className="text-sm text-muted-foreground">Brand -</span>
-                  <span className="text-sm font-semibold text-primary">{product.vendor}</span>
-                  <span className="text-muted-foreground">|</span>
-                </>
-              )}
+            {/* Rating and Stock Row */}
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className={i < Math.round(averageRating) ? "text-yellow-400 text-sm" : "text-muted text-sm"}>
+                    <span 
+                      key={i} 
+                      className={`text-lg ${i < Math.round(averageRating) ? "text-yellow-400" : "text-muted"}`}
+                    >
                       ★
                     </span>
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  ({product.reviews?.length || 0} Review)
+                <span className="text-sm text-primary hover:underline cursor-pointer">
+                  {(product.reviews?.length || 0).toLocaleString()} reviews
                 </span>
               </div>
+              <span className="text-muted-foreground">|</span>
+              {isInStock ? (
+                <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                  <CheckCircle className="h-4 w-4" />
+                  In Stock
+                </span>
+              ) : (
+                <span className="text-sm text-red-600 font-medium">Out of Stock</span>
+              )}
             </div>
 
             {/* Price */}
-            <div className="flex items-center gap-3">
-              {comparePrice && comparePrice > currentPrice && (
-                <span className="text-lg text-muted-foreground line-through">
-                  {comparePrice.toLocaleString('vi-VN')} ₫
-                </span>
-              )}
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-3xl font-bold text-foreground">
                 {currentPrice.toLocaleString('vi-VN')} ₫
               </span>
+              {comparePrice && comparePrice > currentPrice && (
+                <>
+                  <span className="text-lg text-muted-foreground line-through">
+                    {comparePrice.toLocaleString('vi-VN')} ₫
+                  </span>
+                  <span className="px-2 py-1 text-sm font-medium text-green-600 bg-green-100 rounded">
+                    Save {discountPercentage}%
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Short Description */}
             {product.short_description && (
-              <p className="text-sm text-muted-foreground leading-relaxed">{product.short_description}</p>
+              <p className="text-muted-foreground leading-relaxed">
+                {product.short_description}
+              </p>
             )}
 
             {/* Variants Selector */}
@@ -178,159 +196,227 @@ export default function ProductDetail() {
               />
             )}
 
-            {/* Quantity */}
-            <div className="space-y-2">
-              <label className="text-base font-semibold">Quantity</label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="h-10 w-10 rounded-md"
-                >
-                  -
-                </Button>
-                <span className="text-lg font-medium min-w-[3rem] text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="h-10 w-10 rounded-md"
-                >
-                  +
-                </Button>
-              </div>
+            {/* Subscribe & Save */}
+            <div className="flex items-start gap-3 p-4 border border-border rounded-lg bg-muted/30">
+              <Checkbox 
+                id="subscribe" 
+                checked={subscribeEnabled}
+                onCheckedChange={(checked) => setSubscribeEnabled(!!checked)}
+              />
+              <label htmlFor="subscribe" className="cursor-pointer">
+                <span className="font-semibold text-foreground">Subscribe & Save 10%</span>
+                <p className="text-sm text-muted-foreground">
+                  Never run out! Get tailored deliveries and save on every order.
+                </p>
+              </label>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
+            {/* Quantity and Add to Cart Row */}
+            <div className="flex items-center gap-3">
+              {/* Quantity Selector */}
+              <div className="flex items-center border border-border rounded-lg">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="px-4 py-3 text-lg font-medium hover:bg-muted transition-colors"
+                >
+                  −
+                </button>
+                <span className="px-4 py-3 text-lg font-medium min-w-[3rem] text-center">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="px-4 py-3 text-lg font-medium hover:bg-muted transition-colors"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Add to Cart Button */}
               <Button
                 size="lg"
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-14 text-base bg-green-500 hover:bg-green-600 text-white"
                 onClick={handleAddToCart}
+                disabled={!isInStock}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Add to Cart
               </Button>
-              <Button 
-                size="lg" 
-                className="flex-1 h-12 text-base bg-yellow-500 hover:bg-yellow-600 text-white"
+
+              {/* Wishlist Button */}
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-14 w-14 p-0"
               >
-                Buy Now
+                <Heart className="h-5 w-5" />
               </Button>
             </div>
 
-            {/* Action Links */}
-            <div className="flex items-center gap-6 pt-2">
-              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Compare
-              </button>
-              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
-                <Heart className="h-4 w-4" />
-                Add to Wishlist
-              </button>
-              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-                Share Now
-              </button>
-            </div>
-
-            {/* Stock Status */}
-            {selectedVariant && selectedVariant.stock_quantity !== null && (
-              <div className="text-sm pt-2">
-                {selectedVariant.stock_quantity > 0 ? (
-                  <span className="text-green-600 font-medium">
-                    In stock ({selectedVariant.stock_quantity} available)
-                  </span>
-                ) : (
-                  <span className="text-red-600 font-medium">Out of stock</span>
-                )}
+            {/* Trust Badges */}
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium">Vet Approved</span>
               </div>
-            )}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                  <Leaf className="h-5 w-5 text-orange-600" />
+                </div>
+                <span className="text-sm font-medium">100% Organic</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <Truck className="h-5 w-5 text-purple-600" />
+                </div>
+                <span className="text-sm font-medium">Free 2-Day Shipping</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Award className="h-5 w-5 text-yellow-600" />
+                </div>
+                <span className="text-sm font-medium">Satisfaction Guarantee</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Product Details Tabs */}
-        <Tabs defaultValue="description" className="mb-12">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="details">Details & Ingredients</TabsTrigger>
-            <TabsTrigger value="recommendations">For Your Pet</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="description" className="py-6">
-            <div 
-              className="prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
-            />
-          </TabsContent>
-          
-          <TabsContent value="details" className="py-6 space-y-4">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">Product Details</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {product.product_type && (
-                  <div>
-                    <span className="font-semibold">Type:</span> {product.product_type}
-                  </div>
-                )}
-                {product.vendor && (
-                  <div>
-                    <span className="font-semibold">Brand:</span> {product.vendor}
-                  </div>
-                )}
-                {selectedVariant?.weight && (
-                  <div>
-                    <span className="font-semibold">Weight:</span> {selectedVariant.weight}g
-                  </div>
-                )}
-                {selectedVariant?.sku && (
-                  <div>
-                    <span className="font-semibold">SKU:</span> {selectedVariant.sku}
-                  </div>
-                )}
-              </div>
-            </div>
+        <div className="mb-16">
+          <Tabs defaultValue="description">
+            <TabsList className="w-auto bg-transparent border-b border-border rounded-none p-0 h-auto">
+              <TabsTrigger 
+                value="description" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
+              >
+                Description
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ingredients"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
+              >
+                Ingredients
+              </TabsTrigger>
+              <TabsTrigger 
+                value="feeding"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
+              >
+                Feeding Guidelines
+              </TabsTrigger>
+            </TabsList>
             
-            {product.description && (
-              <div>
-                <h3 className="text-xl font-semibold mb-3">Ingredients & Materials</h3>
-                <div 
-                  className="prose max-w-none text-sm"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
+            <TabsContent value="description" className="pt-8">
+              <div className="grid lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                  <div 
+                    className="prose prose-lg max-w-none text-foreground"
+                    dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
+                  />
+                  
+                  <div>
+                    <h3 className="text-xl font-bold mb-4">Key Benefits:</h3>
+                    <ul className="space-y-3 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <span className="text-foreground">•</span>
+                        High-quality protein from real chicken
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-foreground">•</span>
+                        Omega-3 and Omega-6 fatty acids for healthy skin and coat
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-foreground">•</span>
+                        Natural fiber for healthy digestion
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-foreground">•</span>
+                        Essential vitamins and minerals for overall wellness
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Nutrition Facts Card */}
+                <div className="bg-muted/50 rounded-xl p-6">
+                  <h3 className="text-xl font-bold mb-6">Nutrition Facts</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Crude Protein (min)</span>
+                      <span className="font-semibold text-primary">24.0%</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Crude Fat (min)</span>
+                      <span className="font-semibold text-primary">14.0%</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Crude Fiber (max)</span>
+                      <span className="font-semibold text-primary">4.0%</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-muted-foreground">Moisture (max)</span>
+                      <span className="font-semibold text-primary">10.0%</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="recommendations" className="py-6 space-y-4">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">Age & Size Recommendations</h3>
-              <p className="text-muted-foreground">
-                This product is suitable for pets based on the product type and specifications.
-                {product.product_type && ` Categorized as: ${product.product_type}`}
-              </p>
-            </div>
+            </TabsContent>
             
-            <div>
-              <h3 className="text-xl font-semibold mb-3">Usage Instructions</h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>• Always follow feeding guidelines and consult your veterinarian for specific dietary needs</p>
-                <p>• Store in a cool, dry place away from direct sunlight</p>
-                <p>• Ensure fresh water is always available</p>
-                <p>• Monitor your pet for any adverse reactions when introducing new products</p>
+            <TabsContent value="ingredients" className="pt-8">
+              <div className="prose prose-lg max-w-none">
+                <p className="text-muted-foreground">
+                  Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
+                  Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
+                  Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
+                  Blueberries, Raspberries, Yucca Schidigera Extract, Dried Enterococcus 
+                  faecium Fermentation Product, Dried Lactobacillus acidophilus Fermentation 
+                  Product, Dried Lactobacillus casei Fermentation Product.
+                </p>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+            
+            <TabsContent value="feeding" className="pt-8">
+              <div className="space-y-6">
+                <p className="text-muted-foreground">
+                  Feed according to your pet's weight and activity level. Always ensure fresh 
+                  water is available. Consult your veterinarian for specific dietary needs.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full max-w-lg">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 font-semibold">Weight</th>
+                        <th className="text-left py-3 font-semibold">Daily Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-muted-foreground">
+                      <tr className="border-b border-border">
+                        <td className="py-3">3-12 lbs</td>
+                        <td className="py-3">1/3 - 1 cup</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-3">13-20 lbs</td>
+                        <td className="py-3">1 - 1 1/3 cups</td>
+                      </tr>
+                      <tr className="border-b border-border">
+                        <td className="py-3">21-35 lbs</td>
+                        <td className="py-3">1 1/3 - 2 cups</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3">36-50 lbs</td>
+                        <td className="py-3">2 - 2 2/3 cups</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
 
         {/* Reviews Section */}
-        <div className="mb-12">
+        <div className="mb-16">
           <ProductReviews
             productId={product.id}
             reviews={product.reviews || []}

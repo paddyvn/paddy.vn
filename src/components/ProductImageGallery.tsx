@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductImage {
   image_url: string;
@@ -12,9 +13,10 @@ interface ProductImage {
 interface ProductImageGalleryProps {
   images: ProductImage[];
   productName: string;
+  isFeatured?: boolean;
 }
 
-export function ProductImageGallery({ images, productName }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, productName, isFeatured }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
@@ -24,10 +26,16 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
     return (a.display_order || 0) - (b.display_order || 0);
   });
 
+  const maxVisibleThumbnails = 4;
+  const hiddenCount = sortedImages.length - maxVisibleThumbnails;
+  const visibleThumbnails = sortedImages.slice(0, maxVisibleThumbnails);
+
   if (sortedImages.length === 0) {
     return (
-      <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-        <span className="text-muted-foreground">No image available</span>
+      <div className="space-y-4">
+        <div className="aspect-square bg-muted rounded-xl flex items-center justify-center">
+          <span className="text-muted-foreground">No image available</span>
+        </div>
       </div>
     );
   }
@@ -36,28 +44,33 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
     <div className="space-y-4">
       {/* Main Image */}
       <div
-        className="aspect-square rounded-lg overflow-hidden bg-muted cursor-zoom-in hover:opacity-95 transition-smooth"
+        className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 cursor-zoom-in"
         onClick={() => setIsZoomOpen(true)}
       >
+        {isFeatured && (
+          <Badge className="absolute top-4 left-4 z-10 bg-green-500 hover:bg-green-500 text-white font-semibold px-3 py-1">
+            BEST SELLER
+          </Badge>
+        )}
         <img
           src={sortedImages[selectedImage].image_url}
           alt={sortedImages[selectedImage].alt_text || productName}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
         />
       </div>
 
       {/* Thumbnail Row */}
       {sortedImages.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {sortedImages.map((image, index) => (
+        <div className="flex gap-3">
+          {visibleThumbnails.map((image, index) => (
             <button
               key={index}
               onClick={() => setSelectedImage(index)}
               className={cn(
-                "flex-shrink-0 w-20 h-20 rounded-md overflow-hidden transition-smooth",
+                "relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 transition-all",
                 selectedImage === index
-                  ? "ring-2 ring-primary opacity-100"
-                  : "opacity-60 hover:opacity-100"
+                  ? "border-primary"
+                  : "border-transparent hover:border-muted-foreground/30"
               )}
             >
               <img
@@ -65,6 +78,12 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
                 alt={image.alt_text || `${productName} ${index + 1}`}
                 className="w-full h-full object-cover"
               />
+              {/* Show +X overlay on last visible thumbnail if there are more images */}
+              {index === maxVisibleThumbnails - 1 && hiddenCount > 0 && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <span className="text-white font-semibold text-lg">+{hiddenCount}</span>
+                </div>
+              )}
             </button>
           ))}
         </div>
