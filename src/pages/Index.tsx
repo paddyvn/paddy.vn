@@ -6,6 +6,7 @@ import { PetSelector } from "@/components/PetSelector";
 import { Categories } from "@/components/Categories";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
 import { Brands } from "@/components/Brands";
+import { BlogSection } from "@/components/BlogSection";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
         <Categories />
         <FeaturedProducts />
         <Brands />
+        <BlogSection />
       </main>
       <Footer />
     </div>
