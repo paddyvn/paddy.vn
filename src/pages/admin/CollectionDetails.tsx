@@ -668,33 +668,6 @@ export default function CollectionDetails() {
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Publishing */}
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Publishing</h3>
-              <Button variant="link" size="sm" className="text-primary p-0 h-auto">
-                Manage
-              </Button>
-            </div>
-            <div className="space-y-3">
-              <div className="text-sm text-muted-foreground">Sales channels</div>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
-                <span className="text-sm">
-                  {formData.is_active ? 'Online Store' : 'Inactive'}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
-                className="w-full"
-              >
-                {formData.is_active ? 'Deactivate' : 'Activate'}
-              </Button>
-            </div>
-          </Card>
-
           {/* Image */}
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between">
