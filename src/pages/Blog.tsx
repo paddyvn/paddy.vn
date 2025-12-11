@@ -77,7 +77,7 @@ const Blog = () => {
               <div className="lg:col-span-6">
                 {featuredPost?.image_url && (
                   <Link to={`/blog/${featuredPost.handle}`}>
-                    <div className="relative aspect-[16/10] rounded-2xl overflow-hidden">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden">
                       <img
                         src={featuredPost.image_url}
                         alt={featuredPost.title}
@@ -125,7 +125,7 @@ const Blog = () => {
                   to={`/blog/${post.handle}`}
                   className="group"
                 >
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-4">
+                  <div className="relative aspect-video rounded-xl overflow-hidden mb-4">
                     {post.image_url ? (
                       <img
                         src={post.image_url}
@@ -161,7 +161,7 @@ const Blog = () => {
                       to={`/blog/${post.handle}`}
                       className="group"
                     >
-                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3">
+                      <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
                         {post.image_url ? (
                           <img
                             src={post.image_url}

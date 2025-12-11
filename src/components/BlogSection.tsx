@@ -52,7 +52,7 @@ export const BlogSection = () => {
           {/* Featured Post - Left */}
           {featuredPost && (
             <Link to={`/blog/${featuredPost.handle}`} className="group flex flex-col">
-              <div className="flex-1 rounded-xl overflow-hidden mb-4">
+              <div className="aspect-video rounded-xl overflow-hidden mb-4">
                 <img
                   src={featuredPost.image_url || '/placeholder.svg'}
                   alt={featuredPost.title}
@@ -83,7 +83,7 @@ export const BlogSection = () => {
                 to={`/blog/${post.handle}`}
                 className="group flex gap-4"
               >
-                <div className="w-40 h-32 md:w-52 md:h-36 flex-shrink-0 rounded-lg overflow-hidden">
+                <div className="w-40 md:w-52 aspect-video flex-shrink-0 rounded-lg overflow-hidden">
                   <img
                     src={post.image_url || '/placeholder.svg'}
                     alt={post.title}
