@@ -35,7 +35,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight, Tags, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
@@ -44,6 +45,18 @@ import { useSyncProductCollections } from "@/hooks/useSyncProductCollections";
 import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
+
+const COLLECTION_TYPES = [
+  { value: "custom", label: "Custom" },
+  { value: "smart", label: "Smart" },
+  { value: "brand", label: "Brand" },
+  { value: "featured", label: "Featured" },
+  { value: "sale", label: "Sale" },
+  { value: "seasonal", label: "Seasonal" },
+  { value: "pet-type", label: "Pet Type" },
+  { value: "age-group", label: "Age Group" },
+  { value: "health-condition", label: "Health Condition" },
+];
 
 type Collection = {
   id: string;
@@ -78,6 +91,9 @@ export default function CollectionsManagement() {
     image_url: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkTypeDialogOpen, setIsBulkTypeDialogOpen] = useState(false);
+  const [bulkCollectionType, setBulkCollectionType] = useState<string>("");
   const { toast } = useToast();
   const syncCollections = useSyncCollections();
   const syncProductCollections = useSyncProductCollections();
@@ -301,6 +317,54 @@ export default function CollectionsManagement() {
     setIsDialogOpen(true);
   };
 
+  const toggleSelectAll = () => {
+    if (!collections) return;
+    if (selectedIds.size === collections.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(collections.map(c => c.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkTypeChange = async () => {
+    if (!bulkCollectionType || selectedIds.size === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({ collection_type: bulkCollectionType })
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Collection type updated",
+        description: `Updated ${selectedIds.size} collection(s) to "${COLLECTION_TYPES.find(t => t.value === bulkCollectionType)?.label}"`,
+      });
+
+      setSelectedIds(new Set());
+      setIsBulkTypeDialogOpen(false);
+      setBulkCollectionType("");
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update collection type",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -380,10 +444,41 @@ export default function CollectionsManagement() {
         </Select>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-4 bg-primary/10 p-3 rounded-lg border border-primary/20">
+          <span className="text-sm font-medium">
+            {selectedIds.size} collection{selectedIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsBulkTypeDialogOpen(true)}
+          >
+            <Tags className="mr-2 h-4 w-4" />
+            Change Type
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            <X className="mr-2 h-4 w-4" />
+            Clear Selection
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={collections && collections.length > 0 && selectedIds.size === collections.length}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Collection</TableHead>
               <TableHead>Conditions</TableHead>
@@ -396,6 +491,9 @@ export default function CollectionsManagement() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
                   <TableCell>
                     <Skeleton className="h-12 w-12 rounded" />
                   </TableCell>
@@ -418,13 +516,19 @@ export default function CollectionsManagement() {
               ))
             ) : collections?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No collections found. Create your first collection to get started.
                 </TableCell>
               </TableRow>
             ) : (
               collections?.map((collection) => (
                 <TableRow key={collection.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(collection.id)}
+                      onCheckedChange={() => toggleSelectOne(collection.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     {collection.image_url ? (
                       <img
@@ -655,6 +759,46 @@ export default function CollectionsManagement() {
             </Button>
             <Button onClick={handleSave}>
               {editingCollection ? "Update Collection" : "Create Collection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Change Type Dialog */}
+      <Dialog open={isBulkTypeDialogOpen} onOpenChange={setIsBulkTypeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Collection Type</DialogTitle>
+            <DialogDescription>
+              Update the type for {selectedIds.size} selected collection{selectedIds.size !== 1 ? "s" : ""}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="bulk-type">Collection Type</Label>
+              <Select value={bulkCollectionType} onValueChange={setBulkCollectionType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COLLECTION_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsBulkTypeDialogOpen(false);
+              setBulkCollectionType("");
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkTypeChange} disabled={!bulkCollectionType}>
+              Update Type
             </Button>
           </DialogFooter>
         </DialogContent>
