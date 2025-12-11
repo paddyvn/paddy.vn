@@ -207,20 +207,20 @@ export const Header = () => {
                 Other Animals
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button 
-                className="flex items-center gap-1 hover:text-primary transition-smooth"
+              <a 
+                href="/blog" 
+                className="hover:text-primary transition-smooth"
                 onMouseEnter={() => setActiveMegaMenu(null)}
               >
-                Pharmacy
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              <button 
-                className="flex items-center gap-1 hover:text-primary transition-smooth"
+                Pagazine chăm Boss
+              </a>
+              <a 
+                href="/pages/brands-thuong-hieu-thu-cung" 
+                className="hover:text-primary transition-smooth"
                 onMouseEnter={() => setActiveMegaMenu(null)}
               >
-                Services
-                <ChevronDown className="h-4 w-4" />
-              </button>
+                Thương hiệu
+              </a>
               <a 
                 href="#" 
                 className="hover:text-primary transition-smooth"
