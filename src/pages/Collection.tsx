@@ -291,28 +291,18 @@ const Collection = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                 <div className="container mx-auto">
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                  <h1 className="text-3xl md:text-4xl font-bold text-white">
                     {collection.name}
                   </h1>
-                  {collection.description && (
-                    <p className="text-white/80 max-w-2xl line-clamp-2">
-                      {collection.description}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
           ) : (
             <div className="bg-muted py-8 md:py-12">
               <div className="container mx-auto px-4">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                <h1 className="text-3xl md:text-4xl font-bold">
                   {collection.name}
                 </h1>
-                {collection.description && (
-                  <p className="text-muted-foreground max-w-2xl">
-                    {collection.description}
-                  </p>
-                )}
               </div>
             </div>
           )}
@@ -596,6 +586,17 @@ const Collection = () => {
             </div>
           </div>
         </div>
+
+        {/* Collection Description */}
+        {collection.description && (
+          <div className="container mx-auto px-4 py-12 border-t">
+            <h2 className="text-xl font-semibold mb-4">About {collection.name}</h2>
+            <div 
+              className="prose prose-sm max-w-none text-muted-foreground"
+              dangerouslySetInnerHTML={{ __html: collection.description }}
+            />
+          </div>
+        )}
       </main>
       <Footer />
     </div>
