@@ -7,11 +7,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, Loader2, ImageIcon, Check } from "lucide-react";
+import { Search, Plus, Loader2, ImageIcon, Check, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+type SourceFilter = "all" | "product" | "collection" | "blog" | "uploaded";
 
 interface StorageFile {
   id: string;
@@ -19,7 +27,16 @@ interface StorageFile {
   displayName: string;
   ext: string;
   publicUrl: string;
+  source: SourceFilter;
 }
+
+const sourceLabels: Record<SourceFilter, string> = {
+  all: "All sources",
+  product: "Products",
+  collection: "Collections",
+  blog: "Blog",
+  uploaded: "Uploaded",
+};
 
 interface ImagePickerDialogProps {
   open: boolean;
@@ -39,6 +56,7 @@ export function ImagePickerDialog({
   const [isUploading, setIsUploading] = useState(false);
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -83,6 +101,7 @@ export function ImagePickerDialog({
             displayName: truncateName(name),
             ext: getFileExt(img.image_url),
             publicUrl: img.image_url,
+            source: "product",
           });
         }
       }
@@ -104,6 +123,7 @@ export function ImagePickerDialog({
             displayName: truncateName(name),
             ext: getFileExt(col.image_url),
             publicUrl: col.image_url,
+            source: "collection",
           });
         }
       }
@@ -125,6 +145,7 @@ export function ImagePickerDialog({
             displayName: truncateName(name),
             ext: getFileExt(post.image_url),
             publicUrl: post.image_url,
+            source: "blog",
           });
         }
       }
@@ -142,6 +163,7 @@ export function ImagePickerDialog({
             displayName: truncateName(item.name),
             ext: getFileExt(item.name),
             publicUrl: supabase.storage.from("product-images").getPublicUrl(item.name).data.publicUrl,
+            source: "uploaded",
           });
         }
       }
@@ -165,9 +187,11 @@ export function ImagePickerDialog({
     }
   }, [open]);
 
-  const filteredFiles = files.filter(file => 
-    !searchQuery || file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredFiles = files.filter(file => {
+    const matchesSearch = !searchQuery || file.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSource = sourceFilter === "all" || file.source === sourceFilter;
+    return matchesSearch && matchesSource;
+  });
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -254,6 +278,29 @@ export function ImagePickerDialog({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
+          </div>
+
+          {/* Filters */}
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  {sourceLabels[sourceFilter]}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-background">
+                {(Object.keys(sourceLabels) as SourceFilter[]).map((key) => (
+                  <DropdownMenuItem
+                    key={key}
+                    onClick={() => setSourceFilter(key)}
+                    className={cn(sourceFilter === key && "bg-accent")}
+                  >
+                    {sourceLabels[key]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Upload area */}
