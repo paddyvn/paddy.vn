@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import giftCardPromo from "@/assets/gift-card-promo.jpg";
 
 interface MenuColumn {
   title: string;
@@ -119,13 +120,20 @@ export const MegaMenu = ({
 
         {/* Bottom Section - Gift Cards & Popular Brands */}
         <div className="mt-6 pt-6 border-t border-border flex items-center gap-8">
-          {/* Gift Cards */}
+          {/* Gift Cards with Promo Image */}
           <Link 
             to="/collections/gift-cards" 
-            className="flex items-center gap-1 text-sm font-semibold text-foreground hover:text-primary transition-colors flex-shrink-0"
+            className="flex items-center gap-3 group flex-shrink-0"
           >
-            Gift Cards
-            <ChevronRight className="h-4 w-4" />
+            <img 
+              src={giftCardPromo} 
+              alt="Gift Cards" 
+              className="w-28 h-20 object-cover rounded-lg group-hover:scale-105 transition-transform"
+            />
+            <span className="flex items-center gap-1 text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+              Gift Cards
+              <ChevronRight className="h-4 w-4" />
+            </span>
           </Link>
 
           {/* Popular Brands */}
