@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Star, Trash2, ChevronUp, GripVertical } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { ImagePickerDialog } from "@/components/admin/ImagePickerDialog";
 import {
   DndContext,
   closestCenter,
@@ -111,6 +112,7 @@ function SortableImage({ image, isPrimary }: SortableImageProps) {
 
 export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -182,6 +184,34 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
       toast({
         title: "Error",
         description: "Failed to reorder images. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddImage = async (imageUrl: string) => {
+    try {
+      const newDisplayOrder = (images?.length || 0);
+      const { error } = await supabase
+        .from("product_images")
+        .insert({
+          product_id: productId,
+          image_url: imageUrl,
+          display_order: newDisplayOrder,
+          is_primary: newDisplayOrder === 0,
+        });
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ["product-images", productId] });
+      toast({
+        title: "Image added",
+        description: "The image has been added to the product.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add image. Please try again.",
         variant: "destructive",
       });
     }
@@ -263,7 +293,10 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
                 )}
                 
                 {/* Add button */}
-                <button className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
+                <button 
+                  onClick={() => setIsImagePickerOpen(true)}
+                  className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground"
+                >
                   <Plus className="h-6 w-6" />
                 </button>
               </div>
@@ -276,13 +309,19 @@ export function ProductMediaGallery({ productId }: ProductMediaGalleryProps) {
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">Add images to your product</p>
-              <Button variant="secondary" size="sm" className="mt-2">
+              <Button variant="secondary" size="sm" className="mt-2" onClick={() => setIsImagePickerOpen(true)}>
                 Add media
               </Button>
             </div>
           </div>
         )}
       </CardContent>
+      
+      <ImagePickerDialog
+        open={isImagePickerOpen}
+        onOpenChange={setIsImagePickerOpen}
+        onSelect={handleAddImage}
+      />
     </Card>
   );
 }
