@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil } from "lucide-react";
+import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil, ChevronDown } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,6 +84,7 @@ export default function CollectionDetails() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSeoEditing, setIsSeoEditing] = useState(false);
+  const [isImageEditing, setIsImageEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -703,28 +704,58 @@ export default function CollectionDetails() {
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Image</h3>
               {formData.image_url && (
-                <Button variant="link" size="sm" className="text-primary p-0 h-auto">
-                  Edit
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="link" size="sm" className="text-primary p-0 h-auto">
+                      Edit
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsImageEditing(true)}>
+                      Change image
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive" onClick={() => setFormData({ ...formData, image_url: "" })}>
+                      Remove
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
             
-            {formData.image_url ? (
-              <div className="relative group">
-                <img
-                  src={formData.image_url}
-                  alt={formData.name}
-                  className="w-full aspect-square object-contain rounded-lg bg-muted/30"
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setFormData({ ...formData, image_url: "" })}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+            {isImageEditing ? (
+              <div className="space-y-4">
+                {formData.image_url && (
+                  <img
+                    src={formData.image_url}
+                    alt={formData.name}
+                    className="w-full aspect-square object-contain rounded-lg bg-muted/30"
+                  />
+                )}
+                <div className="space-y-2">
+                  <Label>Image URL</Label>
+                  <Input
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                    maxLength={500}
+                  />
+                  {formErrors.image_url && (
+                    <p className="text-sm text-destructive">{formErrors.image_url}</p>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsImageEditing(false)}>
+                    Done
+                  </Button>
+                </div>
               </div>
+            ) : formData.image_url ? (
+              <img
+                src={formData.image_url}
+                alt={formData.name}
+                className="w-full aspect-square object-contain rounded-lg bg-muted/30"
+              />
             ) : (
               <div className="border-2 border-dashed rounded-lg p-6 text-center">
                 <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
