@@ -2,29 +2,26 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface BrandCollection {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string | null;
+}
+
 export const Brands = () => {
   const { data: brands } = useQuery({
-    queryKey: ['brands'],
+    queryKey: ['brand-collections'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('products')
-        .select('brand')
-        .not('brand', 'is', null)
-        .not('brand', 'eq', '');
+        .from('categories')
+        .select('id, name, slug, image_url')
+        .eq('collection_type', 'brand')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .limit(16);
       
-      // Get unique brands and count
-      const brandCounts = data?.reduce((acc, item) => {
-        if (item.brand) {
-          acc[item.brand] = (acc[item.brand] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Sort by product count and take top 16
-      return Object.entries(brandCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 16)
-        .map(([name]) => name);
+      return data as BrandCollection[] || [];
     }
   });
 
@@ -46,19 +43,27 @@ export const Brands = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-          {brands.map((brand, index) => (
+          {brands.map((brand) => (
             <Link
-              key={index}
-              to={`/brand/${encodeURIComponent(brand)}`}
+              key={brand.id}
+              to={`/collection/${brand.slug}`}
               className="group"
             >
-              <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50">
-                <span className="text-sm font-semibold text-center text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                  {brand}
-                </span>
+              <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50 overflow-hidden">
+                {brand.image_url ? (
+                  <img 
+                    src={brand.image_url} 
+                    alt={brand.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-sm font-semibold text-center text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                    {brand.name}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-center mt-2 text-muted-foreground truncate">
-                {brand}
+                {brand.name}
               </p>
             </Link>
           ))}
