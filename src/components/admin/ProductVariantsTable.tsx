@@ -1339,8 +1339,8 @@ export function ProductVariantsTable({
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium">Price</TableHead>
                     <TableHead className="font-medium">SKU</TableHead>
+                    <TableHead className="font-medium">Price</TableHead>
                     <TableHead className="font-medium text-right">Available</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -1486,6 +1486,16 @@ export function ProductVariantsTable({
                                     </div>
                                   </TableCell>
                                   <TableCell>
+                                    <Input
+                                      type="text"
+                                      value={editedVariants[variant.id]?.sku ?? variant.sku ?? ""}
+                                      onChange={(e) => handleSkuChange(variant.id, e.target.value)}
+                                      onBlur={() => handleBlur(variant.id)}
+                                      placeholder="SKU"
+                                      className="w-28 h-9"
+                                    />
+                                  </TableCell>
+                                  <TableCell>
                                     <div className="relative w-36">
                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
                                       <Input
@@ -1496,16 +1506,6 @@ export function ProductVariantsTable({
                                         className="pl-7 h-9"
                                       />
                                     </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Input
-                                      type="text"
-                                      value={editedVariants[variant.id]?.sku ?? variant.sku ?? ""}
-                                      onChange={(e) => handleSkuChange(variant.id, e.target.value)}
-                                      onBlur={() => handleBlur(variant.id)}
-                                      placeholder="SKU"
-                                      className="w-28 h-9"
-                                    />
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <Input
@@ -1592,6 +1592,16 @@ export function ProductVariantsTable({
                             </div>
                           </TableCell>
                           <TableCell>
+                            <Input
+                              type="text"
+                              value={editedVariants[variant.id]?.sku ?? variant.sku ?? ""}
+                              onChange={(e) => handleSkuChange(variant.id, e.target.value)}
+                              onBlur={() => handleBlur(variant.id)}
+                              placeholder="SKU"
+                              className="w-28 h-9"
+                            />
+                          </TableCell>
+                          <TableCell>
                             <div className="relative w-36">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
                               <Input
@@ -1602,16 +1612,6 @@ export function ProductVariantsTable({
                                 className="pl-7 h-9"
                               />
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="text"
-                              value={editedVariants[variant.id]?.sku ?? variant.sku ?? ""}
-                              onChange={(e) => handleSkuChange(variant.id, e.target.value)}
-                              onBlur={() => handleBlur(variant.id)}
-                              placeholder="SKU"
-                              className="w-28 h-9"
-                            />
                           </TableCell>
                           <TableCell className="text-right">
                             <Input
