@@ -283,33 +283,34 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Product Details Tabs */}
-        <div className="mb-16">
-          <Tabs defaultValue="description">
-            <TabsList className="w-auto bg-transparent border-b border-border rounded-none p-0 h-auto">
-              <TabsTrigger 
-                value="description" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
-              >
-                Description
-              </TabsTrigger>
-              <TabsTrigger 
-                value="ingredients"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
-              >
-                Ingredients
-              </TabsTrigger>
-              <TabsTrigger 
-                value="feeding"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
-              >
-                Feeding Guidelines
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="description" className="pt-8">
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
+        {/* Product Details Tabs and Nutrition Facts */}
+        <div className="grid lg:grid-cols-3 gap-8 mb-16">
+          {/* Tabs Section */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="description">
+              <TabsList className="w-auto bg-transparent border-b border-border rounded-none p-0 h-auto">
+                <TabsTrigger 
+                  value="description" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
+                >
+                  Description
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="ingredients"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
+                >
+                  Ingredients
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="feeding"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
+                >
+                  Feeding Guidelines
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="description" className="pt-8">
+                <div className="space-y-6">
                   <div 
                     className="prose prose-lg max-w-none text-foreground"
                     dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
@@ -337,82 +338,82 @@ export default function ProductDetail() {
                     </ul>
                   </div>
                 </div>
-
-                {/* Nutrition Facts Card */}
-                <div className="bg-muted/50 rounded-xl p-6">
-                  <h3 className="text-xl font-bold mb-6">Nutrition Facts</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between py-2 border-b border-border">
-                      <span className="text-muted-foreground">Crude Protein (min)</span>
-                      <span className="font-semibold text-primary">24.0%</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border">
-                      <span className="text-muted-foreground">Crude Fat (min)</span>
-                      <span className="font-semibold text-primary">14.0%</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border">
-                      <span className="text-muted-foreground">Crude Fiber (max)</span>
-                      <span className="font-semibold text-primary">4.0%</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-muted-foreground">Moisture (max)</span>
-                      <span className="font-semibold text-primary">10.0%</span>
-                    </div>
+              </TabsContent>
+              
+              <TabsContent value="ingredients" className="pt-8">
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-muted-foreground">
+                    Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
+                    Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
+                    Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
+                    Blueberries, Raspberries, Yucca Schidigera Extract, Dried Enterococcus 
+                    faecium Fermentation Product, Dried Lactobacillus acidophilus Fermentation 
+                    Product, Dried Lactobacillus casei Fermentation Product.
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="feeding" className="pt-8">
+                <div className="space-y-6">
+                  <p className="text-muted-foreground">
+                    Feed according to your pet's weight and activity level. Always ensure fresh 
+                    water is available. Consult your veterinarian for specific dietary needs.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full max-w-lg">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 font-semibold">Weight</th>
+                          <th className="text-left py-3 font-semibold">Daily Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-muted-foreground">
+                        <tr className="border-b border-border">
+                          <td className="py-3">3-12 lbs</td>
+                          <td className="py-3">1/3 - 1 cup</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-3">13-20 lbs</td>
+                          <td className="py-3">1 - 1 1/3 cups</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-3">21-35 lbs</td>
+                          <td className="py-3">1 1/3 - 2 cups</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3">36-50 lbs</td>
+                          <td className="py-3">2 - 2 2/3 cups</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Nutrition Facts Card - Independent */}
+          <div className="bg-muted/50 rounded-xl p-6 h-fit">
+            <h3 className="text-xl font-bold mb-6">Nutrition Facts</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between py-2 border-b border-border">
+                <span className="text-muted-foreground">Crude Protein (min)</span>
+                <span className="font-semibold text-primary">24.0%</span>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="ingredients" className="pt-8">
-              <div className="prose prose-lg max-w-none">
-                <p className="text-muted-foreground">
-                  Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
-                  Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
-                  Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
-                  Blueberries, Raspberries, Yucca Schidigera Extract, Dried Enterococcus 
-                  faecium Fermentation Product, Dried Lactobacillus acidophilus Fermentation 
-                  Product, Dried Lactobacillus casei Fermentation Product.
-                </p>
+              <div className="flex justify-between py-2 border-b border-border">
+                <span className="text-muted-foreground">Crude Fat (min)</span>
+                <span className="font-semibold text-primary">14.0%</span>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="feeding" className="pt-8">
-              <div className="space-y-6">
-                <p className="text-muted-foreground">
-                  Feed according to your pet's weight and activity level. Always ensure fresh 
-                  water is available. Consult your veterinarian for specific dietary needs.
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full max-w-lg">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 font-semibold">Weight</th>
-                        <th className="text-left py-3 font-semibold">Daily Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-muted-foreground">
-                      <tr className="border-b border-border">
-                        <td className="py-3">3-12 lbs</td>
-                        <td className="py-3">1/3 - 1 cup</td>
-                      </tr>
-                      <tr className="border-b border-border">
-                        <td className="py-3">13-20 lbs</td>
-                        <td className="py-3">1 - 1 1/3 cups</td>
-                      </tr>
-                      <tr className="border-b border-border">
-                        <td className="py-3">21-35 lbs</td>
-                        <td className="py-3">1 1/3 - 2 cups</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3">36-50 lbs</td>
-                        <td className="py-3">2 - 2 2/3 cups</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <div className="flex justify-between py-2 border-b border-border">
+                <span className="text-muted-foreground">Crude Fiber (max)</span>
+                <span className="font-semibold text-primary">4.0%</span>
               </div>
-            </TabsContent>
-          </Tabs>
+              <div className="flex justify-between py-2">
+                <span className="text-muted-foreground">Moisture (max)</span>
+                <span className="font-semibold text-primary">10.0%</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Reviews Section */}
