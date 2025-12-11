@@ -35,7 +35,7 @@ export const Brands = () => {
             1000+ Thương Hiệu Boss Thích
           </h2>
           <Link 
-            to="/brands" 
+            to="/brands-thuong-hieu-thu-cung" 
             className="text-primary hover:underline text-sm font-medium"
           >
             Xem tất cả
