@@ -51,7 +51,7 @@ export const BlogSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Featured Post - Left */}
           {featuredPost && (
-            <Link to={`/blog/${featuredPost.handle}`} className="group flex flex-col">
+            <Link to={`/blogs/${featuredPost.handle}`} className="group flex flex-col">
               <div className="aspect-video rounded-xl overflow-hidden mb-4">
                 <img
                   src={featuredPost.image_url || '/placeholder.svg'}
@@ -80,7 +80,7 @@ export const BlogSection = () => {
             {sidePosts.map((post) => (
               <Link 
                 key={post.id} 
-                to={`/blog/${post.handle}`}
+                to={`/blogs/${post.handle}`}
                 className="group flex gap-4"
               >
                 <div className="w-40 md:w-52 aspect-video flex-shrink-0 rounded-lg overflow-hidden">
@@ -111,7 +111,7 @@ export const BlogSection = () => {
         {/* See More Link */}
         <div className="text-center mt-10">
           <Link 
-            to="/blog" 
+            to="/blogs" 
             className="inline-flex items-center gap-2 text-primary font-medium hover:underline"
           >
             Xem thêm bài viết

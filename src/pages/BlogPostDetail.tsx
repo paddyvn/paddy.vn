@@ -58,7 +58,7 @@ const BlogPostDetail = () => {
     return format(new Date(dateStr), "dd/MM/yyyy", { locale: vi });
   };
 
-  const canonicalUrl = `/blog/${handle}`;
+  const canonicalUrl = `/blogs/${handle}`;
 
   if (postLoading) {
     return (
@@ -102,7 +102,7 @@ const BlogPostDetail = () => {
           <p className="text-muted-foreground mb-6">
             Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
           </p>
-          <Link to="/blog" className="text-primary hover:underline">
+          <Link to="/blogs" className="text-primary hover:underline">
             ← Quay lại Paddy's Magazine
           </Link>
         </main>
@@ -141,7 +141,7 @@ const BlogPostDetail = () => {
                   .map((recentPost) => (
                     <Link
                       key={recentPost.id}
-                      to={`/blog/${recentPost.handle}`}
+                      to={`/blogs/${recentPost.handle}`}
                       className="flex gap-3 group"
                     >
                       {recentPost.image_url && (
@@ -181,7 +181,7 @@ const BlogPostDetail = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to="/blog">Paddy's Magazine</Link>
+                    <Link to="/blogs">Paddy's Magazine</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
