@@ -126,7 +126,32 @@ const BlogPostDetail = () => {
 
       <Header />
 
-      <main className="flex-1 container mx-auto px-4 py-8">
+      {/* Breadcrumb - Below header/announcement bar */}
+      <div className="container mx-auto px-4 py-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/">Trang Chủ</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/blogs">Paddy's Magazine</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="line-clamp-1 max-w-[300px]">
+                {post.title}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
+      <main className="flex-1 container mx-auto px-4 py-4">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar - Recent Articles */}
           <aside className="lg:w-1/4 order-2 lg:order-1">
@@ -170,28 +195,6 @@ const BlogPostDetail = () => {
 
           {/* Main Content */}
           <article className="lg:w-3/4 order-1 lg:order-2">
-            {/* Breadcrumb */}
-            <Breadcrumb className="mb-4">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/">Trang Chủ</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/blogs">Paddy's Magazine</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="line-clamp-1 max-w-[300px]">
-                    {post.title}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
 
             {/* Title */}
             <h1 className="text-2xl md:text-3xl font-bold mb-4">{post.title}</h1>
