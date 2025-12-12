@@ -12,6 +12,7 @@ import Brands from "./pages/Brands";
 import Blog from "./pages/Blog";
 import BlogPostDetail from "./pages/BlogPostDetail";
 import Search from "./pages/Search";
+import Cart from "./pages/Cart";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsManagement from "./pages/admin/ProductsManagement";
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/collections/:slug" element={<Collection />} />
           <Route path="/brands-thuong-hieu-thu-cung" element={<Brands />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/cham-soc-thu-cung/:handle" element={<BlogPostDetail />} />
