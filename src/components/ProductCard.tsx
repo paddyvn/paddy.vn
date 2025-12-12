@@ -14,10 +14,33 @@ interface ProductCardProps {
     compare_at_price?: number | null;
     is_featured?: boolean;
     brand?: string | null;
+    pet_type?: string | null;
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
     reviews?: Array<{ rating: number }>;
   };
 }
+
+const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
+  <span 
+    className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+      type === 'dog' 
+        ? 'bg-amber-100 text-amber-700' 
+        : 'bg-purple-100 text-purple-700'
+    }`}
+    title={type === 'dog' ? 'Cho chó' : 'Cho mèo'}
+  >
+    {type === 'dog' ? '🐕' : '🐱'}
+  </span>
+);
+
+const getPetTypes = (petType: string | null | undefined): ('dog' | 'cat')[] => {
+  if (!petType) return [];
+  const lower = petType.toLowerCase();
+  const types: ('dog' | 'cat')[] = [];
+  if (lower.includes('dog') || lower.includes('chó')) types.push('dog');
+  if (lower.includes('cat') || lower.includes('mèo')) types.push('cat');
+  return types;
+};
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
@@ -40,6 +63,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const discountPercentage = hasDiscount 
     ? Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100)
     : 0;
+  const petTypes = getPetTypes(product.pet_type);
 
   return (
     <Card
@@ -70,6 +94,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </Badge>
           )}
           
+          {petTypes.length > 0 && (
+            <div className="absolute bottom-3 right-3 flex gap-1">
+              {petTypes.map((type) => (
+                <PetBadge key={type} type={type} />
+              ))}
+            </div>
+          )}
           
           <Button
             size="icon"
