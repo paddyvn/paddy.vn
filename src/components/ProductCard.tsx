@@ -1,9 +1,13 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star, ShoppingCart } from "lucide-react";
+import { Heart, Star, ShoppingCart, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "@/hooks/useCart";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   product: {
@@ -44,6 +48,36 @@ const getPetTypes = (petType: string | null | undefined): ('dog' | 'cat')[] => {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [userId, setUserId] = useState<string | undefined>();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addToCart } = useCart(userId);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id);
+    });
+  }, []);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!userId) {
+      toast({
+        title: "Vui lòng đăng nhập",
+        description: "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+    setIsAddingToCart(true);
+    addToCart(
+      { productId: product.id, quantity: 1 },
+      {
+        onSettled: () => setIsAddingToCart(false),
+      }
+    );
+  };
 
   const calculateAverageRating = (reviews: Array<{ rating: number }> | undefined) => {
     if (!reviews || reviews.length === 0) return 0;
@@ -158,12 +192,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <Button
               size="icon"
               className="rounded-full shadow-lg h-9 w-9"
-              onClick={(e) => {
-                e.stopPropagation();
-                // TODO: Add to cart
-              }}
+              onClick={handleAddToCart}
+              disabled={isAddingToCart}
             >
-              <ShoppingCart className="h-4 w-4" />
+              {isAddingToCart ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShoppingCart className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
