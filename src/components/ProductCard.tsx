@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { QuickAddToCartDialog } from "./QuickAddToCartDialog";
 
 interface ProductCardProps {
   product: {
@@ -19,6 +20,9 @@ interface ProductCardProps {
     is_featured?: boolean;
     brand?: string | null;
     pet_type?: string | null;
+    option1_name?: string | null;
+    option2_name?: string | null;
+    option3_name?: string | null;
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
     reviews?: Array<{ rating: number }>;
   };
@@ -51,6 +55,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | undefined>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { addToCart } = useCart(userId);
 
   useEffect(() => {
@@ -59,7 +64,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     });
   }, []);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleQuickAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!userId) {
       toast({
@@ -70,11 +75,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       navigate("/auth");
       return;
     }
+    setQuickAddOpen(true);
+  };
+
+  const handleAddToCart = (variantId: string | null, quantity: number) => {
     setIsAddingToCart(true);
     addToCart(
-      { productId: product.id, quantity: 1 },
+      { productId: product.id, variantId: variantId ?? undefined, quantity },
       {
-        onSettled: () => setIsAddingToCart(false),
+        onSettled: () => {
+          setIsAddingToCart(false);
+          setQuickAddOpen(false);
+        },
       }
     );
   };
@@ -192,7 +204,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <Button
               size="icon"
               className="rounded-full shadow-lg h-9 w-9"
-              onClick={handleAddToCart}
+              onClick={handleQuickAddClick}
               disabled={isAddingToCart}
             >
               {isAddingToCart ? (
@@ -204,6 +216,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         </div>
       </CardContent>
+
+      <QuickAddToCartDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        product={product}
+        onAddToCart={handleAddToCart}
+        isAddingToCart={isAddingToCart}
+      />
     </Card>
   );
 };
