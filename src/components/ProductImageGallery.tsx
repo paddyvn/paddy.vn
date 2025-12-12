@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductImage {
   image_url: string;
@@ -40,6 +41,14 @@ export function ProductImageGallery({ images, productName, isFeatured }: Product
     );
   }
 
+  const scrollPrev = () => {
+    setSelectedImage((prev) => (prev === 0 ? sortedImages.length - 1 : prev - 1));
+  };
+
+  const scrollNext = () => {
+    setSelectedImage((prev) => (prev === sortedImages.length - 1 ? 0 : prev + 1));
+  };
+
   return (
     <div className="space-y-4">
       {/* Main Image */}
@@ -57,6 +66,26 @@ export function ProductImageGallery({ images, productName, isFeatured }: Product
           alt={sortedImages[selectedImage].alt_text || productName}
           className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
         />
+        
+        {/* Navigation Arrows */}
+        {sortedImages.length > 1 && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); scrollPrev(); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-5 w-5 text-foreground" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); scrollNext(); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-5 w-5 text-foreground" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Thumbnail Row */}
