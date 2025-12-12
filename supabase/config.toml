@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.shopify-list-metafields]
 verify_jwt = false
+
+[functions.shopify-sync-ratings]
+verify_jwt = false
