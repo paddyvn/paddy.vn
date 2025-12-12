@@ -144,6 +144,12 @@ All colors MUST be HSL.
   .article-content {
     counter-reset: h2-counter;
   }
+  .article-content h1 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+    margin-top: 2.5rem !important;
+    margin-bottom: 1rem !important;
+  }
   
   .article-content h2 {
     font-size: 1.25rem !important;
