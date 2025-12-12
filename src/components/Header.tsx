@@ -208,7 +208,7 @@ export const Header = () => {
                 <ChevronDown className="h-4 w-4" />
               </button>
               <a 
-                href="/blog" 
+                href="/blogs" 
                 className="hover:text-primary transition-smooth"
                 onMouseEnter={() => setActiveMegaMenu(null)}
               >
