@@ -141,11 +141,34 @@ All colors MUST be HSL.
   }
 
   /* Force article heading sizes (override Shopify inline styles) */
+  .article-content {
+    counter-reset: h2-counter;
+  }
+  
   .article-content h2 {
     font-size: 1.75rem !important;
     line-height: 2rem !important;
     margin-top: 2.5rem !important;
     margin-bottom: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    counter-increment: h2-counter;
+  }
+  
+  .article-content h2::before {
+    content: counter(h2-counter);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    flex-shrink: 0;
   }
   
   .article-content h3 {
