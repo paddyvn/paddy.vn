@@ -108,11 +108,11 @@ const BlogPostDetail = () => {
   };
 
   const estimateReadTime = (html: string | null) => {
-    if (!html) return "3 phút đọc";
+    if (!html) return "3 phút";
     const text = html.replace(/<[^>]*>/g, "");
     const words = text.split(/\s+/).length;
     const minutes = Math.ceil(words / 200);
-    return `${minutes} phút đọc`;
+    return `${minutes} phút`;
   };
 
   const handleSubscribe = (e: React.FormEvent) => {
