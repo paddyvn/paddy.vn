@@ -111,15 +111,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           </div>
 
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-primary">
-              {formatPrice(product.base_price)}₫
-            </span>
+          <div className="flex flex-col items-start">
             {hasDiscount && (
               <span className="text-sm text-muted-foreground line-through">
                 {formatPrice(product.compare_at_price!)}₫
               </span>
             )}
+            <span className="text-xl font-bold text-primary">
+              {formatPrice(product.base_price)}₫
+            </span>
           </div>
         </div>
       </CardContent>
