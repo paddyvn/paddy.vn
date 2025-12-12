@@ -15,6 +15,7 @@ import Search from "./pages/Search";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsManagement from "./pages/admin/ProductsManagement";
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/cham-soc-thu-cung/:handle" element={<BlogPostDetail />} />
