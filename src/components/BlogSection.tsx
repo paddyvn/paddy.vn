@@ -83,7 +83,7 @@ export const BlogSection = () => {
                 to={`/blogs/${post.handle}`}
                 className="group flex gap-4"
               >
-                <div className="w-40 md:w-52 aspect-video flex-shrink-0 rounded-lg overflow-hidden">
+                <div className="w-40 md:w-52 aspect-video flex-shrink-0 rounded-md overflow-hidden">
                   <img
                     src={post.image_url || '/placeholder.svg'}
                     alt={post.title}
