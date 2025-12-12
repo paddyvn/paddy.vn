@@ -64,8 +64,15 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
           Select collections
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 z-[9999]" align="start" side="bottom" sideOffset={4}>
-        <div className="p-2 border-b bg-background">
+      <PopoverContent 
+        className="w-80 p-0" 
+        align="start" 
+        side="bottom" 
+        sideOffset={4}
+        avoidCollisions={true}
+        collisionPadding={10}
+      >
+        <div className="p-2 border-b">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -76,7 +83,7 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
             />
           </div>
         </div>
-        <div className="max-h-64 overflow-y-auto bg-background">
+        <div className="h-64 overflow-y-auto">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Loading collections...
