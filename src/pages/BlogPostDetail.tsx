@@ -349,49 +349,51 @@ const BlogPostDetail = () => {
             <div className="sticky top-24">
               {/* Table of Contents */}
               {tableOfContents.length > 0 && (
-                <nav className="mb-8">
+                <div className="bg-card border rounded-xl p-4 mb-8">
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                     Mục lục
                   </h4>
-                  <ul className="space-y-2">
-                    <li>
-                      <button
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        className={`text-sm text-left w-full transition-colors hover:text-primary ${
-                          activeHeading === '' ? 'text-primary font-medium' : 'text-muted-foreground'
-                        }`}
-                      >
-                        Giới thiệu
-                      </button>
-                    </li>
-                    {tableOfContents.map((item, index) => (
-                      <li key={item.id} className={item.level === 3 ? 'pl-4' : ''}>
+                  <nav>
+                    <ul className="space-y-2">
+                      <li>
                         <button
-                          onClick={() => scrollToHeading(item.id)}
-                          className={`text-sm text-left w-full transition-colors hover:text-primary line-clamp-2 ${
-                            activeHeading === item.id ? 'text-primary font-medium' : 'text-muted-foreground'
+                          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                          className={`text-sm text-left w-full transition-colors hover:text-primary ${
+                            activeHeading === '' ? 'text-primary font-medium' : 'text-muted-foreground'
                           }`}
                         >
-                          {item.level === 2 && `${index + 1}. `}{item.text}
+                          Giới thiệu
                         </button>
                       </li>
-                    ))}
-                    <li>
-                      <button
-                        onClick={() => {
-                          const commentsSection = document.querySelector('.comments-section');
-                          if (commentsSection) {
-                            const y = commentsSection.getBoundingClientRect().top + window.pageYOffset - 100;
-                            window.scrollTo({ top: y, behavior: 'smooth' });
-                          }
-                        }}
-                        className="text-sm text-left w-full transition-colors hover:text-primary text-muted-foreground"
-                      >
-                        Bình luận
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
+                      {tableOfContents.map((item, index) => (
+                        <li key={item.id} className={item.level === 3 ? 'pl-4' : ''}>
+                          <button
+                            onClick={() => scrollToHeading(item.id)}
+                            className={`text-sm text-left w-full transition-colors hover:text-primary line-clamp-2 ${
+                              activeHeading === item.id ? 'text-primary font-medium' : 'text-muted-foreground'
+                            }`}
+                          >
+                            {item.level === 2 && `${index + 1}. `}{item.text}
+                          </button>
+                        </li>
+                      ))}
+                      <li>
+                        <button
+                          onClick={() => {
+                            const commentsSection = document.querySelector('.comments-section');
+                            if (commentsSection) {
+                              const y = commentsSection.getBoundingClientRect().top + window.pageYOffset - 100;
+                              window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                          }}
+                          className="text-sm text-left w-full transition-colors hover:text-primary text-muted-foreground"
+                        >
+                          Bình luận
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
               )}
 
               {/* Share Section */}
