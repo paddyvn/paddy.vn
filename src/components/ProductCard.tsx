@@ -20,48 +20,16 @@ interface ProductCardProps {
   };
 }
 
-const DogIcon = () => (
-  <svg viewBox="0 0 64 64" fill="none" className="w-7 h-7">
-    <path 
-      d="M16 48 C16 28, 16 20, 20 16 M20 16 C22 14, 26 12, 28 8 M20 16 C24 18, 32 20, 36 18 M36 18 C40 16, 44 10, 44 6 M36 18 C42 20, 48 24, 50 30 M50 30 C52 36, 50 40, 48 44 M48 44 C46 48, 42 50, 38 50" 
-      stroke="currentColor" 
-      strokeWidth="3.5" 
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <circle cx="26" cy="26" r="3" fill="currentColor" />
-    <ellipse cx="38" cy="28" rx="5" ry="4" fill="currentColor" />
-    <path d="M30 36 C32 38, 34 38, 36 36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const CatIcon = () => (
-  <svg viewBox="0 0 64 64" fill="none" className="w-6 h-6">
-    <path 
-      d="M16 20 L20 8 L26 18 M38 18 L44 8 L48 20" 
-      stroke="currentColor" 
-      strokeWidth="3.5" 
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <ellipse cx="32" cy="36" rx="18" ry="16" stroke="currentColor" strokeWidth="3.5" fill="none" />
-    <circle cx="24" cy="32" r="2" fill="currentColor" />
-    <circle cx="40" cy="32" r="2" fill="currentColor" />
-    <ellipse cx="32" cy="40" rx="3" ry="2" fill="currentColor" />
-    <path d="M29 40 L22 42 M29 42 L22 44 M35 40 L42 42 M35 42 L42 44" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
 const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
   <span 
-    className={`inline-flex items-center justify-center w-10 h-10 rounded-full shadow-md ${
+    className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-xl font-bold ${
       type === 'dog' 
-        ? 'bg-amber-50 text-amber-800' 
-        : 'bg-purple-50 text-purple-800'
+        ? 'bg-amber-100 text-amber-700' 
+        : 'bg-purple-100 text-purple-700'
     }`}
     title={type === 'dog' ? 'Cho chó' : 'Cho mèo'}
   >
-    {type === 'dog' ? <DogIcon /> : <CatIcon />}
+    {type === 'dog' ? '🐕' : '🐱'}
   </span>
 );
 
