@@ -243,7 +243,7 @@ const BlogPostDetail = () => {
   const categoryTag = tags[0] || "Chăm Sóc Thú Cưng";
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
+    <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
         <title>{post.title} | Paddy's Magazine</title>
         {post.summary_html && (
