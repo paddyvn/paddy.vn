@@ -258,7 +258,7 @@ const BlogPostDetail = () => {
       <Header />
 
       {/* Breadcrumb */}
-      <div className="bg-background border-b">
+      <div className="bg-background">
         <div className="container mx-auto px-4 py-3">
           <Breadcrumb>
             <BreadcrumbList className="text-sm">
