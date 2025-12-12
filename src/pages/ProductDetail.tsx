@@ -182,6 +182,24 @@ export default function ProductDetail() {
               </p>
             )}
 
+            {/* Brand & Origin */}
+            {(product.brand || product.product_origins) && (
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                {product.brand && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Thương hiệu:</span>
+                    <span className="font-medium text-foreground">{product.brand}</span>
+                  </div>
+                )}
+                {product.product_origins && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Xuất xứ:</span>
+                    <span className="font-medium text-foreground">{product.product_origins.name_vi}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Variants Selector */}
             {product.product_variants && product.product_variants.length > 0 && (
               <ProductVariantSelector
