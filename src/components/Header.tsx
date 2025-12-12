@@ -1,6 +1,5 @@
 import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut, ChevronDown, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import paddyLogo from "@/assets/paddy-logo.avif";
 import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
@@ -15,24 +14,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { MegaMenu } from "@/components/MegaMenu";
+import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
+
 export const Header = () => {
   const [userId, setUserId] = useState<string | undefined>();
   const [userName, setUserName] = useState<string | null>(null);
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -96,25 +89,10 @@ export const Header = () => {
             </a>
 
             {/* Search Bar - Centered */}
-            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg">
-              <div className="relative w-full">
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-12 h-11 bg-background text-foreground rounded-md"
-                />
-                <Button 
-                  type="submit"
-                  size="icon" 
-                  variant="ghost"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </form>
+            <SearchAutocomplete
+              className="hidden md:block flex-1 max-w-lg"
+              inputClassName="w-full pr-12 h-11 bg-background text-foreground rounded-md"
+            />
 
             {/* Right Actions */}
             <div className="flex items-center gap-1">
@@ -269,25 +247,12 @@ export const Header = () => {
       </div>
 
       {/* Mobile Search */}
-      <form onSubmit={handleSearch} className="md:hidden bg-primary-foreground border-t border-border/20 px-4 py-3">
-        <div className="relative">
-          <Input
-            type="search"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pr-12 h-10"
-          />
-          <Button 
-            type="submit"
-            size="icon" 
-            variant="ghost"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
-      </form>
+      <div className="md:hidden bg-primary-foreground border-t border-border/20 px-4 py-3">
+        <SearchAutocomplete
+          inputClassName="w-full pr-12 h-10"
+          isMobile
+        />
+      </div>
 
       {/* Announcement Bar */}
       <div className="bg-background">
