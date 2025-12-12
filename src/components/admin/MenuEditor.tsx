@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, GripVertical, ExternalLink, Pencil, Image } from "lucide-react";
+import { CollectionSelectorPopover } from "./CollectionSelectorPopover";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -357,6 +358,10 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
                 value={newColumnLink}
                 onChange={(e) => setNewColumnLink(e.target.value)}
               />
+              <CollectionSelectorPopover
+                currentLink={newColumnLink}
+                onSelect={(link) => setNewColumnLink(link)}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -394,6 +399,12 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
                 value={editingColumn?.shop_all_link || ""}
                 onChange={(e) =>
                   setEditingColumn((prev) => prev ? { ...prev, shop_all_link: e.target.value } : null)
+                }
+              />
+              <CollectionSelectorPopover
+                currentLink={editingColumn?.shop_all_link || ""}
+                onSelect={(link) =>
+                  setEditingColumn((prev) => prev ? { ...prev, shop_all_link: link } : null)
                 }
               />
             </div>
@@ -454,6 +465,13 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
                 value={newItemLink}
                 onChange={(e) => setNewItemLink(e.target.value)}
               />
+              <CollectionSelectorPopover
+                currentLink={newItemLink}
+                onSelect={(link, name) => {
+                  setNewItemLink(link);
+                  if (!newItemLabel) setNewItemLabel(name);
+                }}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -494,6 +512,12 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
                 value={editingItem?.link || ""}
                 onChange={(e) =>
                   setEditingItem((prev) => prev ? { ...prev, link: e.target.value } : null)
+                }
+              />
+              <CollectionSelectorPopover
+                currentLink={editingItem?.link || ""}
+                onSelect={(link) =>
+                  setEditingItem((prev) => prev ? { ...prev, link: link } : null)
                 }
               />
             </div>
