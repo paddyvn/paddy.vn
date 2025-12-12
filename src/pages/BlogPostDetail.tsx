@@ -325,15 +325,17 @@ const BlogPostDetail = () => {
         </div>
       </div>
 
-      {/* Featured Image - Full width of container */}
+      {/* Featured Image - Aligned with article title width */}
       {post.image_url && (
         <div className="container mx-auto px-4 -mt-2 mb-8">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl">
-            <img
-              src={post.image_url}
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
+          <div className="max-w-4xl mx-auto">
+            <div className="aspect-[16/9] overflow-hidden rounded-2xl">
+              <img
+                src={post.image_url}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       )}
