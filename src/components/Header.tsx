@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { MegaMenu } from "@/components/MegaMenu";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
+import { CartDrawer } from "@/components/CartDrawer";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
 
@@ -149,19 +150,24 @@ export const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button 
-                variant="ghost" 
-                className="relative text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10 px-3"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground">
-                    {cartCount}
-                  </span>
-                )}
-                <span className="hidden md:inline ml-1 text-sm">Cart</span>
-                <ChevronDown className="hidden md:inline h-4 w-4 ml-1" />
-              </Button>
+              <CartDrawer 
+                userId={userId}
+                trigger={
+                  <Button 
+                    variant="ghost" 
+                    className="relative text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10 px-3"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground">
+                        {cartCount}
+                      </span>
+                    )}
+                    <span className="hidden md:inline ml-1 text-sm">Cart</span>
+                    <ChevronDown className="hidden md:inline h-4 w-4 ml-1" />
+                  </Button>
+                }
+              />
             </div>
           </div>
         </div>
