@@ -95,7 +95,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
           
           {petTypes.length > 0 && (
-            <div className="absolute bottom-3 right-3 flex gap-1">
+            <div className="absolute -bottom-5 right-3 flex gap-1 z-10">
               {petTypes.map((type) => (
                 <PetBadge key={type} type={type} />
               ))}
