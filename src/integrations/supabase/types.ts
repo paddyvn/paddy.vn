@@ -451,6 +451,124 @@ export type Database = {
         }
         Relationships: []
       }
+      navigation_columns: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          menu_id: string
+          shop_all_link: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          menu_id: string
+          shop_all_link?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          menu_id?: string
+          shop_all_link?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "navigation_columns_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "navigation_menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      navigation_items: {
+        Row: {
+          column_id: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          label: string
+          link: string
+          updated_at: string | null
+        }
+        Insert: {
+          column_id: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          label: string
+          link: string
+          updated_at?: string | null
+        }
+        Update: {
+          column_id?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          label?: string
+          link?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "navigation_items_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "navigation_columns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      navigation_menus: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          promo_badge: string | null
+          promo_image_url: string | null
+          promo_link: string | null
+          promo_title: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          promo_badge?: string | null
+          promo_image_url?: string | null
+          promo_link?: string | null
+          promo_title?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          promo_badge?: string | null
+          promo_image_url?: string | null
+          promo_link?: string | null
+          promo_title?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
