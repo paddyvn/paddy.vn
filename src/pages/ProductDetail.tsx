@@ -175,10 +175,10 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Short Description */}
-            {product.short_description && (
+            {/* Short Description (from meta_description) */}
+            {product.meta_description && (
               <p className="text-muted-foreground leading-relaxed">
-                {product.short_description}
+                {product.meta_description}
               </p>
             )}
 
