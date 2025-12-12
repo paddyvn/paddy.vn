@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export const QuickActions = () => {
   return (
     <section className="container mx-auto px-4">
-      <div className="bg-muted/30 rounded-xl px-8 py-8 my-8">
+      <div className="bg-muted/30 rounded-xl px-8 py-4 my-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
             <p className="text-2xl font-bold text-foreground mb-1">Hi</p>
