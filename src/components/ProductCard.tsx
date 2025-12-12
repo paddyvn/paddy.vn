@@ -70,13 +70,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </Badge>
           )}
           
-          {hasDiscount && (
-            <Badge 
-              className="absolute bottom-3 left-3 bg-green-100 text-green-700 hover:bg-green-100 font-medium"
-            >
-              Save {discountPercentage}%
-            </Badge>
-          )}
           
           <Button
             size="icon"
@@ -117,9 +110,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 {formatPrice(product.compare_at_price!)}₫
               </span>
             )}
-            <span className="text-xl font-bold text-primary">
-              {formatPrice(product.base_price)}₫
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold text-primary">
+                {formatPrice(product.base_price)}₫
+              </span>
+              {hasDiscount && (
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
+                  -{discountPercentage}%
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
