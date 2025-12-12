@@ -156,7 +156,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             {product.brand && (
               <p className="text-xs text-muted-foreground mb-1 font-bold">{product.brand}</p>
             )}
-            <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-smooth">
+            <h3 className="font-semibold text-foreground line-clamp-3 group-hover:text-primary transition-smooth">
               {product.name}
             </h3>
           </div>
