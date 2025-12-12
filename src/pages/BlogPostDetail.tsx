@@ -34,8 +34,14 @@ import {
   Reply
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+
+interface TOCItem {
+  id: string;
+  text: string;
+  level: number;
+}
 
 const BlogPostDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -43,6 +49,7 @@ const BlogPostDetail = () => {
   const [comment, setComment] = useState("");
   const [likedArticle, setLikedArticle] = useState(false);
   const [likeCount, setLikeCount] = useState(12);
+  const [activeHeading, setActiveHeading] = useState<string>("");
 
   // Fetch current post
   const { data: post, isLoading: postLoading } = useQuery({
@@ -136,6 +143,60 @@ const BlogPostDetail = () => {
       toast.success("Đã sao chép link!");
     } else {
       window.open(shareUrls[platform], "_blank", "width=600,height=400");
+    }
+  };
+
+  // Extract headings from HTML for Table of Contents
+  const tableOfContents = useMemo<TOCItem[]>(() => {
+    if (!post?.body_html) return [];
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(post.body_html, 'text/html');
+    const headings = doc.querySelectorAll('h2, h3');
+    
+    return Array.from(headings).map((heading, index) => {
+      const id = `heading-${index}`;
+      const text = heading.textContent || '';
+      const level = parseInt(heading.tagName.charAt(1));
+      return { id, text, level };
+    });
+  }, [post?.body_html]);
+
+  // Add IDs to headings in the rendered content and track active heading
+  useEffect(() => {
+    if (!post?.body_html) return;
+    
+    const articleElement = document.querySelector('.article-content');
+    if (!articleElement) return;
+
+    const headings = articleElement.querySelectorAll('h2, h3');
+    headings.forEach((heading, index) => {
+      heading.id = `heading-${index}`;
+    });
+
+    // Intersection observer for active heading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveHeading(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-80px 0px -80% 0px' }
+    );
+
+    headings.forEach((heading) => observer.observe(heading));
+
+    return () => observer.disconnect();
+  }, [post?.body_html]);
+
+  const scrollToHeading = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const yOffset = -100;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
@@ -265,7 +326,7 @@ const BlogPostDetail = () => {
       {/* Featured Image - Full width of main content area */}
       {post.image_url && (
         <div className="container mx-auto px-4 -mt-2 mb-8">
-          <div className="lg:ml-16 lg:mr-80 lg:pl-0 lg:pr-8">
+          <div className="lg:ml-52 lg:mr-80 lg:pr-8">
             <div className="aspect-[16/9] overflow-hidden rounded-2xl">
               <img
                 src={post.image_url}
@@ -281,42 +342,89 @@ const BlogPostDetail = () => {
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Floating Social Share - Left Side */}
-          <aside className="hidden lg:block w-16 shrink-0">
-            <div className="sticky top-24 flex flex-col items-center gap-1 py-4">
-              <span className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Share</span>
-              <button
-                onClick={() => handleShare("facebook")}
-                className="p-2.5 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
-              >
-                <Facebook className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleShare("twitter")}
-                className="p-2.5 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
-              >
-                <Twitter className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleShare("linkedin")}
-                className="p-2.5 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
-              >
-                <Linkedin className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleShare("copy")}
-                className="p-2.5 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
-              >
-                <Link2 className="h-5 w-5" />
-              </button>
-              <div className="w-8 h-px bg-border my-2" />
-              <button
-                onClick={handleLike}
-                className={`p-2.5 rounded-full transition-colors ${likedArticle ? 'bg-destructive/10 text-destructive' : 'hover:bg-muted text-muted-foreground hover:text-destructive'}`}
-              >
-                <Heart className={`h-5 w-5 ${likedArticle ? 'fill-current' : ''}`} />
-              </button>
-              <span className="text-xs text-muted-foreground">{likeCount}</span>
+          {/* Left Sidebar - Table of Contents & Share */}
+          <aside className="hidden lg:block w-48 shrink-0">
+            <div className="sticky top-24">
+              {/* Table of Contents */}
+              {tableOfContents.length > 0 && (
+                <nav className="mb-8">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+                    Mục lục
+                  </h4>
+                  <ul className="space-y-2">
+                    <li>
+                      <button
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className={`text-sm text-left w-full transition-colors hover:text-primary ${
+                          activeHeading === '' ? 'text-primary font-medium' : 'text-muted-foreground'
+                        }`}
+                      >
+                        Giới thiệu
+                      </button>
+                    </li>
+                    {tableOfContents.map((item, index) => (
+                      <li key={item.id} className={item.level === 3 ? 'pl-4' : ''}>
+                        <button
+                          onClick={() => scrollToHeading(item.id)}
+                          className={`text-sm text-left w-full transition-colors hover:text-primary line-clamp-2 ${
+                            activeHeading === item.id ? 'text-primary font-medium' : 'text-muted-foreground'
+                          }`}
+                        >
+                          {item.level === 2 && `${index + 1}. `}{item.text}
+                        </button>
+                      </li>
+                    ))}
+                    <li>
+                      <button
+                        onClick={() => {
+                          const commentsSection = document.querySelector('.comments-section');
+                          if (commentsSection) {
+                            const y = commentsSection.getBoundingClientRect().top + window.pageYOffset - 100;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                          }
+                        }}
+                        className="text-sm text-left w-full transition-colors hover:text-primary text-muted-foreground"
+                      >
+                        Bình luận
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              )}
+
+              {/* Share Section */}
+              <div>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+                  Chia sẻ
+                </h4>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleShare("facebook")}
+                    className="p-2.5 rounded-full border hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    <Facebook className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleShare("twitter")}
+                    className="p-2.5 rounded-full border hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    <Twitter className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleShare("linkedin")}
+                    className="p-2.5 rounded-full border hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleLike}
+                    className={`p-2.5 rounded-full transition-colors ${likedArticle ? 'bg-primary text-primary-foreground' : 'border hover:bg-muted text-muted-foreground hover:text-primary'}`}
+                  >
+                    <Heart className={`h-4 w-4 ${likedArticle ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">{likeCount.toLocaleString()} lượt thích</p>
+              </div>
             </div>
           </aside>
 
@@ -324,7 +432,7 @@ const BlogPostDetail = () => {
           <article className="flex-1 min-w-0 max-w-3xl">
             {/* Article Body */}
             <div
-              className="prose prose-lg max-w-none 
+              className="article-content prose prose-lg max-w-none 
                 prose-headings:text-foreground prose-headings:font-bold
                 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
                 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
@@ -377,7 +485,7 @@ const BlogPostDetail = () => {
             </div>
 
             {/* Comments Section */}
-            <div className="mt-10">
+            <div className="mt-10 comments-section">
               <h3 className="text-xl font-bold mb-6">Bình luận (3)</h3>
               
               {/* Comment Form */}
