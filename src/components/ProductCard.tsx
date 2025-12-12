@@ -22,7 +22,7 @@ interface ProductCardProps {
 
 const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
   <span 
-    className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+    className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-xl font-bold ${
       type === 'dog' 
         ? 'bg-amber-100 text-amber-700' 
         : 'bg-purple-100 text-purple-700'
