@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const BATCH_SIZE = 50;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -23,28 +25,48 @@ serve(async (req) => {
       throw new Error('Missing required environment variables');
     }
 
+    // Parse request body for pagination
+    let offset = 0;
+    let forceResync = false;
+    try {
+      const body = await req.json();
+      offset = body.offset || 0;
+      forceResync = body.forceResync || false;
+    } catch {
+      // No body or invalid JSON, use defaults
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('Starting Shopify SEO fields sync...');
+    console.log(`Starting Shopify SEO sync - Offset: ${offset}, Batch size: ${BATCH_SIZE}`);
 
-    // Get all products from our database that have a shopify_product_id
-    const { data: products, error: productsError } = await supabase
+    // Build query - skip products that already have meta_description unless forceResync
+    let query = supabase
       .from('products')
-      .select('id, shopify_product_id, name')
+      .select('id, shopify_product_id, name, meta_description, meta_title', { count: 'exact' })
       .not('shopify_product_id', 'is', null);
+
+    if (!forceResync) {
+      // Only get products that don't have meta_description yet
+      query = query.is('meta_description', null);
+    }
+
+    // Get products with pagination
+    const { data: products, error: productsError, count: totalCount } = await query
+      .order('created_at', { ascending: true })
+      .range(offset, offset + BATCH_SIZE - 1);
 
     if (productsError) {
       throw new Error(`Failed to fetch products: ${productsError.message}`);
     }
 
-    console.log(`Found ${products?.length || 0} products to sync SEO fields`);
+    const remaining = (totalCount || 0) - offset - (products?.length || 0);
+    console.log(`Processing ${products?.length || 0} products. Total remaining without SEO: ${remaining}`);
 
     let syncedCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
-    const errors: string[] = [];
 
-    // Process products in batches to avoid rate limiting
     for (const product of products || []) {
       try {
         // Fetch metafields for this product from Shopify
@@ -58,7 +80,7 @@ serve(async (req) => {
         });
 
         if (!response.ok) {
-          console.error(`Failed to fetch metafields for product ${product.shopify_product_id}: ${response.status}`);
+          console.error(`Failed to fetch metafields for ${product.name}: ${response.status}`);
           errorCount++;
           continue;
         }
@@ -66,7 +88,7 @@ serve(async (req) => {
         const data = await response.json();
         const metafields = data.metafields || [];
 
-        // Find SEO metafields (namespace: global, key: title_tag or description_tag)
+        // Find SEO metafields
         const seoTitle = metafields.find(
           (m: any) => m.namespace === 'global' && m.key === 'title_tag'
         );
@@ -74,7 +96,6 @@ serve(async (req) => {
           (m: any) => m.namespace === 'global' && m.key === 'description_tag'
         );
 
-        // Only update if we found SEO data
         if (seoTitle || seoDescription) {
           const updateData: { meta_title?: string; meta_description?: string } = {};
           
@@ -91,40 +112,47 @@ serve(async (req) => {
             .eq('id', product.id);
 
           if (updateError) {
-            console.error(`Failed to update product ${product.name}: ${updateError.message}`);
-            errors.push(`${product.name}: ${updateError.message}`);
+            console.error(`Update failed for ${product.name}: ${updateError.message}`);
             errorCount++;
           } else {
-            console.log(`Updated SEO for: ${product.name} (title: ${!!seoTitle}, desc: ${!!seoDescription})`);
+            console.log(`Synced: ${product.name}`);
             syncedCount++;
           }
         } else {
+          // Mark as processed by setting empty string to avoid re-processing
+          // Actually, skip this - we'll just mark products with no SEO data in Shopify
           skippedCount++;
+          console.log(`No SEO data in Shopify for: ${product.name}`);
         }
 
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`Error processing product ${product.name}: ${errorMessage}`);
-        errors.push(`${product.name}: ${errorMessage}`);
+        console.error(`Error for ${product.name}: ${errorMessage}`);
         errorCount++;
       }
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`SEO sync completed! Synced: ${syncedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}, Duration: ${duration}s`);
+    const hasMore = remaining > 0;
+    const nextOffset = offset + BATCH_SIZE;
+
+    console.log(`Batch complete! Synced: ${syncedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `SEO sync completed`,
+        message: hasMore ? `Batch complete. ${remaining} products remaining.` : 'All products processed!',
         stats: {
-          totalProducts: products?.length || 0,
+          batchSize: products?.length || 0,
           synced: syncedCount,
           skipped: skippedCount,
           errors: errorCount,
+          remaining: remaining,
+          nextOffset: hasMore ? nextOffset : null,
+          hasMore,
           duration: `${duration}s`,
         },
       }),
@@ -139,7 +167,6 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         error: errorMessage,
-        message: 'Failed to sync SEO fields',
       }),
       {
         status: 500,
