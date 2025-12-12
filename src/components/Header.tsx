@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { MegaMenu, dogMenuColumns, catMenuColumns } from "@/components/MegaMenu";
+import { MegaMenu } from "@/components/MegaMenu";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
 export const Header = () => {
@@ -245,22 +245,14 @@ export const Header = () => {
         {/* Mega Menus */}
         {activeMegaMenu === 'dog' && (
           <MegaMenu
-            columns={dogMenuColumns}
-            promoImage={categoryDogs}
-            promoTitle="Summer Collection"
-            promoSubtitle="Get your pup ready for the sunny days ahead."
-            promoBadge="NEW ARRIVALS"
-            promoHref="/collections/dog-new-arrivals"
+            menuSlug="dog"
+            fallbackPromoImage={categoryDogs}
           />
         )}
         {activeMegaMenu === 'cat' && (
           <MegaMenu
-            columns={catMenuColumns}
-            promoImage={categoryCats}
-            promoTitle="Cozy Favorites"
-            promoSubtitle="Keep your feline friend comfortable all year."
-            promoBadge="BEST SELLERS"
-            promoHref="/collections/cat-best-sellers"
+            menuSlug="cat"
+            fallbackPromoImage={categoryCats}
           />
         )}
       </div>
