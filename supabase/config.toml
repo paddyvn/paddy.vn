@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.generate-pet-image]
 verify_jwt = false
+
+[functions.shopify-sync-seo]
+verify_jwt = false
