@@ -1115,6 +1115,8 @@ export type Database = {
           pet_type: string | null
           product_type: string | null
           published_at: string | null
+          rating: number | null
+          rating_count: number | null
           shopify_created_at: string | null
           shopify_product_id: string | null
           shopify_updated_at: string | null
@@ -1145,6 +1147,8 @@ export type Database = {
           pet_type?: string | null
           product_type?: string | null
           published_at?: string | null
+          rating?: number | null
+          rating_count?: number | null
           shopify_created_at?: string | null
           shopify_product_id?: string | null
           shopify_updated_at?: string | null
@@ -1175,6 +1179,8 @@ export type Database = {
           pet_type?: string | null
           product_type?: string | null
           published_at?: string | null
+          rating?: number | null
+          rating_count?: number | null
           shopify_created_at?: string | null
           shopify_product_id?: string | null
           shopify_updated_at?: string | null
