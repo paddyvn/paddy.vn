@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star } from "lucide-react";
+import { Heart, Star, ShoppingCart } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -152,6 +152,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                   -{discountPercentage}%
                 </Badge>
               )}
+              <Button
+                size="icon"
+                className="absolute bottom-4 right-4 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // TODO: Add to cart
+                }}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
