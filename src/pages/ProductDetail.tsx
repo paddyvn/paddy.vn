@@ -126,7 +126,7 @@ export default function ProductDetail() {
           {/* Right Column - Product Info */}
           <div className="space-y-5">
             {/* Product Name */}
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
               {product.name}
             </h1>
 
