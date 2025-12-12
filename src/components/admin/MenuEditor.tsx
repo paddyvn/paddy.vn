@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, GripVertical, ExternalLink, Pencil, Image } from "lucide-react";
+import { Plus, Trash2, Image, Pencil } from "lucide-react";
 import { CollectionSelectorPopover } from "./CollectionSelectorPopover";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,11 +25,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   NavigationMenu,
   NavigationColumn,
   NavigationItem,
@@ -40,8 +35,25 @@ import {
   useCreateItem,
   useUpdateItem,
   useDeleteItem,
+  useBulkUpdateColumnOrder,
+  useBulkUpdateItemOrder,
 } from "@/hooks/useNavigationMenus";
 import { ImagePickerDialog } from "./ImagePickerDialog";
+import { SortableColumn } from "./SortableColumn";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface MenuEditorProps {
   menu: NavigationMenu;
@@ -57,6 +69,8 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
+  const bulkUpdateColumnOrder = useBulkUpdateColumnOrder();
+  const bulkUpdateItemOrder = useBulkUpdateItemOrder();
 
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState("");
@@ -77,6 +91,46 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
   const [promoLink, setPromoLink] = useState(menu.promo_link || "");
   const [promoImage, setPromoImage] = useState(menu.promo_image_url || "");
   const [showImagePicker, setShowImagePicker] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleColumnDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = menu.columns.findIndex((c) => c.id === active.id);
+      const newIndex = menu.columns.findIndex((c) => c.id === over.id);
+      
+      const newColumns = [...menu.columns];
+      const [removed] = newColumns.splice(oldIndex, 1);
+      newColumns.splice(newIndex, 0, removed);
+      
+      const updates = newColumns.map((col, index) => ({
+        id: col.id,
+        display_order: index,
+      }));
+      
+      bulkUpdateColumnOrder.mutate({ menu_id: menu.id, columns: updates });
+    }
+  };
+
+  const handleItemsReorder = (columnId: string, items: NavigationItem[]) => {
+    const updates = items.map((item, index) => ({
+      id: item.id,
+      display_order: index,
+      column_id: columnId,
+    }));
+    
+    bulkUpdateItemOrder.mutate({ menu_id: menu.id, items: updates });
+  };
 
   const handleAddColumn = () => {
     if (!newColumnTitle.trim()) return;
@@ -240,96 +294,29 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
               No columns yet. Add your first column to start building the menu.
             </p>
           ) : (
-            menu.columns.map((column) => (
-              <Collapsible key={column.id} defaultOpen>
-                <div className="border rounded-lg">
-                  <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <GripVertical className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{column.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {column.items.length} items
-                            {column.shop_all_link && ` · Shop all: ${column.shop_all_link}`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingColumn(column);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteColumnId(column.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="border-t p-4 space-y-2 bg-muted/20">
-                      {column.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between p-2 rounded-md bg-background border"
-                        >
-                          <div className="flex items-center gap-3">
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-sm font-medium">{item.label}</p>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <ExternalLink className="h-3 w-3" />
-                                {item.link}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => setEditingItem(item)}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => setDeleteItemId({ id: item.id, columnId: column.id })}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2"
-                        onClick={() => setShowAddItem(column.id)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add item
-                      </Button>
-                    </div>
-                  </CollapsibleContent>
-                </div>
-              </Collapsible>
-            ))
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleColumnDragEnd}
+            >
+              <SortableContext
+                items={menu.columns.map((c) => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {menu.columns.map((column) => (
+                  <SortableColumn
+                    key={column.id}
+                    column={column}
+                    onEditColumn={setEditingColumn}
+                    onDeleteColumn={setDeleteColumnId}
+                    onEditItem={setEditingItem}
+                    onDeleteItem={(itemId, columnId) => setDeleteItemId({ id: itemId, columnId })}
+                    onAddItem={setShowAddItem}
+                    onItemsReorder={handleItemsReorder}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
