@@ -113,10 +113,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Card
-      className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover rounded-sm border-0 cursor-pointer"
+      className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover rounded-sm border-0 cursor-pointer h-full flex flex-col"
       onClick={() => navigate(`/products/${product.slug}`)}
     >
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex flex-col flex-1">
         <div className="relative">
           <div className="relative aspect-square overflow-hidden bg-muted">
             <img
@@ -163,7 +163,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 flex flex-col flex-1">
           <div>
             {product.brand && (
               <p className="text-xs text-muted-foreground mb-1 font-bold">{product.brand}</p>
@@ -183,7 +183,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           </div>
 
-          <div className="flex items-end justify-between">
+          <div className="flex items-end justify-between mt-auto">
             <div className="flex flex-col items-start">
               {hasDiscount && (
                 <span className="text-sm text-muted-foreground line-through">
