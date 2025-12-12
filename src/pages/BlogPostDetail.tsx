@@ -152,7 +152,7 @@ const BlogPostDetail = () => {
     
     const parser = new DOMParser();
     const doc = parser.parseFromString(post.body_html, 'text/html');
-    const headings = doc.querySelectorAll('h2, h3');
+    const headings = doc.querySelectorAll('h2');
     
     return Array.from(headings).map((heading, index) => {
       const id = `heading-${index}`;
@@ -169,7 +169,7 @@ const BlogPostDetail = () => {
     const articleElement = document.querySelector('.article-content');
     if (!articleElement) return;
 
-    const headings = articleElement.querySelectorAll('h2, h3');
+    const headings = articleElement.querySelectorAll('h2');
     headings.forEach((heading, index) => {
       heading.id = `heading-${index}`;
     });
