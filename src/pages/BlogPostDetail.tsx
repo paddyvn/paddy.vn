@@ -262,15 +262,17 @@ const BlogPostDetail = () => {
         </div>
       </div>
 
-      {/* Featured Image */}
+      {/* Featured Image - Full width of main content area */}
       {post.image_url && (
-        <div className="container mx-auto px-4 -mt-2">
-          <div className="aspect-[16/9] max-h-[500px] overflow-hidden rounded-2xl">
-            <img
-              src={post.image_url}
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
+        <div className="container mx-auto px-4 -mt-2 mb-8">
+          <div className="lg:ml-16 lg:mr-80 lg:pl-0 lg:pr-8">
+            <div className="aspect-[16/9] overflow-hidden rounded-2xl">
+              <img
+                src={post.image_url}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       )}
