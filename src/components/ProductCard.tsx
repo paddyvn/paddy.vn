@@ -137,32 +137,34 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           </div>
 
-          <div className="flex flex-col items-start">
-            {hasDiscount && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.compare_at_price!)}₫
-              </span>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-primary">
-                {formatPrice(product.base_price)}₫
-              </span>
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col items-start">
               {hasDiscount && (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
-                  -{discountPercentage}%
-                </Badge>
+                <span className="text-sm text-muted-foreground line-through">
+                  {formatPrice(product.compare_at_price!)}₫
+                </span>
               )}
-              <Button
-                size="icon"
-                className="absolute bottom-4 right-4 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // TODO: Add to cart
-                }}
-              >
-                <ShoppingCart className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-primary">
+                  {formatPrice(product.base_price)}₫
+                </span>
+                {hasDiscount && (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
+                    -{discountPercentage}%
+                  </Badge>
+                )}
+              </div>
             </div>
+            <Button
+              size="icon"
+              className="rounded-full shadow-lg h-9 w-9"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Add to cart
+              }}
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </CardContent>
