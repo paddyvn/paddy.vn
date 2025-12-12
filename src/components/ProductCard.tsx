@@ -37,6 +37,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
+  const discountPercentage = hasDiscount 
+    ? Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100)
+    : 0;
 
   return (
     <Card
@@ -64,6 +67,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
             >
               Sale
+            </Badge>
+          )}
+          
+          {hasDiscount && (
+            <Badge 
+              className="absolute bottom-3 left-3 bg-green-100 text-green-700 hover:bg-green-100 font-medium"
+            >
+              Save {discountPercentage}%
             </Badge>
           )}
           
