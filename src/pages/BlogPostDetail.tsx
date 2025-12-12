@@ -311,13 +311,15 @@ const BlogPostDetail = () => {
                 <p className="text-xs">Biên tập viên</p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <span>{formatDate(post.shopify_published_at || post.updated_at)}</span>
+            <div className="hidden md:block w-px h-8 bg-border" />
+            <div className="flex flex-col items-start">
+              <span className="text-xs text-muted-foreground">Đăng ngày</span>
+              <span className="font-medium text-foreground">{formatDate(post.shopify_published_at || post.updated_at)}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{estimateReadTime(post.body_html)}</span>
+            <div className="hidden md:block w-px h-8 bg-border" />
+            <div className="flex flex-col items-start">
+              <span className="text-xs text-muted-foreground">Thời gian đọc</span>
+              <span className="font-medium text-foreground">{estimateReadTime(post.body_html)}</span>
             </div>
           </div>
         </div>
