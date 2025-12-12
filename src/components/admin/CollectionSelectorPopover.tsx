@@ -7,7 +7,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -65,8 +64,8 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
           Select collections
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
-        <div className="p-2 border-b">
+      <PopoverContent className="w-80 p-0 z-[9999]" align="start" side="bottom" sideOffset={4}>
+        <div className="p-2 border-b bg-background">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -77,7 +76,7 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
             />
           </div>
         </div>
-        <ScrollArea className="h-64">
+        <div className="max-h-64 overflow-y-auto bg-background">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Loading collections...
@@ -110,7 +109,7 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
