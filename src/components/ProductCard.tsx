@@ -71,48 +71,50 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       onClick={() => navigate(`/products/${product.slug}`)}
     >
       <CardContent className="p-0">
-        <div className="relative aspect-square overflow-hidden bg-muted">
-          <img
-            src={getPrimaryImage(product.product_images)}
-            alt={product.name}
-            className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-          />
-          
-          {product.is_featured && (
-            <Badge 
-              className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
+        <div className="relative">
+          <div className="relative aspect-square overflow-hidden bg-muted">
+            <img
+              src={getPrimaryImage(product.product_images)}
+              alt={product.name}
+              className="w-full h-full object-cover transition-smooth group-hover:scale-110"
+            />
+            
+            {product.is_featured && (
+              <Badge 
+                className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
+              >
+                Featured
+              </Badge>
+            )}
+            
+            {hasDiscount && !product.is_featured && (
+              <Badge 
+                className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
+              >
+                Sale
+              </Badge>
+            )}
+            
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Add to wishlist
+              }}
             >
-              Featured
-            </Badge>
-          )}
-          
-          {hasDiscount && !product.is_featured && (
-            <Badge 
-              className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
-            >
-              Sale
-            </Badge>
-          )}
+              <Heart className="h-4 w-4" />
+            </Button>
+          </div>
           
           {petTypes.length > 0 && (
-            <div className="absolute -bottom-5 right-3 flex gap-1 z-10">
+            <div className="absolute -bottom-5 right-3 flex gap-1 z-20">
               {petTypes.map((type) => (
                 <PetBadge key={type} type={type} />
               ))}
             </div>
           )}
-          
-          <Button
-            size="icon"
-            variant="secondary"
-            className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: Add to wishlist
-            }}
-          >
-            <Heart className="h-4 w-4" />
-          </Button>
         </div>
 
         <div className="p-4 space-y-3">
