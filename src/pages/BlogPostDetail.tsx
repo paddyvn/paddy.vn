@@ -293,7 +293,7 @@ const BlogPostDetail = () => {
           </Badge>
 
           {/* Title */}
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 max-w-4xl mx-auto leading-tight">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 max-w-4xl mx-auto leading-tight">
             {post.title}
           </h1>
 
