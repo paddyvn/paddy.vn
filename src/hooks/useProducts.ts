@@ -15,14 +15,20 @@ export interface Product {
   brand: string | null;
   product_type: string | null;
   tags: string | null;
-  shopify_created_at: string | null;
-  shopify_updated_at: string | null;
+  source_id: string | null;
+  source_created_at: string | null;
+  source_updated_at: string | null;
   published_at: string | null;
   option1_name: string | null;
   option2_name: string | null;
   option3_name: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  pet_type: string | null;
+  rating: number | null;
+  rating_count: number | null;
+  created_at: string;
+  updated_at: string;
   product_images: Array<{
     image_url: string;
     alt_text: string | null;
