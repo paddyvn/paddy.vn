@@ -49,7 +49,7 @@ type Product = {
   base_price: number;
   is_active: boolean;
   is_featured: boolean;
-  shopify_product_id: string | null;
+  source_id: string | null;
   category_id: string | null;
   brand: string | null;
   product_type: string | null;
