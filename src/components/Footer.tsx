@@ -3,11 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import govSeal from "@/assets/gov-seal.png";
 
-export const Footer = () => {
+interface FooterProps {
+  hideNewsletter?: boolean;
+}
+
+export const Footer = ({ hideNewsletter = false }: FooterProps) => {
   return (
     <footer className="bg-muted/30">
       {/* Newsletter Section */}
-      <div className="bg-background border-b">
+      {!hideNewsletter && (
+        <div className="bg-background border-b">
         <div className="container mx-auto px-4 py-12 md:py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">Thành viên Paddiers</h2>
@@ -27,6 +32,7 @@ export const Footer = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-12 md:py-16">
