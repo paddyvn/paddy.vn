@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { useBlogPosts, useSyncBlogPosts, useUpdateBlogPost, useDeleteBlogPost, useCreateBlogPost } from "@/hooks/useBlogPosts";
+import { useNavigate } from "react-router-dom";
+import { useBlogPosts, useSyncBlogPosts, useDeleteBlogPost, useCreateBlogPost } from "@/hooks/useBlogPosts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,10 +54,10 @@ import { Search, Eye, Edit, Trash2, RefreshCw, Plus } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ContentBlog() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [blogFilter, setBlogFilter] = useState<string>("all");
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
-  const [editingPost, setEditingPost] = useState<any>(null);
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
@@ -74,9 +75,9 @@ export default function ContentBlog() {
 
   const { data: posts, isLoading } = useBlogPosts();
   const syncPosts = useSyncBlogPosts();
-  const updatePost = useUpdateBlogPost();
   const deletePost = useDeleteBlogPost();
   const createPost = useCreateBlogPost();
+
 
   // Get unique blogs for filter
   const blogs = useMemo(() => {
@@ -125,33 +126,10 @@ export default function ContentBlog() {
     syncPosts.mutate();
   };
 
-  const handleEdit = (post: any) => {
-    setEditingPost({
-      ...post,
-    });
+  const handleEdit = (postId: string) => {
+    navigate(`/admin/content/blog/${postId}/edit`);
   };
 
-  const handleSaveEdit = () => {
-    if (!editingPost) return;
-
-    updatePost.mutate(
-      {
-        id: editingPost.id,
-        updates: {
-          title: editingPost.title,
-          body_html: editingPost.body_html,
-          summary_html: editingPost.summary_html,
-          tags: editingPost.tags,
-          published: editingPost.published,
-        },
-      },
-      {
-        onSuccess: () => {
-          setEditingPost(null);
-        },
-      }
-    );
-  };
 
   const handleDelete = () => {
     if (!deletePostId) return;
@@ -361,7 +339,7 @@ export default function ContentBlog() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(post)}
+                        onClick={() => handleEdit(post.id)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -491,91 +469,6 @@ export default function ContentBlog() {
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Blog Post</DialogTitle>
-            <DialogDescription>
-              Make changes to the blog post content and settings
-            </DialogDescription>
-          </DialogHeader>
-
-          {editingPost && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={editingPost.title}
-                  onChange={(e) =>
-                    setEditingPost({ ...editingPost, title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="summary">Summary (HTML)</Label>
-                <Textarea
-                  id="summary"
-                  value={editingPost.summary_html || ""}
-                  onChange={(e) =>
-                    setEditingPost({ ...editingPost, summary_html: e.target.value })
-                  }
-                  rows={4}
-                  className="font-mono text-sm"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="body">Content (HTML)</Label>
-                <Textarea
-                  id="body"
-                  value={editingPost.body_html || ""}
-                  onChange={(e) =>
-                    setEditingPost({ ...editingPost, body_html: e.target.value })
-                  }
-                  rows={15}
-                  className="font-mono text-sm"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="tags">Tags (comma-separated)</Label>
-                <Input
-                  id="tags"
-                  value={editingPost.tags || ""}
-                  onChange={(e) =>
-                    setEditingPost({ ...editingPost, tags: e.target.value })
-                  }
-                  placeholder="tag1, tag2, tag3"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="published"
-                  checked={editingPost.published}
-                  onCheckedChange={(checked) =>
-                    setEditingPost({ ...editingPost, published: checked })
-                  }
-                />
-                <Label htmlFor="published">Published</Label>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingPost(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit} disabled={updatePost.isPending}>
-              {updatePost.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
