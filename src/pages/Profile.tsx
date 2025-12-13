@@ -11,6 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -38,16 +40,16 @@ import {
   PackageCheck,
   XCircle,
   Loader2,
-  PawPrint
+  PawPrint,
+  CalendarIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { formatPrice } from "@/lib/utils";
-import { format } from "date-fns";
+import { formatPrice, cn } from "@/lib/utils";
+import { format, differenceInMonths, differenceInYears } from "date-fns";
 import { vi } from "date-fns/locale";
-
 interface Profile {
   id: string;
   full_name: string | null;
@@ -145,6 +147,7 @@ const Profile = () => {
   const [newAddress, setNewAddress] = useState<Partial<Address>>({});
   const [isAddingPet, setIsAddingPet] = useState(false);
   const [newPet, setNewPet] = useState<Partial<Pet>>({ species: "dog" });
+  const [petBirthday, setPetBirthday] = useState<Date | undefined>(undefined);
   const [petPhotoFile, setPetPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -361,6 +364,7 @@ const Profile = () => {
       queryClient.invalidateQueries({ queryKey: ["pets", userId] });
       setIsAddingPet(false);
       setNewPet({ species: "dog" });
+      setPetBirthday(undefined);
       setPetPhotoFile(null);
       toast({ title: "Thêm Boss thành công!" });
     },
@@ -392,7 +396,22 @@ const Profile = () => {
       toast({ title: "Vui lòng điền tên và loại thú cưng", variant: "destructive" });
       return;
     }
-    addPetMutation.mutate({ ...newPet, photoFile: petPhotoFile || undefined });
+    
+    // Calculate age from birthday
+    let age_years: number | undefined;
+    let age_months: number | undefined;
+    if (petBirthday) {
+      const now = new Date();
+      age_years = differenceInYears(now, petBirthday);
+      age_months = differenceInMonths(now, petBirthday) % 12;
+    }
+    
+    addPetMutation.mutate({ 
+      ...newPet, 
+      age_years, 
+      age_months, 
+      photoFile: petPhotoFile || undefined 
+    });
   };
 
   const handleLogout = async () => {
@@ -690,29 +709,36 @@ const Profile = () => {
                             )}
                           </div>
                           <div className="space-y-2">
-                            <Label>Tuổi</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                type="number"
-                                min="0"
-                                max="30"
-                                value={newPet.age_years || ""}
-                                onChange={(e) => setNewPet({ ...newPet, age_years: parseInt(e.target.value) || undefined })}
-                                placeholder="Năm"
-                                className="w-20"
-                              />
-                              <span className="self-center text-sm text-muted-foreground">năm</span>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="11"
-                                value={newPet.age_months || ""}
-                                onChange={(e) => setNewPet({ ...newPet, age_months: parseInt(e.target.value) || undefined })}
-                                placeholder="Tháng"
-                                className="w-20"
-                              />
-                              <span className="self-center text-sm text-muted-foreground">tháng</span>
-                            </div>
+                            <Label>Ngày sinh</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !petBirthday && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {petBirthday ? format(petBirthday, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày sinh..."}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={petBirthday}
+                                  onSelect={setPetBirthday}
+                                  disabled={(date) => date > new Date() || date < new Date("1990-01-01")}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            {petBirthday && (
+                              <p className="text-xs text-muted-foreground">
+                                Tuổi: {differenceInYears(new Date(), petBirthday)} năm {differenceInMonths(new Date(), petBirthday) % 12} tháng
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-2 sm:col-span-2">
                             <Label>Ảnh Boss</Label>
