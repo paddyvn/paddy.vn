@@ -631,8 +631,14 @@ const Profile = () => {
                           <div className="space-y-2">
                             <Label>Giống</Label>
                             <Select
-                              value={newPet.breed || ""}
-                              onValueChange={(value) => setNewPet({ ...newPet, breed: value })}
+                              value={newPet.breed === "custom" || (newPet.breed && !["Poodle", "Corgi", "Golden Retriever", "Labrador", "Husky", "Shiba Inu", "Phốc Sóc", "Chihuahua", "Beagle", "Bulldog", "Chó ta", "Mèo Anh lông ngắn", "Mèo Anh lông dài", "Mèo Ba Tư", "Mèo Munchkin", "Mèo Scottish Fold", "Mèo Bengal", "Mèo Ragdoll", "Mèo Siamese", "Mèo Maine Coon", "Mèo ta"].includes(newPet.breed)) ? "custom" : (newPet.breed || "")}
+                              onValueChange={(value) => {
+                                if (value === "custom") {
+                                  setNewPet({ ...newPet, breed: "custom" });
+                                } else {
+                                  setNewPet({ ...newPet, breed: value });
+                                }
+                              }}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Chọn giống..." />
@@ -651,7 +657,7 @@ const Profile = () => {
                                     <SelectItem value="Beagle">Beagle</SelectItem>
                                     <SelectItem value="Bulldog">Bulldog</SelectItem>
                                     <SelectItem value="Chó ta">Chó ta</SelectItem>
-                                    <SelectItem value="Khác">Khác</SelectItem>
+                                    <SelectItem value="custom">Khác (nhập tên giống)</SelectItem>
                                   </>
                                 ) : newPet.species === "cat" ? (
                                   <>
@@ -665,15 +671,23 @@ const Profile = () => {
                                     <SelectItem value="Mèo Siamese">Mèo Siamese</SelectItem>
                                     <SelectItem value="Mèo Maine Coon">Mèo Maine Coon</SelectItem>
                                     <SelectItem value="Mèo ta">Mèo ta</SelectItem>
-                                    <SelectItem value="Khác">Khác</SelectItem>
+                                    <SelectItem value="custom">Khác (nhập tên giống)</SelectItem>
                                   </>
                                 ) : (
                                   <>
-                                    <SelectItem value="Khác">Khác</SelectItem>
+                                    <SelectItem value="custom">Khác (nhập tên giống)</SelectItem>
                                   </>
                                 )}
                               </SelectContent>
                             </Select>
+                            {(newPet.breed === "custom" || (newPet.breed && !["Poodle", "Corgi", "Golden Retriever", "Labrador", "Husky", "Shiba Inu", "Phốc Sóc", "Chihuahua", "Beagle", "Bulldog", "Chó ta", "Mèo Anh lông ngắn", "Mèo Anh lông dài", "Mèo Ba Tư", "Mèo Munchkin", "Mèo Scottish Fold", "Mèo Bengal", "Mèo Ragdoll", "Mèo Siamese", "Mèo Maine Coon", "Mèo ta", "custom"].includes(newPet.breed))) && (
+                              <Input
+                                className="mt-2"
+                                value={newPet.breed === "custom" ? "" : newPet.breed || ""}
+                                onChange={(e) => setNewPet({ ...newPet, breed: e.target.value || "custom" })}
+                                placeholder="Nhập tên giống..."
+                              />
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label>Tuổi</Label>
