@@ -14,7 +14,7 @@ import BlogPostDetail from "./pages/BlogPostDetail";
 import Search from "./pages/Search";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import Orders from "./pages/Orders";
+import { Navigate } from "react-router-dom";
 import Profile from "./pages/Profile";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -53,7 +53,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
