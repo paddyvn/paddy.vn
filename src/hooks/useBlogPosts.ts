@@ -128,3 +128,55 @@ export const useDeleteBlogPost = () => {
     },
   });
 };
+
+export const useCreateBlogPost = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (post: {
+      title: string;
+      handle: string;
+      body_html?: string;
+      summary_html?: string;
+      author?: string;
+      published?: boolean;
+      tags?: string;
+      image_url?: string;
+      blog_title?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .insert({
+          title: post.title,
+          handle: post.handle,
+          body_html: post.body_html || null,
+          summary_html: post.summary_html || null,
+          author: post.author || null,
+          published: post.published ?? false,
+          tags: post.tags || null,
+          image_url: post.image_url || null,
+          blog_title: post.blog_title || "Paddy's Magazine",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      toast({
+        title: "Blog Post Created",
+        description: "New blog post has been created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Create Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

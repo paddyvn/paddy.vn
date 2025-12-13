@@ -922,7 +922,7 @@ export type Database = {
           image_url: string
           is_primary: boolean | null
           product_id: string
-          shopify_image_id: string | null
+          source_image_id: string | null
           variant_ids: Json | null
         }
         Insert: {
@@ -933,7 +933,7 @@ export type Database = {
           image_url: string
           is_primary?: boolean | null
           product_id: string
-          shopify_image_id?: string | null
+          source_image_id?: string | null
           variant_ids?: Json | null
         }
         Update: {
@@ -944,7 +944,7 @@ export type Database = {
           image_url?: string
           is_primary?: boolean | null
           product_id?: string
-          shopify_image_id?: string | null
+          source_image_id?: string | null
           variant_ids?: Json | null
         }
         Relationships: [
@@ -1085,15 +1085,18 @@ export type Database = {
           compare_at_price: number | null
           created_at: string
           id: string
+          input_vat_rate: number | null
           name: string
           option1: string | null
           option2: string | null
           option3: string | null
+          output_vat_rate: number | null
           price: number
           product_id: string
-          shopify_variant_id: string | null
           sku: string | null
+          source_variant_id: string | null
           stock_quantity: number | null
+          taxable: boolean | null
           updated_at: string
           weight: number | null
         }
@@ -1102,15 +1105,18 @@ export type Database = {
           compare_at_price?: number | null
           created_at?: string
           id?: string
+          input_vat_rate?: number | null
           name: string
           option1?: string | null
           option2?: string | null
           option3?: string | null
+          output_vat_rate?: number | null
           price: number
           product_id: string
-          shopify_variant_id?: string | null
           sku?: string | null
+          source_variant_id?: string | null
           stock_quantity?: number | null
+          taxable?: boolean | null
           updated_at?: string
           weight?: number | null
         }
@@ -1119,15 +1125,18 @@ export type Database = {
           compare_at_price?: number | null
           created_at?: string
           id?: string
+          input_vat_rate?: number | null
           name?: string
           option1?: string | null
           option2?: string | null
           option3?: string | null
+          output_vat_rate?: number | null
           price?: number
           product_id?: string
-          shopify_variant_id?: string | null
           sku?: string | null
+          source_variant_id?: string | null
           stock_quantity?: number | null
+          taxable?: boolean | null
           updated_at?: string
           weight?: number | null
         }
@@ -1164,11 +1173,11 @@ export type Database = {
           published_at: string | null
           rating: number | null
           rating_count: number | null
-          shopify_created_at: string | null
-          shopify_product_id: string | null
-          shopify_updated_at: string | null
           short_description: string | null
           slug: string
+          source_created_at: string | null
+          source_id: string | null
+          source_updated_at: string | null
           tags: string | null
           target_age_id: string | null
           target_size_id: string | null
@@ -1196,11 +1205,11 @@ export type Database = {
           published_at?: string | null
           rating?: number | null
           rating_count?: number | null
-          shopify_created_at?: string | null
-          shopify_product_id?: string | null
-          shopify_updated_at?: string | null
           short_description?: string | null
           slug: string
+          source_created_at?: string | null
+          source_id?: string | null
+          source_updated_at?: string | null
           tags?: string | null
           target_age_id?: string | null
           target_size_id?: string | null
@@ -1228,11 +1237,11 @@ export type Database = {
           published_at?: string | null
           rating?: number | null
           rating_count?: number | null
-          shopify_created_at?: string | null
-          shopify_product_id?: string | null
-          shopify_updated_at?: string | null
           short_description?: string | null
           slug?: string
+          source_created_at?: string | null
+          source_id?: string | null
+          source_updated_at?: string | null
           tags?: string | null
           target_age_id?: string | null
           target_size_id?: string | null
@@ -1346,6 +1355,214 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sapo_product_images: {
+        Row: {
+          id: string
+          image_url: string
+          position: number | null
+          sapo_image_id: number
+          sapo_product_id: string
+          synced_at: string
+        }
+        Insert: {
+          id?: string
+          image_url: string
+          position?: number | null
+          sapo_image_id: number
+          sapo_product_id: string
+          synced_at?: string
+        }
+        Update: {
+          id?: string
+          image_url?: string
+          position?: number | null
+          sapo_image_id?: number
+          sapo_product_id?: string
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sapo_product_images_sapo_product_id_fkey"
+            columns: ["sapo_product_id"]
+            isOneToOne: false
+            referencedRelation: "sapo_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sapo_product_variants: {
+        Row: {
+          barcode: string | null
+          id: string
+          import_price: number | null
+          input_vat_rate: number | null
+          linked_variant_id: string | null
+          name: string
+          note: string | null
+          opt1: string | null
+          opt2: string | null
+          opt3: string | null
+          output_vat_rate: number | null
+          retail_price: number | null
+          sapo_product_id: string
+          sapo_variant_id: number
+          sku: string | null
+          sku_converted: string | null
+          stock_quantity: number | null
+          synced_at: string
+          taxable: boolean | null
+          ten_hang: string | null
+          thue_gtgt: string | null
+          unit: string | null
+          weight_unit: string | null
+          weight_value: number | null
+        }
+        Insert: {
+          barcode?: string | null
+          id?: string
+          import_price?: number | null
+          input_vat_rate?: number | null
+          linked_variant_id?: string | null
+          name: string
+          note?: string | null
+          opt1?: string | null
+          opt2?: string | null
+          opt3?: string | null
+          output_vat_rate?: number | null
+          retail_price?: number | null
+          sapo_product_id: string
+          sapo_variant_id: number
+          sku?: string | null
+          sku_converted?: string | null
+          stock_quantity?: number | null
+          synced_at?: string
+          taxable?: boolean | null
+          ten_hang?: string | null
+          thue_gtgt?: string | null
+          unit?: string | null
+          weight_unit?: string | null
+          weight_value?: number | null
+        }
+        Update: {
+          barcode?: string | null
+          id?: string
+          import_price?: number | null
+          input_vat_rate?: number | null
+          linked_variant_id?: string | null
+          name?: string
+          note?: string | null
+          opt1?: string | null
+          opt2?: string | null
+          opt3?: string | null
+          output_vat_rate?: number | null
+          retail_price?: number | null
+          sapo_product_id?: string
+          sapo_variant_id?: number
+          sku?: string | null
+          sku_converted?: string | null
+          stock_quantity?: number | null
+          synced_at?: string
+          taxable?: boolean | null
+          ten_hang?: string | null
+          thue_gtgt?: string | null
+          unit?: string | null
+          weight_unit?: string | null
+          weight_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sapo_product_variants_linked_variant_id_fkey"
+            columns: ["linked_variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sapo_product_variants_sapo_product_id_fkey"
+            columns: ["sapo_product_id"]
+            isOneToOne: false
+            referencedRelation: "sapo_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sapo_products: {
+        Row: {
+          brand: string | null
+          category: string | null
+          created_on: string | null
+          description: string | null
+          id: string
+          linked_product_id: string | null
+          modified_on: string | null
+          name: string
+          note: string | null
+          opt1: string | null
+          opt2: string | null
+          opt3: string | null
+          product_type: string | null
+          published_on: string | null
+          sapo_id: number
+          sku_converted: string | null
+          synced_at: string
+          tags: string | null
+          ten_hang: string | null
+          unit: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          created_on?: string | null
+          description?: string | null
+          id?: string
+          linked_product_id?: string | null
+          modified_on?: string | null
+          name: string
+          note?: string | null
+          opt1?: string | null
+          opt2?: string | null
+          opt3?: string | null
+          product_type?: string | null
+          published_on?: string | null
+          sapo_id: number
+          sku_converted?: string | null
+          synced_at?: string
+          tags?: string | null
+          ten_hang?: string | null
+          unit?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          created_on?: string | null
+          description?: string | null
+          id?: string
+          linked_product_id?: string | null
+          modified_on?: string | null
+          name?: string
+          note?: string | null
+          opt1?: string | null
+          opt2?: string | null
+          opt3?: string | null
+          product_type?: string | null
+          published_on?: string | null
+          sapo_id?: number
+          sku_converted?: string | null
+          synced_at?: string
+          tags?: string | null
+          ten_hang?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sapo_products_linked_product_id_fkey"
+            columns: ["linked_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
