@@ -154,6 +154,8 @@ const Profile = () => {
   const [editPetForm, setEditPetForm] = useState<Partial<Pet>>({});
   const [editPetBirthday, setEditPetBirthday] = useState<Date | undefined>(undefined);
   const [editPetPhotoFile, setEditPetPhotoFile] = useState<File | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -248,19 +250,43 @@ const Profile = () => {
   };
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (updates: Partial<Profile>) => {
+    mutationFn: async (updates: Partial<Profile> & { avatarFile?: File }) => {
+      let avatarUrl = updates.avatar_url;
+      
+      if (updates.avatarFile) {
+        setUploadingAvatar(true);
+        const fileExt = updates.avatarFile.name.split('.').pop();
+        const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("pet-photos")
+          .upload(fileName, updates.avatarFile);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from("pet-photos")
+          .getPublicUrl(fileName);
+        
+        avatarUrl = publicUrl;
+        setUploadingAvatar(false);
+      }
+      
+      const { avatarFile: _, ...updateData } = updates;
       const { error } = await supabase
         .from("profiles")
-        .update(updates)
+        .update({ ...updateData, avatar_url: avatarUrl })
         .eq("id", userId!);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", userId] });
       setIsEditing(false);
-      toast({ title: "Cập nhật thành công", description: "Thông tin cá nhân đã được cập nhật." });
+      setAvatarFile(null);
+      toast({ title: "Cập nhật thành công", description: "Thông tin Sen đã được cập nhật." });
     },
     onError: () => {
+      setUploadingAvatar(false);
       toast({ title: "Lỗi", description: "Không thể cập nhật thông tin.", variant: "destructive" });
     },
   });
@@ -521,12 +547,14 @@ const Profile = () => {
     setEditForm({
       full_name: profile?.full_name || "",
       phone: profile?.phone || "",
+      avatar_url: profile?.avatar_url || "",
     });
+    setAvatarFile(null);
     setIsEditing(true);
   };
 
   const handleSaveProfile = () => {
-    updateProfileMutation.mutate(editForm);
+    updateProfileMutation.mutate({ ...editForm, avatarFile: avatarFile || undefined });
   };
 
   const handleAddAddress = () => {
@@ -634,17 +662,43 @@ const Profile = () => {
                     </Button>
                   ) : (
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                      <Button variant="outline" size="sm" onClick={() => { setIsEditing(false); setAvatarFile(null); }}>
                         <X className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="gap-2">
-                        <Save className="h-4 w-4" />
+                      <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending || uploadingAvatar} className="gap-2">
+                        {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         Lưu
                       </Button>
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                  {/* Avatar Section */}
+                  <div className="flex flex-col items-center gap-4 pb-4 border-b">
+                    <div className="relative">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={avatarFile ? URL.createObjectURL(avatarFile) : profile?.avatar_url || undefined} />
+                        <AvatarFallback className="text-2xl">{getInitials(profile?.full_name)}</AvatarFallback>
+                      </Avatar>
+                      {isEditing && (
+                        <label className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
+                          <Edit2 className="h-4 w-4" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) setAvatarFile(file);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {isEditing && avatarFile && (
+                      <p className="text-sm text-muted-foreground">Ảnh mới: {avatarFile.name}</p>
+                    )}
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Họ và tên</Label>
