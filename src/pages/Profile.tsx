@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -17,7 +16,6 @@ import {
   MapPin, 
   Package, 
   Heart, 
-  Settings, 
   LogOut,
   Edit2,
   Save,
@@ -50,8 +48,18 @@ interface Address {
   is_default: boolean | null;
 }
 
+type MenuSection = "profile" | "addresses" | "orders" | "wishlist";
+
+const menuItems: { key: MenuSection; label: string; icon: React.ElementType }[] = [
+  { key: "profile", label: "Thông tin cá nhân", icon: User },
+  { key: "addresses", label: "Sổ địa chỉ", icon: MapPin },
+  { key: "orders", label: "Đơn hàng của tôi", icon: Package },
+  { key: "wishlist", label: "Sản phẩm yêu thích", icon: Heart },
+];
+
 const Profile = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
@@ -59,6 +67,16 @@ const Profile = () => {
   const [editForm, setEditForm] = useState<Partial<Profile>>({});
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({});
+
+  const activeSection = (searchParams.get("tab") as MenuSection) || "profile";
+
+  const setActiveSection = (section: MenuSection) => {
+    if (section === "orders") {
+      navigate("/orders");
+      return;
+    }
+    setSearchParams({ tab: section });
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -173,12 +191,10 @@ const Profile = () => {
 
   const setDefaultAddressMutation = useMutation({
     mutationFn: async (addressId: string) => {
-      // First, unset all defaults
       await supabase
         .from("addresses")
         .update({ is_default: false })
         .eq("user_id", userId!);
-      // Then set the new default
       const { error } = await supabase
         .from("addresses")
         .update({ is_default: true })
@@ -226,9 +242,9 @@ const Profile = () => {
       <div className="min-h-screen flex flex-col bg-muted/30">
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <Skeleton className="h-32 w-full mb-6 rounded-xl" />
-            <Skeleton className="h-64 w-full rounded-xl" />
+          <div className="flex gap-8">
+            <Skeleton className="h-80 w-64 rounded-xl hidden lg:block" />
+            <Skeleton className="h-96 flex-1 rounded-xl" />
           </div>
         </main>
         <Footer />
@@ -245,54 +261,61 @@ const Profile = () => {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Profile Header */}
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile?.avatar_url || ""} />
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                    {getInitials(profile?.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-center sm:text-left">
-                  <h1 className="text-2xl font-bold">{profile?.full_name || "Chưa cập nhật tên"}</h1>
-                  <p className="text-muted-foreground">{profile?.email}</p>
-                  {profile?.phone && (
-                    <p className="text-muted-foreground flex items-center justify-center sm:justify-start gap-1 mt-1">
-                      <Phone className="h-4 w-4" />
-                      {profile.phone}
-                    </p>
-                  )}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <aside className="w-full lg:w-64 shrink-0">
+            <Card>
+              <CardContent className="p-4">
+                {/* User Info */}
+                <div className="flex items-center gap-3 pb-4 border-b mb-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {getInitials(profile?.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{profile?.full_name || "Chưa cập nhật"}</p>
+                    <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
+                  </div>
                 </div>
-                <Button variant="outline" onClick={handleLogout} className="gap-2">
-                  <LogOut className="h-4 w-4" />
-                  Đăng xuất
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Tabs */}
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="profile" className="gap-2">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">Thông tin</span>
-              </TabsTrigger>
-              <TabsTrigger value="addresses" className="gap-2">
-                <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">Địa chỉ</span>
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="gap-2" onClick={() => navigate("/orders")}>
-                <Package className="h-4 w-4" />
-                <span className="hidden sm:inline">Đơn hàng</span>
-              </TabsTrigger>
-            </TabsList>
+                {/* Menu Items */}
+                <nav className="space-y-1">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setActiveSection(item.key)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                        activeSection === item.key
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </nav>
 
-            {/* Profile Tab */}
-            <TabsContent value="profile">
+                {/* Logout */}
+                <div className="pt-4 mt-4 border-t">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Profile Section */}
+            {activeSection === "profile" && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -359,10 +382,10 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            {/* Addresses Tab */}
-            <TabsContent value="addresses">
+            {/* Addresses Section */}
+            {activeSection === "addresses" && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -498,18 +521,25 @@ const Profile = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            {/* Orders Tab - Redirects to Orders page */}
-            <TabsContent value="orders">
+            {/* Wishlist Section */}
+            {activeSection === "wishlist" && (
               <Card>
-                <CardContent className="p-8 text-center">
-                  <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p>Đang chuyển đến trang đơn hàng...</p>
+                <CardHeader>
+                  <CardTitle>Sản phẩm yêu thích</CardTitle>
+                  <CardDescription>Các sản phẩm bạn đã lưu</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Chưa có sản phẩm yêu thích</p>
+                    <p className="text-sm">Lưu sản phẩm yêu thích để mua sau</p>
+                  </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         </div>
       </main>
 
