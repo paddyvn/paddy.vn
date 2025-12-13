@@ -150,6 +150,10 @@ const Profile = () => {
   const [petBirthday, setPetBirthday] = useState<Date | undefined>(undefined);
   const [petPhotoFile, setPetPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [editingPet, setEditingPet] = useState<Pet | null>(null);
+  const [editPetForm, setEditPetForm] = useState<Partial<Pet>>({});
+  const [editPetBirthday, setEditPetBirthday] = useState<Date | undefined>(undefined);
+  const [editPetPhotoFile, setEditPetPhotoFile] = useState<File | null>(null);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -391,6 +395,58 @@ const Profile = () => {
     },
   });
 
+  const updatePetMutation = useMutation({
+    mutationFn: async (pet: Partial<Pet> & { photoFile?: File }) => {
+      if (!editingPet) return;
+      
+      let photoUrl = editingPet.photo_url;
+      
+      if (pet.photoFile) {
+        setUploadingPhoto(true);
+        const fileExt = pet.photoFile.name.split('.').pop();
+        const fileName = `${userId}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("pet-photos")
+          .upload(fileName, pet.photoFile);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from("pet-photos")
+          .getPublicUrl(fileName);
+        
+        photoUrl = publicUrl;
+        setUploadingPhoto(false);
+      }
+      
+      const { error } = await supabase
+        .from("pets")
+        .update({
+          name: pet.name!,
+          species: pet.species!,
+          breed: pet.breed || null,
+          age_years: pet.age_years || null,
+          age_months: pet.age_months || null,
+          photo_url: photoUrl,
+        })
+        .eq("id", editingPet.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pets", userId] });
+      setEditingPet(null);
+      setEditPetForm({});
+      setEditPetBirthday(undefined);
+      setEditPetPhotoFile(null);
+      toast({ title: "Cập nhật Boss thành công!" });
+    },
+    onError: () => {
+      setUploadingPhoto(false);
+      toast({ title: "Lỗi", description: "Không thể cập nhật Boss.", variant: "destructive" });
+    },
+  });
+
   const handleAddPet = () => {
     if (!newPet.name || !newPet.species) {
       toast({ title: "Vui lòng điền tên và loại thú cưng", variant: "destructive" });
@@ -412,6 +468,48 @@ const Profile = () => {
       age_months, 
       photoFile: petPhotoFile || undefined 
     });
+  };
+
+  const handleEditPet = () => {
+    if (!editPetForm.name || !editPetForm.species) {
+      toast({ title: "Vui lòng điền tên và loại thú cưng", variant: "destructive" });
+      return;
+    }
+    
+    // Calculate age from birthday
+    let age_years: number | undefined;
+    let age_months: number | undefined;
+    if (editPetBirthday) {
+      const now = new Date();
+      age_years = differenceInYears(now, editPetBirthday);
+      age_months = differenceInMonths(now, editPetBirthday) % 12;
+    }
+    
+    updatePetMutation.mutate({ 
+      ...editPetForm, 
+      age_years, 
+      age_months, 
+      photoFile: editPetPhotoFile || undefined 
+    });
+  };
+
+  const startEditingPet = (pet: Pet) => {
+    setEditingPet(pet);
+    setEditPetForm({
+      name: pet.name,
+      species: pet.species,
+      breed: pet.breed || undefined,
+    });
+    // Calculate birthday from age if available
+    if (pet.age_years || pet.age_months) {
+      const now = new Date();
+      const totalMonths = (pet.age_years || 0) * 12 + (pet.age_months || 0);
+      const birthday = new Date(now.setMonth(now.getMonth() - totalMonths));
+      setEditPetBirthday(birthday);
+    } else {
+      setEditPetBirthday(undefined);
+    }
+    setEditPetPhotoFile(null);
   };
 
   const handleLogout = async () => {
@@ -593,18 +691,19 @@ const Profile = () => {
 
             {/* Boss Section */}
             {activeSection === "boss" && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Boss</CardTitle>
-                    <CardDescription>Quản lý thông tin thú cưng của bạn</CardDescription>
-                  </div>
-                  <Button size="sm" onClick={() => setIsAddingPet(true)} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Thêm Boss
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Boss</CardTitle>
+                      <CardDescription>Quản lý thông tin thú cưng của bạn</CardDescription>
+                    </div>
+                    <Button size="sm" onClick={() => setIsAddingPet(true)} className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Thêm Boss
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                   {/* Add Pet Form */}
                   {isAddingPet && (
                     <Card className="border-dashed">
@@ -815,14 +914,23 @@ const Profile = () => {
                               </p>
                             )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive shrink-0"
-                            onClick={() => deletePetMutation.mutate(pet.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => startEditingPet(pet)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => deletePetMutation.mutate(pet.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -835,6 +943,172 @@ const Profile = () => {
                   ) : null}
                 </CardContent>
               </Card>
+
+              {/* Edit Pet Dialog */}
+              <Dialog open={!!editingPet} onOpenChange={(open) => !open && setEditingPet(null)}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Chỉnh sửa Boss</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Tên Boss *</Label>
+                        <Input
+                          value={editPetForm.name || ""}
+                          onChange={(e) => setEditPetForm({ ...editPetForm, name: e.target.value })}
+                          placeholder="Tên thú cưng"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Loại *</Label>
+                        <Select
+                          value={editPetForm.species || ""}
+                          onValueChange={(value) => setEditPetForm({ ...editPetForm, species: value, breed: undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn loại..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="dog">🐕 Chó</SelectItem>
+                            <SelectItem value="cat">🐈 Mèo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Giống</Label>
+                        <Select
+                          value={editPetForm.breed === "custom" || (editPetForm.breed && !["Poodle", "Corgi", "Golden Retriever", "Labrador", "Husky", "Shiba Inu", "Phốc Sóc", "Chihuahua", "Beagle", "Bulldog", "Chó ta", "Mèo Anh lông ngắn", "Mèo Anh lông dài", "Mèo Ba Tư", "Mèo Munchkin", "Mèo Scottish Fold", "Mèo Bengal", "Mèo Ragdoll", "Mèo Siamese", "Mèo Maine Coon", "Mèo ta"].includes(editPetForm.breed)) ? "custom" : (editPetForm.breed || "")}
+                          onValueChange={(value) => {
+                            if (value === "custom") {
+                              setEditPetForm({ ...editPetForm, breed: "custom" });
+                            } else {
+                              setEditPetForm({ ...editPetForm, breed: value });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn giống..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {editPetForm.species === "dog" ? (
+                              <>
+                                <SelectItem value="Poodle">Poodle</SelectItem>
+                                <SelectItem value="Corgi">Corgi</SelectItem>
+                                <SelectItem value="Golden Retriever">Golden Retriever</SelectItem>
+                                <SelectItem value="Labrador">Labrador</SelectItem>
+                                <SelectItem value="Husky">Husky</SelectItem>
+                                <SelectItem value="Shiba Inu">Shiba Inu</SelectItem>
+                                <SelectItem value="Phốc Sóc">Phốc Sóc</SelectItem>
+                                <SelectItem value="Chihuahua">Chihuahua</SelectItem>
+                                <SelectItem value="Beagle">Beagle</SelectItem>
+                                <SelectItem value="Bulldog">Bulldog</SelectItem>
+                                <SelectItem value="Chó ta">Chó ta</SelectItem>
+                                <SelectItem value="custom">Khác (nhập tên giống)</SelectItem>
+                              </>
+                            ) : editPetForm.species === "cat" ? (
+                              <>
+                                <SelectItem value="Mèo Anh lông ngắn">Mèo Anh lông ngắn</SelectItem>
+                                <SelectItem value="Mèo Anh lông dài">Mèo Anh lông dài</SelectItem>
+                                <SelectItem value="Mèo Ba Tư">Mèo Ba Tư</SelectItem>
+                                <SelectItem value="Mèo Munchkin">Mèo Munchkin</SelectItem>
+                                <SelectItem value="Mèo Scottish Fold">Mèo Scottish Fold</SelectItem>
+                                <SelectItem value="Mèo Bengal">Mèo Bengal</SelectItem>
+                                <SelectItem value="Mèo Ragdoll">Mèo Ragdoll</SelectItem>
+                                <SelectItem value="Mèo Siamese">Mèo Siamese</SelectItem>
+                                <SelectItem value="Mèo Maine Coon">Mèo Maine Coon</SelectItem>
+                                <SelectItem value="Mèo ta">Mèo ta</SelectItem>
+                                <SelectItem value="custom">Khác (nhập tên giống)</SelectItem>
+                              </>
+                            ) : (
+                              <>
+                                <SelectItem value="custom">Khác (nhập tên giống)</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {(editPetForm.breed === "custom" || (editPetForm.breed && !["Poodle", "Corgi", "Golden Retriever", "Labrador", "Husky", "Shiba Inu", "Phốc Sóc", "Chihuahua", "Beagle", "Bulldog", "Chó ta", "Mèo Anh lông ngắn", "Mèo Anh lông dài", "Mèo Ba Tư", "Mèo Munchkin", "Mèo Scottish Fold", "Mèo Bengal", "Mèo Ragdoll", "Mèo Siamese", "Mèo Maine Coon", "Mèo ta", "custom"].includes(editPetForm.breed))) && (
+                          <Input
+                            className="mt-2"
+                            value={editPetForm.breed === "custom" ? "" : editPetForm.breed || ""}
+                            onChange={(e) => setEditPetForm({ ...editPetForm, breed: e.target.value || "custom" })}
+                            placeholder="Nhập tên giống..."
+                          />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Ngày sinh</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !editPetBirthday && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {editPetBirthday ? format(editPetBirthday, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày sinh..."}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={editPetBirthday}
+                              onSelect={setEditPetBirthday}
+                              disabled={(date) => date > new Date() || date < new Date("1990-01-01")}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {editPetBirthday && (
+                          <p className="text-xs text-muted-foreground">
+                            Tuổi: {differenceInYears(new Date(), editPetBirthday)} năm {differenceInMonths(new Date(), editPetBirthday) % 12} tháng
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label>Ảnh Boss</Label>
+                        {editingPet?.photo_url && !editPetPhotoFile && (
+                          <div className="mb-2">
+                            <img src={editingPet.photo_url} alt="Current" className="w-20 h-20 rounded-lg object-cover" />
+                          </div>
+                        )}
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setEditPetPhotoFile(e.target.files?.[0] || null)}
+                        />
+                        {editPetPhotoFile && (
+                          <p className="text-xs text-muted-foreground">Ảnh mới: {editPetPhotoFile.name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setEditingPet(null)}>
+                        Hủy
+                      </Button>
+                      <Button onClick={handleEditPet} disabled={updatePetMutation.isPending || uploadingPhoto}>
+                        {uploadingPhoto ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Đang tải ảnh...
+                          </>
+                        ) : updatePetMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Đang lưu...
+                          </>
+                        ) : (
+                          "Lưu thay đổi"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              </>
             )}
 
             {/* Addresses Section */}
