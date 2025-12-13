@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useBlogPosts, useSyncBlogPosts, useUpdateBlogPost, useDeleteBlogPost } from "@/hooks/useBlogPosts";
+import { useBlogPosts, useSyncBlogPosts, useUpdateBlogPost, useDeleteBlogPost, useCreateBlogPost } from "@/hooks/useBlogPosts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,7 +49,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, Edit, Trash2, RefreshCw } from "lucide-react";
+import { Search, Eye, Edit, Trash2, RefreshCw, Plus } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ContentBlog() {
@@ -59,6 +59,16 @@ export default function ContentBlog() {
   const [editingPost, setEditingPost] = useState<any>(null);
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newPost, setNewPost] = useState({
+    title: "",
+    handle: "",
+    body_html: "",
+    summary_html: "",
+    author: "",
+    tags: "",
+    published: false,
+  });
 
   const POSTS_PER_PAGE = 20;
 
@@ -66,6 +76,7 @@ export default function ContentBlog() {
   const syncPosts = useSyncBlogPosts();
   const updatePost = useUpdateBlogPost();
   const deletePost = useDeleteBlogPost();
+  const createPost = useCreateBlogPost();
 
   // Get unique blogs for filter
   const blogs = useMemo(() => {
@@ -152,23 +163,77 @@ export default function ContentBlog() {
     });
   };
 
+  const generateHandle = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
+
+  const handleCreatePost = () => {
+    if (!newPost.title.trim()) return;
+
+    const handle = newPost.handle.trim() || generateHandle(newPost.title);
+
+    createPost.mutate(
+      {
+        title: newPost.title,
+        handle,
+        body_html: newPost.body_html || undefined,
+        summary_html: newPost.summary_html || undefined,
+        author: newPost.author || undefined,
+        tags: newPost.tags || undefined,
+        published: newPost.published,
+      },
+      {
+        onSuccess: () => {
+          setIsCreating(false);
+          setNewPost({
+            title: "",
+            handle: "",
+            body_html: "",
+            summary_html: "",
+            author: "",
+            tags: "",
+            published: false,
+          });
+        },
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Blog posts</h2>
           <p className="text-muted-foreground">
-            Manage blog posts synced from Shopify
+            Manage blog posts for Paddy's Magazine
           </p>
         </div>
-        <Button
-          onClick={handleSync}
-          disabled={syncPosts.isPending}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${syncPosts.isPending ? "animate-spin" : ""}`} />
-          {syncPosts.isPending ? "Syncing..." : "Sync Blog Posts"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setIsCreating(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create post
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSync}
+            disabled={syncPosts.isPending}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncPosts.isPending ? "animate-spin" : ""}`} />
+            {syncPosts.isPending ? "Syncing..." : "Sync from Shopify"}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -535,6 +600,122 @@ export default function ContentBlog() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Post Dialog */}
+      <Dialog open={isCreating} onOpenChange={setIsCreating}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Blog Post</DialogTitle>
+            <DialogDescription>
+              Create a new article for Paddy's Magazine
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="new-title">Title *</Label>
+              <Input
+                id="new-title"
+                value={newPost.title}
+                onChange={(e) => {
+                  setNewPost({ ...newPost, title: e.target.value });
+                }}
+                placeholder="Enter post title"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="new-handle">URL Handle</Label>
+              <Input
+                id="new-handle"
+                value={newPost.handle}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, handle: e.target.value })
+                }
+                placeholder={newPost.title ? generateHandle(newPost.title) : "auto-generated-from-title"}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave empty to auto-generate from title
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="new-author">Author</Label>
+              <Input
+                id="new-author"
+                value={newPost.author}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, author: e.target.value })
+                }
+                placeholder="Author name"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="new-summary">Summary (HTML)</Label>
+              <Textarea
+                id="new-summary"
+                value={newPost.summary_html}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, summary_html: e.target.value })
+                }
+                rows={4}
+                className="font-mono text-sm"
+                placeholder="Brief summary of the article..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="new-body">Content (HTML)</Label>
+              <Textarea
+                id="new-body"
+                value={newPost.body_html}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, body_html: e.target.value })
+                }
+                rows={15}
+                className="font-mono text-sm"
+                placeholder="Article content in HTML..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="new-tags">Tags (comma-separated)</Label>
+              <Input
+                id="new-tags"
+                value={newPost.tags}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, tags: e.target.value })
+                }
+                placeholder="tag1, tag2, tag3"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="new-published"
+                checked={newPost.published}
+                onCheckedChange={(checked) =>
+                  setNewPost({ ...newPost, published: checked })
+                }
+              />
+              <Label htmlFor="new-published">Publish immediately</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreating(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreatePost} 
+              disabled={createPost.isPending || !newPost.title.trim()}
+            >
+              {createPost.isPending ? "Creating..." : "Create Post"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
