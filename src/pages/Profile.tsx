@@ -36,7 +36,8 @@ import {
   Truck,
   PackageCheck,
   XCircle,
-  Loader2
+  Loader2,
+  PawPrint
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -112,7 +113,7 @@ type MenuSection = "profile" | "boss" | "addresses" | "orders" | "wishlist";
 
 const menuItems: { key: MenuSection; label: string; icon: React.ElementType }[] = [
   { key: "profile", label: "Sen", icon: User },
-  { key: "boss", label: "Boss", icon: Heart },
+  { key: "boss", label: "Boss", icon: PawPrint },
   { key: "addresses", label: "Sổ địa chỉ", icon: MapPin },
   { key: "orders", label: "Đơn hàng của tôi", icon: Package },
   { key: "wishlist", label: "Sản phẩm yêu thích", icon: Heart },
