@@ -327,7 +327,7 @@ const Profile = () => {
             <Skeleton className="h-96 flex-1 rounded-xl" />
           </div>
         </main>
-        <Footer />
+        <Footer hideNewsletter />
       </div>
     );
   }
@@ -853,7 +853,7 @@ const Profile = () => {
         </DialogContent>
       </Dialog>
 
-      <Footer />
+      <Footer hideNewsletter />
     </div>
   );
 };
