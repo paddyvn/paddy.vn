@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -629,11 +630,50 @@ const Profile = () => {
                           </div>
                           <div className="space-y-2">
                             <Label>Giống</Label>
-                            <Input
+                            <Select
                               value={newPet.breed || ""}
-                              onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
-                              placeholder="Poodle, Corgi, ..."
-                            />
+                              onValueChange={(value) => setNewPet({ ...newPet, breed: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn giống..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {newPet.species === "dog" ? (
+                                  <>
+                                    <SelectItem value="Poodle">Poodle</SelectItem>
+                                    <SelectItem value="Corgi">Corgi</SelectItem>
+                                    <SelectItem value="Golden Retriever">Golden Retriever</SelectItem>
+                                    <SelectItem value="Labrador">Labrador</SelectItem>
+                                    <SelectItem value="Husky">Husky</SelectItem>
+                                    <SelectItem value="Shiba Inu">Shiba Inu</SelectItem>
+                                    <SelectItem value="Phốc Sóc">Phốc Sóc</SelectItem>
+                                    <SelectItem value="Chihuahua">Chihuahua</SelectItem>
+                                    <SelectItem value="Beagle">Beagle</SelectItem>
+                                    <SelectItem value="Bulldog">Bulldog</SelectItem>
+                                    <SelectItem value="Chó ta">Chó ta</SelectItem>
+                                    <SelectItem value="Khác">Khác</SelectItem>
+                                  </>
+                                ) : newPet.species === "cat" ? (
+                                  <>
+                                    <SelectItem value="Mèo Anh lông ngắn">Mèo Anh lông ngắn</SelectItem>
+                                    <SelectItem value="Mèo Anh lông dài">Mèo Anh lông dài</SelectItem>
+                                    <SelectItem value="Mèo Ba Tư">Mèo Ba Tư</SelectItem>
+                                    <SelectItem value="Mèo Munchkin">Mèo Munchkin</SelectItem>
+                                    <SelectItem value="Mèo Scottish Fold">Mèo Scottish Fold</SelectItem>
+                                    <SelectItem value="Mèo Bengal">Mèo Bengal</SelectItem>
+                                    <SelectItem value="Mèo Ragdoll">Mèo Ragdoll</SelectItem>
+                                    <SelectItem value="Mèo Siamese">Mèo Siamese</SelectItem>
+                                    <SelectItem value="Mèo Maine Coon">Mèo Maine Coon</SelectItem>
+                                    <SelectItem value="Mèo ta">Mèo ta</SelectItem>
+                                    <SelectItem value="Khác">Khác</SelectItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <SelectItem value="Khác">Khác</SelectItem>
+                                  </>
+                                )}
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="space-y-2">
                             <Label>Tuổi</Label>
