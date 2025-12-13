@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useBlogPosts, useUpdateBlogPost } from "@/hooks/useBlogPosts";
+import { useBlogPosts, useUpdateBlogPost, useCreateBlogPost } from "@/hooks/useBlogPosts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,14 +39,17 @@ export default function BlogPostEdit() {
   const navigate = useNavigate();
   const { data: posts, isLoading } = useBlogPosts();
   const updatePost = useUpdateBlogPost();
+  const createPost = useCreateBlogPost();
+
+  const isNewPost = id === "new";
 
   const [title, setTitle] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
   const [summaryHtml, setSummaryHtml] = useState("");
   const [author, setAuthor] = useState("");
-  const [blogTitle, setBlogTitle] = useState("");
+  const [blogTitle, setBlogTitle] = useState("Paddy's Magazine");
   const [tags, setTags] = useState("");
-  const [published, setPublished] = useState(true);
+  const [published, setPublished] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [handle, setHandle] = useState("");
   
@@ -55,17 +58,17 @@ export default function BlogPostEdit() {
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const post = posts?.find((p) => p.id === id);
+  const post = !isNewPost ? posts?.find((p) => p.id === id) : null;
   
-  // Get all posts for navigation
+  // Get all posts for navigation (only for edit mode)
   const sortedPosts = posts?.slice().sort((a, b) => {
     const dateA = a.shopify_published_at || a.updated_at;
     const dateB = b.shopify_published_at || b.updated_at;
     return new Date(dateB).getTime() - new Date(dateA).getTime();
   });
   const currentIndex = sortedPosts?.findIndex((p) => p.id === id) ?? -1;
-  const prevPost = currentIndex > 0 ? sortedPosts?.[currentIndex - 1] : null;
-  const nextPost = currentIndex < (sortedPosts?.length ?? 0) - 1 ? sortedPosts?.[currentIndex + 1] : null;
+  const prevPost = !isNewPost && currentIndex > 0 ? sortedPosts?.[currentIndex - 1] : null;
+  const nextPost = !isNewPost && currentIndex < (sortedPosts?.length ?? 0) - 1 ? sortedPosts?.[currentIndex + 1] : null;
 
   // Get unique blog titles for selector
   const uniqueBlogs = posts
@@ -73,43 +76,76 @@ export default function BlogPostEdit() {
     : [];
 
   useEffect(() => {
-    if (post) {
+    if (post && !isNewPost) {
       setTitle(post.title);
       setBodyHtml(post.body_html || "");
       setSummaryHtml(post.summary_html || "");
       setAuthor(post.author || "");
-      setBlogTitle(post.blog_title || "");
+      setBlogTitle(post.blog_title || "Paddy's Magazine");
       setTags(post.tags || "");
       setPublished(post.published ?? true);
       setImageUrl(post.image_url || "");
       setHandle(post.handle);
       setHasChanges(false);
     }
-  }, [post]);
+  }, [post, isNewPost]);
+
+  const generateHandle = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
 
   const handleSave = () => {
-    if (!id) return;
-
-    updatePost.mutate(
-      {
-        id,
-        updates: {
+    if (isNewPost) {
+      const finalHandle = handle.trim() || generateHandle(title);
+      createPost.mutate(
+        {
           title,
-          body_html: bodyHtml,
-          summary_html: summaryHtml || null,
-          author: author || null,
-          blog_title: blogTitle || null,
-          tags: tags || null,
+          handle: finalHandle,
+          body_html: bodyHtml || undefined,
+          summary_html: summaryHtml || undefined,
+          author: author || undefined,
+          blog_title: blogTitle || undefined,
+          tags: tags || undefined,
           published,
-          image_url: imageUrl || null,
+          image_url: imageUrl || undefined,
         },
-      },
-      {
-        onSuccess: () => {
-          setHasChanges(false);
+        {
+          onSuccess: () => {
+            setHasChanges(false);
+            navigate("/admin/content/blog");
+          },
+        }
+      );
+    } else if (id) {
+      updatePost.mutate(
+        {
+          id,
+          updates: {
+            title,
+            body_html: bodyHtml,
+            summary_html: summaryHtml || null,
+            author: author || null,
+            blog_title: blogTitle || null,
+            tags: tags || null,
+            published,
+            image_url: imageUrl || null,
+          },
         },
-      }
-    );
+        {
+          onSuccess: () => {
+            setHasChanges(false);
+          },
+        }
+      );
+    }
   };
 
   const markChanged = () => setHasChanges(true);
@@ -131,7 +167,7 @@ export default function BlogPostEdit() {
     );
   }
 
-  if (!post) {
+  if (!isNewPost && !post) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Blog post not found</p>
@@ -150,54 +186,60 @@ export default function BlogPostEdit() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
-          <span className="font-medium truncate max-w-md">{title}</span>
+          <span className="font-medium truncate max-w-md">
+            {isNewPost ? "Create blog post" : title}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/blogs/${handle}`} target="_blank">
-              <Eye className="h-4 w-4 mr-2" />
-              View
-            </Link>
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                More actions
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
+          {!isNewPost && handle && (
+            <>
+              <Button variant="outline" size="sm" asChild>
                 <Link to={`/blogs/${handle}`} target="_blank">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View on store
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
                 </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    More actions
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to={`/blogs/${handle}`} target="_blank">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View on store
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          <div className="flex items-center border rounded-md">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-none rounded-l-md"
-              disabled={!prevPost}
-              onClick={() => prevPost && navigate(`/admin/content/blog/${prevPost.id}/edit`)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-none rounded-r-md border-l"
-              disabled={!nextPost}
-              onClick={() => nextPost && navigate(`/admin/content/blog/${nextPost.id}/edit`)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+              <div className="flex items-center border rounded-md">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-none rounded-l-md"
+                  disabled={!prevPost}
+                  onClick={() => prevPost && navigate(`/admin/content/blog/${prevPost.id}/edit`)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-none rounded-r-md border-l"
+                  disabled={!nextPost}
+                  onClick={() => nextPost && navigate(`/admin/content/blog/${nextPost.id}/edit`)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -374,7 +416,7 @@ export default function BlogPostEdit() {
                     Visible
                   </Label>
                 </div>
-                {post.shopify_published_at && (
+                {post?.shopify_published_at && (
                   <p className="text-xs text-muted-foreground ml-6">
                     As of {format(new Date(post.shopify_published_at), "MMMM d, yyyy 'at' h:mm a")}
                   </p>

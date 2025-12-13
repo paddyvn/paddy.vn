@@ -1409,9 +1409,10 @@ export type Database = {
           output_vat_rate: number | null
           retail_price: number | null
           sapo_product_id: string
-          sapo_variant_id: number
+          sapo_variant_id: number | null
           sku: string | null
           sku_converted: string | null
+          source: string | null
           stock_quantity: number | null
           synced_at: string
           taxable: boolean | null
@@ -1435,9 +1436,10 @@ export type Database = {
           output_vat_rate?: number | null
           retail_price?: number | null
           sapo_product_id: string
-          sapo_variant_id: number
+          sapo_variant_id?: number | null
           sku?: string | null
           sku_converted?: string | null
+          source?: string | null
           stock_quantity?: number | null
           synced_at?: string
           taxable?: boolean | null
@@ -1461,9 +1463,10 @@ export type Database = {
           output_vat_rate?: number | null
           retail_price?: number | null
           sapo_product_id?: string
-          sapo_variant_id?: number
+          sapo_variant_id?: number | null
           sku?: string | null
           sku_converted?: string | null
+          source?: string | null
           stock_quantity?: number | null
           synced_at?: string
           taxable?: boolean | null
@@ -1506,8 +1509,9 @@ export type Database = {
           opt3: string | null
           product_type: string | null
           published_on: string | null
-          sapo_id: number
+          sapo_id: number | null
           sku_converted: string | null
+          source: string | null
           synced_at: string
           tags: string | null
           ten_hang: string | null
@@ -1528,8 +1532,9 @@ export type Database = {
           opt3?: string | null
           product_type?: string | null
           published_on?: string | null
-          sapo_id: number
+          sapo_id?: number | null
           sku_converted?: string | null
+          source?: string | null
           synced_at?: string
           tags?: string | null
           ten_hang?: string | null
@@ -1550,8 +1555,9 @@ export type Database = {
           opt3?: string | null
           product_type?: string | null
           published_on?: string | null
-          sapo_id?: number
+          sapo_id?: number | null
           sku_converted?: string | null
+          source?: string | null
           synced_at?: string
           tags?: string | null
           ten_hang?: string | null
