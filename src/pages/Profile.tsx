@@ -67,6 +67,19 @@ interface Address {
   is_default: boolean | null;
 }
 
+interface Pet {
+  id: string;
+  user_id: string;
+  name: string;
+  species: string;
+  breed: string | null;
+  age_years: number | null;
+  age_months: number | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 type OrderStatus = "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
 interface Order {
@@ -129,6 +142,10 @@ const Profile = () => {
   const [editForm, setEditForm] = useState<Partial<Profile>>({});
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({});
+  const [isAddingPet, setIsAddingPet] = useState(false);
+  const [newPet, setNewPet] = useState<Partial<Pet>>({ species: "dog" });
+  const [petPhotoFile, setPetPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -199,6 +216,20 @@ const Profile = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data as unknown as Order[]) || [];
+    },
+    enabled: !!userId,
+  });
+
+  const { data: pets, isLoading: petsLoading } = useQuery({
+    queryKey: ["pets", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pets")
+        .select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Pet[];
     },
     enabled: !!userId,
   });
@@ -288,6 +319,80 @@ const Profile = () => {
       toast({ title: "Đã đặt làm địa chỉ mặc định" });
     },
   });
+
+  const addPetMutation = useMutation({
+    mutationFn: async (pet: Partial<Pet> & { photoFile?: File }) => {
+      let photoUrl: string | null = null;
+      
+      if (pet.photoFile) {
+        setUploadingPhoto(true);
+        const fileExt = pet.photoFile.name.split('.').pop();
+        const fileName = `${userId}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("pet-photos")
+          .upload(fileName, pet.photoFile);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from("pet-photos")
+          .getPublicUrl(fileName);
+        
+        photoUrl = publicUrl;
+        setUploadingPhoto(false);
+      }
+      
+      const { error } = await supabase
+        .from("pets")
+        .insert({
+          user_id: userId!,
+          name: pet.name!,
+          species: pet.species!,
+          breed: pet.breed || null,
+          age_years: pet.age_years || null,
+          age_months: pet.age_months || null,
+          photo_url: photoUrl,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pets", userId] });
+      setIsAddingPet(false);
+      setNewPet({ species: "dog" });
+      setPetPhotoFile(null);
+      toast({ title: "Thêm Boss thành công!" });
+    },
+    onError: () => {
+      setUploadingPhoto(false);
+      toast({ title: "Lỗi", description: "Không thể thêm Boss.", variant: "destructive" });
+    },
+  });
+
+  const deletePetMutation = useMutation({
+    mutationFn: async (petId: string) => {
+      const { error } = await supabase
+        .from("pets")
+        .delete()
+        .eq("id", petId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pets", userId] });
+      toast({ title: "Xóa Boss thành công" });
+    },
+    onError: () => {
+      toast({ title: "Lỗi", description: "Không thể xóa Boss.", variant: "destructive" });
+    },
+  });
+
+  const handleAddPet = () => {
+    if (!newPet.name || !newPet.species) {
+      toast({ title: "Vui lòng điền tên và loại thú cưng", variant: "destructive" });
+      return;
+    }
+    addPetMutation.mutate({ ...newPet, photoFile: petPhotoFile || undefined });
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -469,16 +574,185 @@ const Profile = () => {
             {/* Boss Section */}
             {activeSection === "boss" && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Boss</CardTitle>
-                  <CardDescription>Quản lý thông tin thú cưng của bạn</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Chưa có thú cưng nào</p>
-                    <p className="text-sm">Thêm thông tin về Boss của bạn</p>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Boss</CardTitle>
+                    <CardDescription>Quản lý thông tin thú cưng của bạn</CardDescription>
                   </div>
+                  <Button size="sm" onClick={() => setIsAddingPet(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Thêm Boss
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add Pet Form */}
+                  {isAddingPet && (
+                    <Card className="border-dashed">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Tên Boss *</Label>
+                            <Input
+                              value={newPet.name || ""}
+                              onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
+                              placeholder="Milu"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Loại thú cưng *</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant={newPet.species === "dog" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setNewPet({ ...newPet, species: "dog" })}
+                              >
+                                🐕 Chó
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={newPet.species === "cat" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setNewPet({ ...newPet, species: "cat" })}
+                              >
+                                🐈 Mèo
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={newPet.species === "other" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setNewPet({ ...newPet, species: "other" })}
+                              >
+                                🐾 Khác
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Giống</Label>
+                            <Input
+                              value={newPet.breed || ""}
+                              onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
+                              placeholder="Poodle, Corgi, ..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Tuổi</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="30"
+                                value={newPet.age_years || ""}
+                                onChange={(e) => setNewPet({ ...newPet, age_years: parseInt(e.target.value) || undefined })}
+                                placeholder="Năm"
+                                className="w-20"
+                              />
+                              <span className="self-center text-sm text-muted-foreground">năm</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="11"
+                                value={newPet.age_months || ""}
+                                onChange={(e) => setNewPet({ ...newPet, age_months: parseInt(e.target.value) || undefined })}
+                                placeholder="Tháng"
+                                className="w-20"
+                              />
+                              <span className="self-center text-sm text-muted-foreground">tháng</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2 sm:col-span-2">
+                            <Label>Ảnh Boss</Label>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => setPetPhotoFile(e.target.files?.[0] || null)}
+                            />
+                            {petPhotoFile && (
+                              <p className="text-sm text-muted-foreground">
+                                Đã chọn: {petPhotoFile.name}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => { setIsAddingPet(false); setNewPet({ species: "dog" }); setPetPhotoFile(null); }}>
+                            Hủy
+                          </Button>
+                          <Button onClick={handleAddPet} disabled={addPetMutation.isPending || uploadingPhoto}>
+                            {uploadingPhoto ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Đang tải ảnh...
+                              </>
+                            ) : addPetMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Đang lưu...
+                              </>
+                            ) : (
+                              "Thêm Boss"
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Pet List */}
+                  {petsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : pets && pets.length > 0 ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {pets.map((pet) => (
+                        <div
+                          key={pet.id}
+                          className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                            {pet.photo_url ? (
+                              <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <PawPrint className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium truncate">{pet.name}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {pet.species === "dog" ? "🐕 Chó" : pet.species === "cat" ? "🐈 Mèo" : "🐾 Khác"}
+                              </Badge>
+                            </div>
+                            {pet.breed && (
+                              <p className="text-sm text-muted-foreground">{pet.breed}</p>
+                            )}
+                            {(pet.age_years || pet.age_months) && (
+                              <p className="text-sm text-muted-foreground">
+                                {pet.age_years ? `${pet.age_years} tuổi` : ""}
+                                {pet.age_years && pet.age_months ? " " : ""}
+                                {pet.age_months ? `${pet.age_months} tháng` : ""}
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive shrink-0"
+                            onClick={() => deletePetMutation.mutate(pet.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : !isAddingPet ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <PawPrint className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Chưa có Boss nào</p>
+                      <p className="text-sm">Thêm thông tin về Boss của bạn</p>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
             )}

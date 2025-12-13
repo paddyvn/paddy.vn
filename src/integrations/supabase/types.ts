@@ -731,6 +731,53 @@ export type Database = {
         }
         Relationships: []
       }
+      pets: {
+        Row: {
+          age_months: number | null
+          age_years: number | null
+          breed: string | null
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          species: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_months?: number | null
+          age_years?: number | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          species: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_months?: number | null
+          age_years?: number | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          species?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_age_ranges: {
         Row: {
           created_at: string | null
