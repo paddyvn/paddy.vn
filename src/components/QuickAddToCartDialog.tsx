@@ -88,7 +88,9 @@ export const QuickAddToCartDialog = ({
   const hasDiscount = comparePrice && comparePrice > currentPrice;
 
   const handleAddToCart = () => {
-    onAddToCart(selectedVariant?.id ?? null, quantity);
+    // Always use variant ID if variants exist, even if only one variant
+    const variantId = selectedVariant?.id ?? (variants.length > 0 ? variants[0].id : null);
+    onAddToCart(variantId, quantity);
   };
 
   const hasOptions = product.option1_name || product.option2_name || product.option3_name;
