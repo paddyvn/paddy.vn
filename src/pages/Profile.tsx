@@ -624,8 +624,8 @@ const Profile = () => {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle>Thông tin cá nhân</CardTitle>
-                    <CardDescription>Quản lý thông tin cá nhân của bạn</CardDescription>
+                    <CardTitle>Thông tin Sen</CardTitle>
+                    <CardDescription>Quản lý thông tin Sen của bạn</CardDescription>
                   </div>
                   {!isEditing ? (
                     <Button variant="outline" size="sm" onClick={handleEditStart} className="gap-2">
