@@ -914,23 +914,13 @@ const Profile = () => {
                               </p>
                             )}
                           </div>
-                          <div className="flex gap-1 shrink-0">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => startEditingPet(pet)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => deletePetMutation.mutate(pet.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => startEditingPet(pet)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -1085,25 +1075,40 @@ const Profile = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setEditingPet(null)}>
-                        Hủy
+                    <div className="flex justify-between items-center">
+                      <Button 
+                        variant="ghost" 
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          if (editingPet) {
+                            deletePetMutation.mutate(editingPet.id);
+                            setEditingPet(null);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Xóa Boss
                       </Button>
-                      <Button onClick={handleEditPet} disabled={updatePetMutation.isPending || uploadingPhoto}>
-                        {uploadingPhoto ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Đang tải ảnh...
-                          </>
-                        ) : updatePetMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Đang lưu...
-                          </>
-                        ) : (
-                          "Lưu thay đổi"
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setEditingPet(null)}>
+                          Hủy
+                        </Button>
+                        <Button onClick={handleEditPet} disabled={updatePetMutation.isPending || uploadingPhoto}>
+                          {uploadingPhoto ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Đang tải ảnh...
+                            </>
+                          ) : updatePetMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Đang lưu...
+                            </>
+                          ) : (
+                            "Lưu thay đổi"
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </DialogContent>
