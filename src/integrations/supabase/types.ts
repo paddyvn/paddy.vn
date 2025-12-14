@@ -361,6 +361,33 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_segments: {
         Row: {
           created_at: string | null
@@ -448,6 +475,168 @@ export type Database = {
           total_spent?: number | null
           updated_at?: string
           verified_email?: boolean | null
+        }
+        Relationships: []
+      }
+      misa_invoice_marketplaces: {
+        Row: {
+          address: string | null
+          buyer_name: string | null
+          buyer_person: string | null
+          created_at: string
+          discount_amount: number | null
+          email: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: number
+          order_code: string | null
+          payment_method: string | null
+          product_code: string
+          product_name: string
+          quantity: number | null
+          subtotal: number | null
+          tax_code: string | null
+          unit: string | null
+          unit_price: number | null
+          updated_at: string
+          vat_amount: number | null
+          vat_rate: string | null
+        }
+        Insert: {
+          address?: string | null
+          buyer_name?: string | null
+          buyer_person?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          email?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number: number
+          order_code?: string | null
+          payment_method?: string | null
+          product_code: string
+          product_name: string
+          quantity?: number | null
+          subtotal?: number | null
+          tax_code?: string | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          vat_amount?: number | null
+          vat_rate?: string | null
+        }
+        Update: {
+          address?: string | null
+          buyer_name?: string | null
+          buyer_person?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          email?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: number
+          order_code?: string | null
+          payment_method?: string | null
+          product_code?: string
+          product_name?: string
+          quantity?: number | null
+          subtotal?: number | null
+          tax_code?: string | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          vat_amount?: number | null
+          vat_rate?: string | null
+        }
+        Relationships: []
+      }
+      misa_products: {
+        Row: {
+          branch: string | null
+          calculation: string | null
+          category: string | null
+          conversion_rate: number | null
+          conversion_unit: string | null
+          created_at: string
+          description: string | null
+          fixed_price: number | null
+          fixed_purchase_price: number | null
+          fixed_selling_price: number | null
+          id: string
+          main_unit: string | null
+          name: string
+          product_group: string | null
+          product_nature: string | null
+          selling_price_1: number | null
+          selling_price_2: number | null
+          selling_price_3: number | null
+          sku: string
+          source: string | null
+          status: string | null
+          stock_quantity: number | null
+          stock_value: number | null
+          synced_at: string
+          tax_reduction: string | null
+          updated_at: string
+          vat: string | null
+        }
+        Insert: {
+          branch?: string | null
+          calculation?: string | null
+          category?: string | null
+          conversion_rate?: number | null
+          conversion_unit?: string | null
+          created_at?: string
+          description?: string | null
+          fixed_price?: number | null
+          fixed_purchase_price?: number | null
+          fixed_selling_price?: number | null
+          id?: string
+          main_unit?: string | null
+          name: string
+          product_group?: string | null
+          product_nature?: string | null
+          selling_price_1?: number | null
+          selling_price_2?: number | null
+          selling_price_3?: number | null
+          sku: string
+          source?: string | null
+          status?: string | null
+          stock_quantity?: number | null
+          stock_value?: number | null
+          synced_at?: string
+          tax_reduction?: string | null
+          updated_at?: string
+          vat?: string | null
+        }
+        Update: {
+          branch?: string | null
+          calculation?: string | null
+          category?: string | null
+          conversion_rate?: number | null
+          conversion_unit?: string | null
+          created_at?: string
+          description?: string | null
+          fixed_price?: number | null
+          fixed_purchase_price?: number | null
+          fixed_selling_price?: number | null
+          id?: string
+          main_unit?: string | null
+          name?: string
+          product_group?: string | null
+          product_nature?: string | null
+          selling_price_1?: number | null
+          selling_price_2?: number | null
+          selling_price_3?: number | null
+          sku?: string
+          source?: string | null
+          status?: string | null
+          stock_quantity?: number | null
+          stock_value?: number | null
+          synced_at?: string
+          tax_reduction?: string | null
+          updated_at?: string
+          vat?: string | null
         }
         Relationships: []
       }
@@ -1285,6 +1474,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          invited_at: string | null
           phone: string | null
           updated_at: string
         }
@@ -1294,6 +1484,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          invited_at?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -1303,6 +1494,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          invited_at?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -1358,6 +1550,259 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          module_name: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_name: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_name?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sapo_order_items: {
+        Row: {
+          discount_amount: number | null
+          id: string
+          name: string | null
+          note: string | null
+          order_id: string
+          price: number
+          product_id: number | null
+          product_name: string | null
+          quantity: number
+          sapo_item_id: number | null
+          sku: string | null
+          tax_amount: number | null
+          variant_id: number | null
+          variant_name: string | null
+          weight: number | null
+        }
+        Insert: {
+          discount_amount?: number | null
+          id?: string
+          name?: string | null
+          note?: string | null
+          order_id: string
+          price?: number
+          product_id?: number | null
+          product_name?: string | null
+          quantity?: number
+          sapo_item_id?: number | null
+          sku?: string | null
+          tax_amount?: number | null
+          variant_id?: number | null
+          variant_name?: string | null
+          weight?: number | null
+        }
+        Update: {
+          discount_amount?: number | null
+          id?: string
+          name?: string | null
+          note?: string | null
+          order_id?: string
+          price?: number
+          product_id?: number | null
+          product_name?: string | null
+          quantity?: number
+          sapo_item_id?: number | null
+          sku?: string | null
+          tax_amount?: number | null
+          variant_id?: number | null
+          variant_name?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sapo_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sapo_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sapo_orders: {
+        Row: {
+          account_id: number | null
+          assignee_id: number | null
+          billing_address: Json | null
+          browser_ip: string | null
+          cancelled_on: string | null
+          channel: string | null
+          closed_on: string | null
+          code: string
+          confirmed_on: string | null
+          contact_id: number | null
+          coupon_code: string | null
+          created_on: string | null
+          currency: string | null
+          customer_code: string | null
+          customer_email: string | null
+          customer_id: number | null
+          customer_name: string | null
+          customer_phone: string | null
+          email: string | null
+          financial_status: string | null
+          fulfillment_status: string | null
+          gateway: string | null
+          id: string
+          invoiced_at: string | null
+          issued_on: string | null
+          landing_site: string | null
+          location_id: number | null
+          modified_on: string | null
+          note: string | null
+          payment_status: string | null
+          phone_number: string | null
+          price_list_id: number | null
+          process_status_id: number | null
+          reference_number: string | null
+          reference_url: string | null
+          referring_site: string | null
+          sapo_order_id: number
+          ship_on_max: string | null
+          ship_on_min: string | null
+          shipping_address: Json | null
+          shipping_cost: number | null
+          source_id: number | null
+          source_name: string | null
+          status: string | null
+          synced_at: string
+          tags: string | null
+          tax_treatment: string | null
+          total: number | null
+          total_discount: number | null
+          total_tax: number | null
+          total_weight: number | null
+        }
+        Insert: {
+          account_id?: number | null
+          assignee_id?: number | null
+          billing_address?: Json | null
+          browser_ip?: string | null
+          cancelled_on?: string | null
+          channel?: string | null
+          closed_on?: string | null
+          code: string
+          confirmed_on?: string | null
+          contact_id?: number | null
+          coupon_code?: string | null
+          created_on?: string | null
+          currency?: string | null
+          customer_code?: string | null
+          customer_email?: string | null
+          customer_id?: number | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          email?: string | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
+          gateway?: string | null
+          id?: string
+          invoiced_at?: string | null
+          issued_on?: string | null
+          landing_site?: string | null
+          location_id?: number | null
+          modified_on?: string | null
+          note?: string | null
+          payment_status?: string | null
+          phone_number?: string | null
+          price_list_id?: number | null
+          process_status_id?: number | null
+          reference_number?: string | null
+          reference_url?: string | null
+          referring_site?: string | null
+          sapo_order_id: number
+          ship_on_max?: string | null
+          ship_on_min?: string | null
+          shipping_address?: Json | null
+          shipping_cost?: number | null
+          source_id?: number | null
+          source_name?: string | null
+          status?: string | null
+          synced_at?: string
+          tags?: string | null
+          tax_treatment?: string | null
+          total?: number | null
+          total_discount?: number | null
+          total_tax?: number | null
+          total_weight?: number | null
+        }
+        Update: {
+          account_id?: number | null
+          assignee_id?: number | null
+          billing_address?: Json | null
+          browser_ip?: string | null
+          cancelled_on?: string | null
+          channel?: string | null
+          closed_on?: string | null
+          code?: string
+          confirmed_on?: string | null
+          contact_id?: number | null
+          coupon_code?: string | null
+          created_on?: string | null
+          currency?: string | null
+          customer_code?: string | null
+          customer_email?: string | null
+          customer_id?: number | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          email?: string | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
+          gateway?: string | null
+          id?: string
+          invoiced_at?: string | null
+          issued_on?: string | null
+          landing_site?: string | null
+          location_id?: number | null
+          modified_on?: string | null
+          note?: string | null
+          payment_status?: string | null
+          phone_number?: string | null
+          price_list_id?: number | null
+          process_status_id?: number | null
+          reference_number?: string | null
+          reference_url?: string | null
+          referring_site?: string | null
+          sapo_order_id?: number
+          ship_on_max?: string | null
+          ship_on_min?: string | null
+          shipping_address?: Json | null
+          shipping_cost?: number | null
+          source_id?: number | null
+          source_name?: string | null
+          status?: string | null
+          synced_at?: string
+          tags?: string | null
+          tax_treatment?: string | null
+          total?: number | null
+          total_discount?: number | null
+          total_tax?: number | null
+          total_weight?: number | null
+        }
+        Relationships: []
       }
       sapo_product_images: {
         Row: {
@@ -1573,6 +2018,71 @@ export type Database = {
           },
         ]
       }
+      user_custom_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_custom_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_custom_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_module_access: {
+        Row: {
+          created_at: string
+          id: string
+          module_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1643,6 +2153,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_module_access: {
+        Args: { _module_name: string; _user_id: string }
+        Returns: boolean
+      }
+      has_module_access_via_role: {
+        Args: { _module_name: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
