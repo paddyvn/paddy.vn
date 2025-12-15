@@ -190,6 +190,11 @@ All colors MUST be HSL.
     margin-top: 1.25rem !important;
     margin-bottom: 0.5rem !important;
   }
+  
+  .article-content p {
+    font-size: 0.9375rem !important;
+    line-height: 1.625 !important;
+  }
 }
 
 @layer utilities {
