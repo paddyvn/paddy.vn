@@ -77,6 +77,130 @@ export type Database = {
         }
         Relationships: []
       }
+      acc_transaction_categories: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      acc_transactions: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          credit_account: string | null
+          currency: string | null
+          debit_account: string | null
+          description: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          reference_number: string | null
+          status: string | null
+          tax_amount: number | null
+          tax_rate: number | null
+          transaction_date: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_account?: string | null
+          currency?: string | null
+          debit_account?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          reference_number?: string | null
+          status?: string | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          transaction_date: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_account?: string | null
+          currency?: string | null
+          debit_account?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          reference_number?: string | null
+          status?: string | null
+          tax_amount?: number | null
+          tax_rate?: number | null
+          transaction_date?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acc_transactions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acc_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "acc_transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acc_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       addresses: {
         Row: {
           address_line1: string
