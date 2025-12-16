@@ -68,9 +68,11 @@ const mainItems = [
     icon: Tag,
     subItems: [
       { title: "Flash Sale", url: "/admin/promotions/flash-sale" },
+      { title: "Discounts", url: "/admin/promotions/discounts" },
+      { title: "Vouchers", url: "/admin/promotions/vouchers" },
+      { title: "Combo Buy", url: "/admin/promotions/combo-buy" },
       { title: "Buy More Save More", url: "/admin/promotions/buy-more-save-more" },
       { title: "Free Shipping", url: "/admin/promotions/free-shipping" },
-      { title: "Gifts with Purchase", url: "/admin/promotions/gifts-with-purchase" },
       { title: "Subscription Deals", url: "/admin/promotions/subscription-deals" },
       { title: "Clearance", url: "/admin/promotions/clearance" },
     ],

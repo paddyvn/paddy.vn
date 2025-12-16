@@ -29,9 +29,11 @@ import { toast } from "sonner";
 
 const PROMO_TYPE_MAP: Record<string, { label: string; dbValue: string }> = {
   "flash-sale": { label: "Flash Sale", dbValue: "flash_sale" },
+  "discounts": { label: "Discounts", dbValue: "discounts" },
+  "vouchers": { label: "Vouchers", dbValue: "vouchers" },
+  "combo-buy": { label: "Combo Buy", dbValue: "combo_buy" },
   "buy-more-save-more": { label: "Buy More Save More", dbValue: "buy_more_save_more" },
   "free-shipping": { label: "Free Shipping", dbValue: "free_shipping" },
-  "gifts-with-purchase": { label: "Gifts with Purchase", dbValue: "gifts_with_purchase" },
   "subscription-deals": { label: "Subscription Deals", dbValue: "subscription_deals" },
   "clearance": { label: "Clearance", dbValue: "clearance" },
 };
