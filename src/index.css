@@ -230,3 +230,65 @@ All colors MUST be HSL.
     transition: var(--transition-bounce);
   }
 }
+
+/* Admin layout font size adjustments */
+.admin-layout {
+  font-size: 0.875rem; /* 14px base */
+}
+
+.admin-layout h1 {
+  font-size: 1.5rem !important; /* 24px */
+}
+
+.admin-layout h2 {
+  font-size: 1.25rem !important; /* 20px */
+}
+
+.admin-layout h3 {
+  font-size: 1rem !important; /* 16px */
+}
+
+.admin-layout h4,
+.admin-layout h5,
+.admin-layout h6 {
+  font-size: 0.875rem !important; /* 14px */
+}
+
+.admin-layout p,
+.admin-layout span,
+.admin-layout label,
+.admin-layout td,
+.admin-layout th {
+  font-size: 0.8125rem; /* 13px */
+}
+
+.admin-layout .text-sm {
+  font-size: 0.75rem !important; /* 12px */
+}
+
+.admin-layout .text-xs {
+  font-size: 0.6875rem !important; /* 11px */
+}
+
+.admin-layout .text-lg {
+  font-size: 1rem !important; /* 16px */
+}
+
+.admin-layout .text-xl {
+  font-size: 1.125rem !important; /* 18px */
+}
+
+.admin-layout .text-2xl {
+  font-size: 1.25rem !important; /* 20px */
+}
+
+.admin-layout .text-3xl {
+  font-size: 1.5rem !important; /* 24px */
+}
+
+.admin-layout button,
+.admin-layout input,
+.admin-layout select,
+.admin-layout textarea {
+  font-size: 0.8125rem; /* 13px */
+}
