@@ -1,4 +1,5 @@
 import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft, FileCode, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import paddyLogoFull from "@/assets/paddy-logo-full.avif";
@@ -63,9 +64,9 @@ const mainItems = [
   },
   {
     title: "Deals",
+    url: "/admin/promotions",
     icon: Tag,
     subItems: [
-      { title: "All Deals", url: "/admin/promotions" },
       { title: "Flash Sale", url: "/admin/promotions/flash-sale" },
       { title: "Buy More Save More", url: "/admin/promotions/buy-more-save-more" },
       { title: "Free Shipping", url: "/admin/promotions/free-shipping" },
@@ -145,7 +146,7 @@ export function AdminSidebar() {
             <SidebarMenu>
               {mainItems.map((item) => {
                 if (item.subItems) {
-                  const hasActive = hasActiveChild(item.subItems);
+                  const hasActive = hasActiveChild(item.subItems) || (item.url && isActive(item.url));
                   return (
                     <Collapsible
                       key={item.title}
@@ -153,19 +154,37 @@ export function AdminSidebar() {
                       className="group/collapsible"
                     >
                       <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton
-                            className={hasActive ? "bg-muted text-primary font-medium" : ""}
-                          >
-                            <item.icon className="h-4 w-4" />
-                            {!collapsed && (
-                              <>
-                                <span>{item.title}</span>
-                                <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                              </>
-                            )}
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
+                        <div className="flex items-center w-full">
+                          {item.url ? (
+                            <SidebarMenuButton asChild className={`flex-1 ${hasActive ? "bg-muted text-primary font-medium" : ""}`}>
+                              <NavLink
+                                to={item.url}
+                                end
+                                className="hover:bg-muted/50"
+                                activeClassName="bg-muted text-primary font-medium"
+                              >
+                                <item.icon className="h-4 w-4" />
+                                {!collapsed && <span>{item.title}</span>}
+                              </NavLink>
+                            </SidebarMenuButton>
+                          ) : (
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton
+                                className={`flex-1 ${hasActive ? "bg-muted text-primary font-medium" : ""}`}
+                              >
+                                <item.icon className="h-4 w-4" />
+                                {!collapsed && <span>{item.title}</span>}
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                          )}
+                          {!collapsed && (
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto">
+                                <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                              </Button>
+                            </CollapsibleTrigger>
+                          )}
+                        </div>
                         {!collapsed && (
                           <CollapsibleContent>
                             <SidebarMenuSub>
