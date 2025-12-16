@@ -35,6 +35,7 @@ import ContentAIGenerator from "./pages/admin/ContentAIGenerator";
 import Pages from "./pages/admin/Pages";
 import MarketingBanners from "./pages/admin/MarketingBanners";
 import PromotionsManagement from "./pages/admin/PromotionsManagement";
+import PromotionEdit from "./pages/admin/PromotionEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="content/ai-generator" element={<ContentAIGenerator />} />
             <Route path="marketing/banners" element={<MarketingBanners />} />
             <Route path="promotions" element={<PromotionsManagement />} />
+            <Route path="promotions/:id/edit" element={<PromotionEdit />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
