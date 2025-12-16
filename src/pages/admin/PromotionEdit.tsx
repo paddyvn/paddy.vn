@@ -275,7 +275,7 @@ export default function PromotionEdit() {
 
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
+        {/* Left Panel - Main Settings */}
         <div className="lg:col-span-2 space-y-6">
           {/* Content Card */}
           <Card>
@@ -326,112 +326,66 @@ export default function PromotionEdit() {
             </CardContent>
           </Card>
 
-          {/* Preview Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="rounded-xl p-6 text-white"
-                style={{
-                  background: `linear-gradient(135deg, ${formData.gradient_from}, ${formData.gradient_to})`,
-                }}
-              >
-                <h3 className="text-xl font-bold">{formData.title || "Promotion Title"}</h3>
-                {formData.subtitle && <p className="text-sm opacity-90 mt-1">{formData.subtitle}</p>}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Status Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="is_active">Active</Label>
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Schedule Card */}
           <Card>
             <CardHeader>
               <CardTitle>Schedule</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData.start_date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.start_date ? format(formData.start_date, "PPP") : "No start date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.start_date || undefined}
-                      onSelect={(date) => setFormData({ ...formData, start_date: date || null })}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.start_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.start_date ? format(formData.start_date, "PPP") : "No start date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.start_date || undefined}
+                        onSelect={(date) => setFormData({ ...formData, start_date: date || null })}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-              <div className="space-y-2">
-                <Label>End Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData.end_date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.end_date ? format(formData.end_date, "PPP") : "No end date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.end_date || undefined}
-                      onSelect={(date) => setFormData({ ...formData, end_date: date || null })}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="display_order">Display Order</Label>
-                <Input
-                  id="display_order"
-                  type="number"
-                  value={formData.display_order}
-                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-                />
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.end_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.end_date ? format(formData.end_date, "PPP") : "No end date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.end_date || undefined}
+                        onSelect={(date) => setFormData({ ...formData, end_date: date || null })}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -461,40 +415,128 @@ export default function PromotionEdit() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="gradient_from">Gradient From</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.gradient_from}
-                    onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
-                    className="h-10 w-10 rounded border cursor-pointer"
-                  />
-                  <Input
-                    id="gradient_from"
-                    value={formData.gradient_from}
-                    onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
-                    className="flex-1"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gradient_from">Gradient From</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.gradient_from}
+                      onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
+                      className="h-10 w-10 rounded border cursor-pointer"
+                    />
+                    <Input
+                      id="gradient_from"
+                      value={formData.gradient_from}
+                      onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gradient_to">Gradient To</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.gradient_to}
+                      onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
+                      className="h-10 w-10 rounded border cursor-pointer"
+                    />
+                    <Input
+                      id="gradient_to"
+                      value={formData.gradient_to}
+                      onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="gradient_to">Gradient To</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.gradient_to}
-                    onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
-                    className="h-10 w-10 rounded border cursor-pointer"
-                  />
-                  <Input
-                    id="gradient_to"
-                    value={formData.gradient_to}
-                    onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
-                    className="flex-1"
-                  />
+        {/* Right Panel - Summary */}
+        <div className="space-y-6">
+          {/* Summary Card */}
+          <Card className="bg-muted/30">
+            <CardHeader className="pb-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                {formData.title || "No title yet"}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Type */}
+              <div>
+                <p className="text-sm font-semibold mb-1">Type</p>
+                <p className="text-sm text-muted-foreground">
+                  {PROMO_TYPES.find((t) => t.value === formData.promo_type)?.label || "Deal"}
+                </p>
+              </div>
+
+              {/* Details */}
+              <div>
+                <p className="text-sm font-semibold mb-2">Details</p>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>
+                    {formData.selectedCollections.length + formData.selectedProducts.length === 0
+                      ? "No products/collections selected"
+                      : `${formData.selectedCollections.length} collection(s), ${formData.selectedProducts.length} product(s)`}
+                  </li>
+                  <li>
+                    {formData.start_date
+                      ? `Starts ${format(formData.start_date, "MMM d, yyyy")}`
+                      : "No start date"}
+                  </li>
+                  <li>
+                    {formData.end_date
+                      ? `Ends ${format(formData.end_date, "MMM d, yyyy")}`
+                      : "No end date"}
+                  </li>
+                  <li>{formData.is_active ? "Active" : "Inactive"}</li>
+                </ul>
+              </div>
+
+              {/* Preview */}
+              <div>
+                <p className="text-sm font-semibold mb-2">Preview</p>
+                <div
+                  className="rounded-lg p-4 text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${formData.gradient_from}, ${formData.gradient_to})`,
+                  }}
+                >
+                  <p className="font-semibold text-sm">{formData.title || "Title"}</p>
+                  {formData.subtitle && (
+                    <p className="text-xs opacity-90 mt-0.5">{formData.subtitle}</p>
+                  )}
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="is_active">Active</Label>
+                <Switch
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="display_order">Display Order</Label>
+                <Input
+                  id="display_order"
+                  type="number"
+                  value={formData.display_order}
+                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+                />
               </div>
             </CardContent>
           </Card>
