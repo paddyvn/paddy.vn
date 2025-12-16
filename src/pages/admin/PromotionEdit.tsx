@@ -306,13 +306,8 @@ export default function PromotionEdit() {
                 </div>
               </div>
 
-
-              <Separator className="my-6" />
-
               {/* Schedule Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Active Dates</h3>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="space-y-2">
                     <Label>Start Date</Label>
                     <Popover>
@@ -364,7 +359,6 @@ export default function PromotionEdit() {
                         />
                       </PopoverContent>
                     </Popover>
-                  </div>
                 </div>
               </div>
             </CardContent>
