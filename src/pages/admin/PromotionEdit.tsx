@@ -20,18 +20,22 @@ import { CollectionSelectorPopover } from "@/components/admin/CollectionSelector
 const PROMO_TYPES = [
   { value: "deal", label: "Deal" },
   { value: "flash_sale", label: "Flash Sale" },
+  { value: "discounts", label: "Discounts" },
+  { value: "vouchers", label: "Vouchers" },
+  { value: "combo_buy", label: "Combo Buy" },
   { value: "buy_more_save_more", label: "Buy More Save More" },
   { value: "free_shipping", label: "Free Shipping" },
-  { value: "gifts_with_purchase", label: "Gifts with Purchase" },
   { value: "subscription_deals", label: "Subscription Deals" },
   { value: "clearance", label: "Clearance" },
 ];
 
 const URL_TO_DB_TYPE: Record<string, string> = {
   "flash-sale": "flash_sale",
+  "discounts": "discounts",
+  "vouchers": "vouchers",
+  "combo-buy": "combo_buy",
   "buy-more-save-more": "buy_more_save_more",
   "free-shipping": "free_shipping",
-  "gifts-with-purchase": "gifts_with_purchase",
   "subscription-deals": "subscription_deals",
   "clearance": "clearance",
 };
