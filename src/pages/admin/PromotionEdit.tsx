@@ -303,11 +303,7 @@ export default function PromotionEdit() {
                       placeholder="e.g., Up to 50% off"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Schedule Section */}
-              <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Start Date</Label>
                     <Popover>
@@ -359,8 +355,10 @@ export default function PromotionEdit() {
                         />
                       </PopoverContent>
                     </Popover>
+                  </div>
                 </div>
               </div>
+            </div>
             </CardContent>
           </Card>
 
