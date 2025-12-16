@@ -145,10 +145,12 @@ export default function PromotionsManagement() {
           <h1 className="text-2xl font-bold">{pageTitle}</h1>
           <p className="text-muted-foreground">{pageDescription}</p>
         </div>
-        <Button onClick={handleAddNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add {typeConfig ? typeConfig.label : "Promotion"}
-        </Button>
+        {typeConfig && (
+          <Button onClick={handleAddNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add {typeConfig.label}
+          </Button>
+        )}
       </div>
 
       {/* Promo type filter for main page */}
