@@ -36,6 +36,14 @@ import Pages from "./pages/admin/Pages";
 import MarketingBanners from "./pages/admin/MarketingBanners";
 import PromotionsManagement from "./pages/admin/PromotionsManagement";
 import PromotionEdit from "./pages/admin/PromotionEdit";
+import FlashSaleEdit from "./pages/admin/promotions/FlashSaleEdit";
+import DiscountsEdit from "./pages/admin/promotions/DiscountsEdit";
+import VouchersEdit from "./pages/admin/promotions/VouchersEdit";
+import ComboBuyEdit from "./pages/admin/promotions/ComboBuyEdit";
+import BuyMoreSaveMoreEdit from "./pages/admin/promotions/BuyMoreSaveMoreEdit";
+import FreeShippingEdit from "./pages/admin/promotions/FreeShippingEdit";
+import SubscriptionDealsEdit from "./pages/admin/promotions/SubscriptionDealsEdit";
+import ClearanceEdit from "./pages/admin/promotions/ClearanceEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +90,15 @@ const App = () => (
             <Route path="promotions" element={<PromotionsManagement />} />
             <Route path="promotions/:promoType" element={<PromotionsManagement />} />
             <Route path="promotions/:id/edit" element={<PromotionEdit />} />
+            {/* Type-specific promotion edit routes */}
+            <Route path="promotions/flash-sale/:id/edit" element={<FlashSaleEdit />} />
+            <Route path="promotions/discounts/:id/edit" element={<DiscountsEdit />} />
+            <Route path="promotions/vouchers/:id/edit" element={<VouchersEdit />} />
+            <Route path="promotions/combo-buy/:id/edit" element={<ComboBuyEdit />} />
+            <Route path="promotions/buy-more-save-more/:id/edit" element={<BuyMoreSaveMoreEdit />} />
+            <Route path="promotions/free-shipping/:id/edit" element={<FreeShippingEdit />} />
+            <Route path="promotions/subscription-deals/:id/edit" element={<SubscriptionDealsEdit />} />
+            <Route path="promotions/clearance/:id/edit" element={<ClearanceEdit />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
