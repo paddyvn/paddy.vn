@@ -125,8 +125,16 @@ export default function PromotionsManagement() {
 
   const handleAddNew = () => {
     const url = promoType 
-      ? `/admin/promotions/new/edit?type=${promoType}` 
+      ? `/admin/promotions/${promoType}/new/edit` 
       : "/admin/promotions/new/edit";
+    navigate(url);
+  };
+
+  const handleEdit = (promoId: string, promoTypeValue?: string) => {
+    const typeSlug = promoTypeValue ? Object.entries(PROMO_TYPE_MAP).find(([_, v]) => v.dbValue === promoTypeValue)?.[0] : null;
+    const url = typeSlug 
+      ? `/admin/promotions/${typeSlug}/${promoId}/edit`
+      : `/admin/promotions/${promoId}/edit`;
     navigate(url);
   };
 
@@ -276,7 +284,7 @@ export default function PromotionsManagement() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => navigate(`/admin/promotions/${promo.id}/edit`)}
+                        onClick={() => handleEdit(promo.id, promo.promo_type)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
