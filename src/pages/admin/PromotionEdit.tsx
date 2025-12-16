@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PromotionAppliesTo } from "@/components/admin/PromotionAppliesTo";
+import { Separator } from "@/components/ui/separator";
 
 const PROMO_TYPES = [
   { value: "deal", label: "Deal" },
@@ -276,179 +277,176 @@ export default function PromotionEdit() {
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Main Settings */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Content Card */}
+        <div className="lg:col-span-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Content</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Summer Sale"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="subtitle">Subtitle</Label>
-                <Input
-                  id="subtitle"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  placeholder="e.g., Up to 50% off"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Applies To Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Applies To</CardTitle>
-              <CardDescription>
-                Select which collections or products this promotion applies to
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PromotionAppliesTo
-                selectedCollections={formData.selectedCollections}
-                selectedProducts={formData.selectedProducts}
-                onCollectionsChange={(ids) =>
-                  setFormData({ ...formData, selectedCollections: ids })
-                }
-                onProductsChange={(ids) =>
-                  setFormData({ ...formData, selectedProducts: ids })
-                }
-              />
-            </CardContent>
-          </Card>
-
-          {/* Schedule Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Schedule</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !formData.start_date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.start_date ? format(formData.start_date, "PPP") : "No start date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.start_date || undefined}
-                        onSelect={(date) => setFormData({ ...formData, start_date: date || null })}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>End Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !formData.end_date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.end_date ? format(formData.end_date, "PPP") : "No end date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.end_date || undefined}
-                        onSelect={(date) => setFormData({ ...formData, end_date: date || null })}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Styling Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Styling</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Promo Type</Label>
-                <Select
-                  value={formData.promo_type}
-                  onValueChange={(value) => setFormData({ ...formData, promo_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROMO_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gradient_from">Gradient From</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={formData.gradient_from}
-                      onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
-                      className="h-10 w-10 rounded border cursor-pointer"
-                    />
+            <CardContent className="p-6 space-y-0">
+              {/* Content Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Content</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
                     <Input
-                      id="gradient_from"
-                      value={formData.gradient_from}
-                      onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
-                      className="flex-1"
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g., Summer Sale"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subtitle">Subtitle</Label>
+                    <Input
+                      id="subtitle"
+                      value={formData.subtitle}
+                      onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                      placeholder="e.g., Up to 50% off"
                     />
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="gradient_to">Gradient To</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={formData.gradient_to}
-                      onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
-                      className="h-10 w-10 rounded border cursor-pointer"
-                    />
-                    <Input
-                      id="gradient_to"
-                      value={formData.gradient_to}
-                      onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
-                      className="flex-1"
-                    />
+              <Separator className="my-6" />
+
+              {/* Applies To Section */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold">Applies To</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Select which collections or products this promotion applies to
+                  </p>
+                </div>
+                <PromotionAppliesTo
+                  selectedCollections={formData.selectedCollections}
+                  selectedProducts={formData.selectedProducts}
+                  onCollectionsChange={(ids) =>
+                    setFormData({ ...formData, selectedCollections: ids })
+                  }
+                  onProductsChange={(ids) =>
+                    setFormData({ ...formData, selectedProducts: ids })
+                  }
+                />
+              </div>
+
+              <Separator className="my-6" />
+
+              {/* Styling Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Styling</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Promo Type</Label>
+                    <Select
+                      value={formData.promo_type}
+                      onValueChange={(value) => setFormData({ ...formData, promo_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROMO_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="gradient_from">Gradient From</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={formData.gradient_from}
+                          onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
+                          className="h-10 w-10 rounded border cursor-pointer"
+                        />
+                        <Input
+                          id="gradient_from"
+                          value={formData.gradient_from}
+                          onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="gradient_to">Gradient To</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={formData.gradient_to}
+                          onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
+                          className="h-10 w-10 rounded border cursor-pointer"
+                        />
+                        <Input
+                          id="gradient_to"
+                          value={formData.gradient_to}
+                          onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator className="my-6" />
+
+              {/* Schedule Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Active Dates</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !formData.start_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.start_date ? format(formData.start_date, "PPP") : "No start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formData.start_date || undefined}
+                          onSelect={(date) => setFormData({ ...formData, start_date: date || null })}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>End Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !formData.end_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.end_date ? format(formData.end_date, "PPP") : "No end date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formData.end_date || undefined}
+                          onSelect={(date) => setFormData({ ...formData, end_date: date || null })}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
