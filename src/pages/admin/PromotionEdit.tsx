@@ -277,7 +277,8 @@ export default function PromotionEdit() {
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Main Settings */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Main Settings Card */}
           <Card>
             <CardContent className="p-6 space-y-0">
               {/* Content Section */}
@@ -303,28 +304,6 @@ export default function PromotionEdit() {
                     />
                   </div>
                 </div>
-              </div>
-
-              <Separator className="my-6" />
-
-              {/* Applies To Section */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">Applies To</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Select which collections or products this promotion applies to
-                  </p>
-                </div>
-                <PromotionAppliesTo
-                  selectedCollections={formData.selectedCollections}
-                  selectedProducts={formData.selectedProducts}
-                  onCollectionsChange={(ids) =>
-                    setFormData({ ...formData, selectedCollections: ids })
-                  }
-                  onProductsChange={(ids) =>
-                    setFormData({ ...formData, selectedProducts: ids })
-                  }
-                />
               </div>
 
               <Separator className="my-6" />
@@ -450,6 +429,28 @@ export default function PromotionEdit() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Applies To Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Applies To</CardTitle>
+              <CardDescription>
+                Select which collections or products this promotion applies to
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PromotionAppliesTo
+                selectedCollections={formData.selectedCollections}
+                selectedProducts={formData.selectedProducts}
+                onCollectionsChange={(ids) =>
+                  setFormData({ ...formData, selectedCollections: ids })
+                }
+                onProductsChange={(ids) =>
+                  setFormData({ ...formData, selectedProducts: ids })
+                }
+              />
             </CardContent>
           </Card>
         </div>
