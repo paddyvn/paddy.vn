@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,18 +27,40 @@ import { Plus, Pencil, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
+const PROMO_TYPE_MAP: Record<string, { label: string; dbValue: string }> = {
+  "flash-sale": { label: "Flash Sale", dbValue: "flash_sale" },
+  "buy-more-save-more": { label: "Buy More Save More", dbValue: "buy_more_save_more" },
+  "free-shipping": { label: "Free Shipping", dbValue: "free_shipping" },
+  "gifts-with-purchase": { label: "Gifts with Purchase", dbValue: "gifts_with_purchase" },
+  "subscription-deals": { label: "Subscription Deals", dbValue: "subscription_deals" },
+  "clearance": { label: "Clearance", dbValue: "clearance" },
+};
+
 export default function PromotionsManagement() {
   const navigate = useNavigate();
+  const { promoType } = useParams<{ promoType?: string }>();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const typeConfig = promoType ? PROMO_TYPE_MAP[promoType] : null;
+  const pageTitle = typeConfig ? typeConfig.label : "All Deals";
+  const pageDescription = typeConfig 
+    ? `Manage ${typeConfig.label.toLowerCase()} promotions` 
+    : "Manage deals and promotional banners";
+
   const { data: promotions, isLoading } = useQuery({
-    queryKey: ["promotions"],
+    queryKey: ["promotions", promoType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("promotions")
         .select("*")
         .order("display_order", { ascending: true });
+      
+      if (typeConfig) {
+        query = query.eq("promo_type", typeConfig.dbValue);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -59,22 +81,29 @@ export default function PromotionsManagement() {
     },
   });
 
+  const handleAddNew = () => {
+    const url = promoType 
+      ? `/admin/promotions/new/edit?type=${promoType}` 
+      : "/admin/promotions/new/edit";
+    navigate(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Promotions</h1>
-          <p className="text-muted-foreground">Manage deals and promotional banners</p>
+          <h1 className="text-2xl font-bold">{pageTitle}</h1>
+          <p className="text-muted-foreground">{pageDescription}</p>
         </div>
-        <Button onClick={() => navigate("/admin/promotions/new/edit")}>
+        <Button onClick={handleAddNew}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Promotion
+          Add {typeConfig ? typeConfig.label : "Promotion"}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Promotions</CardTitle>
+          <CardTitle>{pageTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -82,7 +111,9 @@ export default function PromotionsManagement() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : !promotions?.length ? (
-            <p className="text-muted-foreground text-center py-8">No promotions yet</p>
+            <p className="text-muted-foreground text-center py-8">
+              No {typeConfig ? typeConfig.label.toLowerCase() : "promotions"} yet
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -90,7 +121,7 @@ export default function PromotionsManagement() {
                   <TableHead className="w-10"></TableHead>
                   <TableHead>Preview</TableHead>
                   <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
+                  {!typeConfig && <TableHead>Type</TableHead>}
                   <TableHead>Schedule</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -120,9 +151,11 @@ export default function PromotionsManagement() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{promo.promo_type || "deal"}</Badge>
-                    </TableCell>
+                    {!typeConfig && (
+                      <TableCell>
+                        <Badge variant="outline">{promo.promo_type || "deal"}</Badge>
+                      </TableCell>
+                    )}
                     <TableCell>
                       <div className="text-sm">
                         {promo.start_date && (
