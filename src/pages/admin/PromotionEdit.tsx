@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,7 +15,7 @@ import { ArrowLeft, CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { CollectionSelectorPopover } from "@/components/admin/CollectionSelectorPopover";
+import { PromotionAppliesTo } from "@/components/admin/PromotionAppliesTo";
 
 const PROMO_TYPES = [
   { value: "deal", label: "Deal" },
@@ -43,8 +43,6 @@ const URL_TO_DB_TYPE: Record<string, string> = {
 type PromotionFormData = {
   title: string;
   subtitle: string;
-  link_type: string;
-  link_destination: string;
   gradient_from: string;
   gradient_to: string;
   promo_type: string;
@@ -52,13 +50,13 @@ type PromotionFormData = {
   display_order: number;
   start_date: Date | null;
   end_date: Date | null;
+  selectedCollections: string[];
+  selectedProducts: string[];
 };
 
 const getDefaultFormData = (typeFromUrl?: string): PromotionFormData => ({
   title: "",
   subtitle: "",
-  link_type: "collection",
-  link_destination: "",
   gradient_from: "#8B5CF6",
   gradient_to: "#D946EF",
   promo_type: typeFromUrl ? (URL_TO_DB_TYPE[typeFromUrl] || "deal") : "deal",
@@ -66,6 +64,8 @@ const getDefaultFormData = (typeFromUrl?: string): PromotionFormData => ({
   display_order: 0,
   start_date: null,
   end_date: null,
+  selectedCollections: [],
+  selectedProducts: [],
 });
 
 export default function PromotionEdit() {
@@ -93,13 +93,40 @@ export default function PromotionEdit() {
     enabled: !isNew,
   });
 
+  // Fetch existing promotion collections
+  const { data: existingCollections = [] } = useQuery({
+    queryKey: ["promotion-collections", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("promotion_collections")
+        .select("collection_id")
+        .eq("promotion_id", id);
+      if (error) throw error;
+      return data.map((d) => d.collection_id);
+    },
+    enabled: !isNew && !!id,
+  });
+
+  // Fetch existing promotion products
+  const { data: existingProducts = [] } = useQuery({
+    queryKey: ["promotion-products", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("promotion_products")
+        .select("product_id")
+        .eq("promotion_id", id);
+      if (error) throw error;
+      return data.map((d) => d.product_id);
+    },
+    enabled: !isNew && !!id,
+  });
+
   useEffect(() => {
     if (promotion) {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         title: promotion.title || "",
         subtitle: promotion.subtitle || "",
-        link_type: promotion.link_type || "collection",
-        link_destination: promotion.link_destination || "",
         gradient_from: promotion.gradient_from || "#8B5CF6",
         gradient_to: promotion.gradient_to || "#D946EF",
         promo_type: promotion.promo_type || "deal",
@@ -107,17 +134,28 @@ export default function PromotionEdit() {
         display_order: promotion.display_order || 0,
         start_date: promotion.start_date ? new Date(promotion.start_date) : null,
         end_date: promotion.end_date ? new Date(promotion.end_date) : null,
-      });
+      }));
     }
   }, [promotion]);
+
+  // Update selected collections/products when data loads
+  useEffect(() => {
+    if (existingCollections.length > 0 || existingProducts.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        selectedCollections: existingCollections,
+        selectedProducts: existingProducts,
+      }));
+    }
+  }, [existingCollections, existingProducts]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: PromotionFormData) => {
       const payload = {
         title: data.title,
         subtitle: data.subtitle || null,
-        link_type: data.link_type,
-        link_destination: data.link_destination,
+        link_type: "collection", // Keep for backwards compatibility
+        link_destination: "", // Keep for backwards compatibility
         gradient_from: data.gradient_from || null,
         gradient_to: data.gradient_to || null,
         promo_type: data.promo_type || null,
@@ -127,14 +165,57 @@ export default function PromotionEdit() {
         end_date: data.end_date?.toISOString() || null,
       };
 
+      let promotionId = id;
+
       if (isNew) {
-        const { error } = await supabase.from("promotions").insert(payload);
+        const { data: newPromo, error } = await supabase
+          .from("promotions")
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        promotionId = newPromo.id;
       } else {
         const { error } = await supabase
           .from("promotions")
           .update(payload)
           .eq("id", id);
+        if (error) throw error;
+      }
+
+      // Clear existing junction records
+      if (!isNew) {
+        await supabase
+          .from("promotion_collections")
+          .delete()
+          .eq("promotion_id", promotionId);
+        await supabase
+          .from("promotion_products")
+          .delete()
+          .eq("promotion_id", promotionId);
+      }
+
+      // Insert new collection relationships
+      if (data.selectedCollections.length > 0) {
+        const collectionRecords = data.selectedCollections.map((collectionId) => ({
+          promotion_id: promotionId,
+          collection_id: collectionId,
+        }));
+        const { error } = await supabase
+          .from("promotion_collections")
+          .insert(collectionRecords);
+        if (error) throw error;
+      }
+
+      // Insert new product relationships
+      if (data.selectedProducts.length > 0) {
+        const productRecords = data.selectedProducts.map((productId) => ({
+          promotion_id: promotionId,
+          product_id: productId,
+        }));
+        const { error } = await supabase
+          .from("promotion_products")
+          .insert(productRecords);
         if (error) throw error;
       }
     },
@@ -151,10 +232,6 @@ export default function PromotionEdit() {
   const handleSave = () => {
     if (!formData.title.trim()) {
       toast.error("Title is required");
-      return;
-    }
-    if (!formData.link_destination.trim()) {
-      toast.error("Link destination is required");
       return;
     }
     saveMutation.mutate(formData);
@@ -227,51 +304,25 @@ export default function PromotionEdit() {
             </CardContent>
           </Card>
 
-          {/* Link Settings Card */}
+          {/* Applies To Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Link Settings</CardTitle>
+              <CardTitle>Applies To</CardTitle>
+              <CardDescription>
+                Select which collections or products this promotion applies to
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Link Type</Label>
-                <Select
-                  value={formData.link_type}
-                  onValueChange={(value) => setFormData({ ...formData, link_type: value, link_destination: "" })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="collection">Collection</SelectItem>
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="page">Page</SelectItem>
-                    <SelectItem value="custom">Custom URL</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Link Destination *</Label>
-                {formData.link_type === "collection" ? (
-                  <CollectionSelectorPopover
-                    currentLink={formData.link_destination}
-                    onSelect={(link) => setFormData({ ...formData, link_destination: link })}
-                  />
-                ) : (
-                  <Input
-                    value={formData.link_destination}
-                    onChange={(e) => setFormData({ ...formData, link_destination: e.target.value })}
-                    placeholder={
-                      formData.link_type === "product"
-                        ? "/products/product-slug"
-                        : formData.link_type === "page"
-                        ? "/pages/page-slug"
-                        : "https://example.com"
-                    }
-                  />
-                )}
-              </div>
+            <CardContent>
+              <PromotionAppliesTo
+                selectedCollections={formData.selectedCollections}
+                selectedProducts={formData.selectedProducts}
+                onCollectionsChange={(ids) =>
+                  setFormData({ ...formData, selectedCollections: ids })
+                }
+                onProductsChange={(ids) =>
+                  setFormData({ ...formData, selectedProducts: ids })
+                }
+              />
             </CardContent>
           </Card>
 
