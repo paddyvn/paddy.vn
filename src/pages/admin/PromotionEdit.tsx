@@ -306,68 +306,6 @@ export default function PromotionEdit() {
                 </div>
               </div>
 
-              <Separator className="my-6" />
-
-              {/* Styling Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Styling</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Promo Type</Label>
-                    <Select
-                      value={formData.promo_type}
-                      onValueChange={(value) => setFormData({ ...formData, promo_type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PROMO_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="gradient_from">Gradient From</Label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={formData.gradient_from}
-                          onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
-                          className="h-10 w-10 rounded border cursor-pointer"
-                        />
-                        <Input
-                          id="gradient_from"
-                          value={formData.gradient_from}
-                          onChange={(e) => setFormData({ ...formData, gradient_from: e.target.value })}
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="gradient_to">Gradient To</Label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={formData.gradient_to}
-                          onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
-                          className="h-10 w-10 rounded border cursor-pointer"
-                        />
-                        <Input
-                          id="gradient_to"
-                          value={formData.gradient_to}
-                          onChange={(e) => setFormData({ ...formData, gradient_to: e.target.value })}
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <Separator className="my-6" />
 
