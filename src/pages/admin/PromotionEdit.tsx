@@ -254,18 +254,10 @@ export default function PromotionEdit() {
               <div className="space-y-2">
                 <Label>Link Destination *</Label>
                 {formData.link_type === "collection" ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={formData.link_destination}
-                      onChange={(e) => setFormData({ ...formData, link_destination: e.target.value })}
-                      placeholder="/collections/summer-sale"
-                      className="flex-1"
-                    />
-                    <CollectionSelectorPopover
-                      currentLink={formData.link_destination}
-                      onSelect={(link) => setFormData({ ...formData, link_destination: link })}
-                    />
-                  </div>
+                  <CollectionSelectorPopover
+                    currentLink={formData.link_destination}
+                    onSelect={(link) => setFormData({ ...formData, link_destination: link })}
+                  />
                 ) : (
                   <Input
                     value={formData.link_destination}

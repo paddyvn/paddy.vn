@@ -40,6 +40,11 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
     },
   });
 
+  // Find the selected collection based on currentLink
+  const selectedCollection = collections.find(
+    (c) => `/collections/${c.slug}` === currentLink
+  );
+
   const filteredCollections = collections.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.slug.toLowerCase().includes(search.toLowerCase())
@@ -58,10 +63,13 @@ export function CollectionSelectorPopover({ onSelect, currentLink }: CollectionS
         <Button
           variant="outline"
           size="sm"
-          className="w-full justify-start text-muted-foreground font-normal"
+          className={cn(
+            "w-full justify-start font-normal",
+            selectedCollection ? "text-foreground" : "text-muted-foreground"
+          )}
         >
           <ChevronsUpDown className="h-4 w-4 mr-2" />
-          Select collections
+          {selectedCollection ? selectedCollection.name : "Select collections"}
         </Button>
       </PopoverTrigger>
       <PopoverContent 
