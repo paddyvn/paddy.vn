@@ -56,16 +56,29 @@ const SUB_TYPES: Record<string, { label: string; value: string }[]> = {
   ],
 };
 
+const ALL_PROMO_TYPES = [
+  { label: "Flash Sale", value: "flash_sale" },
+  { label: "Discounts", value: "discounts" },
+  { label: "Vouchers", value: "vouchers" },
+  { label: "Combo Buy", value: "combo_buy" },
+  { label: "Buy More Save More", value: "buy_more_save_more" },
+  { label: "Free Shipping", value: "free_shipping" },
+  { label: "Subscription Deals", value: "subscription_deals" },
+  { label: "Clearance", value: "clearance" },
+];
+
 export default function PromotionsManagement() {
   const navigate = useNavigate();
   const { promoType } = useParams<{ promoType?: string }>();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedSubType, setSelectedSubType] = useState<string | null>(null);
+  const [selectedPromoType, setSelectedPromoType] = useState<string | null>(null);
 
-  // Reset sub-type filter when promo type changes
+  // Reset filters when promo type changes
   useEffect(() => {
     setSelectedSubType(null);
+    setSelectedPromoType(null);
   }, [promoType]);
 
   const typeConfig = promoType ? PROMO_TYPE_MAP[promoType] : null;
@@ -76,7 +89,7 @@ export default function PromotionsManagement() {
     : "Manage deals and promotional banners";
 
   const { data: promotions, isLoading } = useQuery({
-    queryKey: ["promotions", promoType],
+    queryKey: ["promotions", promoType, selectedPromoType],
     queryFn: async () => {
       let query = supabase
         .from("promotions")
@@ -85,6 +98,8 @@ export default function PromotionsManagement() {
       
       if (typeConfig) {
         query = query.eq("promo_type", typeConfig.dbValue);
+      } else if (selectedPromoType) {
+        query = query.eq("promo_type", selectedPromoType);
       }
       
       const { data, error } = await query;
@@ -128,6 +143,35 @@ export default function PromotionsManagement() {
         </Button>
       </div>
 
+      {/* Promo type filter for main page */}
+      {!promoType && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-muted-foreground mr-2">Type:</span>
+              <Badge 
+                variant={selectedPromoType === null ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setSelectedPromoType(null)}
+              >
+                All
+              </Badge>
+              {ALL_PROMO_TYPES.map((type) => (
+                <Badge
+                  key={type.value}
+                  variant={selectedPromoType === type.value ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPromoType(type.value)}
+                >
+                  {type.label}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sub-type filter for specific promo type pages */}
       {subTypes && (
         <Card>
           <CardContent className="py-4">
