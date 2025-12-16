@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,25 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CollectionSelectorPopover } from "@/components/admin/CollectionSelectorPopover";
 
+const PROMO_TYPES = [
+  { value: "deal", label: "Deal" },
+  { value: "flash_sale", label: "Flash Sale" },
+  { value: "buy_more_save_more", label: "Buy More Save More" },
+  { value: "free_shipping", label: "Free Shipping" },
+  { value: "gifts_with_purchase", label: "Gifts with Purchase" },
+  { value: "subscription_deals", label: "Subscription Deals" },
+  { value: "clearance", label: "Clearance" },
+];
+
+const URL_TO_DB_TYPE: Record<string, string> = {
+  "flash-sale": "flash_sale",
+  "buy-more-save-more": "buy_more_save_more",
+  "free-shipping": "free_shipping",
+  "gifts-with-purchase": "gifts_with_purchase",
+  "subscription-deals": "subscription_deals",
+  "clearance": "clearance",
+};
+
 type PromotionFormData = {
   title: string;
   subtitle: string;
@@ -31,27 +50,29 @@ type PromotionFormData = {
   end_date: Date | null;
 };
 
-const defaultFormData: PromotionFormData = {
+const getDefaultFormData = (typeFromUrl?: string): PromotionFormData => ({
   title: "",
   subtitle: "",
   link_type: "collection",
   link_destination: "",
   gradient_from: "#8B5CF6",
   gradient_to: "#D946EF",
-  promo_type: "deal",
+  promo_type: typeFromUrl ? (URL_TO_DB_TYPE[typeFromUrl] || "deal") : "deal",
   is_active: true,
   display_order: 0,
   start_date: null,
   end_date: null,
-};
+});
 
 export default function PromotionEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const isNew = id === "new";
+  const typeFromUrl = searchParams.get("type") || undefined;
 
-  const [formData, setFormData] = useState<PromotionFormData>(defaultFormData);
+  const [formData, setFormData] = useState<PromotionFormData>(() => getDefaultFormData(typeFromUrl));
 
   const { data: promotion, isLoading } = useQuery({
     queryKey: ["promotion", id],
@@ -384,10 +405,11 @@ export default function PromotionEdit() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="deal">Deal</SelectItem>
-                    <SelectItem value="sale">Sale</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="featured">Featured</SelectItem>
+                    {PROMO_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

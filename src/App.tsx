@@ -80,6 +80,7 @@ const App = () => (
             <Route path="content/ai-generator" element={<ContentAIGenerator />} />
             <Route path="marketing/banners" element={<MarketingBanners />} />
             <Route path="promotions" element={<PromotionsManagement />} />
+            <Route path="promotions/:promoType" element={<PromotionsManagement />} />
             <Route path="promotions/:id/edit" element={<PromotionEdit />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
