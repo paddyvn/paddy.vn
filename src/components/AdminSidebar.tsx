@@ -158,24 +158,24 @@ export function AdminSidebar() {
                       <SidebarMenuItem>
                         <div className="flex items-center w-full">
                           {item.url ? (
-                            <SidebarMenuButton asChild className={`flex-1 text-sm ${hasActive ? "bg-muted text-primary font-medium" : ""}`}>
+                            <SidebarMenuButton asChild className={`flex-1 text-xs ${hasActive ? "bg-muted text-primary font-medium" : ""}`}>
                               <NavLink
                                 to={item.url}
                                 end
-                                className="hover:bg-muted/50 text-sm"
+                                className="hover:bg-muted/50 text-xs"
                                 activeClassName="bg-muted text-primary font-medium"
                               >
                                 <item.icon className="h-4 w-4" />
-                                {!collapsed && <span className="text-sm">{item.title}</span>}
+                                {!collapsed && <span className="text-xs">{item.title}</span>}
                               </NavLink>
                             </SidebarMenuButton>
                           ) : (
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
-                                className={`flex-1 text-sm ${hasActive ? "bg-muted text-primary font-medium" : ""}`}
+                                className={`flex-1 text-xs ${hasActive ? "bg-muted text-primary font-medium" : ""}`}
                               >
                                 <item.icon className="h-4 w-4" />
-                                {!collapsed && <span className="text-sm">{item.title}</span>}
+                                {!collapsed && <span className="text-xs">{item.title}</span>}
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                           )}
@@ -192,13 +192,13 @@ export function AdminSidebar() {
                             <SidebarMenuSub>
                               {item.subItems.map((subItem) => (
                                 <SidebarMenuSubItem key={subItem.title}>
-                                  <SidebarMenuSubButton asChild className="text-sm">
+                                  <SidebarMenuSubButton asChild className="text-xs">
                                     <NavLink
                                       to={subItem.url}
-                                      className="hover:bg-muted/50 text-sm"
+                                      className="hover:bg-muted/50 text-xs"
                                       activeClassName="bg-muted text-primary font-medium"
                                     >
-                                      <span className="text-sm">{subItem.title}</span>
+                                      <span className="text-xs">{subItem.title}</span>
                                     </NavLink>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
@@ -213,15 +213,15 @@ export function AdminSidebar() {
 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild className="text-sm">
+                    <SidebarMenuButton asChild className="text-xs">
                       <NavLink
                         to={item.url!}
                         end={item.url === "/admin"}
-                        className="hover:bg-muted/50 text-sm"
+                        className="hover:bg-muted/50 text-xs"
                         activeClassName="bg-muted text-primary font-medium"
                       >
                         <item.icon className="h-4 w-4" />
-                        {!collapsed && <span className="text-sm">{item.title}</span>}
+                        {!collapsed && <span className="text-xs">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -235,38 +235,38 @@ export function AdminSidebar() {
       <SidebarFooter className="border-t border-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-sm">
+            <SidebarMenuButton asChild className="text-xs">
               <NavLink
                 to="/admin/settings"
-                className="hover:bg-muted/50 text-sm"
+                className="hover:bg-muted/50 text-xs"
                 activeClassName="bg-muted text-primary font-medium"
               >
                 <Settings className="h-4 w-4" />
-                {!collapsed && <span className="text-sm">Settings</span>}
+                {!collapsed && <span className="text-xs">Settings</span>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-sm">
+            <SidebarMenuButton asChild className="text-xs">
               <NavLink
                 to="/"
-                className="hover:bg-muted/50 text-sm"
+                className="hover:bg-muted/50 text-xs"
               >
                 <ExternalLink className="h-4 w-4" />
-                {!collapsed && <span className="text-sm">Back to Site</span>}
+                {!collapsed && <span className="text-xs">Back to Site</span>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} className="text-sm">
+            <SidebarMenuButton onClick={handleSignOut} className="text-xs">
               <LogOut className="h-4 w-4" />
-              {!collapsed && <span className="text-sm">Sign Out</span>}
+              {!collapsed && <span className="text-xs">Sign Out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={toggleSidebar} className="text-sm">
+            <SidebarMenuButton onClick={toggleSidebar} className="text-xs">
               <PanelLeft className="h-4 w-4" />
-              {!collapsed && <span className="text-sm">Collapse</span>}
+              {!collapsed && <span className="text-xs">Collapse</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
