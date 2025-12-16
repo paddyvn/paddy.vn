@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,13 +38,38 @@ const PROMO_TYPE_MAP: Record<string, { label: string; dbValue: string }> = {
   "clearance": { label: "Clearance", dbValue: "clearance" },
 };
 
+const SUB_TYPES: Record<string, { label: string; value: string }[]> = {
+  "discounts": [
+    { label: "Percentage", value: "percentage" },
+    { label: "Fixed Amount", value: "fixed_amount" },
+    { label: "Special Price", value: "special_price" },
+  ],
+  "vouchers": [
+    { label: "Public", value: "public" },
+    { label: "Private", value: "private" },
+    { label: "Influencer", value: "influencer" },
+  ],
+  "combo-buy": [
+    { label: "Buy X Get Discount Y", value: "buy_x_discount_y" },
+    { label: "Buy X Get Free Y", value: "buy_x_free_y" },
+    { label: "Bundles", value: "bundles" },
+  ],
+};
+
 export default function PromotionsManagement() {
   const navigate = useNavigate();
   const { promoType } = useParams<{ promoType?: string }>();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedSubType, setSelectedSubType] = useState<string | null>(null);
+
+  // Reset sub-type filter when promo type changes
+  useEffect(() => {
+    setSelectedSubType(null);
+  }, [promoType]);
 
   const typeConfig = promoType ? PROMO_TYPE_MAP[promoType] : null;
+  const subTypes = promoType ? SUB_TYPES[promoType] : null;
   const pageTitle = typeConfig ? typeConfig.label : "All Deals";
   const pageDescription = typeConfig 
     ? `Manage ${typeConfig.label.toLowerCase()} promotions` 
@@ -102,6 +127,33 @@ export default function PromotionsManagement() {
           Add {typeConfig ? typeConfig.label : "Promotion"}
         </Button>
       </div>
+
+      {subTypes && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-muted-foreground mr-2">Type:</span>
+              <Badge 
+                variant={selectedSubType === null ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setSelectedSubType(null)}
+              >
+                All
+              </Badge>
+              {subTypes.map((subType) => (
+                <Badge
+                  key={subType.value}
+                  variant={selectedSubType === subType.value ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedSubType(subType.value)}
+                >
+                  {subType.label}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
