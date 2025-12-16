@@ -1624,6 +1624,57 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          end_date: string | null
+          gradient_from: string | null
+          gradient_to: string | null
+          id: string
+          is_active: boolean | null
+          link_destination: string
+          link_type: string
+          promo_type: string | null
+          start_date: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          end_date?: string | null
+          gradient_from?: string | null
+          gradient_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_destination: string
+          link_type?: string
+          promo_type?: string | null
+          start_date?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          end_date?: string | null
+          gradient_from?: string | null
+          gradient_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_destination?: string
+          link_type?: string
+          promo_type?: string | null
+          start_date?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment: string | null
