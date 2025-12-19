@@ -305,7 +305,12 @@ export default function ProductEdit() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(`/product/${product.slug}`, '_blank')}
+            >
               <Eye className="h-4 w-4 mr-2" />
               Preview
             </Button>
