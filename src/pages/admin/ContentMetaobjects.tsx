@@ -38,12 +38,18 @@ interface Attribute {
   country_code?: string;
 }
 
+interface OptionTemplateValue {
+  value: string;
+  value_vi: string;
+}
+
 interface OptionTemplate {
   id: string;
   name: string;
+  name_vi: string;
   display_order: number;
   is_active: boolean;
-  values: string[];
+  values: OptionTemplateValue[];
 }
 
 const ATTRIBUTE_CONFIG: Record<AttributeType, { 
@@ -359,44 +365,49 @@ function OptionTemplatesTable() {
   const [editingTemplate, setEditingTemplate] = useState<OptionTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    name_vi: "",
     is_active: true,
-    values: [] as string[],
+    values: [] as OptionTemplateValue[],
   });
   const [newValue, setNewValue] = useState("");
+  const [newValueVi, setNewValueVi] = useState("");
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ["option-templates-full"],
     queryFn: async () => {
       const { data: templatesData, error: templatesError } = await supabase
         .from("product_option_templates")
-        .select("id, name, display_order, is_active")
+        .select("id, name, name_vi, display_order, is_active")
         .order("display_order", { ascending: true });
       if (templatesError) throw templatesError;
 
       const { data: valuesData, error: valuesError } = await supabase
         .from("product_option_template_values")
-        .select("template_id, value, display_order")
+        .select("template_id, value, value_vi, display_order")
         .order("display_order", { ascending: true });
       if (valuesError) throw valuesError;
 
       const result: OptionTemplate[] = templatesData.map((t) => ({
         id: t.id,
         name: t.name,
+        name_vi: t.name_vi || "",
         display_order: t.display_order || 0,
         is_active: t.is_active ?? true,
-        values: valuesData.filter((v) => v.template_id === t.id).map((v) => v.value),
+        values: valuesData
+          .filter((v) => v.template_id === t.id)
+          .map((v) => ({ value: v.value, value_vi: v.value_vi || "" })),
       }));
       return result;
     },
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { name: string; is_active: boolean; values: string[] }) => {
+    mutationFn: async (data: { name: string; name_vi: string; is_active: boolean; values: OptionTemplateValue[] }) => {
       if (editingTemplate) {
         // Update template
         const { error: updateError } = await supabase
           .from("product_option_templates")
-          .update({ name: data.name, is_active: data.is_active })
+          .update({ name: data.name, name_vi: data.name_vi, is_active: data.is_active })
           .eq("id", editingTemplate.id);
         if (updateError) throw updateError;
 
@@ -412,9 +423,10 @@ function OptionTemplatesTable() {
           const { error: insertError } = await supabase
             .from("product_option_template_values")
             .insert(
-              data.values.map((value, index) => ({
+              data.values.map((v, index) => ({
                 template_id: editingTemplate.id,
-                value,
+                value: v.value,
+                value_vi: v.value_vi,
                 display_order: index,
               }))
             );
@@ -425,7 +437,7 @@ function OptionTemplatesTable() {
         const maxOrder = templates?.reduce((max, t) => Math.max(max, t.display_order), 0) || 0;
         const { data: newTemplate, error: createError } = await supabase
           .from("product_option_templates")
-          .insert({ name: data.name, is_active: data.is_active, display_order: maxOrder + 1 })
+          .insert({ name: data.name, name_vi: data.name_vi, is_active: data.is_active, display_order: maxOrder + 1 })
           .select("id")
           .single();
         if (createError) throw createError;
@@ -435,9 +447,10 @@ function OptionTemplatesTable() {
           const { error: insertError } = await supabase
             .from("product_option_template_values")
             .insert(
-              data.values.map((value, index) => ({
+              data.values.map((v, index) => ({
                 template_id: newTemplate.id,
-                value,
+                value: v.value,
+                value_vi: v.value_vi,
                 display_order: index,
               }))
             );
@@ -504,33 +517,40 @@ function OptionTemplatesTable() {
       setEditingTemplate(template);
       setFormData({
         name: template.name,
+        name_vi: template.name_vi,
         is_active: template.is_active,
         values: [...template.values],
       });
     } else {
       setEditingTemplate(null);
-      setFormData({ name: "", is_active: true, values: [] });
+      setFormData({ name: "", name_vi: "", is_active: true, values: [] });
     }
     setNewValue("");
+    setNewValueVi("");
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingTemplate(null);
-    setFormData({ name: "", is_active: true, values: [] });
+    setFormData({ name: "", name_vi: "", is_active: true, values: [] });
     setNewValue("");
+    setNewValueVi("");
   };
 
   const handleAddValue = () => {
-    if (newValue.trim() && !formData.values.includes(newValue.trim())) {
-      setFormData((p) => ({ ...p, values: [...p.values, newValue.trim()] }));
+    if (newValue.trim() && !formData.values.some(v => v.value === newValue.trim())) {
+      setFormData((p) => ({ 
+        ...p, 
+        values: [...p.values, { value: newValue.trim(), value_vi: newValueVi.trim() }] 
+      }));
       setNewValue("");
+      setNewValueVi("");
     }
   };
 
-  const handleRemoveValue = (value: string) => {
-    setFormData((p) => ({ ...p, values: p.values.filter((v) => v !== value) }));
+  const handleRemoveValue = (valueToRemove: string) => {
+    setFormData((p) => ({ ...p, values: p.values.filter((v) => v.value !== valueToRemove) }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -565,31 +585,42 @@ function OptionTemplatesTable() {
               Add Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
                 {editingTemplate ? "Edit" : "Add"} Option Template
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="template-name">Option Name</Label>
-                <Input
-                  id="template-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g., Size, Color, Flavor"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="template-name">Option Name (EN)</Label>
+                  <Input
+                    id="template-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="e.g., Size, Color"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="template-name-vi">Option Name (VI)</Label>
+                  <Input
+                    id="template-name-vi"
+                    value={formData.name_vi}
+                    onChange={(e) => setFormData((p) => ({ ...p, name_vi: e.target.value }))}
+                    placeholder="e.g., Kích thước, Màu sắc"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
                 <Label>Suggested Values</Label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Input
                     value={newValue}
                     onChange={(e) => setNewValue(e.target.value)}
-                    placeholder="Add a value"
+                    placeholder="Value (EN)"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -597,18 +628,30 @@ function OptionTemplatesTable() {
                       }
                     }}
                   />
-                  <Button type="button" variant="outline" onClick={handleAddValue}>
-                    Add
-                  </Button>
+                  <Input
+                    value={newValueVi}
+                    onChange={(e) => setNewValueVi(e.target.value)}
+                    placeholder="Value (VI)"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddValue();
+                      }
+                    }}
+                  />
                 </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddValue} className="mt-1">
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Value
+                </Button>
                 {formData.values.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.values.map((value) => (
-                      <Badge key={value} variant="secondary" className="gap-1">
-                        {value}
+                    {formData.values.map((v) => (
+                      <Badge key={v.value} variant="secondary" className="gap-1">
+                        {v.value}{v.value_vi ? ` (${v.value_vi})` : ""}
                         <button
                           type="button"
-                          onClick={() => handleRemoveValue(value)}
+                          onClick={() => handleRemoveValue(v.value)}
                           className="ml-1 hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
@@ -665,12 +708,17 @@ function OptionTemplatesTable() {
                   <TableCell>
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </TableCell>
-                  <TableCell className="font-medium">{template.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{template.name}</div>
+                    {template.name_vi && (
+                      <div className="text-xs text-muted-foreground">{template.name_vi}</div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {template.values.slice(0, 5).map((value) => (
-                        <Badge key={value} variant="outline" className="text-xs">
-                          {value}
+                      {template.values.slice(0, 5).map((v) => (
+                        <Badge key={v.value} variant="outline" className="text-xs">
+                          {v.value}
                         </Badge>
                       ))}
                       {template.values.length > 5 && (
