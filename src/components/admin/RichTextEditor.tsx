@@ -13,6 +13,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { useEffect, useCallback } from "react";
+import { ImagePickerDialog } from "./ImagePickerDialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -57,6 +58,7 @@ import {
   IndentDecrease,
   IndentIncrease,
   RemoveFormatting,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -80,6 +82,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [hexBgColor, setHexBgColor] = useState("#eab308");
   const [imageOpen, setImageOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
@@ -502,20 +505,35 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                   }
                 }}
               />
-              <Button
-                type="button"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  if (imageUrl) {
-                    editor.chain().focus().setImage({ src: imageUrl }).run();
-                    setImageUrl("");
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
                     setImageOpen(false);
-                  }
-                }}
-              >
-                Insert Image
-              </Button>
+                    setImagePickerOpen(true);
+                  }}
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Library
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    if (imageUrl) {
+                      editor.chain().focus().setImage({ src: imageUrl }).run();
+                      setImageUrl("");
+                      setImageOpen(false);
+                    }
+                  }}
+                >
+                  Insert Image
+                </Button>
+              </div>
             </div>
           </PopoverContent>
         </Popover>
@@ -676,6 +694,15 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       <div className="overflow-y-auto flex-1">
         <EditorContent editor={editor} />
       </div>
+
+      {/* Image Picker Dialog */}
+      <ImagePickerDialog
+        open={imagePickerOpen}
+        onOpenChange={setImagePickerOpen}
+        onSelect={(url) => {
+          editor.chain().focus().setImage({ src: url }).run();
+        }}
+      />
     </div>
   );
 }
