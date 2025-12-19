@@ -318,9 +318,9 @@ export default function ProductDetail() {
               </TabsList>
               
               <TabsContent value="description" className="pt-6">
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <div 
-                    className="prose prose-sm max-w-none text-foreground"
+                    className="prose prose-sm max-w-none text-foreground text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm"
                     dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
                   />
                   
@@ -349,7 +349,7 @@ export default function ProductDetail() {
               </TabsContent>
               
               <TabsContent value="ingredients" className="pt-6">
-                <div className="prose prose-sm max-w-none">
+                <div className="prose prose-sm max-w-none text-sm [&_p]:text-sm">
                   <p className="text-sm text-muted-foreground">
                     Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
                     Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
