@@ -36,6 +36,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 interface TOCItem {
   id: string;
@@ -448,7 +449,7 @@ const BlogPostDetail = () => {
                 prose-ol:text-foreground/85
                 prose-li:marker:text-primary
                 prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-foreground/80"
-              dangerouslySetInnerHTML={{ __html: post.body_html || "" }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.body_html) }}
             />
 
             {/* Tags */}

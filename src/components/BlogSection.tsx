@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 export const BlogSection = () => {
   const { data: posts } = useQuery({
@@ -68,7 +69,7 @@ export const BlogSection = () => {
                 </h3>
                 {featuredPost.summary_html && (
                   <p className="text-muted-foreground line-clamp-2" 
-                     dangerouslySetInnerHTML={{ __html: featuredPost.summary_html }} 
+                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(featuredPost.summary_html) }} 
                   />
                 )}
               </div>
@@ -99,7 +100,7 @@ export const BlogSection = () => {
                   </h4>
                   {post.summary_html && (
                     <p className="text-sm text-muted-foreground line-clamp-2"
-                       dangerouslySetInnerHTML={{ __html: post.summary_html }} 
+                       dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.summary_html) }} 
                     />
                   )}
                 </div>
