@@ -12,7 +12,8 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
-import { useEffect, useCallback } from "react";
+import { Extension } from "@tiptap/core";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePickerDialog } from "./ImagePickerDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,12 +63,66 @@ import {
   Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useRef } from "react";
 
 const PRESET_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#d946ef",
   "#000000", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f3f4f6",
 ];
+
+const IndentExtension = Extension.create({
+  name: "indent",
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ["paragraph", "heading"],
+        attributes: {
+          indent: {
+            default: 0,
+            parseHTML: (element) => Number(element.getAttribute("data-indent") || 0),
+            renderHTML: (attributes) => {
+              const level = Number(attributes.indent || 0);
+              if (!level) return {};
+              return {
+                "data-indent": String(level),
+                style: `margin-left: ${level * 1.5}rem;`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    const clamp = (n: number) => Math.max(0, Math.min(8, n));
+
+    const updateIndent = (delta: number) =>
+      ({ tr, state, dispatch }: any) => {
+        const { from, to } = state.selection;
+        state.doc.nodesBetween(from, to, (node: any, pos: number) => {
+          if (!node.isTextblock) return;
+          if (node.type.name !== "paragraph" && node.type.name !== "heading") return;
+          const current = Number(node.attrs.indent || 0);
+          const next = clamp(current + delta);
+          if (next !== current) {
+            tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: next });
+          }
+        });
+
+        if (tr.docChanged) {
+          dispatch?.(tr);
+          return true;
+        }
+        return false;
+      };
+
+    return {
+      indent: () => updateIndent(1),
+      outdent: () => updateIndent(-1),
+    } as any;
+  },
+});
 
 interface RichTextEditorProps {
   value: string;
@@ -95,6 +150,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           levels: [1, 2, 3, 4, 5, 6],
         },
       }),
+      IndentExtension,
       Underline.configure({
         HTMLAttributes: {
           class: "underline",
@@ -460,12 +516,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           type="button"
           variant="ghost"
           size="icon"
-          className={cn("h-8 w-8", !editor.can().liftListItem("listItem") && "opacity-50")}
+          className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (editor.can().liftListItem("listItem")) {
               editor.chain().focus().liftListItem("listItem").run();
+              return;
             }
+            (editor.chain().focus() as any).outdent().run();
           }}
         >
           <IndentDecrease className="h-4 w-4" />
@@ -474,12 +532,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           type="button"
           variant="ghost"
           size="icon"
-          className={cn("h-8 w-8", !editor.can().sinkListItem("listItem") && "opacity-50")}
+          className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (editor.can().sinkListItem("listItem")) {
               editor.chain().focus().sinkListItem("listItem").run();
+              return;
             }
+            (editor.chain().focus() as any).indent().run();
           }}
         >
           <IndentIncrease className="h-4 w-4" />
