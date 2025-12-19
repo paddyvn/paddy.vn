@@ -302,7 +302,8 @@ export const useCart = (userId?: string) => {
   return {
     cart,
     isLoading,
-    addToCart: addToCart.mutate,
+    addToCart: addToCart.mutateAsync,
+    addToCartMutation: addToCart,
     removeFromCart: removeFromCart.mutate,
     updateQuantity: updateQuantity.mutate,
     isGuest: !userId,
