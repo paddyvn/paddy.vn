@@ -1507,14 +1507,13 @@ export function ProductVariantsTable({
                                       />
                                     </div>
                                   </TableCell>
-                                  <TableCell className="text-right">
+                                <TableCell className="text-right">
                                     <Input
                                       type="number"
                                       value={editedVariants[variant.id]?.stock_quantity ?? variant.stock_quantity ?? 0}
                                       onChange={(e) => handleStockChange(variant.id, e.target.value)}
                                       onBlur={() => handleBlur(variant.id)}
-                                      className="w-20 ml-auto text-right h-9 bg-muted/50"
-                                      disabled
+                                      className="w-20 ml-auto text-right h-9"
                                     />
                                   </TableCell>
                                   <TableCell>
@@ -1619,8 +1618,7 @@ export function ProductVariantsTable({
                               value={editedVariants[variant.id]?.stock_quantity ?? variant.stock_quantity ?? 0}
                               onChange={(e) => handleStockChange(variant.id, e.target.value)}
                               onBlur={() => handleBlur(variant.id)}
-                              className="w-20 ml-auto text-right h-9 bg-muted/50"
-                              disabled
+                              className="w-20 ml-auto text-right h-9"
                             />
                           </TableCell>
                           <TableCell>
