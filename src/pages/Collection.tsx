@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal, X } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 const PRODUCTS_PER_PAGE = 20;
 const DEFAULT_MAX_PRICE = 10000000;
@@ -593,7 +594,7 @@ const Collection = () => {
             <h2 className="text-xl font-semibold mb-4">About {collection.name}</h2>
             <div 
               className="prose prose-sm max-w-none text-muted-foreground"
-              dangerouslySetInnerHTML={{ __html: collection.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(collection.description) }}
             />
           </div>
         )}

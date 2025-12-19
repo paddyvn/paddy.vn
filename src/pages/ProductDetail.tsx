@@ -16,6 +16,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductBreadcrumb } from "@/components/ProductBreadcrumb";
 import { useToast } from "@/hooks/use-toast";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -321,7 +322,7 @@ export default function ProductDetail() {
                 <div className="space-y-4">
                   <div 
                     className="prose prose-sm max-w-none text-foreground text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm"
-                    dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
                   />
                   
                   <div>
