@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,14 +12,64 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration");
+      throw new Error("Server configuration error");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log("User authenticated:", user.id);
+
     const { petImage, accessoryImage, prompt, size } = await req.json();
+
+    // Input validation
+    if (!petImage || !accessoryImage) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required images (petImage and accessoryImage)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate URL format
+    const urlPattern = /^https?:\/\/.+/;
+    if (!urlPattern.test(petImage) || !urlPattern.test(accessoryImage)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid image URLs - must be valid HTTP/HTTPS URLs' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Starting pet image generation with accessory...");
+    console.log("Starting pet image generation with accessory for user:", user.id);
     console.log("Prompt:", prompt);
     console.log("Size:", size);
 
@@ -78,7 +129,7 @@ ${sizeInstruction}`;
     }
 
     const data = await response.json();
-    console.log("AI response received successfully");
+    console.log("AI response received successfully for user:", user.id);
 
     const generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     const textResponse = data.choices?.[0]?.message?.content;
