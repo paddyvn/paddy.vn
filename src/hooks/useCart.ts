@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ export interface CartItem {
   product_variants?: CartVariant | null;
 }
 
-// Helper functions outside of component
+// Helper functions for localStorage
 const getGuestCart = (): GuestCartItem[] => {
   if (typeof window === "undefined") return [];
   try {
@@ -58,73 +58,59 @@ const clearGuestCart = () => {
   localStorage.removeItem(GUEST_CART_KEY);
 };
 
+// Fetch product details for guest cart items
+const fetchGuestCartWithProducts = async (): Promise<CartItem[]> => {
+  const guestCart = getGuestCart();
+  
+  if (guestCart.length === 0) {
+    return [];
+  }
+
+  const productIds = [...new Set(guestCart.map((item) => item.product_id))];
+  const variantIds = guestCart
+    .map((item) => item.variant_id)
+    .filter((id): id is string => id !== null);
+
+  try {
+    const [productsResult, variantsResult] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id, name, slug, base_price, product_images(image_url, is_primary)")
+        .in("id", productIds),
+      variantIds.length > 0
+        ? supabase.from("product_variants").select("id, name, price").in("id", variantIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const productsMap = new Map((productsResult.data || []).map((p) => [p.id, p]));
+    const variantsMap = new Map((variantsResult.data || []).map((v) => [v.id, v]));
+
+    return guestCart.map((item) => ({
+      ...item,
+      products: productsMap.get(item.product_id) || null,
+      product_variants: item.variant_id ? variantsMap.get(item.variant_id) || null : null,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch guest cart products:", error);
+    return guestCart.map((item) => ({
+      ...item,
+      products: null,
+      product_variants: null,
+    }));
+  }
+};
+
 export const useCart = (userId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [guestCart, setGuestCart] = useState<GuestCartItem[]>([]);
-  const [guestCartWithProducts, setGuestCartWithProducts] = useState<CartItem[]>([]);
-  const [hasSynced, setHasSynced] = useState(false);
-
-  // Load guest cart from localStorage on mount (only for guests)
-  useEffect(() => {
-    if (!userId) {
-      const stored = getGuestCart();
-      setGuestCart(stored);
-    }
-  }, [userId]);
-
-  // Fetch product details for guest cart items
-  useEffect(() => {
-    if (userId || guestCart.length === 0) {
-      setGuestCartWithProducts([]);
-      return;
-    }
-
-    const fetchProducts = async () => {
-      const productIds = [...new Set(guestCart.map((item) => item.product_id))];
-      const variantIds = guestCart
-        .map((item) => item.variant_id)
-        .filter((id): id is string => id !== null);
-
-      try {
-        const [productsResult, variantsResult] = await Promise.all([
-          supabase
-            .from("products")
-            .select("id, name, slug, base_price, product_images(image_url, is_primary)")
-            .in("id", productIds),
-          variantIds.length > 0
-            ? supabase.from("product_variants").select("id, name, price").in("id", variantIds)
-            : Promise.resolve({ data: [] }),
-        ]);
-
-        const productsMap = new Map((productsResult.data || []).map((p) => [p.id, p]));
-        const variantsMap = new Map((variantsResult.data || []).map((v) => [v.id, v]));
-
-        const enriched: CartItem[] = guestCart.map((item) => ({
-          ...item,
-          products: productsMap.get(item.product_id) || null,
-          product_variants: item.variant_id ? variantsMap.get(item.variant_id) || null : null,
-        }));
-
-        setGuestCartWithProducts(enriched);
-      } catch (error) {
-        console.error("Failed to fetch guest cart products:", error);
-      }
-    };
-
-    fetchProducts();
-  }, [guestCart, userId]);
 
   // Sync guest cart to DB when user logs in
   useEffect(() => {
-    if (!userId || hasSynced) return;
+    if (!userId) return;
 
     const syncCart = async () => {
       const storedGuestCart = getGuestCart();
-      if (storedGuestCart.length === 0) {
-        setHasSynced(true);
-        return;
-      }
+      if (storedGuestCart.length === 0) return;
 
       try {
         for (const item of storedGuestCart) {
@@ -140,8 +126,8 @@ export const useCart = (userId?: string) => {
         }
 
         clearGuestCart();
-        setGuestCart([]);
         queryClient.invalidateQueries({ queryKey: ["cart", userId] });
+        queryClient.invalidateQueries({ queryKey: ["guest-cart"] });
 
         toast({
           title: "Cart synced",
@@ -150,15 +136,21 @@ export const useCart = (userId?: string) => {
       } catch (error) {
         console.error("Failed to sync cart:", error);
       }
-
-      setHasSynced(true);
     };
 
     syncCart();
-  }, [userId, hasSynced, queryClient, toast]);
+  }, [userId, queryClient, toast]);
 
-  // Fetch DB cart for logged-in users
-  const cartQuery = useQuery({
+  // Query for guest cart (uses React Query for shared state)
+  const guestCartQuery = useQuery({
+    queryKey: ["guest-cart"],
+    queryFn: fetchGuestCartWithProducts,
+    enabled: !userId,
+    staleTime: 0, // Always refetch to ensure sync
+  });
+
+  // Query for DB cart (logged-in users)
+  const dbCartQuery = useQuery({
     queryKey: ["cart", userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -233,13 +225,14 @@ export const useCart = (userId?: string) => {
         }
 
         saveGuestCart(currentCart);
-        setGuestCart([...currentCart]);
         return currentCart;
       }
     },
     onSuccess: () => {
       if (userId) {
         queryClient.invalidateQueries({ queryKey: ["cart", userId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["guest-cart"] });
       }
       toast({
         title: "Added to cart",
@@ -264,12 +257,13 @@ export const useCart = (userId?: string) => {
       } else {
         const currentCart = getGuestCart().filter((item) => item.id !== cartItemId);
         saveGuestCart(currentCart);
-        setGuestCart([...currentCart]);
       }
     },
     onSuccess: () => {
       if (userId) {
         queryClient.invalidateQueries({ queryKey: ["cart", userId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["guest-cart"] });
       }
       toast({
         title: "Removed from cart",
@@ -290,19 +284,20 @@ export const useCart = (userId?: string) => {
         if (index >= 0) {
           currentCart[index].quantity = quantity;
           saveGuestCart(currentCart);
-          setGuestCart([...currentCart]);
         }
       }
     },
     onSuccess: () => {
       if (userId) {
         queryClient.invalidateQueries({ queryKey: ["cart", userId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["guest-cart"] });
       }
     },
   });
 
-  const cart = userId ? cartQuery.data || [] : guestCartWithProducts;
-  const isLoading = userId ? cartQuery.isLoading : false;
+  const cart = userId ? (dbCartQuery.data || []) : (guestCartQuery.data || []);
+  const isLoading = userId ? dbCartQuery.isLoading : guestCartQuery.isLoading;
 
   return {
     cart,
