@@ -214,7 +214,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       editorProps: {
         attributes: {
           class:
-            "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
+            "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li]:my-1 [&_li::marker]:text-muted-foreground",
           "data-placeholder": placeholder || "",
         },
       },
@@ -546,11 +546,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
+            // If selection is in a list, decrease indent using list command
             if (editor.can().liftListItem("listItem")) {
               editor.chain().focus().liftListItem("listItem").run();
-              return;
+            } else {
+              // Otherwise use custom outdent for paragraphs/headings
+              const chain = editor.chain().focus() as any;
+              if (chain.outdent) chain.outdent().run();
             }
-            (editor.chain().focus() as any).outdent().run();
           }}
         >
           <IndentDecrease className="h-4 w-4" />
@@ -562,11 +565,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
+            // If selection is in a list, increase indent using list command
             if (editor.can().sinkListItem("listItem")) {
               editor.chain().focus().sinkListItem("listItem").run();
-              return;
+            } else {
+              // Otherwise use custom indent for paragraphs/headings
+              const chain = editor.chain().focus() as any;
+              if (chain.indent) chain.indent().run();
             }
-            (editor.chain().focus() as any).indent().run();
           }}
         >
           <IndentIncrease className="h-4 w-4" />
