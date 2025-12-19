@@ -444,7 +444,7 @@ export default function Checkout() {
         <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
-        <Footer />
+        <Footer hideNewsletter />
       </div>
     );
   }
@@ -486,7 +486,7 @@ export default function Checkout() {
             </div>
           </div>
         </main>
-        <Footer />
+        <Footer hideNewsletter />
       </div>
     );
   }
@@ -1009,7 +1009,7 @@ export default function Checkout() {
         </div>
       </main>
 
-      <Footer />
+      <Footer hideNewsletter />
     </div>
   );
 }
