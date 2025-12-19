@@ -45,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { useSyncProducts } from "@/hooks/useSyncProducts";
 import { InlineEditCell } from "@/components/admin/InlineEditCell";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ProductVariant = {
   id: string;
@@ -89,6 +90,8 @@ export default function ProductsManagement() {
   const [sortKey, setSortKey] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [sortOpen, setSortOpen] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -430,6 +433,119 @@ export default function ProductsManagement() {
     queryClient.invalidateQueries({ queryKey: ["admin-products"] });
   };
 
+  // Bulk selection helpers
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!products) return;
+    if (selectedProducts.size === products.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(products.map(p => p.id)));
+    }
+  };
+
+  const isAllSelected = products && products.length > 0 && selectedProducts.size === products.length;
+  const isSomeSelected = selectedProducts.size > 0 && selectedProducts.size < (products?.length || 0);
+
+  // Bulk actions
+  const bulkActivate = async () => {
+    if (selectedProducts.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: true })
+        .in("id", Array.from(selectedProducts));
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Products activated",
+        description: `${selectedProducts.size} products have been activated.`,
+      });
+      setSelectedProducts(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const bulkDeactivate = async () => {
+    if (selectedProducts.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: false })
+        .in("id", Array.from(selectedProducts));
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Products deactivated",
+        description: `${selectedProducts.size} products have been deactivated.`,
+      });
+      setSelectedProducts(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedProducts.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedProducts.size} products? This action cannot be undone.`)) return;
+    
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .in("id", Array.from(selectedProducts));
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Products deleted",
+        description: `${selectedProducts.size} products have been deleted.`,
+      });
+      setSelectedProducts(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-products-count"] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -758,10 +874,66 @@ export default function ProductsManagement() {
         )}
       </div>
 
+      {/* Bulk action bar */}
+      {selectedProducts.size > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+          <span className="text-sm font-medium">
+            {selectedProducts.size} product{selectedProducts.size !== 1 ? "s" : ""} selected
+          </span>
+          <div className="flex gap-2 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={bulkActivate}
+              disabled={bulkActionLoading}
+            >
+              Activate
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={bulkDeactivate}
+              disabled={bulkActionLoading}
+            >
+              Deactivate
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={bulkDelete}
+              disabled={bulkActionLoading}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedProducts(new Set())}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) {
+                      (el as any).indeterminate = isSomeSelected;
+                    }
+                  }}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead className="w-[40px]"></TableHead>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Product</TableHead>
@@ -777,6 +949,9 @@ export default function ProductsManagement() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
                   <TableCell>
                     <Skeleton className="h-4 w-4" />
                   </TableCell>
@@ -808,7 +983,7 @@ export default function ProductsManagement() {
               ))
             ) : products?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   No products found. Try adjusting your search or filters.
                 </TableCell>
               </TableRow>
@@ -816,10 +991,18 @@ export default function ProductsManagement() {
               products?.map((product) => {
                 const isExpanded = expandedRows.has(product.id);
                 const hasVariants = product.product_variants.length > 1;
+                const isSelected = selectedProducts.has(product.id);
                 
                 return (
                   <React.Fragment key={product.id}>
-                    <TableRow className={isExpanded ? "border-b-0" : ""}>
+                    <TableRow className={cn(isExpanded ? "border-b-0" : "", isSelected && "bg-primary/5")}>
+                      <TableCell className="w-[40px]">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleProductSelection(product.id)}
+                          aria-label={`Select ${product.name}`}
+                        />
+                      </TableCell>
                       <TableCell className="w-[40px]">
                         {hasVariants && (
                           <Button
@@ -911,6 +1094,7 @@ export default function ProductsManagement() {
                     {/* Expanded variant rows */}
                     {isExpanded && hasVariants && product.product_variants.map((variant) => (
                       <TableRow key={variant.id} className="bg-muted/30 hover:bg-muted/40">
+                        <TableCell></TableCell>
                         <TableCell></TableCell>
                         <TableCell></TableCell>
                         <TableCell className="py-2 pl-8">
