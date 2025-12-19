@@ -86,16 +86,6 @@ export default function ProductDetail() {
   const isInStock = selectedVariant?.stock_quantity == null || selectedVariant?.stock_quantity > 0;
 
   const handleAddToCart = () => {
-    if (!session?.user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to add items to cart",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
     addToCart({
       productId: product.id,
       variantId: selectedVariant?.id,

@@ -46,11 +46,8 @@ export default function Cart() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id);
-      if (!session?.user?.id) {
-        navigate("/auth");
-      }
     });
-  }, [navigate]);
+  }, []);
 
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
     if (!images || images.length === 0) {

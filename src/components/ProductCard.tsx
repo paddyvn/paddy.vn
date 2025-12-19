@@ -66,15 +66,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   const handleQuickAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!userId) {
-      toast({
-        title: "Vui lòng đăng nhập",
-        description: "Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
     setQuickAddOpen(true);
   };
 
