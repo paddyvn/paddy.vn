@@ -768,7 +768,7 @@ export default function ProductsManagement() {
                   filteredCategories.map((cat) => (
                     <div
                       key={cat.id}
-                      className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
+                      className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center whitespace-nowrap overflow-hidden"
                       onClick={() => {
                         setCategoryFilter(cat.id);
                         setCategoryOpen(false);
@@ -777,11 +777,11 @@ export default function ProductsManagement() {
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
+                          "mr-2 h-4 w-4 shrink-0",
                           categoryFilter === cat.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {cat.name}
+                      <span className="truncate">{cat.name}</span>
                     </div>
                   ))
                 )}
