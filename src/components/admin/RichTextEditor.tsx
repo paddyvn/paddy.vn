@@ -280,6 +280,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive("bold") && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
           <Bold className="h-4 w-4" strokeWidth={3} />
@@ -289,6 +290,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive("italic") && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         >
           <Italic className="h-4 w-4" />
@@ -298,6 +300,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive("underline") && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
         >
           <UnderlineIcon className="h-4 w-4" />
@@ -437,6 +440,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive({ textAlign: "left" }) && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
         >
           <AlignLeft className="h-4 w-4" />
@@ -446,6 +450,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive({ textAlign: "center" }) && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
         >
           <AlignCenter className="h-4 w-4" />
@@ -455,6 +460,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive({ textAlign: "right" }) && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
         >
           <AlignRight className="h-4 w-4" />
