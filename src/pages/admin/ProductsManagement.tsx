@@ -675,7 +675,7 @@ export default function ProductsManagement() {
               <TableHead>Status</TableHead>
               <TableHead>Inventory</TableHead>
               <TableHead>Brand</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>SKU</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
@@ -781,9 +781,7 @@ export default function ProductsManagement() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
-                          {product.product_type || "—"}
-                        </span>
+                        <span className="text-sm text-muted-foreground">—</span>
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(product.base_price)}
@@ -818,40 +816,27 @@ export default function ProductsManagement() {
                     </TableRow>
                     
                     {/* Expanded variant rows */}
-                    {isExpanded && hasVariants && (
-                      <TableRow>
-                        <TableCell colSpan={9} className="p-0 bg-muted/30">
-                          <div className="px-12 py-3">
-                            <Table>
-                              <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                  <TableHead className="h-8 text-xs">Variant</TableHead>
-                                  <TableHead className="h-8 text-xs">SKU</TableHead>
-                                  <TableHead className="h-8 text-xs text-right">Price</TableHead>
-                                  <TableHead className="h-8 text-xs text-right">Available</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {product.product_variants.map((variant) => (
-                                  <TableRow key={variant.id} className="hover:bg-muted/50">
-                                    <TableCell className="py-2 text-sm">{variant.name}</TableCell>
-                                    <TableCell className="py-2 text-sm text-muted-foreground">
-                                      {variant.sku || "—"}
-                                    </TableCell>
-                                    <TableCell className="py-2 text-sm text-right">
-                                      {formatCurrency(variant.price)}
-                                    </TableCell>
-                                    <TableCell className="py-2 text-sm text-right">
-                                      {variant.stock_quantity ?? 0}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
+                    {isExpanded && hasVariants && product.product_variants.map((variant) => (
+                      <TableRow key={variant.id} className="bg-muted/30 hover:bg-muted/40">
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="py-2">
+                          <span className="text-sm text-muted-foreground pl-4">{variant.name}</span>
                         </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="py-2 text-sm">
+                          {variant.stock_quantity ?? 0}
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="py-2 text-sm text-muted-foreground">
+                          {variant.sku || "—"}
+                        </TableCell>
+                        <TableCell className="py-2 text-sm text-right">
+                          {formatCurrency(variant.price)}
+                        </TableCell>
+                        <TableCell></TableCell>
                       </TableRow>
-                    )}
+                    ))}
                   </React.Fragment>
                 );
               })
