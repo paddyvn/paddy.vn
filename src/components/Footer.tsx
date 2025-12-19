@@ -40,29 +40,29 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
           {/* Shop */}
           <div>
             <h3 className="font-bold text-lg mb-4">Shop</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Dành Cho Chó
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Dành Cho Mèo
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Thương Hiệu
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Blogs
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Bộ Sưu Tập
                 </a>
               </li>
@@ -72,24 +72,24 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
           {/* Paddy Pet Shop */}
           <div>
             <h3 className="font-bold text-lg mb-4">Paddy Pet Shop</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Giới Thiệu
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Thành Viên Paddier
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Điều Khoản Sử Dụng
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Tuyển Dụng
                 </a>
               </li>
@@ -99,29 +99,29 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
           {/* Hỗ Trợ Khách Hàng */}
           <div>
             <h3 className="font-bold text-lg mb-4">Hỗ Trợ Khách Hàng</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Đổi Trả Hàng
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Phương Thức Vận Chuyển
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Bảo Mật
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Phương Thức Thanh Toán
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Hoàn Tiền
                 </a>
               </li>
