@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { useSyncProducts } from "@/hooks/useSyncProducts";
+import { InlineEditCell } from "@/components/admin/InlineEditCell";
 
 type ProductVariant = {
   id: string;
@@ -84,6 +85,7 @@ export default function ProductsManagement() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const syncProducts = useSyncProducts();
 
   const ITEMS_PER_PAGE = 50;
@@ -398,6 +400,33 @@ export default function ProductsManagement() {
     if (names.length === 0) return "—";
     if (names.length === 1) return names[0];
     return `${names[0]} +${names.length - 1}`;
+  };
+
+  const updateVariant = async (
+    variantId: string,
+    field: "name" | "sku" | "price" | "stock_quantity",
+    value: string | number
+  ) => {
+    const { error } = await supabase
+      .from("product_variants")
+      .update({ [field]: value })
+      .eq("id", variantId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: `Failed to update variant: ${error.message}`,
+        variant: "destructive",
+      });
+      throw error;
+    }
+
+    toast({
+      title: "Updated",
+      description: "Variant updated successfully",
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["admin-products"] });
   };
 
   return (
@@ -820,19 +849,41 @@ export default function ProductsManagement() {
                       <TableRow key={variant.id} className="bg-muted/30 hover:bg-muted/40">
                         <TableCell></TableCell>
                         <TableCell></TableCell>
+                        <TableCell className="py-2 pl-8">
+                          <InlineEditCell
+                            value={variant.name}
+                            onSave={(val) => updateVariant(variant.id, "name", val)}
+                            className="text-sm text-muted-foreground"
+                          />
+                        </TableCell>
+                        <TableCell></TableCell>
                         <TableCell className="py-2">
-                          <span className="text-sm text-muted-foreground pl-4">{variant.name}</span>
+                          <InlineEditCell
+                            value={variant.stock_quantity ?? 0}
+                            type="number"
+                            onSave={(val) => updateVariant(variant.id, "stock_quantity", val)}
+                            className="text-sm"
+                            inputClassName="w-20"
+                          />
                         </TableCell>
                         <TableCell></TableCell>
-                        <TableCell className="py-2 text-sm">
-                          {variant.stock_quantity ?? 0}
+                        <TableCell className="py-2">
+                          <InlineEditCell
+                            value={variant.sku || ""}
+                            onSave={(val) => updateVariant(variant.id, "sku", val)}
+                            className="text-sm text-muted-foreground"
+                            inputClassName="w-28"
+                          />
                         </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell className="py-2 text-sm text-muted-foreground">
-                          {variant.sku || "—"}
-                        </TableCell>
-                        <TableCell className="py-2 text-sm text-right">
-                          {formatCurrency(variant.price)}
+                        <TableCell className="py-2 text-right">
+                          <InlineEditCell
+                            value={variant.price}
+                            type="number"
+                            onSave={(val) => updateVariant(variant.id, "price", val)}
+                            formatDisplay={(v) => formatCurrency(Number(v))}
+                            className="text-sm"
+                            inputClassName="w-24 text-right"
+                          />
                         </TableCell>
                         <TableCell></TableCell>
                       </TableRow>
