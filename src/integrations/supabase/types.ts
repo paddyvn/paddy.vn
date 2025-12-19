@@ -1286,6 +1286,7 @@ export type Database = {
           id: string
           template_id: string
           value: string
+          value_vi: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1293,6 +1294,7 @@ export type Database = {
           id?: string
           template_id: string
           value: string
+          value_vi?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1300,6 +1302,7 @@ export type Database = {
           id?: string
           template_id?: string
           value?: string
+          value_vi?: string | null
         }
         Relationships: [
           {
@@ -1318,6 +1321,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          name_vi: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1326,6 +1330,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          name_vi?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1334,6 +1339,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          name_vi?: string | null
           updated_at?: string | null
         }
         Relationships: []
