@@ -317,16 +317,16 @@ export default function ProductDetail() {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="description" className="pt-8">
-                <div className="space-y-6">
+              <TabsContent value="description" className="pt-6">
+                <div className="space-y-5">
                   <div 
-                    className="prose prose-lg max-w-none text-foreground"
+                    className="prose prose-sm max-w-none text-foreground"
                     dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
                   />
                   
                   <div>
-                    <h3 className="text-xl font-bold mb-4">Key Benefits:</h3>
-                    <ul className="space-y-3 text-muted-foreground">
+                    <h3 className="text-base font-bold mb-3">Key Benefits:</h3>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex items-start gap-2">
                         <span className="text-foreground">•</span>
                         High-quality protein from real chicken
@@ -348,9 +348,9 @@ export default function ProductDetail() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="ingredients" className="pt-8">
-                <div className="prose prose-lg max-w-none">
-                  <p className="text-muted-foreground">
+              <TabsContent value="ingredients" className="pt-6">
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-sm text-muted-foreground">
                     Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
                     Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
                     Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
@@ -361,36 +361,36 @@ export default function ProductDetail() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="feeding" className="pt-8">
-                <div className="space-y-6">
-                  <p className="text-muted-foreground">
+              <TabsContent value="feeding" className="pt-6">
+                <div className="space-y-5">
+                  <p className="text-sm text-muted-foreground">
                     Feed according to your pet's weight and activity level. Always ensure fresh 
                     water is available. Consult your veterinarian for specific dietary needs.
                   </p>
                   <div className="overflow-x-auto">
-                    <table className="w-full max-w-lg">
+                    <table className="w-full max-w-lg text-sm">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="text-left py-3 font-semibold">Weight</th>
-                          <th className="text-left py-3 font-semibold">Daily Amount</th>
+                          <th className="text-left py-2 font-semibold">Weight</th>
+                          <th className="text-left py-2 font-semibold">Daily Amount</th>
                         </tr>
                       </thead>
                       <tbody className="text-muted-foreground">
                         <tr className="border-b border-border">
-                          <td className="py-3">3-12 lbs</td>
-                          <td className="py-3">1/3 - 1 cup</td>
+                          <td className="py-2">3-12 lbs</td>
+                          <td className="py-2">1/3 - 1 cup</td>
                         </tr>
                         <tr className="border-b border-border">
-                          <td className="py-3">13-20 lbs</td>
-                          <td className="py-3">1 - 1 1/3 cups</td>
+                          <td className="py-2">13-20 lbs</td>
+                          <td className="py-2">1 - 1 1/3 cups</td>
                         </tr>
                         <tr className="border-b border-border">
-                          <td className="py-3">21-35 lbs</td>
-                          <td className="py-3">1 1/3 - 2 cups</td>
+                          <td className="py-2">21-35 lbs</td>
+                          <td className="py-2">1 1/3 - 2 cups</td>
                         </tr>
                         <tr>
-                          <td className="py-3">36-50 lbs</td>
-                          <td className="py-3">2 - 2 2/3 cups</td>
+                          <td className="py-2">36-50 lbs</td>
+                          <td className="py-2">2 - 2 2/3 cups</td>
                         </tr>
                       </tbody>
                     </table>
