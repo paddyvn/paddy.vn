@@ -59,9 +59,10 @@ import {
   IndentIncrease,
   RemoveFormatting,
   FolderOpen,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const PRESET_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#d946ef",
@@ -81,8 +82,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [hexColor, setHexColor] = useState("#000000");
   const [hexBgColor, setHexBgColor] = useState("#eab308");
   const [imageOpen, setImageOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
@@ -490,18 +492,38 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               <ImageIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-3" align="start">
+          <PopoverContent className="w-64 p-3" align="start">
             <div className="space-y-3">
               <p className="text-sm font-medium">Insert Image</p>
-              <Input
-                placeholder="Enter image URL..."
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && imageUrl) {
-                    editor.chain().focus().setImage({ src: imageUrl }).run();
-                    setImageUrl("");
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  setIsUploadingImage(true);
+                  try {
+                    const { supabase } = await import("@/integrations/supabase/client");
+                    const fileExt = file.name.split(".").pop();
+                    const fileName = `editor-${Date.now()}.${fileExt}`;
+                    
+                    const { error: uploadError } = await supabase.storage
+                      .from("product-images")
+                      .upload(fileName, file);
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    const publicUrl = supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
+                    editor.chain().focus().setImage({ src: publicUrl }).run();
                     setImageOpen(false);
+                  } catch (error) {
+                    console.error("Upload failed:", error);
+                  } finally {
+                    setIsUploadingImage(false);
+                    if (imageInputRef.current) imageInputRef.current.value = "";
                   }
                 }}
               />
@@ -523,15 +545,11 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                   type="button"
                   size="sm"
                   className="flex-1"
-                  onClick={() => {
-                    if (imageUrl) {
-                      editor.chain().focus().setImage({ src: imageUrl }).run();
-                      setImageUrl("");
-                      setImageOpen(false);
-                    }
-                  }}
+                  disabled={isUploadingImage}
+                  onClick={() => imageInputRef.current?.click()}
                 >
-                  Insert Image
+                  <Upload className="h-4 w-4 mr-2" />
+                  {isUploadingImage ? "Uploading..." : "Upload"}
                 </Button>
               </div>
             </div>
