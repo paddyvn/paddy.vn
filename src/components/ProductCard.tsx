@@ -69,17 +69,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     setQuickAddOpen(true);
   };
 
-  const handleAddToCart = (variantId: string | null, quantity: number) => {
+  const handleAddToCart = async (variantId: string | null, quantity: number) => {
     setIsAddingToCart(true);
-    addToCart(
-      { productId: product.id, variantId: variantId ?? undefined, quantity },
-      {
-        onSettled: () => {
-          setIsAddingToCart(false);
-          setQuickAddOpen(false);
-        },
-      }
-    );
+    try {
+      await addToCart({ productId: product.id, variantId: variantId ?? undefined, quantity });
+    } finally {
+      setIsAddingToCart(false);
+      setQuickAddOpen(false);
+    }
   };
 
   const calculateAverageRating = (reviews: Array<{ rating: number }> | undefined) => {
