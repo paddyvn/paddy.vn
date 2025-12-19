@@ -1377,12 +1377,14 @@ export function ProductVariantsTable({
                                     <PopoverTrigger asChild>
                                       <button
                                         type="button"
-                                        className="h-10 w-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                                        className="h-12 w-12 rounded overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
                                       >
                                         {groupImage ? (
-                                          <img src={groupImage.image_url} alt={groupValue} className="h-full w-full object-cover" />
+                                          <img src={groupImage.image_url} alt={groupValue} className="h-12 w-12 rounded object-cover" />
                                         ) : (
-                                          <Package className="h-4 w-4 text-muted-foreground" />
+                                          <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                                            <Package className="h-5 w-5 text-muted-foreground" />
+                                          </div>
                                         )}
                                       </button>
                                     </PopoverTrigger>
@@ -1548,11 +1550,13 @@ export function ProductVariantsTable({
                             <div className="flex items-center gap-3">
                               <Popover>
                                 <PopoverTrigger asChild>
-                                  <button type="button" className="h-12 w-12 rounded-md bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all overflow-hidden border">
+                                  <button type="button" className="h-12 w-12 rounded overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
                                     {variantImage ? (
-                                      <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-full w-full object-cover" />
+                                      <img src={variantImage.image_url} alt={variantImage.alt_text || variant.name} className="h-12 w-12 rounded object-cover" />
                                     ) : (
-                                      <Package className="h-5 w-5 text-muted-foreground" />
+                                      <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                                        <Package className="h-5 w-5 text-muted-foreground" />
+                                      </div>
                                     )}
                                   </button>
                                 </PopoverTrigger>
