@@ -34,7 +34,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -83,6 +86,9 @@ export default function ProductsManagement() {
   const [tagSearchText, setTagSearchText] = useState("");
   const [categorySearchText, setCategorySearchText] = useState("");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [sortOpen, setSortOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -102,15 +108,10 @@ export default function ProductsManagement() {
     });
   };
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter]);
+  }, [searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter, sortKey, sortDirection]);
 
   // Fetch unique brands directly with proper query
   const { data: brands, isLoading: brandsLoading, error: brandsError } = useQuery({
@@ -281,7 +282,7 @@ export default function ProductsManagement() {
   });
 
   const { data: products, isLoading, refetch } = useQuery({
-    queryKey: ["admin-products", searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter, currentPage],
+    queryKey: ["admin-products", searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter, currentPage, sortKey, sortDirection],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -307,7 +308,7 @@ export default function ProductsManagement() {
             categories(name)
           )
         `)
-        .order("created_at", { ascending: false })
+        .order(sortKey, { ascending: sortDirection === "asc" })
         .range(from, to);
 
       if (searchQuery) {
@@ -673,6 +674,69 @@ export default function ProductsManagement() {
                   ))
                 )}
               </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Sort dropdown - Shopify style */}
+        <Popover open={sortOpen} onOpenChange={setSortOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="gap-2"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              Sort
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[220px] p-0 bg-popover" align="end">
+            <div className="p-3">
+              <p className="text-sm font-medium mb-3">Sort by</p>
+              <RadioGroup value={sortKey} onValueChange={setSortKey} className="gap-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="name" id="sort-name" />
+                  <Label htmlFor="sort-name" className="text-sm cursor-pointer">Product title</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="created_at" id="sort-created" />
+                  <Label htmlFor="sort-created" className="text-sm cursor-pointer">Created</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="updated_at" id="sort-updated" />
+                  <Label htmlFor="sort-updated" className="text-sm cursor-pointer">Updated</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="base_price" id="sort-price" />
+                  <Label htmlFor="sort-price" className="text-sm cursor-pointer">Price</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="product_type" id="sort-type" />
+                  <Label htmlFor="sort-type" className="text-sm cursor-pointer">Product type</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="brand" id="sort-vendor" />
+                  <Label htmlFor="sort-vendor" className="text-sm cursor-pointer">Vendor</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <Separator />
+            <div className="p-3">
+              <RadioGroup value={sortDirection} onValueChange={(v) => setSortDirection(v as "asc" | "desc")} className="gap-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="asc" id="sort-asc" />
+                  <Label htmlFor="sort-asc" className="text-sm cursor-pointer flex items-center gap-2">
+                    <ArrowUp className="h-3 w-3" />
+                    {sortKey === "name" || sortKey === "product_type" || sortKey === "brand" ? "A-Z" : "Oldest first"}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="desc" id="sort-desc" />
+                  <Label htmlFor="sort-desc" className="text-sm cursor-pointer flex items-center gap-2">
+                    <ArrowDown className="h-3 w-3" />
+                    {sortKey === "name" || sortKey === "product_type" || sortKey === "brand" ? "Z-A" : "Newest first"}
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
           </PopoverContent>
         </Popover>
