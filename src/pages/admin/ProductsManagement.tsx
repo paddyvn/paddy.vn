@@ -189,48 +189,39 @@ export default function ProductsManagement() {
     );
   }, [collections, collectionSearchText]);
 
-  // Fetch categories (collections) - exclude brands
-  const { data: categories } = useQuery({
-    queryKey: ["product-categories"],
+  // Fetch product types from products table
+  const { data: productTypes } = useQuery({
+    queryKey: ["product-types"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("categories")
-        .select("id, name")
-        .eq("is_active", true)
-        .neq("collection_type", "brand")
-        .order("name");
+        .from("products")
+        .select("product_type")
+        .not("product_type", "is", null)
+        .neq("product_type", "");
       
       if (error) throw error;
-      return data || [];
+      
+      // Get unique product types
+      const uniqueTypes = [...new Set(data?.map(p => p.product_type).filter(Boolean))] as string[];
+      return uniqueTypes.sort();
     },
   });
 
-  // Manually filter categories based on search
-  const filteredCategories = useMemo(() => {
-    if (!categories) return [];
-    if (!categorySearchText.trim()) return categories;
+  // Manually filter product types based on search
+  const filteredProductTypes = useMemo(() => {
+    if (!productTypes) return [];
+    if (!categorySearchText.trim()) return productTypes;
     
     const searchLower = categorySearchText.toLowerCase().trim();
-    return categories.filter(cat =>
-      cat.name.toLowerCase().startsWith(searchLower)
+    return productTypes.filter(type =>
+      type.toLowerCase().startsWith(searchLower)
     );
-  }, [categories, categorySearchText]);
+  }, [productTypes, categorySearchText]);
 
   // Get total count
   const { data: totalCount } = useQuery({
     queryKey: ["admin-products-count", searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter],
     queryFn: async () => {
-      // If category filter is applied, we need to get product IDs from product_collections first
-      let productIdsInCategory: string[] | null = null;
-      if (categoryFilter !== "all") {
-        const { data: pcData } = await supabase
-          .from("product_collections")
-          .select("product_id")
-          .eq("collection_id", categoryFilter);
-        productIdsInCategory = pcData?.map(pc => pc.product_id) || [];
-        if (productIdsInCategory.length === 0) return 0;
-      }
-
       let query = supabase
         .from("products")
         .select("*", { count: "exact", head: true });
@@ -258,8 +249,8 @@ export default function ProductsManagement() {
         query = query.in("id", collectionProductIds);
       }
 
-      if (productIdsInCategory) {
-        query = query.in("id", productIdsInCategory);
+      if (categoryFilter !== "all") {
+        query = query.eq("product_type", categoryFilter);
       }
 
       const { count, error } = await query;
@@ -273,17 +264,6 @@ export default function ProductsManagement() {
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
-
-      // If category filter is applied, we need to get product IDs from product_collections first
-      let productIdsInCategory: string[] | null = null;
-      if (categoryFilter !== "all") {
-        const { data: pcData } = await supabase
-          .from("product_collections")
-          .select("product_id")
-          .eq("collection_id", categoryFilter);
-        productIdsInCategory = pcData?.map(pc => pc.product_id) || [];
-        if (productIdsInCategory.length === 0) return [];
-      }
 
       let query = supabase
         .from("products")
@@ -321,8 +301,8 @@ export default function ProductsManagement() {
         query = query.in("id", collectionProductIds);
       }
 
-      if (productIdsInCategory) {
-        query = query.in("id", productIdsInCategory);
+      if (categoryFilter !== "all") {
+        query = query.eq("product_type", categoryFilter);
       }
 
       const { data, error } = await query;
@@ -727,9 +707,11 @@ export default function ProductsManagement() {
               aria-expanded={categoryOpen}
               className="w-[180px] justify-between"
             >
-              {categoryFilter === "all" 
-                ? "All Categories" 
-                : categories?.find(c => c.id === categoryFilter)?.name || "All Categories"}
+              <span className="truncate">
+                {categoryFilter === "all" 
+                  ? "All Product Types" 
+                  : categoryFilter}
+              </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -737,7 +719,7 @@ export default function ProductsManagement() {
             <div className="flex flex-col">
               <div className="p-2 border-b">
                 <Input
-                  placeholder="Search categories..."
+                  placeholder="Search product types..."
                   value={categorySearchText}
                   onChange={(e) => setCategorySearchText(e.target.value)}
                   className="h-8"
@@ -754,23 +736,23 @@ export default function ProductsManagement() {
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
+                      "mr-2 h-4 w-4 shrink-0",
                       categoryFilter === "all" ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  All Categories
+                  All Product Types
                 </div>
-                {filteredCategories.length === 0 ? (
+                {filteredProductTypes.length === 0 ? (
                   <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    No category found.
+                    No product type found.
                   </div>
                 ) : (
-                  filteredCategories.map((cat) => (
+                  filteredProductTypes.map((type) => (
                     <div
-                      key={cat.id}
+                      key={type}
                       className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center whitespace-nowrap overflow-hidden"
                       onClick={() => {
-                        setCategoryFilter(cat.id);
+                        setCategoryFilter(type);
                         setCategoryOpen(false);
                         setCategorySearchText("");
                       }}
@@ -778,10 +760,10 @@ export default function ProductsManagement() {
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4 shrink-0",
-                          categoryFilter === cat.id ? "opacity-100" : "opacity-0"
+                          categoryFilter === type ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <span className="truncate">{cat.name}</span>
+                      <span className="truncate">{type}</span>
                     </div>
                   ))
                 )}
