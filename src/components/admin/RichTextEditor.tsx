@@ -143,9 +143,11 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
-  const isLocalUpdateRef = useRef(false);
+  // Keep a local mirror to avoid setContent loops (important for react-hook-form)
+  const lastHtmlRef = useRef<string>(value || "");
 
   const editor = useEditor({
+    editable: true,
     extensions: [
       StarterKit.configure({
         // We add Underline separately; disable any underline coming from StarterKit to avoid duplicate extension names
@@ -209,26 +211,25 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       attributes: {
         class:
           "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
+        "data-placeholder": placeholder || "",
       },
     },
     onUpdate: ({ editor }) => {
-      isLocalUpdateRef.current = true;
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      lastHtmlRef.current = html;
+      onChange(html);
     },
   });
 
   useEffect(() => {
     if (!editor) return;
 
-    // Avoid resetting content right after the editor itself emitted an update.
-    if (isLocalUpdateRef.current) {
-      isLocalUpdateRef.current = false;
-      return;
-    }
+    const next = value || "";
+    if (next === lastHtmlRef.current) return;
 
-    if (value !== editor.getHTML()) {
-      editor.commands.setContent(value || "");
-    }
+    // Update editor content without firing onUpdate (prevents feedback loops)
+    editor.commands.setContent(next, { emitUpdate: false });
+    lastHtmlRef.current = next;
   }, [value, editor]);
 
   const setLink = useCallback(() => {
