@@ -143,9 +143,13 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
+  const isLocalUpdateRef = useRef(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
+        // We add Underline separately; disable any underline coming from StarterKit to avoid duplicate extension names
+        underline: false as any,
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
@@ -203,16 +207,26 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     content: value,
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
+        class:
+          "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
       },
     },
     onUpdate: ({ editor }) => {
+      isLocalUpdateRef.current = true;
       onChange(editor.getHTML());
     },
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (!editor) return;
+
+    // Avoid resetting content right after the editor itself emitted an update.
+    if (isLocalUpdateRef.current) {
+      isLocalUpdateRef.current = false;
+      return;
+    }
+
+    if (value !== editor.getHTML()) {
       editor.commands.setContent(value || "");
     }
   }, [value, editor]);
