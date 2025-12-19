@@ -213,7 +213,7 @@ export default function ProductsManagement() {
     );
   }, [tags, tagSearchText]);
 
-  // Fetch categories (collections)
+  // Fetch categories (collections) - exclude brands
   const { data: categories } = useQuery({
     queryKey: ["product-categories"],
     queryFn: async () => {
@@ -221,6 +221,7 @@ export default function ProductsManagement() {
         .from("categories")
         .select("id, name")
         .eq("is_active", true)
+        .neq("collection_type", "brand")
         .order("name");
       
       if (error) throw error;
