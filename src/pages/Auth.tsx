@@ -124,8 +124,8 @@ export default function Auth() {
       <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Admin Access</CardTitle>
-            <CardDescription>Sign in to access the admin dashboard</CardDescription>
+            <CardTitle>Đăng nhập</CardTitle>
+            <CardDescription>Đăng nhập vào tài khoản Paddy của bạn</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin">
