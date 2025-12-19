@@ -439,6 +439,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive("bulletList") && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
         >
           <List className="h-4 w-4" />
@@ -448,6 +449,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className={cn("h-8 w-8", editor.isActive("orderedList") && "bg-muted")}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
         >
           <ListOrdered className="h-4 w-4" />
@@ -458,9 +460,13 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
-          onClick={() => editor.chain().focus().liftListItem("listItem").run()}
-          disabled={!editor.can().liftListItem("listItem")}
+          className={cn("h-8 w-8", !editor.can().liftListItem("listItem") && "opacity-50")}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            if (editor.can().liftListItem("listItem")) {
+              editor.chain().focus().liftListItem("listItem").run();
+            }
+          }}
         >
           <IndentDecrease className="h-4 w-4" />
         </Button>
@@ -468,9 +474,13 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
-          onClick={() => editor.chain().focus().sinkListItem("listItem").run()}
-          disabled={!editor.can().sinkListItem("listItem")}
+          className={cn("h-8 w-8", !editor.can().sinkListItem("listItem") && "opacity-50")}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            if (editor.can().sinkListItem("listItem")) {
+              editor.chain().focus().sinkListItem("listItem").run();
+            }
+          }}
         >
           <IndentIncrease className="h-4 w-4" />
         </Button>
