@@ -77,14 +77,14 @@ export default function ProductsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [brandFilter, setBrandFilter] = useState<string>("all");
-  const [tagFilter, setTagFilter] = useState<string>("all");
+  const [collectionFilter, setCollectionFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [brandOpen, setBrandOpen] = useState(false);
-  const [tagOpen, setTagOpen] = useState(false);
+  const [collectionOpen, setCollectionOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [brandSearchText, setBrandSearchText] = useState("");
-  const [tagSearchText, setTagSearchText] = useState("");
+  const [collectionSearchText, setCollectionSearchText] = useState("");
   const [categorySearchText, setCategorySearchText] = useState("");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<string>("created_at");
@@ -114,7 +114,7 @@ export default function ProductsManagement() {
   // Reset to page 1 when filters or sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter, sortKey, sortDirection]);
+  }, [searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter, sortKey, sortDirection]);
 
   // Fetch unique brands directly with proper query
   const { data: brands, isLoading: brandsLoading, error: brandsError } = useQuery({
@@ -163,55 +163,31 @@ export default function ProductsManagement() {
     );
   }, [brands, brandSearchText]);
 
-  // Fetch unique tags
-  const { data: tags } = useQuery({
-    queryKey: ["product-tags"],
+  // Fetch all collections for the collection filter
+  const { data: collections } = useQuery({
+    queryKey: ["all-collections"],
     queryFn: async () => {
-      // Fetch ALL products to get complete tag list
-      let allProducts: Array<{ tags: string | null }> = [];
-      let from = 0;
-      const batchSize = 1000;
-      let hasMore = true;
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, collection_type")
+        .eq("is_active", true)
+        .order("name");
       
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("products")
-          .select("tags")
-          .not("tags", "is", null)
-          .range(from, from + batchSize - 1);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          allProducts = allProducts.concat(data);
-          from += batchSize;
-          hasMore = data.length === batchSize;
-        } else {
-          hasMore = false;
-        }
-      }
-      
-      const allTags = new Set<string>();
-      allProducts.forEach(p => {
-        if (p.tags) {
-          p.tags.split(",").forEach(tag => allTags.add(tag.trim()));
-        }
-      });
-      
-      return Array.from(allTags).sort();
+      if (error) throw error;
+      return data || [];
     },
   });
 
-  // Manually filter tags based on search
-  const filteredTags = useMemo(() => {
-    if (!tags) return [];
-    if (!tagSearchText.trim()) return tags;
+  // Manually filter collections based on search
+  const filteredCollections = useMemo(() => {
+    if (!collections) return [];
+    if (!collectionSearchText.trim()) return collections;
     
-    const searchLower = tagSearchText.toLowerCase().trim();
-    return tags.filter(tag =>
-      tag.toLowerCase().startsWith(searchLower)
+    const searchLower = collectionSearchText.toLowerCase().trim();
+    return collections.filter(col =>
+      col.name.toLowerCase().startsWith(searchLower)
     );
-  }, [tags, tagSearchText]);
+  }, [collections, collectionSearchText]);
 
   // Fetch categories (collections) - exclude brands
   const { data: categories } = useQuery({
@@ -242,7 +218,7 @@ export default function ProductsManagement() {
 
   // Get total count
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-products-count", searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter],
+    queryKey: ["admin-products-count", searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter],
     queryFn: async () => {
       // If category filter is applied, we need to get product IDs from product_collections first
       let productIdsInCategory: string[] | null = null;
@@ -271,8 +247,15 @@ export default function ProductsManagement() {
         query = query.eq("brand", brandFilter);
       }
 
-      if (tagFilter !== "all") {
-        query = query.ilike("tags", `%${tagFilter}%`);
+      if (collectionFilter !== "all") {
+        // Get products in this collection
+        const { data: collectionProducts } = await supabase
+          .from("product_collections")
+          .select("product_id")
+          .eq("collection_id", collectionFilter);
+        const collectionProductIds = collectionProducts?.map(cp => cp.product_id) || [];
+        if (collectionProductIds.length === 0) return 0;
+        query = query.in("id", collectionProductIds);
       }
 
       if (productIdsInCategory) {
@@ -286,7 +269,7 @@ export default function ProductsManagement() {
   });
 
   const { data: products, isLoading, refetch } = useQuery({
-    queryKey: ["admin-products", searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter, currentPage, sortKey, sortDirection],
+    queryKey: ["admin-products", searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter, currentPage, sortKey, sortDirection],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -327,8 +310,15 @@ export default function ProductsManagement() {
         query = query.eq("brand", brandFilter);
       }
 
-      if (tagFilter !== "all") {
-        query = query.ilike("tags", `%${tagFilter}%`);
+      if (collectionFilter !== "all") {
+        // Get products in this collection
+        const { data: collectionProducts } = await supabase
+          .from("product_collections")
+          .select("product_id")
+          .eq("collection_id", collectionFilter);
+        const collectionProductIds = collectionProducts?.map(cp => cp.product_id) || [];
+        if (collectionProductIds.length === 0) return [];
+        query = query.in("id", collectionProductIds);
       }
 
       if (productIdsInCategory) {
@@ -655,25 +645,27 @@ export default function ProductsManagement() {
           </PopoverContent>
         </Popover>
 
-        <Popover open={tagOpen} onOpenChange={setTagOpen}>
+        <Popover open={collectionOpen} onOpenChange={setCollectionOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              aria-expanded={tagOpen}
+              aria-expanded={collectionOpen}
               className="w-[180px] justify-between"
             >
-              {tagFilter === "all" ? "All Tags" : tagFilter}
+              {collectionFilter === "all" 
+                ? "All Collections" 
+                : collections?.find(c => c.id === collectionFilter)?.name || "All Collections"}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0 bg-popover" align="start">
+          <PopoverContent className="w-[220px] p-0 bg-popover" align="start">
             <div className="flex flex-col">
               <div className="p-2 border-b">
                 <Input
-                  placeholder="Search tags..."
-                  value={tagSearchText}
-                  onChange={(e) => setTagSearchText(e.target.value)}
+                  placeholder="Search collections..."
+                  value={collectionSearchText}
+                  onChange={(e) => setCollectionSearchText(e.target.value)}
                   className="h-8"
                 />
               </div>
@@ -681,41 +673,44 @@ export default function ProductsManagement() {
                 <div
                   className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
                   onClick={() => {
-                    setTagFilter("all");
-                    setTagOpen(false);
-                    setTagSearchText("");
+                    setCollectionFilter("all");
+                    setCollectionOpen(false);
+                    setCollectionSearchText("");
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      tagFilter === "all" ? "opacity-100" : "opacity-0"
+                      collectionFilter === "all" ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  All Tags
+                  All Collections
                 </div>
-                {filteredTags.length === 0 ? (
+                {filteredCollections.length === 0 ? (
                   <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    No tag found.
+                    No collection found.
                   </div>
                 ) : (
-                  filteredTags.map((tag) => (
+                  filteredCollections.map((col) => (
                     <div
-                      key={tag}
+                      key={col.id}
                       className="px-2 py-1.5 text-sm hover:bg-accent cursor-pointer flex items-center"
                       onClick={() => {
-                        setTagFilter(tag);
-                        setTagOpen(false);
-                        setTagSearchText("");
+                        setCollectionFilter(col.id);
+                        setCollectionOpen(false);
+                        setCollectionSearchText("");
                       }}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          tagFilter === tag ? "opacity-100" : "opacity-0"
+                          collectionFilter === col.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {tag}
+                      <span className="truncate">{col.name}</span>
+                      {col.collection_type === "brand" && (
+                        <span className="ml-1 text-xs text-muted-foreground">(Brand)</span>
+                      )}
                     </div>
                   ))
                 )}
@@ -858,7 +853,7 @@ export default function ProductsManagement() {
           </PopoverContent>
         </Popover>
 
-        {(statusFilter !== "all" || brandFilter !== "all" || tagFilter !== "all" || categoryFilter !== "all") && (
+        {(statusFilter !== "all" || brandFilter !== "all" || collectionFilter !== "all" || categoryFilter !== "all") && (
           <Button
             variant="outline"
             size="sm"
@@ -866,7 +861,7 @@ export default function ProductsManagement() {
               setStatusFilter("all");
               setCategoryFilter("all");
               setBrandFilter("all");
-              setTagFilter("all");
+              setCollectionFilter("all");
             }}
             className="gap-2"
           >
