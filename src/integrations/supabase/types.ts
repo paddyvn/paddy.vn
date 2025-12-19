@@ -766,8 +766,11 @@ export type Database = {
       }
       navigation_columns: {
         Row: {
+          background_color: string | null
           created_at: string | null
           display_order: number | null
+          group_type: string | null
+          icon_type: string | null
           id: string
           menu_id: string
           shop_all_link: string | null
@@ -775,8 +778,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          background_color?: string | null
           created_at?: string | null
           display_order?: number | null
+          group_type?: string | null
+          icon_type?: string | null
           id?: string
           menu_id: string
           shop_all_link?: string | null
@@ -784,8 +790,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          background_color?: string | null
           created_at?: string | null
           display_order?: number | null
+          group_type?: string | null
+          icon_type?: string | null
           id?: string
           menu_id?: string
           shop_all_link?: string | null
