@@ -143,83 +143,89 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
-  // Keep a local mirror to avoid setContent loops (important for react-hook-form)
+  // TipTap should NOT be re-created when RHF updates `value` (it breaks toolbar commands).
+  // We keep our own mirror + a one-time initial value.
+  const initialContentRef = useRef<string>(value || "");
   const lastHtmlRef = useRef<string>(value || "");
 
-  const editor = useEditor({
-    editable: true,
-    extensions: [
-      StarterKit.configure({
-        // We add Underline separately; disable any underline coming from StarterKit to avoid duplicate extension names
-        underline: false as any,
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6],
+  const editor = useEditor(
+    {
+      editable: true,
+      extensions: [
+        StarterKit.configure({
+          // We add Underline separately; disable any underline coming from StarterKit to avoid duplicate extension names
+          underline: false as any,
+          heading: {
+            levels: [1, 2, 3, 4, 5, 6],
+          },
+        }),
+        IndentExtension,
+        Underline.configure({
+          HTMLAttributes: {
+            class: "underline",
+          },
+        }),
+        Link.extend({
+          name: "customLink",
+        }).configure({
+          openOnClick: false,
+          HTMLAttributes: {
+            class: "text-primary underline",
+          },
+        }),
+        TextAlign.configure({
+          types: ["heading", "paragraph"],
+        }),
+        TextStyle,
+        Color,
+        Highlight.configure({
+          multicolor: true,
+        }),
+        Image.configure({
+          HTMLAttributes: {
+            class: "max-w-full h-auto rounded-lg",
+          },
+        }),
+        Youtube.configure({
+          HTMLAttributes: {
+            class: "w-full aspect-video rounded-lg",
+          },
+        }),
+        Table.configure({
+          resizable: true,
+          HTMLAttributes: {
+            class: "border-collapse border border-border",
+          },
+        }),
+        TableRow,
+        TableHeader.configure({
+          HTMLAttributes: {
+            class: "border border-border bg-muted font-semibold p-2",
+          },
+        }),
+        TableCell.configure({
+          HTMLAttributes: {
+            class: "border border-border p-2",
+          },
+        }),
+      ],
+      // Only set initial content here (do not bind to `value`, otherwise TipTap re-inits).
+      content: initialContentRef.current,
+      editorProps: {
+        attributes: {
+          class:
+            "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
+          "data-placeholder": placeholder || "",
         },
-      }),
-      IndentExtension,
-      Underline.configure({
-        HTMLAttributes: {
-          class: "underline",
-        },
-      }),
-      Link.extend({
-        name: "customLink",
-      }).configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-primary underline",
-        },
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
-      TextStyle,
-      Color,
-      Highlight.configure({
-        multicolor: true,
-      }),
-      Image.configure({
-        HTMLAttributes: {
-          class: "max-w-full h-auto rounded-lg",
-        },
-      }),
-      Youtube.configure({
-        HTMLAttributes: {
-          class: "w-full aspect-video rounded-lg",
-        },
-      }),
-      Table.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: "border-collapse border border-border",
-        },
-      }),
-      TableRow,
-      TableHeader.configure({
-        HTMLAttributes: {
-          class: "border border-border bg-muted font-semibold p-2",
-        },
-      }),
-      TableCell.configure({
-        HTMLAttributes: {
-          class: "border border-border p-2",
-        },
-      }),
-    ],
-    content: value,
-    editorProps: {
-      attributes: {
-        class:
-          "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm",
-        "data-placeholder": placeholder || "",
+      },
+      onUpdate: ({ editor }) => {
+        const html = editor.getHTML();
+        lastHtmlRef.current = html;
+        onChange(html);
       },
     },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      lastHtmlRef.current = html;
-      onChange(html);
-    },
-  });
+    []
+  );
 
   useEffect(() => {
     if (!editor) return;
