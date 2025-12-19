@@ -116,7 +116,7 @@ export default function ProductDetail() {
           {/* Right Column - Product Info */}
           <div className="space-y-5">
             {/* Product Name */}
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
               {product.name}
             </h1>
 
@@ -167,7 +167,7 @@ export default function ProductDetail() {
 
             {/* Short Description (from meta_description) */}
             {product.meta_description && (
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {product.meta_description}
               </p>
             )}
