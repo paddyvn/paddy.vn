@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,13 +34,21 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown, ChevronDown, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { useSyncProducts } from "@/hooks/useSyncProducts";
+
+type ProductVariant = {
+  id: string;
+  sku: string | null;
+  name: string;
+  price: number;
+  stock_quantity: number | null;
+};
 
 type Product = {
   id: string;
@@ -54,7 +62,7 @@ type Product = {
   brand: string | null;
   product_type: string | null;
   product_images: Array<{ image_url: string; is_primary: boolean }>;
-  product_variants: Array<{ stock_quantity: number }>;
+  product_variants: ProductVariant[];
   product_collections: Array<{
     categories: { name: string } | null;
   }>;
@@ -73,11 +81,29 @@ export default function ProductsManagement() {
   const [brandSearchText, setBrandSearchText] = useState("");
   const [tagSearchText, setTagSearchText] = useState("");
   const [categorySearchText, setCategorySearchText] = useState("");
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const navigate = useNavigate();
   const syncProducts = useSyncProducts();
 
   const ITEMS_PER_PAGE = 50;
+
+  const toggleRowExpanded = (productId: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, brandFilter, tagFilter, categoryFilter]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -274,7 +300,7 @@ export default function ProductsManagement() {
         .select(`
           *,
           product_images(image_url, is_primary),
-          product_variants(stock_quantity),
+          product_variants(id, sku, name, price, stock_quantity),
           product_collections(
             categories(name)
           )
@@ -356,7 +382,7 @@ export default function ProductsManagement() {
     }
   };
 
-  const getTotalStock = (variants: Array<{ stock_quantity: number }>) => {
+  const getTotalStock = (variants: ProductVariant[]) => {
     return variants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0);
   };
 
@@ -643,6 +669,7 @@ export default function ProductsManagement() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]"></TableHead>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Product</TableHead>
               <TableHead>Status</TableHead>
@@ -657,6 +684,9 @@ export default function ProductsManagement() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
                   <TableCell>
                     <Skeleton className="h-12 w-12 rounded" />
                   </TableCell>
@@ -685,87 +715,146 @@ export default function ProductsManagement() {
               ))
             ) : products?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   No products found. Try adjusting your search or filters.
                 </TableCell>
               </TableRow>
             ) : (
-              products?.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <img
-                      src={getPrimaryImage(product.product_images)}
-                      alt={product.name}
-                      className="h-12 w-12 rounded object-cover"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/admin/products/${product.id}/edit`)}
-                      className="text-left hover:underline cursor-pointer"
-                    >
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">{product.slug}</div>
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={product.is_active ? "default" : "secondary"}>
-                      {product.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {getTotalStock(product.product_variants)} in stock
-                      {product.product_variants.length > 1 && (
-                        <span className="text-muted-foreground ml-1">
-                          ({product.product_variants.length} variants)
+              products?.map((product) => {
+                const isExpanded = expandedRows.has(product.id);
+                const hasVariants = product.product_variants.length > 1;
+                
+                return (
+                  <React.Fragment key={product.id}>
+                    <TableRow className={isExpanded ? "border-b-0" : ""}>
+                      <TableCell className="w-[40px]">
+                        {hasVariants && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => toggleRowExpanded(product.id)}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <img
+                          src={getPrimaryImage(product.product_images)}
+                          alt={product.name}
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                          className="text-left hover:underline cursor-pointer"
+                        >
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">{product.slug}</div>
+                        </button>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={product.is_active ? "default" : "secondary"}>
+                          {product.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {getTotalStock(product.product_variants)} in stock
+                          {hasVariants && (
+                            <span className="text-muted-foreground ml-1">
+                              ({product.product_variants.length} variants)
+                            </span>
+                          )}
                         </span>
-                      )}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {product.brand || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {product.product_type || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(product.base_price)}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-background">
-                        <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}/edit`)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => toggleStatus(product.id, product.is_active, product.name)}
-                        >
-                          {product.is_active ? "Deactivate" : "Activate"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {product.brand || "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {product.product_type || "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(product.base_price)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-background">
+                            <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}/edit`)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => toggleStatus(product.id, product.is_active, product.name)}
+                            >
+                              {product.is_active ? "Deactivate" : "Activate"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(product.id, product.name)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* Expanded variant rows */}
+                    {isExpanded && hasVariants && (
+                      <TableRow>
+                        <TableCell colSpan={9} className="p-0 bg-muted/30">
+                          <div className="px-12 py-3">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                  <TableHead className="h-8 text-xs">Variant</TableHead>
+                                  <TableHead className="h-8 text-xs">SKU</TableHead>
+                                  <TableHead className="h-8 text-xs text-right">Price</TableHead>
+                                  <TableHead className="h-8 text-xs text-right">Available</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {product.product_variants.map((variant) => (
+                                  <TableRow key={variant.id} className="hover:bg-muted/50">
+                                    <TableCell className="py-2 text-sm">{variant.name}</TableCell>
+                                    <TableCell className="py-2 text-sm text-muted-foreground">
+                                      {variant.sku || "—"}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-sm text-right">
+                                      {formatCurrency(variant.price)}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-sm text-right">
+                                      {variant.stock_quantity ?? 0}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>
