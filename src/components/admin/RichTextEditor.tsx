@@ -95,8 +95,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           levels: [1, 2, 3, 4, 5, 6],
         },
       }),
-      Underline,
-      Link.configure({
+      Underline.configure({
+        HTMLAttributes: {
+          class: "underline",
+        },
+      }),
+      Link.extend({
+        name: "customLink",
+      }).configure({
         openOnClick: false,
         HTMLAttributes: {
           class: "text-primary underline",
@@ -159,9 +165,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     if (!editor) return;
     
     if (linkUrl === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      editor.chain().focus().extendMarkRange("customLink").unsetLink().run();
     } else {
-      editor.chain().focus().extendMarkRange("link").setLink({ href: linkUrl }).run();
+      editor.chain().focus().extendMarkRange("customLink").setLink({ href: linkUrl }).run();
     }
     setLinkUrl("");
     setLinkOpen(false);
@@ -407,7 +413,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               type="button"
               variant="ghost"
               size="icon"
-              className={cn("h-8 w-8", editor.isActive("link") && "bg-muted")}
+              className={cn("h-8 w-8", editor.isActive("customLink") && "bg-muted")}
             >
               <LinkIcon className="h-4 w-4" />
             </Button>
