@@ -13,6 +13,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Extension } from "@tiptap/core";
+import { TextSelection } from "prosemirror-state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePickerDialog } from "./ImagePickerDialog";
 import { Button } from "@/components/ui/button";
@@ -291,39 +292,73 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
-    // Block formatting applies to a whole block. When a range within a single paragraph is selected,
-    // split the paragraph at boundaries so only that sentence/fragment is affected.
+    // Block formatting applies to a whole block.
+    // If the user selected only part of a single paragraph, split that paragraph at
+    // selection boundaries, then change ONLY the resulting block, and finally remove
+    // any empty paragraph introduced by splitting at the end.
     const sel = getStableSelection();
-    const from = sel.from;
-    const to = sel.to;
-    const empty = sel.empty;
 
-    const $from = editor.state.doc.resolve(from);
-    const $to = editor.state.doc.resolve(to);
-    const sameParent = $from.start() === $to.start() && $from.depth === $to.depth;
-    const parentIsParagraph = $from.parent.type.name === "paragraph";
+    editor.commands.command(({ state, tr, dispatch }) => {
+      const { schema } = state;
+      const from = sel.from;
+      const to = sel.to;
+      const empty = sel.empty;
 
-    if (!empty && sameParent && parentIsParagraph) {
-      const start = $from.start();
-      const end = $from.end();
+      // Resolve positions against the CURRENT document.
+      const $from = tr.doc.resolve(from);
+      const $to = tr.doc.resolve(to);
+      const sameParent = $from.start() === $to.start() && $from.depth === $to.depth;
+      const parentIsParagraph = $from.parent.type.name === "paragraph";
 
-      // Split at end first, then at start. Guard against splitting at boundaries.
-      if (to > start && to < end) {
-        editor.chain().focus().setTextSelection(to).splitBlock().run();
+      // 1) Split paragraph when a partial range inside a single paragraph is selected.
+      if (!empty && sameParent && parentIsParagraph) {
+        const start = $from.start();
+        const end = $from.end();
+
+        // Split at end first, then at start. (This avoids messing up `to` mapping.)
+        if (to > start && to < end) {
+          tr.split(to);
+        }
+        if (from > start && from < end) {
+          tr.split(from);
+        }
       }
-      if (from > start && from < end) {
-        editor.chain().focus().setTextSelection(from).splitBlock().run();
+
+      // Map original `from` into the updated doc after splits.
+      const mappedFrom = tr.mapping.map(from);
+      const $mapped = tr.doc.resolve(mappedFrom);
+      const blockPos = $mapped.before($mapped.depth);
+      const blockNode = tr.doc.nodeAt(blockPos);
+
+      if (!blockNode || !blockNode.isTextblock) {
+        return false;
       }
-    }
 
-    // Always collapse to where the cursor actually was.
-    if (type === "paragraph") {
-      editor.chain().focus().setTextSelection(from).setParagraph().run();
-      return;
-    }
+      // 2) Apply the requested block type to the block at the cursor.
+      if (type === "paragraph") {
+        if (blockNode.type.name !== "paragraph") {
+          const nextAttrs = { ...blockNode.attrs };
+          delete (nextAttrs as any).level;
+          tr.setNodeMarkup(blockPos, schema.nodes.paragraph, nextAttrs);
+        }
+      } else {
+        const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
+        const nextAttrs = { ...blockNode.attrs, level };
+        tr.setNodeMarkup(blockPos, schema.nodes.heading, nextAttrs);
+      }
 
-    const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
-    editor.chain().focus().setTextSelection(from).setHeading({ level }).run();
+      // 3) Cleanup: remove an empty paragraph immediately AFTER the converted block.
+      // This is what creates the “extra blank line” in your screenshot.
+      const nodeAfterPos = blockPos + (tr.doc.nodeAt(blockPos)?.nodeSize ?? 0);
+      const nodeAfter = tr.doc.nodeAt(nodeAfterPos);
+      if (nodeAfter?.type.name === "paragraph" && nodeAfter.content.size === 0) {
+        tr.delete(nodeAfterPos, nodeAfterPos + nodeAfter.nodeSize);
+      }
+
+      tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+      dispatch?.(tr);
+      return true;
+    });
   };
 
   return (
