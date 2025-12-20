@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.shopify-sync-ratings]
 verify_jwt = false
+
+[functions.shopify-sync-option-names]
+verify_jwt = false
