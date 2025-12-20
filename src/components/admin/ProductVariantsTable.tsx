@@ -1325,7 +1325,7 @@ export function ProductVariantsTable({
                     <TableHead className="w-[40px]">
                       <Checkbox checked={selectedVariants.length === variants.length} onCheckedChange={handleSelectAll} />
                     </TableHead>
-                    <TableHead className="font-medium min-w-[280px]">
+                    <TableHead className="font-medium">
                       <div className="flex items-center gap-2">
                         <span>Variant</span>
                         {option1Name && option2Name && (
@@ -1339,9 +1339,9 @@ export function ProductVariantsTable({
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium w-[200px]">SKU</TableHead>
-                    <TableHead className="font-medium w-[120px]">Price</TableHead>
-                    <TableHead className="font-medium text-right w-[100px]">Available</TableHead>
+                    <TableHead className="font-medium w-[160px]">SKU</TableHead>
+                    <TableHead className="font-medium w-[110px]">Price</TableHead>
+                    <TableHead className="font-medium text-right w-[80px]">Available</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1494,11 +1494,11 @@ export function ProductVariantsTable({
                                       onChange={(e) => handleSkuChange(variant.id, e.target.value)}
                                       onBlur={() => handleBlur(variant.id)}
                                       placeholder="SKU"
-                                      className="w-44 h-9"
+                                      className="w-36 h-9"
                                     />
                                   </TableCell>
                                   <TableCell>
-                                    <div className="relative w-36">
+                                    <div className="relative w-24">
                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
                                       <Input
                                         type="text"
@@ -1601,11 +1601,11 @@ export function ProductVariantsTable({
                               onChange={(e) => handleSkuChange(variant.id, e.target.value)}
                               onBlur={() => handleBlur(variant.id)}
                               placeholder="SKU"
-                              className="w-44 h-9"
+                              className="w-36 h-9"
                             />
                           </TableCell>
                           <TableCell>
-                            <div className="relative w-36">
+                            <div className="relative w-24">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
                               <Input
                                 type="text"
