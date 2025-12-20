@@ -98,19 +98,38 @@ serve(async (req) => {
         // Fetch product from Shopify - only get options field
         const shopifyUrl = `https://${shopifyStore}/admin/api/2024-01/products/${shopifyProductId}.json?fields=id,options`;
         
-        const shopifyResponse = await fetch(shopifyUrl, {
-          headers: {
-            'X-Shopify-Access-Token': shopifyToken,
-            'Content-Type': 'application/json',
-          },
-        });
+        let shopifyResponse: Response | null = null;
+        let retries = 0;
+        const maxRetries = 3;
+        
+        while (retries < maxRetries) {
+          shopifyResponse = await fetch(shopifyUrl, {
+            headers: {
+              'X-Shopify-Access-Token': shopifyToken,
+              'Content-Type': 'application/json',
+            },
+          });
 
-        if (!shopifyResponse.ok) {
-          if (shopifyResponse.status === 404) {
+          if (shopifyResponse.status === 429) {
+            // Rate limited - wait longer and retry
+            retries++;
+            const waitTime = 2000 * retries; // 2s, 4s, 6s
+            console.log(`Rate limited, waiting ${waitTime}ms before retry ${retries}/${maxRetries}`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+          break;
+        }
+
+        if (!shopifyResponse || !shopifyResponse.ok) {
+          if (shopifyResponse?.status === 404) {
             console.log(`Product ${shopifyProductId} not found in Shopify, skipping`);
             continue;
           }
-          throw new Error(`Shopify API error: ${shopifyResponse.status}`);
+          if (shopifyResponse?.status === 429) {
+            throw new Error(`Rate limit exceeded after ${maxRetries} retries`);
+          }
+          throw new Error(`Shopify API error: ${shopifyResponse?.status}`);
         }
 
         const shopifyData = await shopifyResponse.json();
@@ -149,8 +168,8 @@ serve(async (req) => {
         updatedCount++;
         console.log(`Updated product "${product.name}" with options: ${JSON.stringify(updateData)}`);
 
-        // Rate limiting - Shopify allows 2 requests per second
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Rate limiting - wait 1 second between requests to stay under Shopify's limit
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (productError) {
         errorCount++;
