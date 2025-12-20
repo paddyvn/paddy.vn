@@ -634,7 +634,21 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               }
 
               mappedFrom = tr.mapping.map(from);
-              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+
+              // Delete empty paragraphs created by splits (scan doc for empty <p>)
+              const toDelete: { from: number; to: number }[] = [];
+              tr.doc.descendants((node, pos) => {
+                if (node.type.name === "paragraph" && node.content.size === 0) {
+                  toDelete.push({ from: pos, to: pos + node.nodeSize });
+                }
+              });
+              // Delete in reverse order to keep positions valid
+              for (let i = toDelete.length - 1; i >= 0; i--) {
+                tr.delete(toDelete[i].from, toDelete[i].to);
+              }
+
+              mappedFrom = tr.mapping.map(from);
+              tr.setSelection(TextSelection.create(tr.doc, Math.min(mappedFrom, tr.doc.content.size - 1)));
               dispatch?.(tr);
               return true;
             });
@@ -672,7 +686,20 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               }
 
               mappedFrom = tr.mapping.map(from);
-              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+
+              // Delete empty paragraphs created by splits
+              const toDelete: { from: number; to: number }[] = [];
+              tr.doc.descendants((node, pos) => {
+                if (node.type.name === "paragraph" && node.content.size === 0) {
+                  toDelete.push({ from: pos, to: pos + node.nodeSize });
+                }
+              });
+              for (let i = toDelete.length - 1; i >= 0; i--) {
+                tr.delete(toDelete[i].from, toDelete[i].to);
+              }
+
+              mappedFrom = tr.mapping.map(from);
+              tr.setSelection(TextSelection.create(tr.doc, Math.min(mappedFrom, tr.doc.content.size - 1)));
               dispatch?.(tr);
               return true;
             });
