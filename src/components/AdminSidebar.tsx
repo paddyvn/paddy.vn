@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft, FileCode, Sparkles } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft, FileCode, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -45,6 +45,7 @@ const mainItems = [
     subItems: [
       { title: "All Products", url: "/admin/products" },
       { title: "Collections", url: "/admin/collections" },
+      { title: "Inventory Sync", url: "/admin/products/inventory-sync" },
     ],
   },
   {
