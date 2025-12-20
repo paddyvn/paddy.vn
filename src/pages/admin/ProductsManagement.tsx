@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ShopifySync } from "@/components/ShopifySync";
+import { SyncOptionNamesButton } from "@/components/SyncOptionNamesButton";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -526,7 +526,7 @@ export default function ProductsManagement() {
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
         <div className="flex items-center gap-2">
-          <ShopifySync />
+          <SyncOptionNamesButton />
           <Button
             onClick={() => syncProducts.mutate()}
             disabled={syncProducts.isPending}
