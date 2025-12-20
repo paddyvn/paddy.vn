@@ -227,7 +227,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         },
         attributes: {
           class:
-            "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li]:my-1 [&_li::marker]:text-muted-foreground",
+            "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li]:my-1 [&_li::marker]:text-muted-foreground",
           "data-placeholder": placeholder || "",
         },
       },
