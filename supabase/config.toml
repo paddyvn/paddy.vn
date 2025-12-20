@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.shopify-sync-option-names]
 verify_jwt = false
+
+[functions.sapo-sync-inventory]
+verify_jwt = false
