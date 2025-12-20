@@ -528,7 +528,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           size="icon"
           className={cn("h-8 w-8", editor.isActive("bulletList") && "bg-muted")}
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={() => {
+            const { from } = editor.state.selection;
+            editor.chain().focus().setTextSelection(from).toggleBulletList().run();
+          }}
         >
           <List className="h-4 w-4" />
         </Button>
@@ -538,7 +541,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           size="icon"
           className={cn("h-8 w-8", editor.isActive("orderedList") && "bg-muted")}
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={() => {
+            const { from } = editor.state.selection;
+            editor.chain().focus().setTextSelection(from).toggleOrderedList().run();
+          }}
         >
           <ListOrdered className="h-4 w-4" />
         </Button>
@@ -551,12 +557,15 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
+            const { from } = editor.state.selection;
+            editor.chain().focus().setTextSelection(from).run();
+
             // If selection is in a list, decrease indent using list command
             if (editor.can().liftListItem("listItem")) {
-              editor.chain().focus().liftListItem("listItem").run();
+              editor.chain().focus().setTextSelection(from).liftListItem("listItem").run();
             } else {
               // Otherwise use custom outdent for paragraphs/headings
-              const chain = editor.chain().focus() as any;
+              const chain = editor.chain().focus().setTextSelection(from) as any;
               if (chain.outdent) chain.outdent().run();
             }
           }}
@@ -570,12 +579,15 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
+            const { from } = editor.state.selection;
+            editor.chain().focus().setTextSelection(from).run();
+
             // If selection is in a list, increase indent using list command
             if (editor.can().sinkListItem("listItem")) {
-              editor.chain().focus().sinkListItem("listItem").run();
+              editor.chain().focus().setTextSelection(from).sinkListItem("listItem").run();
             } else {
               // Otherwise use custom indent for paragraphs/headings
-              const chain = editor.chain().focus() as any;
+              const chain = editor.chain().focus().setTextSelection(from) as any;
               if (chain.indent) chain.indent().run();
             }
           }}
@@ -589,7 +601,11 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            const { from } = editor.state.selection;
+            editor.chain().focus().setTextSelection(from).clearNodes().unsetAllMarks().run();
+          }}
         >
           <RemoveFormatting className="h-4 w-4" />
         </Button>
