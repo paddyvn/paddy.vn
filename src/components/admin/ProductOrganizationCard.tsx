@@ -186,13 +186,17 @@ export function ProductOrganizationCard({
               {loadingAges ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select 
+                  onValueChange={(val) => field.onChange(val === "__none__" ? null : val)} 
+                  value={field.value || "__none__"}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select age range" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="__none__">-- None --</SelectItem>
                     {ageRanges.map((age) => (
                       <SelectItem key={age.id} value={age.id}>
                         {age.name_vi}
@@ -215,13 +219,17 @@ export function ProductOrganizationCard({
               {loadingSizes ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select 
+                  onValueChange={(val) => field.onChange(val === "__none__" ? null : val)} 
+                  value={field.value || "__none__"}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="__none__">-- None --</SelectItem>
                     {sizes.map((size) => (
                       <SelectItem key={size.id} value={size.id}>
                         {size.name_vi}
@@ -244,13 +252,17 @@ export function ProductOrganizationCard({
               {loadingOrigins ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select 
+                  onValueChange={(val) => field.onChange(val === "__none__" ? null : val)} 
+                  value={field.value || "__none__"}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select origin country" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="__none__">-- None --</SelectItem>
                     {origins.map((origin) => (
                       <SelectItem key={origin.id} value={origin.id}>
                         {origin.name_vi}
