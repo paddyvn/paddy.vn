@@ -13,7 +13,6 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Extension } from "@tiptap/core";
-import { TextSelection } from "@tiptap/pm/state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePickerDialog } from "./ImagePickerDialog";
 import { Button } from "@/components/ui/button";
@@ -213,6 +212,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       // Only set initial content here (do not bind to `value`, otherwise TipTap re-inits).
       content: initialContentRef.current,
       editorProps: {
+        transformPastedHTML: (html) => {
+          // Normalize pasted <br> into real paragraphs so formatting applies per-line.
+          return html.replace(/<br\s*\/?\s*>/gi, "</p><p>");
+        },
+        transformPastedText: (text) => {
+          // Turn single newlines into paragraph breaks (double newline) on paste.
+          return text.replace(/\r\n/g, "\n").replace(/\n/g, "\n\n");
+        },
         attributes: {
           class:
             "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_li]:my-1 [&_li::marker]:text-muted-foreground",
@@ -266,83 +273,17 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
-    // Repro: when content is pasted, users often have "multiple lines" that are actually
-    // a single paragraph with HardBreak (<br>) nodes. Block-type commands (heading/paragraph)
-    // always apply to the whole paragraph, so we first normalize HardBreaks into real paragraphs.
-    const { from, to, empty } = editor.state.selection;
-
-    // 1) If the current paragraph contains HardBreaks, split ONLY around the current selection.
-    // We do *not* split on every hardBreak (that can create unexpected empty paragraphs).
-    editor.commands.command(({ state, tr, dispatch }) => {
-      const $from = state.doc.resolve(from);
-      const parent = $from.parent;
-      if (parent.type.name !== "paragraph") return false;
-
-      const parentStart = $from.start();
-      const breaks: number[] = [];
-      parent.descendants((node, pos) => {
-        if (node.type.name === "hardBreak") breaks.push(parentStart + pos);
-      });
-      if (!breaks.length) return false;
-
-      const anchor = from;
-      const head = empty ? anchor : Math.min(from, to);
-      const tail = empty ? anchor : Math.max(from, to);
-
-      // Find the nearest hardBreak before and after the selection.
-      const prev = [...breaks].reverse().find((p) => p < head);
-      const next = breaks.find((p) => p >= tail);
-
-      let changed = false;
-
-      // Split after the selection (end boundary) first.
-      if (typeof next === "number") {
-        const p = tr.mapping.map(next);
-        // If the break is at the very end of the paragraph, just remove it.
-        tr.delete(p, p + 1);
-        if (p < tr.doc.content.size) {
-          tr.split(p);
-        }
-        changed = true;
-      }
-
-      // Split before the selection (start boundary).
-      if (typeof prev === "number") {
-        const p = tr.mapping.map(prev);
-        tr.delete(p, p + 1);
-        if (p > 0) {
-          tr.split(p);
-        }
-        changed = true;
-      }
-
-      if (!changed) return false;
-
-      const mapped = tr.mapping.map(anchor);
-      tr.setSelection(TextSelection.create(tr.doc, mapped));
-      dispatch?.(tr);
-      return true;
-    });
-
-    // 2) If user selected a text range inside one paragraph, isolate it so "Heading" applies only to that part.
-    // (After normalization, this is usually a no-op, but it still helps for true long paragraphs.)
-    const sameParent = editor.state.selection.$from.parent === editor.state.selection.$to.parent;
-    const parentIsParagraph = editor.state.selection.$from.parent.type.name === "paragraph";
-
-    if (!empty && sameParent && parentIsParagraph) {
-      editor.chain().focus().setTextSelection(to).splitBlock().run();
-      editor.chain().focus().setTextSelection(from).splitBlock().run();
-    }
-
-    const anchor = from;
+    // After fixing paste handling (converting <br>/\n into real paragraphs), block formatting can be simple.
+    // Keep it cursor-scoped to avoid affecting unintended ranges.
+    const { from } = editor.state.selection;
 
     if (type === "paragraph") {
-      editor.chain().focus().setTextSelection(anchor).setParagraph().run();
+      editor.chain().focus().setTextSelection(from).setParagraph().run();
       return;
     }
 
     const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
-    editor.chain().focus().setTextSelection(anchor).setHeading({ level }).run();
+    editor.chain().focus().setTextSelection(from).setHeading({ level }).run();
   };
 
   return (
