@@ -1498,7 +1498,7 @@ export function ProductVariantsTable({
                                     />
                                   </TableCell>
                                   <TableCell>
-                                    <div className="relative w-24">
+                                    <div className="relative w-28">
                                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
                                       <Input
                                         type="text"
@@ -1605,7 +1605,7 @@ export function ProductVariantsTable({
                             />
                           </TableCell>
                           <TableCell>
-                            <div className="relative w-24">
+                            <div className="relative w-28">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₫</span>
                               <Input
                                 type="text"
