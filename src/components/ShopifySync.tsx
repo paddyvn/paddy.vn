@@ -12,8 +12,11 @@ export const ShopifySync = () => {
   const [syncingOlderOrders, setSyncingOlderOrders] = useState(false);
   const [syncingCustomers, setSyncingCustomers] = useState(false);
   const [syncingAbandonedCheckouts, setSyncingAbandonedCheckouts] = useState(false);
+  const [syncingOptionNames, setSyncingOptionNames] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
+
+  const isAnySyncing = syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts || syncingOptionNames;
 
   const syncAllProducts = async () => {
     setSyncing(true);
@@ -394,6 +397,68 @@ export const ShopifySync = () => {
     }
   };
 
+  const syncOptionNames = async () => {
+    setSyncingOptionNames(true);
+    setProgress({ current: 0, total: 0 });
+    
+    try {
+      let nextBatch: string | null = null;
+      let totalUpdated = 0;
+      let batchCount = 0;
+
+      do {
+        batchCount++;
+        console.log(`Syncing option names batch ${batchCount}...`);
+        
+        const body: any = {};
+        if (nextBatch) {
+          body.continueFrom = nextBatch;
+        }
+
+        const { data, error } = await supabase.functions.invoke('shopify-sync-option-names', {
+          body,
+        });
+
+        if (error) throw error;
+
+        if (data) {
+          totalUpdated += data.stats.updatedProducts;
+          setProgress({ current: totalUpdated, total: totalUpdated });
+          
+          nextBatch = data.hasMore ? data.nextBatch : null;
+          
+          console.log(`Batch ${batchCount}: ${data.stats.updatedProducts} products updated (Total: ${totalUpdated})`);
+          
+          if (data.errors && data.errors.length > 0) {
+            console.warn('Some errors occurred:', data.errors);
+          }
+        }
+
+        // Small delay between batches
+        if (nextBatch) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } while (nextBatch);
+
+      toast({
+        title: "Option Names Sync Complete!",
+        description: totalUpdated > 0 
+          ? `Successfully updated option names for ${totalUpdated} products from Shopify.`
+          : "No products needed option name updates.",
+      });
+    } catch (error) {
+      console.error('Option names sync error:', error);
+      toast({
+        title: "Option Names Sync Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingOptionNames(false);
+      setProgress({ current: 0, total: 0 });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
@@ -412,7 +477,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAllProducts} 
-          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={isAnySyncing}
           className="w-full"
         >
           {syncing ? (
@@ -436,7 +501,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCollections} 
-          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={isAnySyncing}
           className="w-full"
         >
           {syncingCollections ? (
@@ -460,7 +525,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncProductCollections} 
-          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={isAnySyncing}
           className="w-full"
         >
           {syncingProductCollections ? (
@@ -491,7 +556,7 @@ export const ShopifySync = () => {
         <div className="flex gap-2">
           <Button 
             onClick={syncOrders} 
-            disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+            disabled={isAnySyncing}
             className="flex-1"
           >
             {syncingOrders ? (
@@ -506,7 +571,7 @@ export const ShopifySync = () => {
           
           <Button 
             onClick={syncOlderOrders} 
-            disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+            disabled={isAnySyncing}
             variant="outline"
             className="flex-1"
           >
@@ -538,7 +603,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncCustomers} 
-          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={isAnySyncing}
           className="w-full"
         >
           {syncingCustomers ? (
@@ -568,7 +633,7 @@ export const ShopifySync = () => {
         
         <Button 
           onClick={syncAbandonedCheckouts} 
-          disabled={syncing || syncingCollections || syncingProductCollections || syncingOrders || syncingOlderOrders || syncingCustomers || syncingAbandonedCheckouts}
+          disabled={isAnySyncing}
           className="w-full"
         >
           {syncingAbandonedCheckouts ? (
@@ -578,6 +643,36 @@ export const ShopifySync = () => {
             </>
           ) : (
             'Sync Abandoned Checkouts'
+          )}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-6 border border-border rounded-lg bg-card">
+        <div>
+          <h3 className="text-lg font-semibold">Product Option Names</h3>
+          <p className="text-sm text-muted-foreground">
+            Populate missing option names (e.g., "Flavor", "Size") from Shopify for products with variants.
+          </p>
+        </div>
+        
+        {syncingOptionNames && progress.current > 0 && (
+          <div className="text-sm text-muted-foreground">
+            Updated {progress.current} products...
+          </div>
+        )}
+        
+        <Button 
+          onClick={syncOptionNames} 
+          disabled={isAnySyncing}
+          className="w-full"
+        >
+          {syncingOptionNames ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing Option Names...
+            </>
+          ) : (
+            'Sync Option Names'
           )}
         </Button>
       </div>
