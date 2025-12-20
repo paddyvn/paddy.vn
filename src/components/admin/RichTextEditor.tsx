@@ -273,9 +273,26 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
-    // After fixing paste handling (converting <br>/\n into real paragraphs), block formatting can be simple.
-    // Keep it cursor-scoped to avoid affecting unintended ranges.
-    const { from } = editor.state.selection;
+    // Block formatting (heading/paragraph) applies to the whole current block.
+    // If the user selected only part of a paragraph, we first split the block
+    // at the selection boundaries so the change affects only that part.
+    const { from, to, empty } = editor.state.selection;
+
+    const sameParent = editor.state.selection.$from.parent === editor.state.selection.$to.parent;
+    const parentIsParagraph = editor.state.selection.$from.parent.type.name === "paragraph";
+
+    if (!empty && sameParent && parentIsParagraph) {
+      const start = editor.state.selection.$from.start();
+      const end = editor.state.selection.$to.end();
+
+      // Split at end first, then at start. Guard against splitting at boundaries.
+      if (to > start && to < end) {
+        editor.chain().focus().setTextSelection(to).splitBlock().run();
+      }
+      if (from > start && from < end) {
+        editor.chain().focus().setTextSelection(from).splitBlock().run();
+      }
+    }
 
     if (type === "paragraph") {
       editor.chain().focus().setTextSelection(from).setParagraph().run();
