@@ -281,27 +281,27 @@ export function ProductOrganizationCard({
           {loadingHealth ? (
             <Skeleton className="h-20 w-full" />
           ) : (
-            <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+            <div className="flex flex-wrap gap-2">
               {healthConditions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No health conditions available</p>
               ) : (
-                healthConditions.map((condition) => (
-                  <div key={condition.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={condition.id}
-                      checked={selectedHealthConditions.includes(condition.id)}
-                      onCheckedChange={(checked) => 
-                        handleHealthConditionToggle(condition.id, checked === true)
-                      }
-                    />
-                    <label
-                      htmlFor={condition.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                healthConditions.map((condition) => {
+                  const isChecked = selectedHealthConditions.includes(condition.id);
+                  return (
+                    <button
+                      key={condition.id}
+                      type="button"
+                      onClick={() => handleHealthConditionToggle(condition.id, !isChecked)}
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                        isChecked
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground"
+                      }`}
                     >
                       {condition.name_vi}
-                    </label>
-                  </div>
-                ))
+                    </button>
+                  );
+                })
               )}
             </div>
           )}
