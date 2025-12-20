@@ -41,6 +41,9 @@ serve(async (req) => {
       throw new Error("Missing Sapo API configuration");
     }
 
+    // Normalize the store URL - remove trailing slash if present
+    const baseUrl = sapoStoreUrl.replace(/\/+$/, "");
+
     // Create Supabase client with service role for admin operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -88,7 +91,8 @@ serve(async (req) => {
     console.log(`Starting Sapo inventory sync - page ${page}, batchSize ${batchSize}`);
 
     // Fetch products from Sapo with inventory data
-    const sapoUrl = `${sapoStoreUrl}/admin/products.json?limit=${batchSize}&page=${page}`;
+    // Sapo API uses /admin/products.json endpoint
+    const sapoUrl = `${baseUrl}/admin/products.json?limit=${batchSize}&page=${page}`;
     console.log("Fetching from Sapo:", sapoUrl);
 
     const sapoResponse = await fetch(sapoUrl, {
