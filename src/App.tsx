@@ -44,6 +44,7 @@ import BuyMoreSaveMoreEdit from "./pages/admin/promotions/BuyMoreSaveMoreEdit";
 import FreeShippingEdit from "./pages/admin/promotions/FreeShippingEdit";
 import SubscriptionDealsEdit from "./pages/admin/promotions/SubscriptionDealsEdit";
 import ClearanceEdit from "./pages/admin/promotions/ClearanceEdit";
+import InventorySync from "./pages/admin/InventorySync";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -80,6 +81,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
             <Route path="products/:id/edit" element={<ProductEdit />} />
+            <Route path="products/inventory-sync" element={<InventorySync />} />
             <Route path="collections" element={<CollectionsManagement />} />
             <Route path="collections/:id" element={<CollectionDetails />} />
             <Route path="orders" element={<OrdersManagement />} />
