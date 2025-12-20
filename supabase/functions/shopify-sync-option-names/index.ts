@@ -81,13 +81,19 @@ serve(async (req) => {
 
     for (const product of products) {
       try {
-        // Extract Shopify product ID from source_id (format: "gid://shopify/Product/123456")
-        const shopifyIdMatch = product.source_id.match(/\/(\d+)$/);
-        if (!shopifyIdMatch) {
+        // Extract Shopify product ID from source_id
+        // Handle both formats: "gid://shopify/Product/123456" or just "123456"
+        let shopifyProductId: string;
+        const gidMatch = product.source_id.match(/\/(\d+)$/);
+        if (gidMatch) {
+          shopifyProductId = gidMatch[1];
+        } else if (/^\d+$/.test(product.source_id)) {
+          // Plain numeric ID
+          shopifyProductId = product.source_id;
+        } else {
           console.log(`Invalid source_id format for product ${product.id}: ${product.source_id}`);
           continue;
         }
-        const shopifyProductId = shopifyIdMatch[1];
 
         // Fetch product from Shopify - only get options field
         const shopifyUrl = `https://${shopifyStore}/admin/api/2024-01/products/${shopifyProductId}.json?fields=id,options`;
