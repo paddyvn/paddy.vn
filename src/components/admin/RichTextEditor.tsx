@@ -13,6 +13,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Extension } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePickerDialog } from "./ImagePickerDialog";
 import { Button } from "@/components/ui/button";
@@ -265,25 +266,53 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
-    // IMPORTANT: TipTap selection can sometimes become the whole document (or a large range)
-    // when interacting with toolbar elements. We:
-    // 1) remember the selection
-    // 2) if a text range is selected inside a single paragraph, split it into its own block
-    // 3) apply the block type to the resulting current block
+    // Repro: when content is pasted, users often have "multiple lines" that are actually
+    // a single paragraph with HardBreak (<br>) nodes. Block-type commands (heading/paragraph)
+    // always apply to the whole paragraph, so we first normalize HardBreaks into real paragraphs.
     const { from, to, empty } = editor.state.selection;
 
-    // If user selected a text range inside one paragraph, isolate it so "Heading" applies only to that part.
-    // This is especially common when content was pasted as a single paragraph (line breaks inside).
+    // 1) Normalize hardBreaks inside the current paragraph into real paragraphs.
+    editor.commands.command(({ state, tr, dispatch }) => {
+      const $from = state.doc.resolve(from);
+      const parent = $from.parent;
+      if (parent.type.name !== "paragraph") return false;
+
+      const parentStart = $from.start();
+      const hardBreakPositions: number[] = [];
+
+      parent.descendants((node, pos) => {
+        if (node.type.name === "hardBreak") {
+          hardBreakPositions.push(parentStart + pos);
+        }
+      });
+
+      if (!hardBreakPositions.length) return false;
+
+      // Replace each hardBreak with a block split.
+      // Iterate from end to start to keep positions stable (and also use mapping).
+      for (let i = hardBreakPositions.length - 1; i >= 0; i--) {
+        const p = tr.mapping.map(hardBreakPositions[i]);
+        // Remove the hardBreak node and split the paragraph at that position.
+        tr.delete(p, p + 1);
+        tr.split(p);
+      }
+
+      const mapped = tr.mapping.map(from);
+      tr.setSelection(TextSelection.create(tr.doc, mapped));
+      dispatch?.(tr);
+      return true;
+    });
+
+    // 2) If user selected a text range inside one paragraph, isolate it so "Heading" applies only to that part.
+    // (After normalization, this is usually a no-op, but it still helps for true long paragraphs.)
     const sameParent = editor.state.selection.$from.parent === editor.state.selection.$to.parent;
     const parentIsParagraph = editor.state.selection.$from.parent.type.name === "paragraph";
 
     if (!empty && sameParent && parentIsParagraph) {
-      // Split at end first, then at start.
       editor.chain().focus().setTextSelection(to).splitBlock().run();
       editor.chain().focus().setTextSelection(from).splitBlock().run();
     }
 
-    // Collapse to the original cursor start (or start of selection)
     const anchor = from;
 
     if (type === "paragraph") {
