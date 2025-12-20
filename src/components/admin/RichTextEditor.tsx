@@ -619,12 +619,20 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               const toDelete: { from: number; to: number }[] = [];
               tr.doc.descendants((node: any, pos: number) => {
                 if (node.type.name !== "paragraph") return;
+
+                // TipTap/ProseMirror can leave "empty" paragraphs containing invisible chars
+                // (NBSP/zero-width) or a single hardBreak.
+                const normalizedText = (node.textContent || "")
+                  .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, "")
+                  .trim();
+
                 const onlyHardBreak =
                   node.childCount === 1 && node.firstChild?.type.name === "hardBreak";
-                const visuallyEmpty =
-                  node.textContent.trim() === "" && (node.content.size === 0 || onlyHardBreak);
+
+                const visuallyEmpty = normalizedText === "" || onlyHardBreak;
                 if (visuallyEmpty) toDelete.push({ from: pos, to: pos + node.nodeSize });
               });
+
               for (let i = toDelete.length - 1; i >= 0; i--) {
                 tr.delete(toDelete[i].from, toDelete[i].to);
               }
@@ -682,12 +690,18 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               const toDelete: { from: number; to: number }[] = [];
               tr.doc.descendants((node: any, pos: number) => {
                 if (node.type.name !== "paragraph") return;
+
+                const normalizedText = (node.textContent || "")
+                  .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, "")
+                  .trim();
+
                 const onlyHardBreak =
                   node.childCount === 1 && node.firstChild?.type.name === "hardBreak";
-                const visuallyEmpty =
-                  node.textContent.trim() === "" && (node.content.size === 0 || onlyHardBreak);
+
+                const visuallyEmpty = normalizedText === "" || onlyHardBreak;
                 if (visuallyEmpty) toDelete.push({ from: pos, to: pos + node.nodeSize });
               });
+
               for (let i = toDelete.length - 1; i >= 0; i--) {
                 tr.delete(toDelete[i].from, toDelete[i].to);
               }
