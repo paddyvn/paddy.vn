@@ -126,12 +126,35 @@ export function ProductCollectionTags({ productId }: ProductCollectionTagsProps)
   const currentCollectionIds = productCollections?.map(pc => pc.collection_id) || [];
   const smartCollectionIds = smartCollections.map(c => c.id);
   
-  const filteredCollections = allCollections?.filter(
-    (c) =>
-      !currentCollectionIds.includes(c.id) &&
-      !smartCollectionIds.includes(c.id) &&
-      c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Relevance-ranked search: exact match > starts with > contains
+  const filteredCollections = useMemo(() => {
+    if (!searchQuery || !allCollections) return [];
+    
+    const query = searchQuery.toLowerCase();
+    const available = allCollections.filter(
+      (c) =>
+        !currentCollectionIds.includes(c.id) &&
+        !smartCollectionIds.includes(c.id) &&
+        c.name.toLowerCase().includes(query)
+    );
+    
+    return available.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      
+      const aExact = aName === query;
+      const bExact = bName === query;
+      if (aExact && !bExact) return -1;
+      if (bExact && !aExact) return 1;
+      
+      const aStarts = aName.startsWith(query);
+      const bStarts = bName.startsWith(query);
+      if (aStarts && !bStarts) return -1;
+      if (bStarts && !aStarts) return 1;
+      
+      return aName.localeCompare(bName);
+    });
+  }, [allCollections, searchQuery, currentCollectionIds, smartCollectionIds]);
 
   const handleAddCollection = async (collectionId: string) => {
     try {
