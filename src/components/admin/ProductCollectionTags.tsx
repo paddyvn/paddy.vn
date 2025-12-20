@@ -202,8 +202,8 @@ export function ProductCollectionTags({ productId }: ProductCollectionTagsProps)
           
           {/* Search Results Dropdown */}
           {searchQuery && filteredCollections.length > 0 && (
-            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
-              {filteredCollections.slice(0, 5).map((collection) => (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+              {filteredCollections.map((collection) => (
                 <button
                   key={collection.id}
                   type="button"
