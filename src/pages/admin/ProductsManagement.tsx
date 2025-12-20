@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ShopifySync } from "@/components/ShopifySync";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -524,14 +525,17 @@ export default function ProductsManagement() {
           <h2 className="text-3xl font-bold tracking-tight">Products</h2>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
-        <Button
-          onClick={() => syncProducts.mutate()}
-          disabled={syncProducts.isPending}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
-          {syncProducts.isPending ? "Syncing..." : "Sync Products"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ShopifySync />
+          <Button
+            onClick={() => syncProducts.mutate()}
+            disabled={syncProducts.isPending}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
+            {syncProducts.isPending ? "Syncing..." : "Sync Products"}
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4 items-center bg-card p-4 rounded-lg border flex-wrap">
