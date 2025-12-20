@@ -161,11 +161,14 @@ serve(async (req) => {
         for (const variant of variants || []) {
           if (!variant.sku) continue;
 
-          const newStock = skuInventoryMap.get(variant.sku);
-          if (newStock === undefined) {
+          const rawStock = skuInventoryMap.get(variant.sku);
+          if (rawStock === undefined) {
             skippedCount++;
             continue;
           }
+
+          // Round decimal stock values to integers (Sapo can return decimals like 12.85)
+          const newStock = Math.floor(rawStock);
 
           // Only update if stock changed
           if (variant.stock_quantity === newStock) {
