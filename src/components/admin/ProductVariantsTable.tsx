@@ -1494,7 +1494,7 @@ export function ProductVariantsTable({
                                       onChange={(e) => handleSkuChange(variant.id, e.target.value)}
                                       onBlur={() => handleBlur(variant.id)}
                                       placeholder="SKU"
-                                      className="w-28 h-9"
+                                      className="w-44 h-9"
                                     />
                                   </TableCell>
                                   <TableCell>
