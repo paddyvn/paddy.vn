@@ -1339,7 +1339,7 @@ export function ProductVariantsTable({
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium">SKU</TableHead>
+                    <TableHead className="font-medium w-[180px]">SKU</TableHead>
                     <TableHead className="font-medium">Price</TableHead>
                     <TableHead className="font-medium text-right">Available</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
