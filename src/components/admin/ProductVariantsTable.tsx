@@ -1325,7 +1325,7 @@ export function ProductVariantsTable({
                     <TableHead className="w-[40px]">
                       <Checkbox checked={selectedVariants.length === variants.length} onCheckedChange={handleSelectAll} />
                     </TableHead>
-                    <TableHead className="font-medium">
+                    <TableHead className="font-medium min-w-[280px]">
                       <div className="flex items-center gap-2">
                         <span>Variant</span>
                         {option1Name && option2Name && (
@@ -1339,9 +1339,9 @@ export function ProductVariantsTable({
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium w-[240px]">SKU</TableHead>
-                    <TableHead className="font-medium w-[140px]">Price</TableHead>
-                    <TableHead className="font-medium text-right">Available</TableHead>
+                    <TableHead className="font-medium w-[200px]">SKU</TableHead>
+                    <TableHead className="font-medium w-[120px]">Price</TableHead>
+                    <TableHead className="font-medium text-right w-[100px]">Available</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
