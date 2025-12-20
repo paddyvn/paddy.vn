@@ -269,7 +269,8 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       editor.chain().focus().setParagraph().run();
     } else {
       const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
-      editor.chain().focus().toggleHeading({ level }).run();
+      // Use setHeading instead of toggleHeading to only affect current block
+      editor.chain().focus().setHeading({ level }).run();
     }
   };
 
