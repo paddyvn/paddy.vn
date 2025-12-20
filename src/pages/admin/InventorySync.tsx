@@ -12,46 +12,38 @@ interface SyncLog {
   id: string;
   timestamp: Date;
   status: "success" | "error" | "running";
-  stats?: {
+  stats: {
     productsProcessed: number;
     skusFound: number;
     updated: number;
     skipped: number;
     errors: number;
+    pagesProcessed: number;
   };
   message?: string;
-  page?: number;
 }
 
 export default function InventorySync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
+  const [currentProgress, setCurrentProgress] = useState<{ page: number; updated: number } | null>(null);
   const { toast } = useToast();
 
   const addLog = (log: Omit<SyncLog, "id">) => {
     setSyncLogs((prev) => [{ ...log, id: crypto.randomUUID() }, ...prev]);
   };
 
-  const updateLastLog = (updates: Partial<SyncLog>) => {
-    setSyncLogs((prev) => {
-      if (prev.length === 0) return prev;
-      const [first, ...rest] = prev;
-      return [{ ...first, ...updates }, ...rest];
-    });
-  };
-
   const handleSync = async () => {
     setIsSyncing(true);
+    setCurrentProgress({ page: 1, updated: 0 });
+    
     let currentPage = 1;
     let hasMore = true;
     let totalUpdated = 0;
+    let totalSkipped = 0;
     let totalErrors = 0;
-
-    addLog({
-      timestamp: new Date(),
-      status: "running",
-      message: "Starting inventory sync from Sapo...",
-    });
+    let totalSkusFound = 0;
+    let totalProductsProcessed = 0;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -60,15 +52,10 @@ export default function InventorySync() {
       }
 
       while (hasMore) {
-        addLog({
-          timestamp: new Date(),
-          status: "running",
-          message: `Syncing page ${currentPage}...`,
-          page: currentPage,
-        });
+        setCurrentProgress({ page: currentPage, updated: totalUpdated });
 
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sapo-sync-inventory`,
+          `https://fexafkqzpbzjcupvbfhe.supabase.co/functions/v1/sapo-sync-inventory`,
           {
             method: "POST",
             headers: {
@@ -87,13 +74,10 @@ export default function InventorySync() {
 
         if (result.success) {
           totalUpdated += result.stats?.updated || 0;
+          totalSkipped += result.stats?.skipped || 0;
           totalErrors += result.stats?.errors || 0;
-
-          updateLastLog({
-            status: "success",
-            stats: result.stats,
-            message: `Page ${currentPage}: ${result.stats?.updated || 0} updated, ${result.stats?.skipped || 0} skipped`,
-          });
+          totalSkusFound += result.stats?.skusFound || 0;
+          totalProductsProcessed += result.stats?.productsProcessed || 0;
 
           hasMore = result.hasMore;
           if (hasMore) {
@@ -107,13 +91,14 @@ export default function InventorySync() {
       addLog({
         timestamp: new Date(),
         status: "success",
-        message: `Sync completed! Total: ${totalUpdated} variants updated, ${totalErrors} errors`,
+        message: `Synced ${totalUpdated} variants`,
         stats: {
-          productsProcessed: 0,
-          skusFound: 0,
+          productsProcessed: totalProductsProcessed,
+          skusFound: totalSkusFound,
           updated: totalUpdated,
-          skipped: 0,
+          skipped: totalSkipped,
           errors: totalErrors,
+          pagesProcessed: currentPage,
         },
       });
 
@@ -124,9 +109,18 @@ export default function InventorySync() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       
-      updateLastLog({
+      addLog({
+        timestamp: new Date(),
         status: "error",
         message: errorMessage,
+        stats: {
+          productsProcessed: totalProductsProcessed,
+          skusFound: totalSkusFound,
+          updated: totalUpdated,
+          skipped: totalSkipped,
+          errors: totalErrors + 1,
+          pagesProcessed: currentPage,
+        },
       });
 
       toast({
@@ -136,6 +130,7 @@ export default function InventorySync() {
       });
     } finally {
       setIsSyncing(false);
+      setCurrentProgress(null);
     }
   };
 
@@ -223,7 +218,7 @@ export default function InventorySync() {
           <CardDescription>Recent synchronization logs for this session</CardDescription>
         </CardHeader>
         <CardContent>
-          {syncLogs.length === 0 ? (
+          {syncLogs.length === 0 && !currentProgress ? (
             <div className="text-center py-8 text-muted-foreground">
               <RefreshCw className="h-12 w-12 mx-auto mb-4 opacity-20" />
               <p>No sync logs yet</p>
@@ -232,6 +227,19 @@ export default function InventorySync() {
           ) : (
             <ScrollArea className="h-[400px]">
               <div className="space-y-3">
+                {currentProgress && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg border bg-card border-blue-500/30">
+                    <div className="mt-0.5">
+                      <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Running</Badge>
+                      </div>
+                      <p className="text-sm">Syncing page {currentProgress.page}... ({currentProgress.updated} updated so far)</p>
+                    </div>
+                  </div>
+                )}
                 {syncLogs.map((log) => (
                   <div
                     key={log.id}
@@ -244,23 +252,17 @@ export default function InventorySync() {
                         <span className="text-xs text-muted-foreground">
                           {format(log.timestamp, "HH:mm:ss")}
                         </span>
-                        {log.page && (
-                          <span className="text-xs text-muted-foreground">
-                            Page {log.page}
-                          </span>
-                        )}
                       </div>
                       <p className="text-sm">{log.message}</p>
-                      {log.stats && log.stats.updated > 0 && (
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                          <span>SKUs: {log.stats.skusFound}</span>
-                          <span className="text-green-600">Updated: {log.stats.updated}</span>
-                          <span>Skipped: {log.stats.skipped}</span>
-                          {log.stats.errors > 0 && (
-                            <span className="text-destructive">Errors: {log.stats.errors}</span>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                        <span>Pages: {log.stats.pagesProcessed}</span>
+                        <span>SKUs: {log.stats.skusFound}</span>
+                        <span className="text-green-600">Updated: {log.stats.updated}</span>
+                        <span>Skipped: {log.stats.skipped}</span>
+                        {log.stats.errors > 0 && (
+                          <span className="text-destructive">Errors: {log.stats.errors}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
