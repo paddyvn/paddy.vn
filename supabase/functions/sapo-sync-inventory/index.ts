@@ -40,8 +40,8 @@ serve(async (req) => {
     if (!sapoStoreUrl || !sapoAccessToken) {
       throw new Error("Missing Sapo API configuration");
     }
-    // Normalize the store URL - trim whitespace and remove trailing slashes
-    const baseUrl = sapoStoreUrl.trim().replace(/\/+$/, "");
+    // Normalize the store URL - trim whitespace, remove trailing slashes and /admin suffix
+    const baseUrl = sapoStoreUrl.trim().replace(/\/+$/, "").replace(/\/admin$/, "");
     // Create Supabase client with service role for admin operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
