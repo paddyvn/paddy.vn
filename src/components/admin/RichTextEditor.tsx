@@ -620,6 +620,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           onClick={() => {
             const sel = getStableSelection();
             let mappedFrom = sel.from;
+            let mappedTo = sel.to;
 
             const removeVisuallyEmptyParagraphs = (tr: any) => {
               const toDelete: { from: number; to: number }[] = [];
@@ -644,7 +645,20 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               }
             };
 
-            // If a fragment inside a paragraph is selected, split first so the list applies only to that fragment.
+            // If the selection contains hardBreaks (Shift+Enter), split them into real paragraphs
+            // so each line becomes a separate list item.
+            const splitHardBreaksInRange = (tr: any, from: number, to: number) => {
+              const positions: number[] = [];
+              tr.doc.nodesBetween(from, to, (node: any, pos: number) => {
+                if (node.type.name === "hardBreak") positions.push(pos);
+              });
+              for (let i = positions.length - 1; i >= 0; i--) {
+                // Split AFTER the hardBreak
+                tr.split(positions[i] + 1);
+              }
+            };
+
+            // Normalize selection into blocks before toggling list.
             editor.commands.command(({ tr, dispatch }) => {
               const from = sel.from;
               const to = sel.to;
@@ -662,15 +676,22 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                 if (from > start && from < end) tr.split(from);
               }
 
+              if (!empty) {
+                const fromMappedNow = tr.mapping.map(from);
+                const toMappedNow = tr.mapping.map(to);
+                splitHardBreaksInRange(tr, fromMappedNow, toMappedNow);
+              }
+
               removeVisuallyEmptyParagraphs(tr);
 
               mappedFrom = tr.mapping.map(from);
-              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+              mappedTo = tr.mapping.map(to);
+              tr.setSelection(TextSelection.create(tr.doc, mappedFrom, mappedTo));
               dispatch?.(tr);
               return true;
             });
 
-            editor.chain().focus().setTextSelection(mappedFrom).toggleBulletList().run();
+            editor.chain().focus().setTextSelection({ from: mappedFrom, to: mappedTo }).toggleBulletList().run();
 
             // TipTap can insert empty paragraphs during list conversion; clean them up after.
             editor.commands.command(({ tr, dispatch }) => {
@@ -691,6 +712,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           onClick={() => {
             const sel = getStableSelection();
             let mappedFrom = sel.from;
+            let mappedTo = sel.to;
 
             const removeVisuallyEmptyParagraphs = (tr: any) => {
               const toDelete: { from: number; to: number }[] = [];
@@ -713,6 +735,16 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               }
             };
 
+            const splitHardBreaksInRange = (tr: any, from: number, to: number) => {
+              const positions: number[] = [];
+              tr.doc.nodesBetween(from, to, (node: any, pos: number) => {
+                if (node.type.name === "hardBreak") positions.push(pos);
+              });
+              for (let i = positions.length - 1; i >= 0; i--) {
+                tr.split(positions[i] + 1);
+              }
+            };
+
             editor.commands.command(({ tr, dispatch }) => {
               const from = sel.from;
               const to = sel.to;
@@ -730,15 +762,22 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                 if (from > start && from < end) tr.split(from);
               }
 
+              if (!empty) {
+                const fromMappedNow = tr.mapping.map(from);
+                const toMappedNow = tr.mapping.map(to);
+                splitHardBreaksInRange(tr, fromMappedNow, toMappedNow);
+              }
+
               removeVisuallyEmptyParagraphs(tr);
 
               mappedFrom = tr.mapping.map(from);
-              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+              mappedTo = tr.mapping.map(to);
+              tr.setSelection(TextSelection.create(tr.doc, mappedFrom, mappedTo));
               dispatch?.(tr);
               return true;
             });
 
-            editor.chain().focus().setTextSelection(mappedFrom).toggleOrderedList().run();
+            editor.chain().focus().setTextSelection({ from: mappedFrom, to: mappedTo }).toggleOrderedList().run();
 
             editor.commands.command(({ tr, dispatch }) => {
               removeVisuallyEmptyParagraphs(tr);
