@@ -92,7 +92,7 @@ export function SyncOptionNamesButton() {
       
       {syncing && progress && (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div className="flex justify-between">
+          <div className="flex items-center gap-3">
             <span>{progress.processed} / {progress.total}</span>
             <span className="text-primary">{progress.updated} updated</span>
             {progress.errors > 0 && (
