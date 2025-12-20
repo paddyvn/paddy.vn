@@ -615,6 +615,21 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
             const sel = getStableSelection();
             let mappedFrom = sel.from;
 
+            const removeVisuallyEmptyParagraphs = (tr: any) => {
+              const toDelete: { from: number; to: number }[] = [];
+              tr.doc.descendants((node: any, pos: number) => {
+                if (node.type.name !== "paragraph") return;
+                const onlyHardBreak =
+                  node.childCount === 1 && node.firstChild?.type.name === "hardBreak";
+                const visuallyEmpty =
+                  node.textContent.trim() === "" && (node.content.size === 0 || onlyHardBreak);
+                if (visuallyEmpty) toDelete.push({ from: pos, to: pos + node.nodeSize });
+              });
+              for (let i = toDelete.length - 1; i >= 0; i--) {
+                tr.delete(toDelete[i].from, toDelete[i].to);
+              }
+            };
+
             // If a fragment inside a paragraph is selected, split first so the list applies only to that fragment.
             editor.commands.command(({ tr, dispatch }) => {
               const from = sel.from;
@@ -633,27 +648,22 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                 if (from > start && from < end) tr.split(from);
               }
 
-              mappedFrom = tr.mapping.map(from);
-
-              // Delete empty paragraphs created by splits (scan doc for empty <p>)
-              const toDelete: { from: number; to: number }[] = [];
-              tr.doc.descendants((node, pos) => {
-                if (node.type.name === "paragraph" && node.content.size === 0) {
-                  toDelete.push({ from: pos, to: pos + node.nodeSize });
-                }
-              });
-              // Delete in reverse order to keep positions valid
-              for (let i = toDelete.length - 1; i >= 0; i--) {
-                tr.delete(toDelete[i].from, toDelete[i].to);
-              }
+              removeVisuallyEmptyParagraphs(tr);
 
               mappedFrom = tr.mapping.map(from);
-              tr.setSelection(TextSelection.create(tr.doc, Math.min(mappedFrom, tr.doc.content.size - 1)));
+              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
               dispatch?.(tr);
               return true;
             });
 
             editor.chain().focus().setTextSelection(mappedFrom).toggleBulletList().run();
+
+            // TipTap can insert empty paragraphs during list conversion; clean them up after.
+            editor.commands.command(({ tr, dispatch }) => {
+              removeVisuallyEmptyParagraphs(tr);
+              dispatch?.(tr);
+              return true;
+            });
           }}
         >
           <List className="h-4 w-4" />
@@ -667,6 +677,21 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           onClick={() => {
             const sel = getStableSelection();
             let mappedFrom = sel.from;
+
+            const removeVisuallyEmptyParagraphs = (tr: any) => {
+              const toDelete: { from: number; to: number }[] = [];
+              tr.doc.descendants((node: any, pos: number) => {
+                if (node.type.name !== "paragraph") return;
+                const onlyHardBreak =
+                  node.childCount === 1 && node.firstChild?.type.name === "hardBreak";
+                const visuallyEmpty =
+                  node.textContent.trim() === "" && (node.content.size === 0 || onlyHardBreak);
+                if (visuallyEmpty) toDelete.push({ from: pos, to: pos + node.nodeSize });
+              });
+              for (let i = toDelete.length - 1; i >= 0; i--) {
+                tr.delete(toDelete[i].from, toDelete[i].to);
+              }
+            };
 
             editor.commands.command(({ tr, dispatch }) => {
               const from = sel.from;
@@ -685,26 +710,21 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                 if (from > start && from < end) tr.split(from);
               }
 
-              mappedFrom = tr.mapping.map(from);
-
-              // Delete empty paragraphs created by splits
-              const toDelete: { from: number; to: number }[] = [];
-              tr.doc.descendants((node, pos) => {
-                if (node.type.name === "paragraph" && node.content.size === 0) {
-                  toDelete.push({ from: pos, to: pos + node.nodeSize });
-                }
-              });
-              for (let i = toDelete.length - 1; i >= 0; i--) {
-                tr.delete(toDelete[i].from, toDelete[i].to);
-              }
+              removeVisuallyEmptyParagraphs(tr);
 
               mappedFrom = tr.mapping.map(from);
-              tr.setSelection(TextSelection.create(tr.doc, Math.min(mappedFrom, tr.doc.content.size - 1)));
+              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
               dispatch?.(tr);
               return true;
             });
 
             editor.chain().focus().setTextSelection(mappedFrom).toggleOrderedList().run();
+
+            editor.commands.command(({ tr, dispatch }) => {
+              removeVisuallyEmptyParagraphs(tr);
+              dispatch?.(tr);
+              return true;
+            });
           }}
         >
           <ListOrdered className="h-4 w-4" />
