@@ -9,7 +9,7 @@ interface SyncProgress {
   updated: number;
   processed: number;
   errors: number;
-  hasMore: boolean;
+  total: number;
 }
 
 export function SyncOptionNamesButton() {
@@ -19,9 +19,18 @@ export function SyncOptionNamesButton() {
 
   const syncOptionNames = async () => {
     setSyncing(true);
-    setProgress({ updated: 0, processed: 0, errors: 0, hasMore: true });
     
     try {
+      // Get total count of products needing sync
+      const { count: totalCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .not('source_id', 'is', null)
+        .is('option1_name', null);
+
+      const total = totalCount || 0;
+      setProgress({ updated: 0, processed: 0, errors: 0, total });
+
       let totalUpdated = 0;
       let totalProcessed = 0;
       let totalErrors = 0;
@@ -45,7 +54,7 @@ export function SyncOptionNamesButton() {
           updated: totalUpdated,
           processed: totalProcessed,
           errors: totalErrors,
-          hasMore
+          total
         });
       }
 
@@ -65,6 +74,10 @@ export function SyncOptionNamesButton() {
     }
   };
 
+  const progressPercent = progress && progress.total > 0 
+    ? Math.round((progress.processed / progress.total) * 100) 
+    : 0;
+
   return (
     <div className="flex flex-col gap-2">
       <Button
@@ -80,13 +93,13 @@ export function SyncOptionNamesButton() {
       {syncing && progress && (
         <div className="text-xs text-muted-foreground space-y-1">
           <div className="flex justify-between">
-            <span>Processed: {progress.processed}</span>
-            <span>Updated: {progress.updated}</span>
+            <span>{progress.processed} / {progress.total}</span>
+            <span className="text-primary">{progress.updated} updated</span>
             {progress.errors > 0 && (
-              <span className="text-destructive">Errors: {progress.errors}</span>
+              <span className="text-destructive">{progress.errors} errors</span>
             )}
           </div>
-          <Progress value={progress.hasMore ? 50 : 100} className="h-1" />
+          <Progress value={progressPercent} className="h-1" />
         </div>
       )}
     </div>
