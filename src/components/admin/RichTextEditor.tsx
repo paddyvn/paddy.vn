@@ -265,17 +265,34 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
-    // IMPORTANT: when the dropdown is used, TipTap selection can sometimes become the whole document.
-    // To ensure the format applies only to the current line/paragraph, we collapse the selection
-    // to the cursor start before applying the block type.
-    const { from } = editor.state.selection;
+    // IMPORTANT: TipTap selection can sometimes become the whole document (or a large range)
+    // when interacting with toolbar elements. We:
+    // 1) remember the selection
+    // 2) if a text range is selected inside a single paragraph, split it into its own block
+    // 3) apply the block type to the resulting current block
+    const { from, to, empty } = editor.state.selection;
+
+    // If user selected a text range inside one paragraph, isolate it so "Heading" applies only to that part.
+    // This is especially common when content was pasted as a single paragraph (line breaks inside).
+    const sameParent = editor.state.selection.$from.parent === editor.state.selection.$to.parent;
+    const parentIsParagraph = editor.state.selection.$from.parent.type.name === "paragraph";
+
+    if (!empty && sameParent && parentIsParagraph) {
+      // Split at end first, then at start.
+      editor.chain().focus().setTextSelection(to).splitBlock().run();
+      editor.chain().focus().setTextSelection(from).splitBlock().run();
+    }
+
+    // Collapse to the original cursor start (or start of selection)
+    const anchor = from;
 
     if (type === "paragraph") {
-      editor.chain().focus().setTextSelection(from).setParagraph().run();
-    } else {
-      const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
-      editor.chain().focus().setTextSelection(from).setHeading({ level }).run();
+      editor.chain().focus().setTextSelection(anchor).setParagraph().run();
+      return;
     }
+
+    const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
+    editor.chain().focus().setTextSelection(anchor).setHeading({ level }).run();
   };
 
   return (
