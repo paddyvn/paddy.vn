@@ -148,6 +148,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const initialContentRef = useRef<string>(value || "");
   const lastHtmlRef = useRef<string>(value || "");
 
+  // Toolbar clicks can steal focus and ProseMirror may temporarily report a selection at doc start.
+  // Track the last real selection from within the editor so commands apply where the cursor was.
+  const lastSelectionRef = useRef<{ from: number; to: number; empty: boolean } | null>(null);
+
   const editor = useEditor(
     {
       editable: true,
@@ -231,6 +235,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         lastHtmlRef.current = html;
         onChange(html);
       },
+      onSelectionUpdate: ({ editor }) => {
+        const s = editor.state.selection;
+        lastSelectionRef.current = { from: s.from, to: s.to, empty: s.empty };
+      },
     },
     []
   );
@@ -262,6 +270,16 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     return null;
   }
 
+  const getStableSelection = () => {
+    return (
+      lastSelectionRef.current ?? {
+        from: editor.state.selection.from,
+        to: editor.state.selection.to,
+        empty: editor.state.selection.empty,
+      }
+    );
+  };
+
   const getCurrentBlockType = () => {
     if (editor.isActive("heading", { level: 1 })) return "h1";
     if (editor.isActive("heading", { level: 2 })) return "h2";
@@ -273,17 +291,21 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
-    // Block formatting (heading/paragraph) applies to the whole current block.
-    // If the user selected only part of a paragraph, we first split the block
-    // at the selection boundaries so the change affects only that part.
-    const { from, to, empty } = editor.state.selection;
+    // Block formatting applies to a whole block. When a range within a single paragraph is selected,
+    // split the paragraph at boundaries so only that sentence/fragment is affected.
+    const sel = getStableSelection();
+    const from = sel.from;
+    const to = sel.to;
+    const empty = sel.empty;
 
-    const sameParent = editor.state.selection.$from.parent === editor.state.selection.$to.parent;
-    const parentIsParagraph = editor.state.selection.$from.parent.type.name === "paragraph";
+    const $from = editor.state.doc.resolve(from);
+    const $to = editor.state.doc.resolve(to);
+    const sameParent = $from.start() === $to.start() && $from.depth === $to.depth;
+    const parentIsParagraph = $from.parent.type.name === "paragraph";
 
     if (!empty && sameParent && parentIsParagraph) {
-      const start = editor.state.selection.$from.start();
-      const end = editor.state.selection.$to.end();
+      const start = $from.start();
+      const end = $from.end();
 
       // Split at end first, then at start. Guard against splitting at boundaries.
       if (to > start && to < end) {
@@ -294,6 +316,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       }
     }
 
+    // Always collapse to where the cursor actually was.
     if (type === "paragraph") {
       editor.chain().focus().setTextSelection(from).setParagraph().run();
       return;
@@ -554,7 +577,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className={cn("h-8 w-8", editor.isActive("bulletList") && "bg-muted")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = editor.state.selection;
+            const { from } = getStableSelection();
             editor.chain().focus().setTextSelection(from).toggleBulletList().run();
           }}
         >
@@ -567,7 +590,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className={cn("h-8 w-8", editor.isActive("orderedList") && "bg-muted")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = editor.state.selection;
+            const { from } = getStableSelection();
             editor.chain().focus().setTextSelection(from).toggleOrderedList().run();
           }}
         >
@@ -582,7 +605,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = editor.state.selection;
+            const { from } = getStableSelection();
             editor.chain().focus().setTextSelection(from).run();
 
             // If selection is in a list, decrease indent using list command
@@ -604,7 +627,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = editor.state.selection;
+            const { from } = getStableSelection();
             editor.chain().focus().setTextSelection(from).run();
 
             // If selection is in a list, increase indent using list command
@@ -628,7 +651,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className="h-8 w-8"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = editor.state.selection;
+            const { from } = getStableSelection();
             editor.chain().focus().setTextSelection(from).clearNodes().unsetAllMarks().run();
           }}
         >
