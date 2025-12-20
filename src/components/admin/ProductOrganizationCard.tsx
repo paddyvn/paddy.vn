@@ -127,34 +127,33 @@ export function ProductOrganizationCard({
         {/* Pet Types (Multi-select) */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Pet</Label>
-          <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+          <div className="flex flex-wrap gap-2">
             {PET_TYPES.map((pet) => {
               const currentValue = form.watch("pet_type") || "";
               const selectedPets = currentValue ? currentValue.split(",").filter(Boolean) : [];
               const isChecked = selectedPets.includes(pet.value);
               
               return (
-                <div key={pet.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`pet-${pet.value}`}
-                    checked={isChecked}
-                    onCheckedChange={(checked) => {
-                      let newSelectedPets: string[];
-                      if (checked) {
-                        newSelectedPets = [...selectedPets, pet.value];
-                      } else {
-                        newSelectedPets = selectedPets.filter(p => p !== pet.value);
-                      }
-                      form.setValue("pet_type", newSelectedPets.join(","), { shouldDirty: true });
-                    }}
-                  />
-                  <label
-                    htmlFor={`pet-${pet.value}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    {pet.label}
-                  </label>
-                </div>
+                <button
+                  key={pet.value}
+                  type="button"
+                  onClick={() => {
+                    let newSelectedPets: string[];
+                    if (isChecked) {
+                      newSelectedPets = selectedPets.filter(p => p !== pet.value);
+                    } else {
+                      newSelectedPets = [...selectedPets, pet.value];
+                    }
+                    form.setValue("pet_type", newSelectedPets.join(","), { shouldDirty: true });
+                  }}
+                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                    isChecked
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-foreground border-input hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                >
+                  {pet.label}
+                </button>
               );
             })}
           </div>
