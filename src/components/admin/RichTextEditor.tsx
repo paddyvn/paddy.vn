@@ -265,12 +265,16 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   const setBlockType = (type: string) => {
+    // IMPORTANT: when the dropdown is used, TipTap selection can sometimes become the whole document.
+    // To ensure the format applies only to the current line/paragraph, we collapse the selection
+    // to the cursor start before applying the block type.
+    const { from } = editor.state.selection;
+
     if (type === "paragraph") {
-      editor.chain().focus().setParagraph().run();
+      editor.chain().focus().setTextSelection(from).setParagraph().run();
     } else {
       const level = parseInt(type.replace("h", "")) as 1 | 2 | 3 | 4 | 5 | 6;
-      // Use setHeading instead of toggleHeading to only affect current block
-      editor.chain().focus().setHeading({ level }).run();
+      editor.chain().focus().setTextSelection(from).setHeading({ level }).run();
     }
   };
 
