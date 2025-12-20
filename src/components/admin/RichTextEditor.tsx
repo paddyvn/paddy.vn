@@ -232,7 +232,13 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         },
       },
       onUpdate: ({ editor }) => {
-        const html = editor.getHTML();
+        let html = editor.getHTML();
+        // Clean up empty paragraphs that appear as blank lines
+        html = html
+          .replace(/<p><br\s*\/?><\/p>/gi, "")
+          .replace(/<p><\/p>/gi, "")
+          .replace(/(<\/ul>|<\/ol>)\s*(<p><br\s*\/?><\/p>|<p><\/p>)+/gi, "$1")
+          .replace(/(<p><br\s*\/?><\/p>|<p><\/p>)+\s*(<ul>|<ol>)/gi, "$2");
         lastHtmlRef.current = html;
         onChange(html);
       },
