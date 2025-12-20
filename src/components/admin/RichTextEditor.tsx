@@ -626,39 +626,57 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               const toDelete: { from: number; to: number }[] = [];
               tr.doc.descendants((node: any, pos: number) => {
                 if (node.type.name !== "paragraph") return;
-
-                // TipTap/ProseMirror can leave "empty" paragraphs containing invisible chars
-                // (NBSP/zero-width) or a single hardBreak.
                 const normalizedText = (node.textContent || "")
                   .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, "")
                   .trim();
-
                 const onlyHardBreak =
                   node.childCount === 1 && node.firstChild?.type.name === "hardBreak";
-
                 const visuallyEmpty = normalizedText === "" || onlyHardBreak;
                 if (visuallyEmpty) toDelete.push({ from: pos, to: pos + node.nodeSize });
               });
-
               for (let i = toDelete.length - 1; i >= 0; i--) {
                 tr.delete(toDelete[i].from, toDelete[i].to);
               }
             };
 
-            // If the selection contains hardBreaks (Shift+Enter), split them into real paragraphs
-            // so each line becomes a separate list item.
+            // Split at sentence boundaries (. followed by space) so each sentence becomes a list item.
+            const splitSentencesInRange = (tr: any, from: number, to: number) => {
+              const positions: number[] = [];
+              tr.doc.nodesBetween(from, to, (node: any, pos: number) => {
+                if (!node.isText) return;
+                const text = node.text || "";
+                // Find ". " patterns (sentence end)
+                let idx = 0;
+                while ((idx = text.indexOf(". ", idx)) !== -1) {
+                  // Position after the period+space
+                  const splitPos = pos + idx + 2;
+                  if (splitPos > from && splitPos < to) {
+                    positions.push(splitPos);
+                  }
+                  idx += 2;
+                }
+              });
+              // Split in reverse order to preserve positions
+              for (let i = positions.length - 1; i >= 0; i--) {
+                try {
+                  tr.split(positions[i]);
+                } catch (e) {
+                  // Ignore if split fails
+                }
+              }
+            };
+
+            // Also split hardBreaks
             const splitHardBreaksInRange = (tr: any, from: number, to: number) => {
               const positions: number[] = [];
               tr.doc.nodesBetween(from, to, (node: any, pos: number) => {
                 if (node.type.name === "hardBreak") positions.push(pos);
               });
               for (let i = positions.length - 1; i >= 0; i--) {
-                // Split AFTER the hardBreak
                 tr.split(positions[i] + 1);
               }
             };
 
-            // Normalize selection into blocks before toggling list.
             editor.commands.command(({ tr, dispatch }) => {
               const from = sel.from;
               const to = sel.to;
@@ -677,9 +695,12 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               }
 
               if (!empty) {
-                const fromMappedNow = tr.mapping.map(from);
-                const toMappedNow = tr.mapping.map(to);
+                let fromMappedNow = tr.mapping.map(from);
+                let toMappedNow = tr.mapping.map(to);
                 splitHardBreaksInRange(tr, fromMappedNow, toMappedNow);
+                fromMappedNow = tr.mapping.map(from);
+                toMappedNow = tr.mapping.map(to);
+                splitSentencesInRange(tr, fromMappedNow, toMappedNow);
               }
 
               removeVisuallyEmptyParagraphs(tr);
@@ -693,7 +714,6 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
 
             editor.chain().focus().setTextSelection({ from: mappedFrom, to: mappedTo }).toggleBulletList().run();
 
-            // TipTap can insert empty paragraphs during list conversion; clean them up after.
             editor.commands.command(({ tr, dispatch }) => {
               removeVisuallyEmptyParagraphs(tr);
               dispatch?.(tr);
@@ -718,20 +738,37 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               const toDelete: { from: number; to: number }[] = [];
               tr.doc.descendants((node: any, pos: number) => {
                 if (node.type.name !== "paragraph") return;
-
                 const normalizedText = (node.textContent || "")
                   .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, "")
                   .trim();
-
                 const onlyHardBreak =
                   node.childCount === 1 && node.firstChild?.type.name === "hardBreak";
-
                 const visuallyEmpty = normalizedText === "" || onlyHardBreak;
                 if (visuallyEmpty) toDelete.push({ from: pos, to: pos + node.nodeSize });
               });
-
               for (let i = toDelete.length - 1; i >= 0; i--) {
                 tr.delete(toDelete[i].from, toDelete[i].to);
+              }
+            };
+
+            const splitSentencesInRange = (tr: any, from: number, to: number) => {
+              const positions: number[] = [];
+              tr.doc.nodesBetween(from, to, (node: any, pos: number) => {
+                if (!node.isText) return;
+                const text = node.text || "";
+                let idx = 0;
+                while ((idx = text.indexOf(". ", idx)) !== -1) {
+                  const splitPos = pos + idx + 2;
+                  if (splitPos > from && splitPos < to) {
+                    positions.push(splitPos);
+                  }
+                  idx += 2;
+                }
+              });
+              for (let i = positions.length - 1; i >= 0; i--) {
+                try {
+                  tr.split(positions[i]);
+                } catch (e) {}
               }
             };
 
@@ -763,9 +800,12 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               }
 
               if (!empty) {
-                const fromMappedNow = tr.mapping.map(from);
-                const toMappedNow = tr.mapping.map(to);
+                let fromMappedNow = tr.mapping.map(from);
+                let toMappedNow = tr.mapping.map(to);
                 splitHardBreaksInRange(tr, fromMappedNow, toMappedNow);
+                fromMappedNow = tr.mapping.map(from);
+                toMappedNow = tr.mapping.map(to);
+                splitSentencesInRange(tr, fromMappedNow, toMappedNow);
               }
 
               removeVisuallyEmptyParagraphs(tr);
