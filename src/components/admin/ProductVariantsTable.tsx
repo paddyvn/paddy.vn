@@ -1342,7 +1342,7 @@ export function ProductVariantsTable({
                     <TableHead className="font-medium w-[160px]">SKU</TableHead>
                     <TableHead className="font-medium w-[110px]">Price</TableHead>
                     <TableHead className="font-medium text-right w-[80px]">Available</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1465,7 +1465,7 @@ export function ProductVariantsTable({
                                   {groupVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)}
                                 </span>
                               </TableCell>
-                              <TableCell></TableCell>
+                              
                             </TableRow>
                             
                             {/* Sub-variants */}
@@ -1517,18 +1517,6 @@ export function ProductVariantsTable({
                                       onBlur={() => handleBlur(variant.id)}
                                       className="w-20 ml-auto text-right h-9"
                                     />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                                      onClick={() => deleteVariantMutation.mutate(variant.id)}
-                                      disabled={deleteVariantMutation.isPending}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -1624,18 +1612,6 @@ export function ProductVariantsTable({
                               onBlur={() => handleBlur(variant.id)}
                               className="w-20 ml-auto text-right h-9"
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                              onClick={() => deleteVariantMutation.mutate(variant.id)}
-                              disabled={deleteVariantMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
                           </TableCell>
                         </TableRow>
                       );
