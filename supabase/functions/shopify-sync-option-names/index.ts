@@ -149,10 +149,9 @@ serve(async (req) => {
           option3_name: sortedOptions[2]?.name || null,
         };
 
-        // Skip if all options are "Title" (default Shopify single variant)
+        // For products with only the default "Title" option, still update to mark as synced
         if (updateData.option1_name === 'Title' && !updateData.option2_name && !updateData.option3_name) {
-          console.log(`Product ${product.id} has only default "Title" option, skipping`);
-          continue;
+          console.log(`Product ${product.id} has only default "Title" option, marking as synced`);
         }
 
         // Update product in Supabase
