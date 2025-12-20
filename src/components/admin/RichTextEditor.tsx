@@ -612,8 +612,34 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className={cn("h-8 w-8", editor.isActive("bulletList") && "bg-muted")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = getStableSelection();
-            editor.chain().focus().setTextSelection(from).toggleBulletList().run();
+            const sel = getStableSelection();
+            let mappedFrom = sel.from;
+
+            // If a fragment inside a paragraph is selected, split first so the list applies only to that fragment.
+            editor.commands.command(({ tr, dispatch }) => {
+              const from = sel.from;
+              const to = sel.to;
+              const empty = sel.empty;
+
+              const $from = tr.doc.resolve(from);
+              const $to = tr.doc.resolve(to);
+              const sameParent = $from.start() === $to.start() && $from.depth === $to.depth;
+              const parentIsParagraph = $from.parent.type.name === "paragraph";
+
+              if (!empty && sameParent && parentIsParagraph) {
+                const start = $from.start();
+                const end = $from.end();
+                if (to > start && to < end) tr.split(to);
+                if (from > start && from < end) tr.split(from);
+              }
+
+              mappedFrom = tr.mapping.map(from);
+              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+              dispatch?.(tr);
+              return true;
+            });
+
+            editor.chain().focus().setTextSelection(mappedFrom).toggleBulletList().run();
           }}
         >
           <List className="h-4 w-4" />
@@ -625,8 +651,33 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className={cn("h-8 w-8", editor.isActive("orderedList") && "bg-muted")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
-            const { from } = getStableSelection();
-            editor.chain().focus().setTextSelection(from).toggleOrderedList().run();
+            const sel = getStableSelection();
+            let mappedFrom = sel.from;
+
+            editor.commands.command(({ tr, dispatch }) => {
+              const from = sel.from;
+              const to = sel.to;
+              const empty = sel.empty;
+
+              const $from = tr.doc.resolve(from);
+              const $to = tr.doc.resolve(to);
+              const sameParent = $from.start() === $to.start() && $from.depth === $to.depth;
+              const parentIsParagraph = $from.parent.type.name === "paragraph";
+
+              if (!empty && sameParent && parentIsParagraph) {
+                const start = $from.start();
+                const end = $from.end();
+                if (to > start && to < end) tr.split(to);
+                if (from > start && from < end) tr.split(from);
+              }
+
+              mappedFrom = tr.mapping.map(from);
+              tr.setSelection(TextSelection.create(tr.doc, mappedFrom));
+              dispatch?.(tr);
+              return true;
+            });
+
+            editor.chain().focus().setTextSelection(mappedFrom).toggleOrderedList().run();
           }}
         >
           <ListOrdered className="h-4 w-4" />
