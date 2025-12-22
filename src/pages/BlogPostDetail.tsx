@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -37,6 +37,12 @@ import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { 
+  useBlogComments, 
+  useCreateBlogComment, 
+  useToggleCommentLike,
+  useBlogCommentsCount 
+} from "@/hooks/useBlogComments";
 
 interface TOCItem {
   id: string;
@@ -490,51 +496,7 @@ const BlogPostDetail = () => {
             </div>
 
             {/* Comments Section */}
-            <div className="mt-10 comments-section">
-              <h3 className="text-xl font-bold mb-6">Bình luận (3)</h3>
-              
-              {/* Comment Form */}
-              <div className="bg-background rounded-2xl border p-6 mb-6">
-                <h4 className="font-semibold mb-4">Để lại bình luận</h4>
-                <Textarea
-                  placeholder="Chia sẻ suy nghĩ của bạn..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="mb-4 min-h-[100px] resize-none"
-                />
-                <Button className="bg-primary hover:bg-primary/90">
-                  Gửi bình luận
-                </Button>
-              </div>
-
-              {/* Sample Comments */}
-              <div className="space-y-6">
-                <div className="bg-background rounded-2xl border p-6">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-secondary text-secondary-foreground">M</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold">Minh Thắng</span>
-                        <span className="text-xs text-muted-foreground">2 ngày trước</span>
-                      </div>
-                      <p className="text-muted-foreground text-sm mb-3">
-                        Bài viết rất hữu ích! Mình đã áp dụng cho bé cún nhà mình và thấy hiệu quả rõ rệt.
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                          <ThumbsUp className="h-4 w-4" /> Thích
-                        </button>
-                        <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                          <Reply className="h-4 w-4" /> Trả lời
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <BlogCommentsSection postId={post.id} comment={comment} setComment={setComment} />
           </article>
 
           {/* Right Sidebar */}
@@ -690,6 +652,160 @@ const BlogPostDetail = () => {
       )}
 
       <Footer />
+    </div>
+  );
+};
+
+// Comments Section Component
+const BlogCommentsSection = ({ 
+  postId, 
+  comment, 
+  setComment 
+}: { 
+  postId: string; 
+  comment: string; 
+  setComment: (value: string) => void;
+}) => {
+  const { data: comments, isLoading } = useBlogComments(postId);
+  const { data: commentsCount } = useBlogCommentsCount(postId);
+  const createComment = useCreateBlogComment();
+  const toggleLike = useToggleCommentLike();
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUser(user);
+    });
+  }, []);
+
+  const handleSubmitComment = async () => {
+    if (!comment.trim()) {
+      toast.error("Vui lòng nhập nội dung bình luận");
+      return;
+    }
+
+    if (!currentUser) {
+      toast.error("Bạn cần đăng nhập để bình luận");
+      return;
+    }
+
+    await createComment.mutateAsync({
+      postId,
+      content: comment.trim(),
+    });
+    setComment("");
+  };
+
+  const handleLikeComment = async (commentId: string, isLiked: boolean) => {
+    if (!currentUser) {
+      toast.error("Bạn cần đăng nhập để thích bình luận");
+      return;
+    }
+
+    await toggleLike.mutateAsync({
+      commentId,
+      postId,
+      isLiked,
+    });
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return "U";
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: vi });
+  };
+
+  return (
+    <div className="mt-10 comments-section">
+      <h3 className="text-xl font-bold mb-6">Bình luận ({commentsCount || 0})</h3>
+      
+      {/* Comment Form */}
+      <div className="bg-background rounded-2xl border p-6 mb-6">
+        <h4 className="font-semibold mb-4">Để lại bình luận</h4>
+        <Textarea
+          placeholder="Chia sẻ suy nghĩ của bạn..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="mb-4 min-h-[100px] resize-none"
+        />
+        <Button 
+          className="bg-primary hover:bg-primary/90"
+          onClick={handleSubmitComment}
+          disabled={createComment.isPending}
+        >
+          {createComment.isPending ? "Đang gửi..." : "Gửi bình luận"}
+        </Button>
+        {!currentUser && (
+          <p className="text-sm text-muted-foreground mt-2">
+            <Link to="/auth" className="text-primary hover:underline">Đăng nhập</Link> để bình luận
+          </p>
+        )}
+      </div>
+
+      {/* Comments List */}
+      <div className="space-y-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-background rounded-2xl border p-6">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : comments && comments.length > 0 ? (
+          comments.map((commentItem) => (
+            <div key={commentItem.id} className="bg-background rounded-2xl border p-6">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={commentItem.profiles?.avatar_url || ""} />
+                  <AvatarFallback className="bg-secondary text-secondary-foreground">
+                    {getInitials(commentItem.profiles?.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-semibold">
+                      {commentItem.profiles?.full_name || "Người dùng"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatTimeAgo(commentItem.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    {commentItem.content}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <button 
+                      onClick={() => handleLikeComment(commentItem.id, !!commentItem.user_has_liked)}
+                      className={`flex items-center gap-1 transition-colors ${
+                        commentItem.user_has_liked ? 'text-primary' : 'hover:text-primary'
+                      }`}
+                    >
+                      <ThumbsUp className={`h-4 w-4 ${commentItem.user_has_liked ? 'fill-current' : ''}`} />
+                      Thích
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
