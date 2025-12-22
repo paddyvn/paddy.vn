@@ -2506,6 +2506,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_comment_likes: {
+        Args: { comment_id_param: string }
+        Returns: undefined
+      }
       has_module_access: {
         Args: { _module_name: string; _user_id: string }
         Returns: boolean
@@ -2520,6 +2524,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_comment_likes: {
+        Args: { comment_id_param: string }
+        Returns: undefined
       }
     }
     Enums: {

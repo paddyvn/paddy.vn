@@ -138,7 +138,7 @@ export const useToggleCommentLike = () => {
       if (!user) throw new Error("Bạn cần đăng nhập để thích bình luận");
 
       if (isLiked) {
-        // Unlike
+        // Unlike - delete the like
         const { error } = await supabase
           .from("blog_comment_likes")
           .delete()
@@ -146,11 +146,8 @@ export const useToggleCommentLike = () => {
           .eq("user_id", user.id);
 
         if (error) throw error;
-
-        // Decrement likes_count
-        await supabase.rpc('decrement_comment_likes', { comment_id: commentId }).maybeSingle();
       } else {
-        // Like
+        // Like - insert the like
         const { error } = await supabase
           .from("blog_comment_likes")
           .insert({
@@ -159,9 +156,6 @@ export const useToggleCommentLike = () => {
           });
 
         if (error) throw error;
-
-        // Increment likes_count
-        await supabase.rpc('increment_comment_likes', { comment_id: commentId }).maybeSingle();
       }
 
       return { postId };
@@ -172,5 +166,23 @@ export const useToggleCommentLike = () => {
     onError: (error: Error) => {
       toast.error(error.message);
     },
+  });
+};
+
+export const useBlogCommentsCount = (postId: string | undefined) => {
+  return useQuery({
+    queryKey: ["blog-comments-count", postId],
+    queryFn: async () => {
+      if (!postId) return 0;
+
+      const { count, error } = await supabase
+        .from("blog_comments")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", postId);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!postId,
   });
 };
