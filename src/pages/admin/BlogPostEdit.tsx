@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useBlogPosts, useUpdateBlogPost, useCreateBlogPost } from "@/hooks/useBlogPosts";
+import { useBlogPosts, useUpdateBlogPost, useCreateBlogPost, useDeleteBlogPost } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { ImagePickerDialog } from "@/components/admin/ImagePickerDialog";
 import {
@@ -42,6 +53,7 @@ export default function BlogPostEdit() {
   const { data: categories } = useBlogCategories();
   const updatePost = useUpdateBlogPost();
   const createPost = useCreateBlogPost();
+  const deletePost = useDeleteBlogPost();
 
   const isNewPost = id === "new";
 
@@ -59,6 +71,7 @@ export default function BlogPostEdit() {
   const [isSeoEditing, setIsSeoEditing] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const post = !isNewPost ? posts?.find((p) => p.id === id) : null;
   
@@ -225,6 +238,14 @@ export default function BlogPostEdit() {
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View on store
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete post
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -577,6 +598,33 @@ export default function BlogPostEdit() {
         }}
         currentImage={imageUrl}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete blog post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{title}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (id) {
+                  deletePost.mutate(id, {
+                    onSuccess: () => navigate("/admin/content/blog"),
+                  });
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
