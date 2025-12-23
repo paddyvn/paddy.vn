@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useBlogPosts, useSyncBlogPosts, useDeleteBlogPost } from "@/hooks/useBlogPosts";
+import { useBlogPosts, useSyncBlogPosts } from "@/hooks/useBlogPosts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,16 +28,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -46,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, Edit, Trash2, RefreshCw, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Eye, Edit, RefreshCw, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 
 type SortField = "title" | "blog_title" | "author" | "published" | "shopify_published_at" | "updated_at";
@@ -57,7 +47,6 @@ export default function ContentBlog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [blogFilter, setBlogFilter] = useState<string>("all");
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
-  const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("shopify_published_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -66,7 +55,7 @@ export default function ContentBlog() {
 
   const { data: posts, isLoading } = useBlogPosts();
   const syncPosts = useSyncBlogPosts();
-  const deletePost = useDeleteBlogPost();
+  
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -182,16 +171,6 @@ export default function ContentBlog() {
     navigate(`/admin/content/blog/${postId}/edit`);
   };
 
-
-  const handleDelete = () => {
-    if (!deletePostId) return;
-
-    deletePost.mutate(deletePostId, {
-      onSuccess: () => {
-        setDeletePostId(null);
-      },
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -420,13 +399,6 @@ export default function ContentBlog() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeletePostId(post.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -549,27 +521,6 @@ export default function ContentBlog() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deletePostId} onOpenChange={() => setDeletePostId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete the blog post from your database. This action cannot be undone.
-              The post will still exist in Shopify.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
