@@ -1,6 +1,23 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { z } from "zod";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +72,66 @@ const categorySchema = z.object({
   is_active: z.boolean(),
 });
 
+interface SortableRowProps {
+  category: BlogCategory;
+  onEdit: (category: BlogCategory) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (category: BlogCategory) => void;
+}
+
+const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRowProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} className={isDragging ? "bg-muted" : ""}>
+      <TableCell>
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </TableCell>
+      <TableCell className="font-medium">{category.name}</TableCell>
+      <TableCell className="font-mono text-sm">{category.slug}</TableCell>
+      <TableCell className="max-w-[200px] truncate">
+        {category.description || "-"}
+      </TableCell>
+      <TableCell>{category.display_order}</TableCell>
+      <TableCell>
+        <Switch
+          checked={category.is_active}
+          onCheckedChange={() => onToggleActive(category)}
+        />
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => onDelete(category.id)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
+
 const BlogCategories = () => {
   const { data: categories, isLoading } = useBlogCategories();
   const createCategory = useCreateBlogCategory();
@@ -76,7 +153,38 @@ const BlogCategories = () => {
 
   const { toast } = useToast();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const generateSlug = (name: string) => slugify(name);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && categories) {
+      const oldIndex = categories.findIndex((c) => c.id === active.id);
+      const newIndex = categories.findIndex((c) => c.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = arrayMove(categories, oldIndex, newIndex);
+        
+        // Update display_order for all affected items
+        reordered.forEach((category, index) => {
+          const newOrder = index + 1;
+          if (category.display_order !== newOrder) {
+            updateCategory.mutate({
+              id: category.id,
+              updates: { display_order: newOrder },
+            });
+          }
+        });
+      }
+    }
+  };
 
   const handleOpenCreate = () => {
     setEditingCategory(null);
@@ -165,6 +273,8 @@ const BlogCategories = () => {
     });
   };
 
+  const sortedCategories = categories?.slice().sort((a, b) => a.display_order - b.display_order) || [];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -200,52 +310,33 @@ const BlogCategories = () => {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : categories?.length === 0 ? (
+            ) : sortedCategories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   No categories found. Create your first category.
                 </TableCell>
               </TableRow>
             ) : (
-              categories?.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                  </TableCell>
-                  <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {category.slug}
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {category.description || "-"}
-                  </TableCell>
-                  <TableCell>{category.display_order}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={category.is_active}
-                      onCheckedChange={() => handleToggleActive(category)}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedCategories.map((c) => c.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sortedCategories.map((category) => (
+                    <SortableRow
+                      key={category.id}
+                      category={category}
+                      onEdit={handleOpenEdit}
+                      onDelete={setDeleteId}
+                      onToggleActive={handleToggleActive}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenEdit(category)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(category.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                  ))}
+                </SortableContext>
+              </DndContext>
             )}
           </TableBody>
         </Table>
