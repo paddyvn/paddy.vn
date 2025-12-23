@@ -33,7 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, Edit, Trash2, RefreshCw, ExternalLink } from "lucide-react";
+import { Search, Eye, Edit, Trash2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 
 export default function Pages() {
@@ -203,13 +203,6 @@ export default function Pages() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeletePageId(page.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -306,13 +299,24 @@ export default function Pages() {
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingPage(null)}>
-              Cancel
+          <DialogFooter className="flex justify-between sm:justify-between">
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setDeletePageId(editingPage.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
             </Button>
-            <Button onClick={handleSaveEdit} disabled={updatePage.isPending}>
-              {updatePage.isPending ? "Saving..." : "Save Changes"}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditingPage(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={updatePage.isPending}>
+                {updatePage.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
