@@ -8,6 +8,7 @@ const corsHeaders = {
 interface ShopifyBlog {
   id: number;
   title: string;
+  handle: string;
 }
 
 interface ShopifyArticle {
@@ -109,9 +110,30 @@ Deno.serve(async (req) => {
     const blogs: ShopifyBlog[] = blogsData.blogs || [];
     console.log(`Found ${blogs.length} blogs`);
 
-    // Create a map of blog IDs to titles
-    const blogMap = new Map<number, string>();
-    blogs.forEach((blog) => blogMap.set(blog.id, blog.title));
+    // Create maps of blog IDs to titles and handles
+    const blogTitleMap = new Map<number, string>();
+    const blogHandleMap = new Map<number, string>();
+    blogs.forEach((blog) => {
+      blogTitleMap.set(blog.id, blog.title);
+      blogHandleMap.set(blog.id, blog.handle);
+    });
+
+    // Sync blog categories
+    console.log('Syncing blog categories...');
+    for (const blog of blogs) {
+      const { error: catError } = await supabase
+        .from('blog_categories')
+        .upsert({
+          name: blog.title,
+          slug: blog.handle,
+          shopify_blog_id: blog.id.toString(),
+          is_active: true,
+        }, { onConflict: 'slug' });
+
+      if (catError) {
+        console.error(`Error syncing blog category ${blog.title}:`, catError);
+      }
+    }
 
     // Fetch all articles from all blogs
     let allArticles: ShopifyArticle[] = [];
@@ -168,7 +190,7 @@ Deno.serve(async (req) => {
         const articleData = {
           shopify_article_id: article.id.toString(),
           shopify_blog_id: article.blog_id.toString(),
-          blog_title: blogMap.get(article.blog_id) || '',
+          blog_title: blogTitleMap.get(article.blog_id) || '',
           title: article.title,
           handle: article.handle,
           body_html: article.body_html || '',
