@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useBlogPosts, useUpdateBlogPost, useCreateBlogPost } from "@/hooks/useBlogPosts";
+import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +39,7 @@ export default function BlogPostEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: posts, isLoading } = useBlogPosts();
+  const { data: categories } = useBlogCategories();
   const updatePost = useUpdateBlogPost();
   const createPost = useCreateBlogPost();
 
@@ -59,6 +61,14 @@ export default function BlogPostEdit() {
   const [hasChanges, setHasChanges] = useState(false);
 
   const post = !isNewPost ? posts?.find((p) => p.id === id) : null;
+  
+  // Get category slug for view URL
+  const categorySlug = useMemo(() => {
+    const category = categories?.find((c) => c.name === blogTitle);
+    return category?.slug || 'articles';
+  }, [categories, blogTitle]);
+
+  const getViewUrl = () => `/blogs/${categorySlug}/${handle}`;
   
   // Get all posts for navigation (only for edit mode)
   const sortedPosts = posts?.slice().sort((a, b) => {
@@ -195,7 +205,7 @@ export default function BlogPostEdit() {
           {!isNewPost && handle && (
             <>
               <Button variant="outline" size="sm" asChild>
-                <Link to={`/blogs/${handle}`} target="_blank">
+                <Link to={getViewUrl()} target="_blank">
                   <Eye className="h-4 w-4 mr-2" />
                   View
                 </Link>
@@ -210,7 +220,7 @@ export default function BlogPostEdit() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to={`/blogs/${handle}`} target="_blank">
+                    <Link to={getViewUrl()} target="_blank">
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View on store
                     </Link>
@@ -379,7 +389,7 @@ export default function BlogPostEdit() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-primary">Paddy Pet Shop</p>
                   <p className="text-sm text-muted-foreground">
-                    https://paddy.vn › blogs › {handle}
+                    https://paddy.vn › blogs › {categorySlug} › {handle}
                   </p>
                   <p className="text-base text-primary hover:underline cursor-pointer">
                     {title}

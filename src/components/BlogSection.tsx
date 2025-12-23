@@ -10,13 +10,18 @@ export const BlogSection = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('blog_posts')
-        .select('*')
+        .select('*, blog_categories(slug)')
         .eq('published', true)
         .order('shopify_published_at', { ascending: false })
         .limit(4);
       return data || [];
     }
   });
+
+  const getBlogPostUrl = (post: any) => {
+    const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
+    return `/blogs/${categorySlug}/${post.handle}`;
+  };
 
   if (!posts || posts.length === 0) return null;
 
@@ -52,7 +57,7 @@ export const BlogSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Featured Post - Left */}
           {featuredPost && (
-            <Link to={`/blogs/${featuredPost.handle}`} className="group flex flex-col">
+            <Link to={getBlogPostUrl(featuredPost)} className="group flex flex-col">
               <div className="aspect-video rounded-xl overflow-hidden mb-4">
                 <img
                   src={featuredPost.image_url || '/placeholder.svg'}
@@ -81,7 +86,7 @@ export const BlogSection = () => {
             {sidePosts.map((post) => (
               <Link 
                 key={post.id} 
-                to={`/blogs/${post.handle}`}
+                to={getBlogPostUrl(post)}
                 className="group flex gap-4"
               >
                 <div className="w-40 md:w-52 aspect-video flex-shrink-0 rounded-md overflow-hidden">

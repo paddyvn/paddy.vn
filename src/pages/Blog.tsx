@@ -23,7 +23,7 @@ const Blog = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("*")
+        .select("*, blog_categories(slug, name)")
         .eq("published", true)
         .order("shopify_published_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false });
@@ -76,6 +76,11 @@ const Blog = () => {
   const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
   const paginatedPosts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+
+  const getBlogPostUrl = (post: any) => {
+    const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
+    return `/blogs/${categorySlug}/${post.handle}`;
+  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";
@@ -198,7 +203,7 @@ const Blog = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Featured Article Text */}
                     <div className="flex items-center">
-                      <Link to={`/blogs/${featuredPost.handle}`} className="group">
+                      <Link to={getBlogPostUrl(featuredPost)} className="group">
                         <h2 className="text-xl lg:text-2xl font-bold text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
                           {featuredPost.title}
                         </h2>
@@ -210,7 +215,7 @@ const Blog = () => {
 
                     {/* Large Featured Image */}
                     <div className="lg:col-span-2">
-                      <Link to={`/blogs/${featuredPost.handle}`} className="block">
+                      <Link to={getBlogPostUrl(featuredPost)} className="block">
                         <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-muted">
                           {featuredPost.image_url ? (
                             <img
@@ -233,7 +238,7 @@ const Blog = () => {
                     {secondaryPosts.map((post) => (
                       <Link
                         key={post.id}
-                        to={`/blogs/${post.handle}`}
+                        to={getBlogPostUrl(post)}
                         className="group"
                       >
                         <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
@@ -265,7 +270,7 @@ const Blog = () => {
                     {popularPosts.map((post, index) => (
                       <Link
                         key={post.id}
-                        to={`/blogs/${post.handle}`}
+                        to={getBlogPostUrl(post)}
                         className="flex gap-4 py-5 group first:pt-0"
                       >
                         <span className="text-3xl font-bold text-amber-500 shrink-0">
@@ -307,7 +312,7 @@ const Blog = () => {
                   {paginatedPosts.map((post) => (
                     <Link
                       key={post.id}
-                      to={`/blogs/${post.handle}`}
+                      to={getBlogPostUrl(post)}
                       className="group"
                     >
                       <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
