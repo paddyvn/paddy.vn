@@ -67,6 +67,8 @@ export default function CollectionDetails() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSeoEditing, setIsSeoEditing] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
+  const [isPreviewingConditions, setIsPreviewingConditions] = useState(false);
+  const [previewedProducts, setPreviewedProducts] = useState<any[] | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -248,6 +250,122 @@ export default function CollectionDetails() {
     const newRules = [...rules];
     newRules[index] = { ...newRules[index], [field]: value };
     setRules(newRules);
+    // Clear preview when rules change
+    setPreviewedProducts(null);
+  };
+
+  const previewMatchingProducts = async () => {
+    if (rules.length === 0) {
+      toast({
+        title: "No conditions",
+        description: "Please add at least one condition to preview matching products.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPreviewingConditions(true);
+    try {
+      let query = supabase
+        .from("products")
+        .select(`
+          id,
+          name,
+          base_price,
+          is_active,
+          brand,
+          product_type,
+          tags,
+          product_images(image_url, is_primary)
+        `)
+        .eq("is_active", true);
+
+      // Apply each rule as a filter
+      for (const rule of rules) {
+        if (!rule.value.trim()) continue;
+
+        const value = rule.value.trim();
+        
+        switch (rule.field) {
+          case "brand":
+            if (rule.operator === "equals") {
+              query = query.ilike("brand", value);
+            } else if (rule.operator === "not_equals") {
+              query = query.not("brand", "ilike", value);
+            } else if (rule.operator === "contains") {
+              query = query.ilike("brand", `%${value}%`);
+            } else if (rule.operator === "starts_with") {
+              query = query.ilike("brand", `${value}%`);
+            } else if (rule.operator === "ends_with") {
+              query = query.ilike("brand", `%${value}`);
+            }
+            break;
+          case "product_type":
+            if (rule.operator === "equals") {
+              query = query.ilike("product_type", value);
+            } else if (rule.operator === "not_equals") {
+              query = query.not("product_type", "ilike", value);
+            } else if (rule.operator === "contains") {
+              query = query.ilike("product_type", `%${value}%`);
+            }
+            break;
+          case "tag":
+            if (rule.operator === "equals" || rule.operator === "contains") {
+              query = query.ilike("tags", `%${value}%`);
+            } else if (rule.operator === "not_equals") {
+              query = query.not("tags", "ilike", `%${value}%`);
+            }
+            break;
+          case "title":
+            if (rule.operator === "equals") {
+              query = query.ilike("name", value);
+            } else if (rule.operator === "not_equals") {
+              query = query.not("name", "ilike", value);
+            } else if (rule.operator === "contains") {
+              query = query.ilike("name", `%${value}%`);
+            } else if (rule.operator === "starts_with") {
+              query = query.ilike("name", `${value}%`);
+            } else if (rule.operator === "ends_with") {
+              query = query.ilike("name", `%${value}`);
+            }
+            break;
+          case "price":
+            const priceValue = parseFloat(value);
+            if (!isNaN(priceValue)) {
+              if (rule.operator === "equals") {
+                query = query.eq("base_price", priceValue);
+              } else if (rule.operator === "not_equals") {
+                query = query.neq("base_price", priceValue);
+              } else if (rule.operator === "greater_than") {
+                query = query.gt("base_price", priceValue);
+              } else if (rule.operator === "less_than") {
+                query = query.lt("base_price", priceValue);
+              }
+            }
+            break;
+        }
+      }
+
+      const { data, error } = await query.limit(100);
+
+      if (error) throw error;
+
+      setPreviewedProducts(data || []);
+      setProductsPage(1);
+      
+      toast({
+        title: "Preview loaded",
+        description: `Found ${data?.length || 0} matching products.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to preview products",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPreviewingConditions(false);
+    }
   };
 
   const handleSeoSave = async () => {
@@ -323,9 +441,14 @@ export default function CollectionDetails() {
     );
   }
 
-  const products = collection?.product_collections
+  // Use previewed products for smart collections if available, otherwise use linked products
+  const linkedProducts = collection?.product_collections
     ?.map((pc: any) => pc.products)
     .filter(Boolean) || [];
+  
+  const products = formData.collection_type === "smart" && previewedProducts !== null
+    ? previewedProducts
+    : linkedProducts;
 
   return (
     <div className="space-y-6">
@@ -465,15 +588,25 @@ export default function CollectionDetails() {
                   </div>
                 ))}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addRule}
-                  className="w-fit"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add another condition
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addRule}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add another condition
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={previewMatchingProducts}
+                    disabled={isPreviewingConditions || rules.length === 0}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    {isPreviewingConditions ? "Loading..." : "Preview matching products"}
+                  </Button>
+                </div>
               </div>
             </Card>
           )}
