@@ -19,9 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Image, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { Plus, Search, Image, ChevronLeft, ChevronRight, Pencil, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useSyncBrands } from "@/hooks/useSyncBrands";
 
 interface Brand {
   id: string;
@@ -37,6 +38,7 @@ export default function BrandsManagement() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const syncBrands = useSyncBrands();
 
   // Fetch brands
   const { data: brands, isLoading } = useQuery({
@@ -101,10 +103,20 @@ export default function BrandsManagement() {
             Manage product brands and their details
           </p>
         </div>
-        <Button onClick={() => navigate("/admin/products/brands/new")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Brand
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => syncBrands.mutate()}
+            disabled={syncBrands.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncBrands.isPending ? "animate-spin" : ""}`} />
+            Sync from Collections
+          </Button>
+          <Button onClick={() => navigate("/admin/products/brands/new")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Brand
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-4">
