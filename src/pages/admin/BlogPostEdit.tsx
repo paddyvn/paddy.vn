@@ -445,7 +445,10 @@ export default function BlogPostEdit() {
           {/* Image Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-base font-medium">Image</CardTitle>
+              <div>
+                <CardTitle className="text-base font-medium">Image</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Recommended: 1200 × 628px</p>
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="link" size="sm" className="text-primary h-auto p-0">
