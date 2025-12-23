@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Image, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Image, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
@@ -131,6 +131,7 @@ export default function BrandsManagement() {
               <TableHead>Slug</TableHead>
               <TableHead className="text-center">Products</TableHead>
               <TableHead className="text-center">Status</TableHead>
+              <TableHead className="w-16"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -152,11 +153,14 @@ export default function BrandsManagement() {
                   <TableCell>
                     <Skeleton className="h-5 w-16 mx-auto" />
                   </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-8" />
+                  </TableCell>
                 </TableRow>
               ))
             ) : paginatedBrands.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No brands found
                 </TableCell>
               </TableRow>
@@ -191,6 +195,19 @@ export default function BrandsManagement() {
                     <Badge variant={brand.is_active ? "default" : "secondary"}>
                       {brand.is_active ? "Active" : "Inactive"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/admin/products/brands/${brand.id}`);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
