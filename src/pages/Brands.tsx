@@ -17,47 +17,69 @@ import {
 } from "@/components/ui/breadcrumb";
 
 interface Brand {
-  id: string;
   name: string;
   slug: string;
-  image_url: string | null;
+  productCount: number;
 }
 
 const ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'];
+
+// Helper to create slug from brand name
+const createSlug = (name: string) => {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
 
 export default function Brands() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
 
   const { data: brands, isLoading } = useQuery({
-    queryKey: ['all-brands'],
+    queryKey: ['all-brands-from-products'],
     queryFn: async () => {
+      // Get all unique brands from products
       const { data } = await supabase
-        .from('categories')
-        .select('id, name, slug, image_url')
-        .eq('collection_type', 'brand')
-        .eq('is_active', true)
-        .order('name', { ascending: true });
+        .from('products')
+        .select('brand')
+        .not('brand', 'is', null)
+        .neq('brand', '')
+        .eq('is_active', true);
       
-      return data as Brand[] || [];
+      if (!data) return [];
+
+      // Count occurrences and create unique brand list
+      const brandCounts: Record<string, number> = {};
+      data.forEach((product) => {
+        const brand = product.brand?.trim();
+        if (brand) {
+          brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+        }
+      });
+
+      // Convert to array and sort
+      const brandsArray: Brand[] = Object.entries(brandCounts)
+        .map(([name, count]) => ({
+          name,
+          slug: createSlug(name),
+          productCount: count,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      return brandsArray;
     }
   });
 
-  const { data: featuredBrands } = useQuery({
-    queryKey: ['featured-brands'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name, slug, image_url')
-        .eq('collection_type', 'brand')
-        .eq('is_active', true)
-        .not('image_url', 'is', null)
-        .order('display_order', { ascending: true })
-        .limit(20);
-      
-      return data as Brand[] || [];
-    }
-  });
+  // Get top brands by product count for carousel
+  const featuredBrands = useMemo(() => {
+    if (!brands) return [];
+    return [...brands]
+      .sort((a, b) => b.productCount - a.productCount)
+      .slice(0, 20);
+  }, [brands]);
 
   // Group brands by first letter
   const groupedBrands = useMemo(() => {
@@ -128,25 +150,17 @@ export default function Brands() {
                 ) : (
                   featuredBrands?.map((brand) => (
                     <Link
-                      key={brand.id}
-                      to={`/collection/${brand.slug}`}
+                      key={brand.name}
+                      to={`/search?brand=${encodeURIComponent(brand.name)}`}
                       className="flex-shrink-0 w-48 border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all bg-background"
                     >
                       <div className="h-24 flex items-center justify-center mb-2">
-                        {brand.image_url ? (
-                          <img
-                            src={brand.image_url}
-                            alt={brand.name}
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        ) : (
-                          <span className="text-lg font-semibold text-center">
-                            {brand.name}
-                          </span>
-                        )}
+                        <span className="text-lg font-semibold text-center">
+                          {brand.name}
+                        </span>
                       </div>
-                      <p className="text-sm text-center text-muted-foreground truncate">
-                        {brand.name}
+                      <p className="text-sm text-center text-muted-foreground">
+                        {brand.productCount} sản phẩm
                       </p>
                     </Link>
                   ))
@@ -242,11 +256,12 @@ export default function Brands() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-3">
                         {letterBrands.map((brand) => (
                           <Link
-                            key={brand.id}
-                            to={`/collection/${brand.slug}`}
-                            className="text-sm text-foreground hover:text-primary hover:underline transition-colors"
+                            key={brand.name}
+                            to={`/search?brand=${encodeURIComponent(brand.name)}`}
+                            className="text-sm text-foreground hover:text-primary hover:underline transition-colors flex items-center justify-between"
                           >
-                            {brand.name}
+                            <span>{brand.name}</span>
+                            <span className="text-muted-foreground text-xs">({brand.productCount})</span>
                           </Link>
                         ))}
                       </div>
