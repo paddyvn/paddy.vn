@@ -62,13 +62,19 @@ export default function BlogPostEdit() {
 
   const post = !isNewPost ? posts?.find((p) => p.id === id) : null;
   
-  // Get category slug for view URL
+  // Get category slug for view URL (only used for Shopify posts)
   const categorySlug = useMemo(() => {
     const category = categories?.find((c) => c.name === blogTitle);
     return category?.slug || 'articles';
   }, [categories, blogTitle]);
 
-  const getViewUrl = () => `/blogs/${categorySlug}/${handle}`;
+  // Shopify posts use /blogs/:categorySlug/:handle, new posts use /blogs/:handle
+  const getViewUrl = () => {
+    if (post?.shopify_article_id) {
+      return `/blogs/${categorySlug}/${handle}`;
+    }
+    return `/blogs/${handle}`;
+  };
   
   // Get all posts for navigation (only for edit mode)
   const sortedPosts = posts?.slice().sort((a, b) => {
@@ -386,10 +392,10 @@ export default function BlogPostEdit() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1">
+              <div className="space-y-1">
                   <p className="text-sm font-medium text-primary">Paddy Pet Shop</p>
                   <p className="text-sm text-muted-foreground">
-                    https://paddy.vn › blogs › {categorySlug} › {handle}
+                    https://paddy.vn › blogs{post?.shopify_article_id ? ` › ${categorySlug}` : ''} › {handle}
                   </p>
                   <p className="text-base text-primary hover:underline cursor-pointer">
                     {title}

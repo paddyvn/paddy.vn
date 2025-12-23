@@ -76,8 +76,8 @@ const App = () => (
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/blogs" element={<Blog />} />
-          <Route path="/blogs/:categorySlug" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
+          <Route path="/blogs/:handle" element={<BlogPostDetail />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
