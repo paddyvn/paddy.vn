@@ -25,7 +25,6 @@ const PRODUCT_FIELDS = [
   { value: "brand", label: "Brand" },
   { value: "tags", label: "Tag" },
   { value: "base_price", label: "Price" },
-  { value: "compare_at_price", label: "Compare-at price" },
   { value: "weight", label: "Weight" },
   { value: "stock_quantity", label: "Inventory stock" },
   { value: "variant_title", label: "Variant's title" },
