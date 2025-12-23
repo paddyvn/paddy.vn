@@ -93,8 +93,11 @@ const mainItems = [
   },
   {
     title: "Analytics",
-    url: "/admin/analytics",
     icon: BarChart3,
+    subItems: [
+      { title: "Sales", url: "/admin/analytics/sales" },
+      { title: "Traffic", url: "/admin/analytics/traffic" },
+    ],
   },
 ];
 
