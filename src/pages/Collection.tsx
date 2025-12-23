@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal, X, Globe, MapPin } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 const PRODUCTS_PER_PAGE = 20;
@@ -39,6 +39,23 @@ const Collection = () => {
         .eq("slug", slug)
         .eq("is_active", true)
         .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!slug,
+  });
+
+  // Fetch brand metadata if this collection matches a brand
+  const { data: brandData } = useQuery({
+    queryKey: ["collection-brand", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("id, name, logo_url, website_url, country_code, description")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -291,19 +308,89 @@ const Collection = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                <div className="container mx-auto">
-                  <h1 className="text-3xl md:text-4xl font-bold text-white">
-                    {collection.name}
-                  </h1>
+                <div className="container mx-auto flex items-end gap-6">
+                  {/* Brand Logo */}
+                  {brandData?.logo_url && (
+                    <div className="hidden md:block w-24 h-24 rounded-xl bg-background shadow-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={brandData.logo_url}
+                        alt={brandData.name}
+                        className="w-full h-full object-contain p-2"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h1 className="text-3xl md:text-4xl font-bold text-white">
+                      {collection.name}
+                    </h1>
+                    {/* Brand Meta Info */}
+                    {brandData && (
+                      <div className="flex items-center gap-4 mt-2">
+                        {brandData.country_code && (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-white/80">
+                            <MapPin className="h-4 w-4" />
+                            {brandData.country_code}
+                          </span>
+                        )}
+                        {brandData.website_url && (
+                          <a
+                            href={brandData.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors"
+                          >
+                            <Globe className="h-4 w-4" />
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="bg-background py-8 md:py-12">
               <div className="container mx-auto px-4">
-                <h1 className="text-3xl md:text-4xl font-bold">
-                  {collection.name}
-                </h1>
+                <div className="flex items-center gap-6">
+                  {/* Brand Logo for non-image header */}
+                  {brandData?.logo_url && (
+                    <div className="w-20 h-20 rounded-xl border bg-background shadow-sm overflow-hidden flex-shrink-0">
+                      <img
+                        src={brandData.logo_url}
+                        alt={brandData.name}
+                        className="w-full h-full object-contain p-2"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold">
+                      {collection.name}
+                    </h1>
+                    {/* Brand Meta Info */}
+                    {brandData && (
+                      <div className="flex items-center gap-4 mt-2">
+                        {brandData.country_code && (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            {brandData.country_code}
+                          </span>
+                        )}
+                        {brandData.website_url && (
+                          <a
+                            href={brandData.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Globe className="h-4 w-4" />
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
