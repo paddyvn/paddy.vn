@@ -51,20 +51,20 @@ interface TOCItem {
 }
 
 const BlogPostDetail = () => {
-  const { handle } = useParams<{ handle: string }>();
+  const { categorySlug, handle } = useParams<{ categorySlug: string; handle: string }>();
   const [email, setEmail] = useState("");
   const [comment, setComment] = useState("");
   const [likedArticle, setLikedArticle] = useState(false);
   const [likeCount, setLikeCount] = useState(12);
   const [activeHeading, setActiveHeading] = useState<string>("");
 
-  // Fetch current post
+  // Fetch current post with category
   const { data: post, isLoading: postLoading } = useQuery({
-    queryKey: ["blog-post", handle],
+    queryKey: ["blog-post", categorySlug, handle],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("*")
+        .select("*, blog_categories(slug, name)")
         .eq("handle", handle)
         .eq("published", true)
         .single();
@@ -81,7 +81,7 @@ const BlogPostDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("id, title, handle, image_url, shopify_published_at, updated_at")
+        .select("id, title, handle, image_url, shopify_published_at, updated_at, blog_categories(slug)")
         .eq("published", true)
         .order("shopify_published_at", { ascending: false, nullsFirst: false })
         .limit(4);
@@ -97,7 +97,7 @@ const BlogPostDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("id, title, handle, image_url, shopify_published_at, updated_at, tags, summary_html")
+        .select("id, title, handle, image_url, shopify_published_at, updated_at, tags, summary_html, blog_categories(slug)")
         .eq("published", true)
         .neq("id", post?.id || "")
         .order("shopify_published_at", { ascending: false, nullsFirst: false })
@@ -207,7 +207,8 @@ const BlogPostDetail = () => {
     }
   };
 
-  const canonicalUrl = `/blogs/${handle}`;
+  const postCategorySlug = (post?.blog_categories as { slug: string; name: string } | null)?.slug || categorySlug;
+  const canonicalUrl = `/blogs/${postCategorySlug}/${handle}`;
 
   if (postLoading) {
     return (
@@ -280,6 +281,18 @@ const BlogPostDetail = () => {
                   <Link to="/blogs" className="text-muted-foreground hover:text-primary">Paddy's Magazine</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
+              {postCategorySlug && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link to={`/blogs/${postCategorySlug}`} className="text-muted-foreground hover:text-primary">
+                        {(post?.blog_categories as { slug: string; name: string } | null)?.name || post.blog_title || postCategorySlug}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbPage className="line-clamp-1 max-w-[300px] text-primary">
@@ -537,12 +550,14 @@ const BlogPostDetail = () => {
                 {trendingPosts
                   ?.filter((p) => p.id !== post.id)
                   .slice(0, 3)
-                  .map((trendingPost) => (
-                    <Link
-                      key={trendingPost.id}
-                      to={`/blogs/${trendingPost.handle}`}
-                      className="flex gap-3 group"
-                    >
+                  .map((trendingPost) => {
+                    const trendingCategorySlug = (trendingPost?.blog_categories as { slug: string } | null)?.slug || 'articles';
+                    return (
+                      <Link
+                        key={trendingPost.id}
+                        to={`/blogs/${trendingCategorySlug}/${trendingPost.handle}`}
+                        className="flex gap-3 group"
+                      >
                       {trendingPost.image_url && (
                         <img
                           src={trendingPost.image_url}
@@ -558,8 +573,9 @@ const BlogPostDetail = () => {
                           {formatDate(trendingPost.shopify_published_at || trendingPost.updated_at)} • {estimateReadTime(null)}
                         </p>
                       </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
               </div>
             </div>
 
@@ -608,44 +624,47 @@ const BlogPostDetail = () => {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedPosts.map((relatedPost) => (
-                <Link
-                  key={relatedPost.id}
-                  to={`/blogs/${relatedPost.handle}`}
-                  className="group"
-                >
-                  <div className="bg-card rounded-2xl overflow-hidden border hover:shadow-lg transition-shadow">
-                    {relatedPost.image_url && (
-                      <div className="aspect-[16/9] overflow-hidden">
-                        <img
-                          src={relatedPost.image_url}
-                          alt={relatedPost.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    <div className="p-5">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                        {relatedPost.tags && (
-                          <Badge variant="secondary" className="text-xs uppercase bg-primary/10 text-primary">
-                            {relatedPost.tags.split(",")[0]?.trim()}
-                          </Badge>
-                        )}
-                        <span>•</span>
-                        <span>{formatDate(relatedPost.shopify_published_at || relatedPost.updated_at)}</span>
-                      </div>
-                      <h3 className="font-bold line-clamp-2 group-hover:text-primary transition-colors mb-2">
-                        {relatedPost.title}
-                      </h3>
-                      {relatedPost.summary_html && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {relatedPost.summary_html.replace(/<[^>]*>/g, "").slice(0, 100)}...
-                        </p>
+              {relatedPosts.map((relatedPost) => {
+                const relatedCategorySlug = (relatedPost?.blog_categories as { slug: string } | null)?.slug || 'articles';
+                return (
+                  <Link
+                    key={relatedPost.id}
+                    to={`/blogs/${relatedCategorySlug}/${relatedPost.handle}`}
+                    className="group"
+                  >
+                    <div className="bg-card rounded-2xl overflow-hidden border hover:shadow-lg transition-shadow">
+                      {relatedPost.image_url && (
+                        <div className="aspect-[16/9] overflow-hidden">
+                          <img
+                            src={relatedPost.image_url}
+                            alt={relatedPost.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
                       )}
+                      <div className="p-5">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                          {relatedPost.tags && (
+                            <Badge variant="secondary" className="text-xs uppercase bg-primary/10 text-primary">
+                              {relatedPost.tags.split(",")[0]?.trim()}
+                            </Badge>
+                          )}
+                          <span>•</span>
+                          <span>{formatDate(relatedPost.shopify_published_at || relatedPost.updated_at)}</span>
+                        </div>
+                        <h3 className="font-bold line-clamp-2 group-hover:text-primary transition-colors mb-2">
+                          {relatedPost.title}
+                        </h3>
+                        {relatedPost.summary_html && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {relatedPost.summary_html.replace(/<[^>]*>/g, "").slice(0, 100)}...
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
