@@ -266,6 +266,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           name_vi: string | null
+          shopify_blog_id: string | null
           slug: string
           updated_at: string | null
         }
@@ -277,6 +278,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           name_vi?: string | null
+          shopify_blog_id?: string | null
           slug: string
           updated_at?: string | null
         }
@@ -288,6 +290,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           name_vi?: string | null
+          shopify_blog_id?: string | null
           slug?: string
           updated_at?: string | null
         }
