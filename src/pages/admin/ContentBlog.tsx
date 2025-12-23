@@ -142,8 +142,8 @@ export default function ContentBlog() {
           bVal = b.shopify_published_at || "";
           break;
         case "updated_at":
-          aVal = a.updated_at || "";
-          bVal = b.updated_at || "";
+          aVal = a.shopify_updated_at || "";
+          bVal = b.shopify_updated_at || "";
           break;
       }
 
@@ -395,8 +395,8 @@ export default function ContentBlog() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {post.updated_at
-                      ? format(new Date(post.updated_at), "MMM d, yyyy HH:mm")
+                    {post.shopify_updated_at
+                      ? format(new Date(post.shopify_updated_at), "MMM d, yyyy HH:mm")
                       : "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
