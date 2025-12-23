@@ -45,6 +45,7 @@ const mainItems = [
     subItems: [
       { title: "All Products", url: "/admin/products" },
       { title: "Collections", url: "/admin/collections" },
+      { title: "Brands", url: "/admin/products/brands" },
       { title: "Inventory Sync", url: "/admin/products/inventory-sync" },
     ],
   },

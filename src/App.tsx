@@ -46,6 +46,7 @@ import FreeShippingEdit from "./pages/admin/promotions/FreeShippingEdit";
 import SubscriptionDealsEdit from "./pages/admin/promotions/SubscriptionDealsEdit";
 import ClearanceEdit from "./pages/admin/promotions/ClearanceEdit";
 import InventorySync from "./pages/admin/InventorySync";
+import BrandsManagement from "./pages/admin/BrandsManagement";
 import SalesAnalytics from "./pages/admin/SalesAnalytics";
 import TrafficAnalytics from "./pages/admin/TrafficAnalytics";
 import NotFound from "./pages/NotFound";
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="products" element={<ProductsManagement />} />
             <Route path="products/:id/edit" element={<ProductEdit />} />
             <Route path="products/inventory-sync" element={<InventorySync />} />
+            <Route path="products/brands" element={<BrandsManagement />} />
             <Route path="collections" element={<CollectionsManagement />} />
             <Route path="collections/:id" element={<CollectionDetails />} />
             <Route path="orders" element={<OrdersManagement />} />
