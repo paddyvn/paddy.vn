@@ -1,13 +1,22 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Users, Clock, TrendingDown, Monitor, Smartphone, Tablet, Globe, RefreshCw, AlertCircle } from "lucide-react";
+import { Eye, Users, Clock, TrendingDown, Monitor, Smartphone, Tablet, Globe, RefreshCw, AlertCircle, Calendar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
 import { format, parse } from "date-fns";
 import { useGA4Analytics } from "@/hooks/useGA4Analytics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
+
+const TIME_RANGES = [
+  { value: "7", label: "Last 7 days", startDate: "7daysAgo" },
+  { value: "14", label: "Last 14 days", startDate: "14daysAgo" },
+  { value: "30", label: "Last 30 days", startDate: "30daysAgo" },
+  { value: "90", label: "Last 90 days", startDate: "90daysAgo" },
+];
 
 const getDeviceIcon = (deviceName: string) => {
   const name = deviceName.toLowerCase();
@@ -17,7 +26,9 @@ const getDeviceIcon = (deviceName: string) => {
 };
 
 export default function TrafficAnalytics() {
-  const { data, isLoading, error, refetch, isFetching } = useGA4Analytics();
+  const [timeRange, setTimeRange] = useState("7");
+  const selectedRange = TIME_RANGES.find(r => r.value === timeRange) || TIME_RANGES[0];
+  const { data, isLoading, error, refetch, isFetching } = useGA4Analytics(selectedRange.startDate, "today");
 
   // Format date for display (YYYYMMDD -> readable)
   const formatDateLabel = (dateStr: string) => {
@@ -105,15 +116,29 @@ export default function TrafficAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Traffic Analytics</h1>
           <p className="text-muted-foreground">Monitor your website traffic and visitor behavior</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[160px]">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_RANGES.map((range) => (
+                <SelectItem key={range.value} value={range.value}>
+                  {range.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -125,7 +150,7 @@ export default function TrafficAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary?.pageViews.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">Last 7 days</p>
+            <p className="text-xs text-muted-foreground">{selectedRange.label}</p>
           </CardContent>
         </Card>
 
@@ -136,7 +161,7 @@ export default function TrafficAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary?.users.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">Last 7 days</p>
+            <p className="text-xs text-muted-foreground">{selectedRange.label}</p>
           </CardContent>
         </Card>
 
@@ -168,7 +193,7 @@ export default function TrafficAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Traffic Overview</CardTitle>
-            <CardDescription>Page views and visitors over the last 7 days</CardDescription>
+            <CardDescription>Page views and visitors - {selectedRange.label.toLowerCase()}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
