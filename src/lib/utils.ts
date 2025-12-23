@@ -5,6 +5,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function slugify(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 /**
  * Format a number as Vietnamese Dong currency
  * @param amount - The amount to format
@@ -26,3 +37,4 @@ export function formatPrice(price: number | null | undefined): string {
   if (price === null || price === undefined) return "0";
   return new Intl.NumberFormat("vi-VN").format(price);
 }
+
