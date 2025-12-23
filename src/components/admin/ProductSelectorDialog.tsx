@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, X, Plus } from "lucide-react";
+import { Search, X, Plus, ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -19,6 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 interface Product {
   id: string;
@@ -26,6 +33,12 @@ interface Product {
   base_price: number;
   is_active: boolean;
   product_images: Array<{ image_url: string; is_primary: boolean }>;
+}
+
+interface ActiveFilter {
+  type: "category" | "collection" | "type" | "tag" | "vendor";
+  value: string;
+  label: string;
 }
 
 interface ProductSelectorDialogProps {
@@ -45,9 +58,68 @@ export function ProductSelectorDialog({
   const [searchBy, setSearchBy] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [activeFilterType, setActiveFilterType] = useState<string | null>(null);
+
+  // Fetch filter options
+  const { data: categories } = useQuery({
+    queryKey: ["categories-for-filter"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  const { data: productTypes } = useQuery({
+    queryKey: ["product-types-for-filter"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("product_type")
+        .not("product_type", "is", null)
+        .eq("is_active", true);
+      const types = [...new Set(data?.map(p => p.product_type).filter(Boolean))];
+      return types.sort();
+    },
+    enabled: open,
+  });
+
+  const { data: tags } = useQuery({
+    queryKey: ["tags-for-filter"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("tags")
+        .not("tags", "is", null)
+        .eq("is_active", true);
+      const allTags = data?.flatMap(p => p.tags?.split(",").map((t: string) => t.trim()) || []) || [];
+      return [...new Set(allTags)].filter(Boolean).sort();
+    },
+    enabled: open,
+  });
+
+  const { data: vendors } = useQuery({
+    queryKey: ["vendors-for-filter"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("brand")
+        .not("brand", "is", null)
+        .eq("is_active", true);
+      const brands = [...new Set(data?.map(p => p.brand).filter(Boolean))];
+      return brands.sort();
+    },
+    enabled: open,
+  });
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products-for-selection", searchQuery, searchBy],
+    queryKey: ["products-for-selection", searchQuery, searchBy, activeFilters],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -56,7 +128,12 @@ export function ProductSelectorDialog({
           name,
           base_price,
           is_active,
-          product_images(image_url, is_primary)
+          brand,
+          product_type,
+          tags,
+          category_id,
+          product_images(image_url, is_primary),
+          product_collections(collection_id)
         `)
         .eq("is_active", true)
         .order("name")
@@ -65,14 +142,35 @@ export function ProductSelectorDialog({
       if (searchQuery) {
         if (searchBy === "all" || searchBy === "title") {
           query = query.ilike("name", `%${searchQuery}%`);
-        } else if (searchBy === "sku") {
-          // Search in variants
+        }
+      }
+
+      // Apply filters
+      for (const filter of activeFilters) {
+        if (filter.type === "category") {
+          query = query.eq("category_id", filter.value);
+        } else if (filter.type === "type") {
+          query = query.eq("product_type", filter.value);
+        } else if (filter.type === "vendor") {
+          query = query.eq("brand", filter.value);
+        } else if (filter.type === "tag") {
+          query = query.ilike("tags", `%${filter.value}%`);
         }
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Product[];
+
+      // Filter by collection if needed
+      let filteredData = data || [];
+      const collectionFilter = activeFilters.find(f => f.type === "collection");
+      if (collectionFilter) {
+        filteredData = filteredData.filter(p => 
+          p.product_collections?.some((pc: any) => pc.collection_id === collectionFilter.value)
+        );
+      }
+
+      return filteredData as Product[];
     },
     enabled: open,
   });
@@ -95,11 +193,11 @@ export function ProductSelectorDialog({
   };
 
   const handleConfirm = () => {
-    // Get all selected products
     const allSelectedProducts = products?.filter(p => selectedIds.has(p.id)) || [];
     onProductsSelect(allSelectedProducts);
     setSelectedIds(new Set());
     setSelectedProducts([]);
+    setActiveFilters([]);
     onOpenChange(false);
   };
 
@@ -107,7 +205,39 @@ export function ProductSelectorDialog({
     setSelectedIds(new Set());
     setSelectedProducts([]);
     setSearchQuery("");
+    setActiveFilters([]);
+    setActiveFilterType(null);
     onOpenChange(false);
+  };
+
+  const addFilter = (type: ActiveFilter["type"], value: string, label: string) => {
+    // Remove existing filter of same type
+    setActiveFilters(prev => [
+      ...prev.filter(f => f.type !== type),
+      { type, value, label }
+    ]);
+    setActiveFilterType(null);
+  };
+
+  const removeFilter = (type: string) => {
+    setActiveFilters(prev => prev.filter(f => f.type !== type));
+  };
+
+  const getFilterOptions = () => {
+    switch (activeFilterType) {
+      case "category":
+        return categories?.map(c => ({ value: c.id, label: c.name })) || [];
+      case "collection":
+        return categories?.map(c => ({ value: c.id, label: c.name })) || [];
+      case "type":
+        return productTypes?.map(t => ({ value: t, label: t })) || [];
+      case "tag":
+        return tags?.map(t => ({ value: t, label: t })) || [];
+      case "vendor":
+        return vendors?.map(v => ({ value: v, label: v })) || [];
+      default:
+        return [];
+    }
   };
 
   return (
@@ -144,10 +274,71 @@ export function ProductSelectorDialog({
             </Select>
           </div>
           
-          <Button variant="outline" size="sm" className="text-muted-foreground">
-            <Plus className="h-4 w-4 mr-1" />
-            Add filter
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <DropdownMenu open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="text-muted-foreground">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add filter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => { setActiveFilterType("category"); setFilterMenuOpen(false); }}>
+                  Categories
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setActiveFilterType("collection"); setFilterMenuOpen(false); }}>
+                  Collection
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setActiveFilterType("type"); setFilterMenuOpen(false); }}>
+                  Types
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setActiveFilterType("tag"); setFilterMenuOpen(false); }}>
+                  Tags
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setActiveFilterType("vendor"); setFilterMenuOpen(false); }}>
+                  Vendors
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Active filters */}
+            {activeFilters.map(filter => (
+              <Badge key={filter.type} variant="secondary" className="gap-1">
+                {filter.type}: {filter.label}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => removeFilter(filter.type)} 
+                />
+              </Badge>
+            ))}
+          </div>
+
+          {/* Filter value selector */}
+          {activeFilterType && (
+            <div className="flex items-center gap-2">
+              <Select onValueChange={(value) => {
+                const options = getFilterOptions();
+                const option = options.find(o => o.value === value);
+                if (option) {
+                  addFilter(activeFilterType as ActiveFilter["type"], option.value, option.label);
+                }
+              }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={`Select ${activeFilterType}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {getFilterOptions().map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="sm" onClick={() => setActiveFilterType(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Products list */}
