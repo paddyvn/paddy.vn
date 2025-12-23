@@ -57,10 +57,7 @@ type CollectionRule = {
   value: string;
 };
 
-import {
-  CollectionTypeSelector,
-  getCollectionTypeDescription,
-} from "@/components/admin/CollectionTypeSelector";
+import { CollectionTypeSelector } from "@/components/admin/CollectionTypeSelector";
 
 export default function CollectionDetails() {
   const { id } = useParams<{ id: string }>();
@@ -78,7 +75,7 @@ export default function CollectionDetails() {
     is_active: true,
     meta_title: "",
     meta_description: "",
-    collection_type: "custom",
+    collection_type: "manual",
     rules_match_type: "all",
   });
   const [rules, setRules] = useState<CollectionRule[]>([]);
@@ -414,70 +411,72 @@ export default function CollectionDetails() {
             </div>
           </Card>
 
-          {/* Conditions */}
-          <Card className="p-6 space-y-4">
-            <h3 className="text-lg font-semibold">Conditions</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <span className="text-sm">Products must match:</span>
-                <RadioGroup
-                  value={formData.rules_match_type}
-                  onValueChange={(value) => setFormData({ ...formData, rules_match_type: value })}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="all" />
-                    <Label htmlFor="all" className="font-normal cursor-pointer">all conditions</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="any" id="any" />
-                    <Label htmlFor="any" className="font-normal cursor-pointer">any condition</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {rules.map((rule, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <ConditionFieldSelector
-                    value={rule.field}
-                    onValueChange={(value) => updateRule(index, "field", value)}
-                  />
-
-                  <ConditionOperatorSelector
-                    value={rule.operator}
-                    onValueChange={(value) => updateRule(index, "operator", value)}
-                    fieldType={getFieldType(rule.field)}
-                  />
-
-                  <Input
-                    value={rule.value}
-                    onChange={(e) => updateRule(index, "value", e.target.value)}
-                    placeholder="Enter value..."
-                    className="flex-1"
-                  />
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeRule(index)}
+          {/* Conditions - Only show for Smart collections */}
+          {formData.collection_type === "smart" && (
+            <Card className="p-6 space-y-4">
+              <h3 className="text-lg font-semibold">Conditions</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm">Products must match:</span>
+                  <RadioGroup
+                    value={formData.rules_match_type}
+                    onValueChange={(value) => setFormData({ ...formData, rules_match_type: value })}
+                    className="flex gap-4"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="all" id="all" />
+                      <Label htmlFor="all" className="font-normal cursor-pointer">all conditions</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="any" id="any" />
+                      <Label htmlFor="any" className="font-normal cursor-pointer">any condition</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-              ))}
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addRule}
-                className="w-fit"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add another condition
-              </Button>
-            </div>
-          </Card>
+                {rules.map((rule, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <ConditionFieldSelector
+                      value={rule.field}
+                      onValueChange={(value) => updateRule(index, "field", value)}
+                    />
+
+                    <ConditionOperatorSelector
+                      value={rule.operator}
+                      onValueChange={(value) => updateRule(index, "operator", value)}
+                      fieldType={getFieldType(rule.field)}
+                    />
+
+                    <Input
+                      value={rule.value}
+                      onChange={(e) => updateRule(index, "value", e.target.value)}
+                      placeholder="Enter value..."
+                      className="flex-1"
+                    />
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeRule(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addRule}
+                  className="w-fit"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add another condition
+                </Button>
+              </div>
+            </Card>
+          )}
 
           {/* Products */}
           <Card className="p-6 space-y-4">
@@ -751,11 +750,14 @@ export default function CollectionDetails() {
             <h3 className="font-semibold">Collection type</h3>
             <CollectionTypeSelector
               value={formData.collection_type}
-              onValueChange={(value) => setFormData({ ...formData, collection_type: value })}
+              onValueChange={(value) => {
+                setFormData({ ...formData, collection_type: value });
+                // Clear rules when switching to manual
+                if (value === "manual") {
+                  setRules([]);
+                }
+              }}
             />
-            <p className="text-xs text-muted-foreground">
-              {getCollectionTypeDescription(formData.collection_type)}
-            </p>
           </Card>
         </div>
       </div>
