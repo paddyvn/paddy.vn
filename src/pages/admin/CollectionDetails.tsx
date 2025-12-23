@@ -66,6 +66,7 @@ export default function CollectionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isNewCollection = id === "new";
   const [isSaving, setIsSaving] = useState(false);
   const [isSeoEditing, setIsSeoEditing] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
@@ -116,7 +117,7 @@ export default function CollectionDetails() {
       if (error) throw error;
       return data as any;
     },
-    enabled: !!id,
+    enabled: !!id && !isNewCollection,
   });
 
   useEffect(() => {
@@ -185,28 +186,48 @@ export default function CollectionDetails() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from("categories")
-        .update({
-          name: formData.name.trim(),
-          slug: formData.slug.trim(),
-          description: formData.description.trim() || null,
-          image_url: formData.image_url.trim() || null,
-          is_active: formData.is_active,
-          meta_title: formData.meta_title.trim() || null,
-          meta_description: formData.meta_description.trim() || null,
-          collection_type: formData.collection_type,
-          rules: rules.length > 0 ? rules : null,
-          rules_match_type: formData.rules_match_type,
-        })
-        .eq("id", id);
+      const collectionData = {
+        name: formData.name.trim(),
+        slug: formData.slug.trim(),
+        description: formData.description.trim() || null,
+        image_url: formData.image_url.trim() || null,
+        is_active: formData.is_active,
+        meta_title: formData.meta_title.trim() || null,
+        meta_description: formData.meta_description.trim() || null,
+        collection_type: formData.collection_type,
+        rules: rules.length > 0 ? rules : null,
+        rules_match_type: formData.rules_match_type,
+      };
 
-      if (error) throw error;
+      if (isNewCollection) {
+        const { data, error } = await supabase
+          .from("categories")
+          .insert(collectionData)
+          .select()
+          .single();
 
-      toast({
-        title: "Collection updated",
-        description: "Your changes have been saved successfully.",
-      });
+        if (error) throw error;
+
+        toast({
+          title: "Collection created",
+          description: "Your collection has been created successfully.",
+        });
+
+        // Navigate to the new collection's edit page
+        navigate(`/admin/collections/${data.id}`, { replace: true });
+      } else {
+        const { error } = await supabase
+          .from("categories")
+          .update(collectionData)
+          .eq("id", id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Collection updated",
+          description: "Your changes have been saved successfully.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -273,7 +294,7 @@ export default function CollectionDetails() {
     return primary?.image_url || images?.[0]?.image_url;
   };
 
-  if (isLoading) {
+  if (isLoading && !isNewCollection) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -294,7 +315,7 @@ export default function CollectionDetails() {
     );
   }
 
-  if (!collection) {
+  if (!collection && !isNewCollection) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Collection not found</p>
@@ -305,7 +326,7 @@ export default function CollectionDetails() {
     );
   }
 
-  const products = collection.product_collections
+  const products = collection?.product_collections
     ?.map((pc: any) => pc.products)
     .filter(Boolean) || [];
 
@@ -321,36 +342,42 @@ export default function CollectionDetails() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">{collection.name}</h1>
+          <h1 className="text-2xl font-bold">
+            {isNewCollection ? "Create collection" : collection?.name}
+          </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.open(`/collection/${formData.slug}`, '_blank')}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {!isNewCollection && (
+            <>
               <Button variant="outline" size="sm">
-                More actions
-                <MoreHorizontal className="h-4 w-4 ml-2" />
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="text-destructive">
-                Delete collection
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.open(`/collection/${formData.slug}`, '_blank')}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    More actions
+                    <MoreHorizontal className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-destructive">
+                    Delete collection
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
           <Button onClick={handleSave} disabled={isSaving} size="sm">
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? (isNewCollection ? "Creating..." : "Saving...") : (isNewCollection ? "Create" : "Save")}
           </Button>
         </div>
       </div>

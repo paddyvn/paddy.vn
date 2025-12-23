@@ -312,10 +312,7 @@ export default function CollectionsManagement() {
   };
 
   const handleAddNew = () => {
-    setEditingCollection(null);
-    setFormData({ name: "", slug: "", description: "", image_url: "" });
-    setFormErrors({});
-    setIsDialogOpen(true);
+    navigate("/admin/collections/new");
   };
 
   const toggleSelectAll = () => {
