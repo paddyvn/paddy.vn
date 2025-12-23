@@ -46,6 +46,7 @@ import FreeShippingEdit from "./pages/admin/promotions/FreeShippingEdit";
 import SubscriptionDealsEdit from "./pages/admin/promotions/SubscriptionDealsEdit";
 import ClearanceEdit from "./pages/admin/promotions/ClearanceEdit";
 import InventorySync from "./pages/admin/InventorySync";
+import Analytics from "./pages/admin/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="promotions/free-shipping/:id/edit" element={<FreeShippingEdit />} />
             <Route path="promotions/subscription-deals/:id/edit" element={<SubscriptionDealsEdit />} />
             <Route path="promotions/clearance/:id/edit" element={<ClearanceEdit />} />
+            <Route path="analytics" element={<Analytics />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
