@@ -51,7 +51,11 @@ interface TOCItem {
 }
 
 const BlogPostDetail = () => {
-  const { categorySlug, handle } = useParams<{ categorySlug: string; handle: string }>();
+  const params = useParams<{ categorySlug?: string; handle?: string }>();
+  // Handle both URL patterns: /blogs/:categorySlug/:handle (Shopify) and /blogs/:handle (new)
+  const handle = params.handle || params.categorySlug;
+  const categorySlugFromUrl = params.handle ? params.categorySlug : undefined;
+  
   const [email, setEmail] = useState("");
   const [comment, setComment] = useState("");
   const [likedArticle, setLikedArticle] = useState(false);
@@ -60,7 +64,7 @@ const BlogPostDetail = () => {
 
   // Fetch current post with category
   const { data: post, isLoading: postLoading } = useQuery({
-    queryKey: ["blog-post", categorySlug, handle],
+    queryKey: ["blog-post", handle],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_posts")
@@ -207,8 +211,12 @@ const BlogPostDetail = () => {
     }
   };
 
-  const postCategorySlug = (post?.blog_categories as { slug: string; name: string } | null)?.slug || categorySlug;
-  const canonicalUrl = `/blogs/${postCategorySlug}/${handle}`;
+  const postCategorySlug = (post?.blog_categories as { slug: string; name: string } | null)?.slug || categorySlugFromUrl;
+  const isShopifyPost = !!post?.shopify_article_id;
+  // Shopify posts use /blogs/:categorySlug/:handle, new posts use /blogs/:handle
+  const canonicalUrl = isShopifyPost && postCategorySlug 
+    ? `/blogs/${postCategorySlug}/${handle}` 
+    : `/blogs/${handle}`;
 
   if (postLoading) {
     return (
