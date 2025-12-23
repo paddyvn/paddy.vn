@@ -226,8 +226,8 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           return text.replace(/\r\n/g, "\n").replace(/\n/g, "\n\n");
         },
         attributes: {
-          class:
-            "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_p]:my-3 [&_li]:text-sm [&_li]:my-0 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_ul]:my-0 [&_ol]:my-0 [&_li::marker]:text-muted-foreground",
+            class:
+            "prose prose-sm max-w-none min-h-[260px] p-4 focus:outline-none text-sm [&_p]:text-sm [&_p]:my-3 [&_li]:text-sm [&_li]:my-0 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_ul]:my-0 [&_ol]:my-0 [&_li::marker]:text-muted-foreground",
           "data-placeholder": placeholder || "",
         },
       },
