@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Users, Clock, TrendingDown, Monitor, Smartphone, Tablet, Globe, RefreshCw, AlertCircle, Calendar } from "lucide-react";
+import { Eye, Users, Clock, TrendingDown, Monitor, Smartphone, Tablet, Globe, RefreshCw, AlertCircle, Calendar as CalendarIcon } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
-import { format, parse } from "date-fns";
+import { format, parse, subDays } from "date-fns";
 import { useGA4Analytics } from "@/hooks/useGA4Analytics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
@@ -16,6 +20,7 @@ const TIME_RANGES = [
   { value: "14", label: "Last 14 days", startDate: "14daysAgo" },
   { value: "30", label: "Last 30 days", startDate: "30daysAgo" },
   { value: "90", label: "Last 90 days", startDate: "90daysAgo" },
+  { value: "custom", label: "Custom", startDate: "" },
 ];
 
 const getDeviceIcon = (deviceName: string) => {
@@ -27,8 +32,44 @@ const getDeviceIcon = (deviceName: string) => {
 
 export default function TrafficAnalytics() {
   const [timeRange, setTimeRange] = useState("7");
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
   const selectedRange = TIME_RANGES.find(r => r.value === timeRange) || TIME_RANGES[0];
-  const { data, isLoading, error, refetch, isFetching } = useGA4Analytics(selectedRange.startDate, "today");
+  
+  // Calculate start and end dates
+  const getDateParams = () => {
+    if (timeRange === "custom" && customDateRange?.from && customDateRange?.to) {
+      return {
+        startDate: format(customDateRange.from, "yyyy-MM-dd"),
+        endDate: format(customDateRange.to, "yyyy-MM-dd"),
+      };
+    }
+    return {
+      startDate: selectedRange.startDate,
+      endDate: "today",
+    };
+  };
+
+  const dateParams = getDateParams();
+  const { data, isLoading, error, refetch, isFetching } = useGA4Analytics(dateParams.startDate, dateParams.endDate);
+
+  const getDisplayLabel = () => {
+    if (timeRange === "custom" && customDateRange?.from && customDateRange?.to) {
+      return `${format(customDateRange.from, "MMM d")} - ${format(customDateRange.to, "MMM d")}`;
+    }
+    return selectedRange.label;
+  };
+
+  const handleTimeRangeChange = (value: string) => {
+    setTimeRange(value);
+    if (value === "custom") {
+      setIsCalendarOpen(true);
+    }
+  };
 
   // Format date for display (YYYYMMDD -> readable)
   const formatDateLabel = (dateStr: string) => {
@@ -122,19 +163,46 @@ export default function TrafficAnalytics() {
           <p className="text-muted-foreground">Monitor your website traffic and visitor behavior</p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[160px]">
-              <Calendar className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIME_RANGES.map((range) => (
-                <SelectItem key={range.value} value={range.value}>
-                  {range.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <div className="flex items-center gap-2">
+              <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+                <SelectTrigger className="w-[180px]">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  <span className="truncate">{getDisplayLabel()}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_RANGES.map((range) => (
+                    <SelectItem key={range.value} value={range.value}>
+                      {range.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {timeRange === "custom" && (
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+              )}
+            </div>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={customDateRange}
+                onSelect={(range) => {
+                  setCustomDateRange(range);
+                  if (range?.from && range?.to) {
+                    setIsCalendarOpen(false);
+                  }
+                }}
+                numberOfMonths={2}
+                disabled={(date) => date > new Date()}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           </Button>
@@ -150,7 +218,7 @@ export default function TrafficAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary?.pageViews.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">{selectedRange.label}</p>
+            <p className="text-xs text-muted-foreground">{getDisplayLabel()}</p>
           </CardContent>
         </Card>
 
@@ -161,7 +229,7 @@ export default function TrafficAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary?.users.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">{selectedRange.label}</p>
+            <p className="text-xs text-muted-foreground">{getDisplayLabel()}</p>
           </CardContent>
         </Card>
 
@@ -193,7 +261,7 @@ export default function TrafficAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Traffic Overview</CardTitle>
-            <CardDescription>Page views and visitors - {selectedRange.label.toLowerCase()}</CardDescription>
+            <CardDescription>Page views and visitors - {getDisplayLabel().toLowerCase()}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
