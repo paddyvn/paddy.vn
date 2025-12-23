@@ -211,12 +211,9 @@ const BlogPostDetail = () => {
     }
   };
 
-  const postCategorySlug = (post?.blog_categories as { slug: string; name: string } | null)?.slug || categorySlugFromUrl;
-  const isShopifyPost = !!post?.shopify_article_id;
-  // Shopify posts use /blogs/:categorySlug/:handle, new posts use /blogs/:handle
-  const canonicalUrl = isShopifyPost && postCategorySlug 
-    ? `/blogs/${postCategorySlug}/${handle}` 
-    : `/blogs/${handle}`;
+  const postCategorySlug = (post?.blog_categories as { slug: string; name: string } | null)?.slug || categorySlugFromUrl || 'articles';
+  // Always use category-based URLs for better SEO
+  const canonicalUrl = `/blogs/${postCategorySlug}/${handle}`;
 
   if (postLoading) {
     return (

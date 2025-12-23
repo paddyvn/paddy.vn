@@ -78,12 +78,9 @@ const Blog = () => {
   const paginatedPosts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
   const getBlogPostUrl = (post: any) => {
-    // Shopify posts use /blogs/:categorySlug/:handle, new posts use /blogs/:handle
-    if (post.shopify_article_id) {
-      const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
-      return `/blogs/${categorySlug}/${post.handle}`;
-    }
-    return `/blogs/${post.handle}`;
+    // Always use category-based URLs for better SEO
+    const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
+    return `/blogs/${categorySlug}/${post.handle}`;
   };
 
   const formatDate = (dateStr: string | null) => {
