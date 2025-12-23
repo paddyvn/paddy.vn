@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, GripVertical, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +31,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { slugify } from "@/lib/utils";
 import {
   useBlogCategories,
   useCreateBlogCategory,
@@ -37,6 +40,20 @@ import {
   useDeleteBlogCategory,
   BlogCategory,
 } from "@/hooks/useBlogCategories";
+
+const categorySchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  name_vi: z.string().trim().max(100).optional(),
+  slug: z
+    .string()
+    .trim()
+    .min(1, "Slug is required")
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase and URL-safe"),
+  description: z.string().trim().max(500).optional(),
+  display_order: z.number().int().min(0).max(9999),
+  is_active: z.boolean(),
+});
 
 const BlogCategories = () => {
   const { data: categories, isLoading } = useBlogCategories();
@@ -57,12 +74,9 @@ const BlogCategories = () => {
     is_active: true,
   });
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  };
+  const { toast } = useToast();
+
+  const generateSlug = (name: string) => slugify(name);
 
   const handleOpenCreate = () => {
     setEditingCategory(null);
@@ -91,19 +105,46 @@ const BlogCategories = () => {
   };
 
   const handleSubmit = () => {
-    const slug = formData.slug || generateSlug(formData.name);
+    const slug = (formData.slug || generateSlug(formData.name)).trim();
+
+    const parsed = categorySchema.safeParse({
+      name: formData.name,
+      name_vi: formData.name_vi || undefined,
+      slug,
+      description: formData.description || undefined,
+      display_order: Number(formData.display_order) || 0,
+      is_active: !!formData.is_active,
+    });
+
+    if (!parsed.success) {
+      toast({
+        title: "Invalid category",
+        description: parsed.error.issues[0]?.message || "Please check your inputs",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const payload = parsed.data as z.infer<typeof categorySchema>;
 
     if (editingCategory) {
       updateCategory.mutate(
         {
           id: editingCategory.id,
-          updates: { ...formData, slug },
+          updates: payload,
         },
         { onSuccess: () => setIsDialogOpen(false) }
       );
     } else {
       createCategory.mutate(
-        { ...formData, slug },
+        payload as {
+          name: string;
+          name_vi?: string;
+          slug: string;
+          description?: string;
+          display_order?: number;
+          is_active?: boolean;
+        },
         { onSuccess: () => setIsDialogOpen(false) }
       );
     }
@@ -229,10 +270,11 @@ const BlogCategories = () => {
                 id="name"
                 value={formData.name}
                 onChange={(e) => {
+                  const nextName = e.target.value;
                   setFormData({
                     ...formData,
-                    name: e.target.value,
-                    slug: formData.slug || generateSlug(e.target.value),
+                    name: nextName,
+                    slug: formData.slug || generateSlug(nextName),
                   });
                 }}
                 placeholder="Category name"
@@ -254,9 +296,9 @@ const BlogCategories = () => {
               <Input
                 id="slug"
                 value={formData.slug}
-                onChange={(e) =>
-                  setFormData({ ...formData, slug: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, slug: slugify(e.target.value) });
+                }}
                 placeholder="category-slug"
               />
             </div>

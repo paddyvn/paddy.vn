@@ -17,6 +17,8 @@ export interface BlogCategory {
 export const useBlogCategories = () => {
   return useQuery({
     queryKey: ["blog-categories"],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_categories" as any)
