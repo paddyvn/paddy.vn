@@ -41,21 +41,23 @@ export default function Auth() {
 
     checkSessionAndRedirect();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && event === 'SIGNED_IN') {
-        // Check if user is admin before redirecting
-        const { data } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .eq("role", "admin")
-          .single();
-        
-        if (data) {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
+        // Defer Supabase call to prevent deadlock
+        setTimeout(async () => {
+          const { data } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "admin")
+            .single();
+          
+          if (data) {
+            navigate("/admin");
+          } else {
+            navigate("/");
+          }
+        }, 0);
       }
     });
 
