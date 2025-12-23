@@ -23,7 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil, ChevronDown } from "lucide-react";
+import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil, ChevronDown, Search } from "lucide-react";
+import { ProductSelectorDialog } from "@/components/admin/ProductSelectorDialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,6 +91,8 @@ export default function CollectionDetails() {
     slug: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
+  const [manuallySelectedProducts, setManuallySelectedProducts] = useState<any[]>([]);
 
   const { data: collection, isLoading } = useQuery({
     queryKey: ["collection", id],
@@ -208,6 +211,21 @@ export default function CollectionDetails() {
 
         if (error) throw error;
 
+        // If manual collection with products, save product_collections
+        if (formData.collection_type === "manual" && manuallySelectedProducts.length > 0) {
+          const productCollections = manuallySelectedProducts.map((product, index) => ({
+            collection_id: data.id,
+            product_id: product.id,
+            position: index,
+          }));
+          
+          const { error: pcError } = await supabase
+            .from("product_collections")
+            .insert(productCollections);
+          
+          if (pcError) console.error("Error saving product collections:", pcError);
+        }
+
         toast({
           title: "Collection created",
           description: "Your collection has been created successfully.",
@@ -223,10 +241,33 @@ export default function CollectionDetails() {
 
         if (error) throw error;
 
+        // If manual collection with new products, save product_collections
+        if (formData.collection_type === "manual" && manuallySelectedProducts.length > 0) {
+          const existingIds = new Set(linkedProducts.map((p: any) => p.id));
+          const newProducts = manuallySelectedProducts.filter(p => !existingIds.has(p.id));
+          
+          if (newProducts.length > 0) {
+            const productCollections = newProducts.map((product, index) => ({
+              collection_id: id,
+              product_id: product.id,
+              position: linkedProducts.length + index,
+            }));
+            
+            const { error: pcError } = await supabase
+              .from("product_collections")
+              .insert(productCollections);
+            
+            if (pcError) console.error("Error saving product collections:", pcError);
+          }
+        }
+
         toast({
           title: "Collection updated",
           description: "Your changes have been saved successfully.",
         });
+        
+        // Clear manually selected after save
+        setManuallySelectedProducts([]);
       }
     } catch (error) {
       toast({
@@ -447,9 +488,33 @@ export default function CollectionDetails() {
     ?.map((pc: any) => pc.products)
     .filter(Boolean) || [];
   
-  const products = formData.collection_type === "smart" && previewedProducts !== null
-    ? previewedProducts
-    : linkedProducts;
+  // For manual collections, combine linked products with manually selected ones
+  const getProducts = () => {
+    if (formData.collection_type === "smart" && previewedProducts !== null) {
+      return previewedProducts;
+    }
+    if (formData.collection_type === "manual" && manuallySelectedProducts.length > 0) {
+      // Combine existing linked products with newly selected ones
+      const existingIds = new Set(linkedProducts.map((p: any) => p.id));
+      const newProducts = manuallySelectedProducts.filter(p => !existingIds.has(p.id));
+      return [...linkedProducts, ...newProducts];
+    }
+    return linkedProducts;
+  };
+  
+  const products = getProducts();
+  
+  const handleProductsSelect = (selectedProducts: any[]) => {
+    setManuallySelectedProducts(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const newProducts = selectedProducts.filter(p => !existingIds.has(p.id));
+      return [...prev, ...newProducts];
+    });
+  };
+  
+  const removeManualProduct = (productId: string) => {
+    setManuallySelectedProducts(prev => prev.filter(p => p.id !== productId));
+  };
 
   return (
     <div className="space-y-6">
@@ -617,53 +682,88 @@ export default function CollectionDetails() {
               <h3 className="text-lg font-semibold">
                 Products ({products.length})
               </h3>
-              <Select defaultValue="best-selling">
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="best-selling">Best selling</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                  <SelectItem value="price-low">Price: Low to high</SelectItem>
-                  <SelectItem value="price-high">Price: High to low</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                {formData.collection_type === "manual" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsProductSelectorOpen(true)}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Browse products
+                  </Button>
+                )}
+                <Select defaultValue="best-selling">
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="best-selling">Best selling</SelectItem>
+                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                    <SelectItem value="price-low">Price: Low to high</SelectItem>
+                    <SelectItem value="price-high">Price: High to low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {products.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p>No products in this collection</p>
+                {formData.collection_type === "manual" && (
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setIsProductSelectorOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add products
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
                   {products
                     .slice((productsPage - 1) * PRODUCTS_PER_PAGE, productsPage * PRODUCTS_PER_PAGE)
-                    .map((product: any, index: number) => (
-                      <div
-                        key={product.id}
-                        className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <span className="text-sm text-muted-foreground w-6">
-                          {(productsPage - 1) * PRODUCTS_PER_PAGE + index + 1}.
-                        </span>
-                        {getPrimaryImage(product.product_images) ? (
-                          <img
-                            src={getPrimaryImage(product.product_images)}
-                            alt={product.name}
-                            className="w-12 h-12 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded bg-muted" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{product.name}</p>
+                    .map((product: any, index: number) => {
+                      const isManuallyAdded = manuallySelectedProducts.some(p => p.id === product.id);
+                      return (
+                        <div
+                          key={product.id}
+                          className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                        >
+                          <span className="text-sm text-muted-foreground w-6">
+                            {(productsPage - 1) * PRODUCTS_PER_PAGE + index + 1}.
+                          </span>
+                          {getPrimaryImage(product.product_images) ? (
+                            <img
+                              src={getPrimaryImage(product.product_images)}
+                              alt={product.name}
+                              className="w-12 h-12 rounded object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-muted" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{product.name}</p>
+                          </div>
+                          <Badge variant={product.is_active ? "default" : "secondary"}>
+                            {product.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                          {formData.collection_type === "manual" && isManuallyAdded && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeManualProduct(product.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                        <Badge variant={product.is_active ? "default" : "secondary"}>
-                          {product.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
                 
                 {/* Pagination */}
@@ -895,6 +995,13 @@ export default function CollectionDetails() {
         </div>
       </div>
 
+      {/* Product Selector Dialog for Manual Collections */}
+      <ProductSelectorDialog
+        open={isProductSelectorOpen}
+        onOpenChange={setIsProductSelectorOpen}
+        selectedProductIds={products.map((p: any) => p.id)}
+        onProductsSelect={handleProductsSelect}
+      />
     </div>
   );
 }
