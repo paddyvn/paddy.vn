@@ -368,7 +368,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-background flex flex-col max-h-[400px]">
+    <div className="border rounded-lg overflow-hidden bg-background flex flex-col h-[600px]">
       {/* Toolbar - Sticky */}
       <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 overflow-x-auto flex-shrink-0 sticky top-0 z-10">
         {/* Block Type Select */}
