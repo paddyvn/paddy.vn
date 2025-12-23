@@ -46,8 +46,11 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, Edit, Trash2, RefreshCw, Plus } from "lucide-react";
+import { Search, Eye, Edit, Trash2, RefreshCw, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
+
+type SortField = "title" | "blog_title" | "author" | "published" | "shopify_published_at";
+type SortDirection = "asc" | "desc";
 
 export default function ContentBlog() {
   const navigate = useNavigate();
@@ -56,6 +59,8 @@ export default function ContentBlog() {
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>("shopify_published_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const POSTS_PER_PAGE = 20;
 
@@ -63,6 +68,25 @@ export default function ContentBlog() {
   const syncPosts = useSyncBlogPosts();
   const deletePost = useDeleteBlogPost();
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="ml-1 h-3 w-3" />
+    ) : (
+      <ArrowDown className="ml-1 h-3 w-3" />
+    );
+  };
 
   // Get unique blogs for filter
   const blogs = useMemo(() => {
@@ -76,10 +100,10 @@ export default function ContentBlog() {
     return Array.from(uniqueBlogs.entries()).map(([id, title]) => ({ id, title }));
   }, [posts]);
 
-  const filteredPosts = useMemo(() => {
+  const filteredAndSortedPosts = useMemo(() => {
     if (!posts) return [];
 
-    return posts.filter((post) => {
+    let filtered = posts.filter((post) => {
       const matchesSearch =
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,15 +114,54 @@ export default function ContentBlog() {
 
       return matchesSearch && matchesBlog;
     });
-  }, [posts, searchQuery, blogFilter]);
 
-  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+    // Sort
+    filtered.sort((a, b) => {
+      let aVal: string | boolean | null = null;
+      let bVal: string | boolean | null = null;
+
+      switch (sortField) {
+        case "title":
+          aVal = a.title.toLowerCase();
+          bVal = b.title.toLowerCase();
+          break;
+        case "blog_title":
+          aVal = (a.blog_title || "").toLowerCase();
+          bVal = (b.blog_title || "").toLowerCase();
+          break;
+        case "author":
+          aVal = (a.author || "").toLowerCase();
+          bVal = (b.author || "").toLowerCase();
+          break;
+        case "published":
+          aVal = a.published ?? false;
+          bVal = b.published ?? false;
+          break;
+        case "shopify_published_at":
+          aVal = a.shopify_published_at || "";
+          bVal = b.shopify_published_at || "";
+          break;
+      }
+
+      if (aVal === null && bVal === null) return 0;
+      if (aVal === null) return 1;
+      if (bVal === null) return -1;
+
+      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [posts, searchQuery, blogFilter, sortField, sortDirection]);
+
+  const totalPages = Math.ceil(filteredAndSortedPosts.length / POSTS_PER_PAGE);
   
   const paginatedPosts = useMemo(() => {
     const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
     const endIndex = startIndex + POSTS_PER_PAGE;
-    return filteredPosts.slice(startIndex, endIndex);
-  }, [filteredPosts, currentPage, POSTS_PER_PAGE]);
+    return filteredAndSortedPosts.slice(startIndex, endIndex);
+  }, [filteredAndSortedPosts, currentPage, POSTS_PER_PAGE]);
 
   // Reset to page 1 when filters change
   useMemo(() => {
@@ -184,12 +247,62 @@ export default function ContentBlog() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Blog</TableHead>
-              <TableHead>Author</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-3 h-8 data-[state=open]:bg-accent"
+                  onClick={() => handleSort("title")}
+                >
+                  Title
+                  <SortIcon field="title" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-3 h-8 data-[state=open]:bg-accent"
+                  onClick={() => handleSort("blog_title")}
+                >
+                  Blog
+                  <SortIcon field="blog_title" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-3 h-8 data-[state=open]:bg-accent"
+                  onClick={() => handleSort("author")}
+                >
+                  Author
+                  <SortIcon field="author" />
+                </Button>
+              </TableHead>
               <TableHead>Tags</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Published</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-3 h-8 data-[state=open]:bg-accent"
+                  onClick={() => handleSort("published")}
+                >
+                  Status
+                  <SortIcon field="published" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-3 h-8 data-[state=open]:bg-accent"
+                  onClick={() => handleSort("shopify_published_at")}
+                >
+                  Published
+                  <SortIcon field="shopify_published_at" />
+                </Button>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -220,7 +333,7 @@ export default function ContentBlog() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredPosts.length === 0 ? (
+            ) : filteredAndSortedPosts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <p className="text-muted-foreground">
@@ -300,10 +413,10 @@ export default function ContentBlog() {
         </Table>
       </div>
 
-      {filteredPosts.length > 0 && totalPages > 1 && (
+      {filteredAndSortedPosts.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * POSTS_PER_PAGE) + 1} to {Math.min(currentPage * POSTS_PER_PAGE, filteredPosts.length)} of {filteredPosts.length} posts
+            Showing {((currentPage - 1) * POSTS_PER_PAGE) + 1} to {Math.min(currentPage * POSTS_PER_PAGE, filteredAndSortedPosts.length)} of {filteredAndSortedPosts.length} posts
           </p>
           <Pagination>
             <PaginationContent>
