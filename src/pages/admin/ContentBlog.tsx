@@ -49,7 +49,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Eye, Edit, Trash2, RefreshCw, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 
-type SortField = "title" | "blog_title" | "author" | "published" | "shopify_published_at";
+type SortField = "title" | "blog_title" | "author" | "published" | "shopify_published_at" | "updated_at";
 type SortDirection = "asc" | "desc";
 
 export default function ContentBlog() {
@@ -140,6 +140,10 @@ export default function ContentBlog() {
         case "shopify_published_at":
           aVal = a.shopify_published_at || "";
           bVal = b.shopify_published_at || "";
+          break;
+        case "updated_at":
+          aVal = a.updated_at || "";
+          bVal = b.updated_at || "";
           break;
       }
 
@@ -297,6 +301,17 @@ export default function ContentBlog() {
                   variant="ghost"
                   size="sm"
                   className="-ml-3 h-8 data-[state=open]:bg-accent"
+                  onClick={() => handleSort("updated_at")}
+                >
+                  Updated
+                  <SortIcon field="updated_at" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-3 h-8 data-[state=open]:bg-accent"
                   onClick={() => handleSort("shopify_published_at")}
                 >
                   Published
@@ -329,13 +344,16 @@ export default function ContentBlog() {
                     <Skeleton className="h-4 w-32" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-8 w-32 ml-auto" />
                   </TableCell>
                 </TableRow>
               ))
             ) : filteredAndSortedPosts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <p className="text-muted-foreground">
                     {searchQuery || blogFilter !== "all"
                       ? "No blog posts found"
@@ -375,6 +393,11 @@ export default function ContentBlog() {
                     <Badge variant={post.published ? "default" : "secondary"}>
                       {post.published ? "Published" : "Draft"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {post.updated_at
+                      ? format(new Date(post.updated_at), "MMM d, yyyy HH:mm")
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {post.shopify_published_at
