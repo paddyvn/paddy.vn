@@ -39,6 +39,7 @@ import {
 import {
   ConditionFieldSelector,
   ConditionOperatorSelector,
+  ConditionValueSelector,
   getFieldType,
 } from "@/components/admin/ConditionFieldSelector";
 
@@ -571,11 +572,10 @@ export default function CollectionDetails() {
                       fieldType={getFieldType(rule.field)}
                     />
 
-                    <Input
+                    <ConditionValueSelector
                       value={rule.value}
-                      onChange={(e) => updateRule(index, "value", e.target.value)}
-                      placeholder="Enter value..."
-                      className="flex-1"
+                      onValueChange={(value) => updateRule(index, "value", value)}
+                      field={rule.field}
                     />
 
                     <Button
