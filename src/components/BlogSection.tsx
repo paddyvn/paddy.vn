@@ -19,12 +19,9 @@ export const BlogSection = () => {
   });
 
   const getBlogPostUrl = (post: any) => {
-    // Shopify posts use /blogs/:categorySlug/:handle, new posts use /blogs/:handle
-    if (post.shopify_article_id) {
-      const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
-      return `/blogs/${categorySlug}/${post.handle}`;
-    }
-    return `/blogs/${post.handle}`;
+    // Always use category-based URLs for better SEO
+    const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
+    return `/blogs/${categorySlug}/${post.handle}`;
   };
 
   if (!posts || posts.length === 0) return null;
