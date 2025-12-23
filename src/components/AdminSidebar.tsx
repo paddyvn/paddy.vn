@@ -86,6 +86,7 @@ const mainItems = [
       { title: "Files", url: "/admin/content/files" },
       { title: "Menus", url: "/admin/content/menus" },
       { title: "Blog posts", url: "/admin/content/blog" },
+      { title: "Blog categories", url: "/admin/content/blog-categories" },
       { title: "Pages", url: "/admin/content/pages" },
       { title: "AI Generator", url: "/admin/content/ai-generator" },
     ],

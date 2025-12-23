@@ -31,6 +31,7 @@ import ContentFiles from "./pages/admin/ContentFiles";
 import ContentMenus from "./pages/admin/ContentMenus";
 import ContentBlog from "./pages/admin/ContentBlog";
 import BlogPostEdit from "./pages/admin/BlogPostEdit";
+import BlogCategories from "./pages/admin/BlogCategories";
 import ContentAIGenerator from "./pages/admin/ContentAIGenerator";
 import Pages from "./pages/admin/Pages";
 import MarketingBanners from "./pages/admin/MarketingBanners";
@@ -93,6 +94,7 @@ const App = () => (
             <Route path="content/menus" element={<ContentMenus />} />
             <Route path="content/blog" element={<ContentBlog />} />
             <Route path="content/blog/:id/edit" element={<BlogPostEdit />} />
+            <Route path="content/blog-categories" element={<BlogCategories />} />
             <Route path="content/pages" element={<Pages />} />
             <Route path="content/ai-generator" element={<ContentAIGenerator />} />
             <Route path="marketing/banners" element={<MarketingBanners />} />
