@@ -223,16 +223,19 @@ export function ConditionValueSelector({ value, onValueChange, field }: Conditio
           const uniqueTypes = [...new Set(data?.map(p => p.product_type).filter(Boolean))];
           setOptions(uniqueTypes.map(t => ({ value: t as string, label: t as string })));
         } else if (field === "category") {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("categories")
-            .select("id, name, parent_id, categories!categories_parent_id_fkey(name)")
+            .select("id, name")
             .eq("is_active", true)
             .order("name");
           
+          if (error) {
+            console.error("Error fetching categories:", error);
+          }
+          
           setOptions((data || []).map((c: any) => ({
             value: c.name,
-            label: c.name,
-            parent: c.categories?.name
+            label: c.name
           })));
         } else if (field === "tags") {
           const { data } = await supabase
