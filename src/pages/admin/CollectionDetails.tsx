@@ -351,10 +351,10 @@ export default function CollectionDetails() {
               query = query.ilike("product_type", `%${value}%`);
             }
             break;
-          case "tag":
+          case "tags":
             if (rule.operator === "equals" || rule.operator === "contains") {
               query = query.ilike("tags", `%${value}%`);
-            } else if (rule.operator === "not_equals") {
+            } else if (rule.operator === "not_equals" || rule.operator === "not_contains") {
               query = query.not("tags", "ilike", `%${value}%`);
             }
             break;
