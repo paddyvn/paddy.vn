@@ -10,9 +10,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, X } from "lucide-react";
+import { Search, X, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Product {
   id: string;
@@ -36,11 +42,12 @@ export function ProductSelectorDialog({
   onProductsSelect,
 }: ProductSelectorDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(selectedProductIds));
+  const [searchBy, setSearchBy] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products-for-selection", searchQuery],
+    queryKey: ["products-for-selection", searchQuery, searchBy],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -51,11 +58,16 @@ export function ProductSelectorDialog({
           is_active,
           product_images(image_url, is_primary)
         `)
+        .eq("is_active", true)
         .order("name")
         .limit(50);
 
       if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
+        if (searchBy === "all" || searchBy === "title") {
+          query = query.ilike("name", `%${searchQuery}%`);
+        } else if (searchBy === "sku") {
+          // Search in variants
+        }
       }
 
       const { data, error } = await query;
@@ -83,54 +95,63 @@ export function ProductSelectorDialog({
   };
 
   const handleConfirm = () => {
-    // Get all selected products (from previously selected + newly selected)
+    // Get all selected products
     const allSelectedProducts = products?.filter(p => selectedIds.has(p.id)) || [];
     onProductsSelect(allSelectedProducts);
+    setSelectedIds(new Set());
+    setSelectedProducts([]);
     onOpenChange(false);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
+  const handleClose = () => {
+    setSelectedIds(new Set());
+    setSelectedProducts([]);
+    setSearchQuery("");
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Add products</DialogTitle>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-xl p-0 gap-0">
+        <DialogHeader className="p-4 pb-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle>Add products</DialogTitle>
+          </div>
         </DialogHeader>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search row */}
+        <div className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                autoFocus
+              />
+            </div>
+            <Select value={searchBy} onValueChange={setSearchBy}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Search by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Search by All</SelectItem>
+                <SelectItem value="title">Title</SelectItem>
+                <SelectItem value="sku">SKU</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <Button variant="outline" size="sm" className="text-muted-foreground">
+            <Plus className="h-4 w-4 mr-1" />
+            Add filter
+          </Button>
         </div>
 
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Selected:</span>
-            <Badge variant="secondary">{selectedIds.size} products</Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelectedIds(new Set());
-                setSelectedProducts([]);
-              }}
-            >
-              Clear all
-            </Button>
-          </div>
-        )}
-
-        <ScrollArea className="flex-1 min-h-[300px] max-h-[400px] border rounded-md">
+        {/* Products list */}
+        <ScrollArea className="h-[400px] border-t">
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               Loading products...
@@ -148,9 +169,9 @@ export function ProductSelectorDialog({
                 return (
                   <div
                     key={product.id}
-                    className={`flex items-center gap-4 p-3 cursor-pointer hover:bg-muted/50 transition-colors ${
-                      isSelected ? "bg-primary/5" : ""
-                    } ${isAlreadyAdded ? "opacity-50" : ""}`}
+                    className={`flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors ${
+                      isAlreadyAdded ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                     onClick={() => !isAlreadyAdded && toggleProduct(product)}
                   >
                     <Checkbox
@@ -162,20 +183,14 @@ export function ProductSelectorDialog({
                       <img
                         src={getPrimaryImage(product.product_images)}
                         alt={product.name}
-                        className="w-10 h-10 rounded object-cover"
+                        className="w-10 h-10 rounded border object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded bg-muted" />
+                      <div className="w-10 h-10 rounded border bg-muted" />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{product.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatPrice(product.base_price)}
-                      </p>
-                    </div>
-                    {isAlreadyAdded && (
-                      <Badge variant="outline">Already added</Badge>
-                    )}
+                    <span className="flex-1 text-sm font-medium truncate">
+                      {product.name}
+                    </span>
                   </div>
                 );
               })}
@@ -183,12 +198,16 @@ export function ProductSelectorDialog({
           )}
         </ScrollArea>
 
-        <div className="flex items-center justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 p-4 border-t bg-muted/30">
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={handleConfirm} disabled={selectedIds.size === 0}>
-            Add {selectedIds.size > 0 ? `${selectedIds.size} products` : "products"}
+          <Button 
+            onClick={handleConfirm} 
+            disabled={selectedIds.size === 0}
+          >
+            Add
           </Button>
         </div>
       </DialogContent>

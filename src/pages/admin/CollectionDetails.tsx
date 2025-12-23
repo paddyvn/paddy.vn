@@ -678,48 +678,57 @@ export default function CollectionDetails() {
 
           {/* Products */}
           <Card className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                Products ({products.length})
-              </h3>
+            <h3 className="text-lg font-semibold">Products</h3>
+            
+            {/* Shopify-style search bar */}
+            {formData.collection_type === "manual" && (
               <div className="flex items-center gap-2">
-                {formData.collection_type === "manual" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search products"
+                    className="pl-10 cursor-pointer"
                     onClick={() => setIsProductSelectorOpen(true)}
-                  >
-                    <Search className="h-4 w-4 mr-2" />
-                    Browse products
-                  </Button>
-                )}
+                    readOnly
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsProductSelectorOpen(true)}
+                >
+                  Browse
+                </Button>
                 <Select defaultValue="best-selling">
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sort" />
+                    <SelectValue placeholder="Sort: Best selling" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="best-selling">Best selling</SelectItem>
-                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                    <SelectItem value="price-low">Price: Low to high</SelectItem>
-                    <SelectItem value="price-high">Price: High to low</SelectItem>
+                    <SelectItem value="best-selling">Sort: Best selling</SelectItem>
+                    <SelectItem value="alphabetical">Sort: Alphabetical</SelectItem>
+                    <SelectItem value="price-low">Sort: Price low to high</SelectItem>
+                    <SelectItem value="price-high">Sort: Price high to low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            )}
 
             {products.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>No products in this collection</p>
-                {formData.collection_type === "manual" && (
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => setIsProductSelectorOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add products
-                  </Button>
-                )}
+              <div className="text-center py-16 text-muted-foreground">
+                <svg 
+                  className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={1.5} 
+                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" 
+                  />
+                </svg>
+                <p className="font-medium text-foreground">There are no products in this collection.</p>
+                <p className="text-sm mt-1">Search or browse to add products.</p>
               </div>
             ) : (
               <div className="space-y-4">
