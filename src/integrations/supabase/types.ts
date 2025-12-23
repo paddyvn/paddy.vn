@@ -257,6 +257,42 @@ export type Database = {
           },
         ]
       }
+      blog_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       blog_comment_likes: {
         Row: {
           comment_id: string
@@ -353,6 +389,7 @@ export type Database = {
           author: string | null
           blog_title: string | null
           body_html: string | null
+          category_id: string | null
           created_at: string
           handle: string
           id: string
@@ -372,6 +409,7 @@ export type Database = {
           author?: string | null
           blog_title?: string | null
           body_html?: string | null
+          category_id?: string | null
           created_at?: string
           handle: string
           id?: string
@@ -391,6 +429,7 @@ export type Database = {
           author?: string | null
           blog_title?: string | null
           body_html?: string | null
+          category_id?: string | null
           created_at?: string
           handle?: string
           id?: string
@@ -406,7 +445,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cart_items: {
         Row: {
