@@ -19,12 +19,12 @@ export const useBlogCategories = () => {
     queryKey: ["blog-categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("blog_categories")
+        .from("blog_categories" as any)
         .select("*")
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data as BlogCategory[];
+      return data as unknown as BlogCategory[];
     },
   });
 };
@@ -43,7 +43,7 @@ export const useCreateBlogCategory = () => {
       is_active?: boolean;
     }) => {
       const { data, error } = await supabase
-        .from("blog_categories")
+        .from("blog_categories" as any)
         .insert(category)
         .select()
         .single();
@@ -81,7 +81,7 @@ export const useUpdateBlogCategory = () => {
       updates: Partial<BlogCategory>;
     }) => {
       const { error } = await supabase
-        .from("blog_categories")
+        .from("blog_categories" as any)
         .update(updates)
         .eq("id", id);
 
@@ -111,7 +111,7 @@ export const useDeleteBlogCategory = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("blog_categories")
+        .from("blog_categories" as any)
         .delete()
         .eq("id", id);
 
