@@ -186,7 +186,6 @@ const BlogCategories = () => {
             <TableRow>
               <TableHead className="w-12"></TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Name (VI)</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-20">Order</TableHead>
@@ -197,13 +196,13 @@ const BlogCategories = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : categories?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   No categories found. Create your first category.
                 </TableCell>
               </TableRow>
@@ -214,9 +213,6 @@ const BlogCategories = () => {
                     <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                   </TableCell>
                   <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {category.name_vi || "-"}
-                  </TableCell>
                   <TableCell className="font-mono text-sm">
                     {category.slug}
                   </TableCell>
