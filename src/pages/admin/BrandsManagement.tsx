@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Search, Image, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Image, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ImagePickerDialog } from "@/components/admin/ImagePickerDialog";
@@ -66,6 +73,8 @@ export default function BrandsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
@@ -228,9 +237,24 @@ export default function BrandsManagement() {
     }));
   };
 
-  const filteredBrands = brands?.filter((brand) =>
-    brand.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredBrands = useMemo(() => {
+    return brands?.filter((brand) =>
+      brand.name.toLowerCase().includes(search.toLowerCase())
+    ) || [];
+  }, [brands, search]);
+
+  // Reset page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  // Pagination calculations
+  const totalItems = filteredBrands.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedBrands = filteredBrands.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6">
@@ -247,15 +271,18 @@ export default function BrandsManagement() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search brands..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9"
           />
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {totalItems} brand{totalItems !== 1 ? "s" : ""}
         </div>
       </div>
 
@@ -295,14 +322,14 @@ export default function BrandsManagement() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredBrands?.length === 0 ? (
+            ) : paginatedBrands.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No brands found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredBrands?.map((brand) => (
+              paginatedBrands.map((brand) => (
                 <TableRow key={brand.id}>
                   <TableCell>
                     {brand.logo_url ? (
@@ -356,6 +383,58 @@ export default function BrandsManagement() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Rows per page:</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
