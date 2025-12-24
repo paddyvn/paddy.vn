@@ -37,8 +37,15 @@ import {
   CheckSquare,
   Truck,
   CreditCard,
+  BookOpen,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Order {
   id: string;
@@ -217,6 +224,49 @@ export default function OrderDetail() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch customer's previous addresses from other orders
+  const customerPhone = order?.customer_phone || order?.shipping_address?.phone;
+  const customerEmail = order?.customer_email;
+  
+  const { data: customerAddresses } = useQuery({
+    queryKey: ["customer-addresses", customerPhone, customerEmail],
+    queryFn: async () => {
+      let query = supabase
+        .from("orders")
+        .select("shipping_address, order_number, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      
+      if (customerPhone) {
+        query = query.or(`customer_phone.eq.${customerPhone},shipping_address->phone.eq.${customerPhone}`);
+      } else if (customerEmail) {
+        query = query.eq("customer_email", customerEmail);
+      } else {
+        return [];
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      // Deduplicate addresses based on address1 + city
+      const seen = new Set<string>();
+      const uniqueAddresses: Array<{ address: any; order_number: string }> = [];
+      
+      for (const order of data || []) {
+        const addr = order.shipping_address as Record<string, any> | null;
+        if (!addr || typeof addr !== 'object') continue;
+        const key = `${addr.address1 || ''}-${addr.city || ''}`.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueAddresses.push({ address: addr, order_number: order.order_number });
+        }
+      }
+      
+      return uniqueAddresses;
+    },
+    enabled: !!order && (!!customerPhone || !!customerEmail),
   });
 
   const currentOrderIndex = allOrders?.findIndex((o) => o.id === id) ?? -1;
@@ -963,7 +1013,58 @@ export default function OrderDetail() {
       <Dialog open={editAddressOpen} onOpenChange={setEditAddressOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Shipping Address</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Edit Shipping Address</DialogTitle>
+              {customerAddresses && customerAddresses.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      Address Book
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-80 p-0">
+                    <div className="p-2 border-b">
+                      <p className="text-sm font-medium">Select from previous addresses</p>
+                    </div>
+                    <ScrollArea className="max-h-64">
+                      <div className="p-2 space-y-1">
+                        {customerAddresses.map((item, index) => (
+                          <button
+                            key={index}
+                            className="w-full text-left p-2 rounded-md hover:bg-muted transition-colors"
+                            onClick={() => {
+                              const addr = item.address;
+                              setEditAddress({
+                                first_name: addr.first_name || "",
+                                last_name: addr.last_name || "",
+                                address1: addr.address1 || "",
+                                address2: addr.address2 || "",
+                                city: addr.city || "",
+                                province: addr.province || "",
+                                zip: addr.zip || "",
+                                country: addr.country || "Vietnam",
+                                phone: addr.phone || "",
+                              });
+                            }}
+                          >
+                            <p className="font-medium text-sm">
+                              {item.address.first_name} {item.address.last_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.address.address1}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.address.city}{item.address.country ? `, ${item.address.country}` : ""}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
