@@ -45,7 +45,7 @@ export default function BrandDetails() {
   const { toast } = useToast();
   const isNewBrand = id === "new";
   const [isSaving, setIsSaving] = useState(false);
-  const [isSeoEditing, setIsSeoEditing] = useState(false);
+  
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,9 +57,6 @@ export default function BrandDetails() {
     country_code: "",
     is_active: true,
     display_order: 0,
-  });
-  const [seoFormData, setSeoFormData] = useState({
-    slug: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -104,9 +101,6 @@ export default function BrandDetails() {
         country_code: brand.country_code || "",
         is_active: brand.is_active,
         display_order: brand.display_order || 0,
-      });
-      setSeoFormData({
-        slug: brand.slug,
       });
     }
   }, [brand]);
@@ -233,37 +227,6 @@ export default function BrandDetails() {
     }
   };
 
-  const handleSeoSave = async () => {
-    setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from("brands")
-        .update({
-          slug: seoFormData.slug.trim(),
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setFormData({
-        ...formData,
-        slug: seoFormData.slug,
-      });
-
-      toast({
-        title: "URL updated",
-        description: "The brand URL has been updated.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save URL",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   if (isLoading && !isNewBrand) {
     return (
@@ -436,71 +399,6 @@ export default function BrandDetails() {
               </Button>
             </Card>
           )}
-
-          {/* URL Handle */}
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">URL handle</h3>
-              {!isSeoEditing && !isNewBrand && (
-                <Button 
-                  variant="link" 
-                  size="sm"
-                  className="text-primary p-0 h-auto"
-                  onClick={() => {
-                    setSeoFormData({
-                      slug: formData.slug,
-                    });
-                    setIsSeoEditing(true);
-                  }}
-                >
-                  Edit
-                </Button>
-              )}
-            </div>
-            
-            {isSeoEditing ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="seo-slug">URL handle</Label>
-                  <Input
-                    id="seo-slug"
-                    value={seoFormData.slug}
-                    onChange={(e) => setSeoFormData({ ...seoFormData, slug: e.target.value })}
-                    maxLength={100}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    https://paddy.vn/brands/{seoFormData.slug}
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setIsSeoEditing(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    size="sm"
-                    onClick={async () => {
-                      await handleSeoSave();
-                      setIsSeoEditing(false);
-                    }} 
-                    disabled={isSaving}
-                  >
-                    {isSaving ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  https://paddy.vn/brands/{formData.slug}
-                </p>
-              </div>
-            )}
-          </Card>
         </div>
 
         {/* Right Column */}
