@@ -542,7 +542,7 @@ export default function OrderDetail() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">Refund</Button>
           <Button variant="outline" size="sm">Return</Button>
-          <Button variant="outline" size="sm">Edit</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/admin/orders/${id}/edit`)}>Edit</Button>
           <Button variant="outline" size="sm">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
