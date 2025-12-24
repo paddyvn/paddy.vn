@@ -71,6 +71,7 @@ interface Order {
   customer_phone: string | null;
   cancelled_at: string | null;
   closed_at: string | null;
+  delivery_method: string | null;
 }
 
 interface OrderItem {
@@ -134,12 +135,14 @@ export default function OrderDetail() {
   const [editContactOpen, setEditContactOpen] = useState(false);
   const [editAddressOpen, setEditAddressOpen] = useState(false);
   const [editTagsOpen, setEditTagsOpen] = useState(false);
+  const [editDeliveryOpen, setEditDeliveryOpen] = useState(false);
 
   // Form states
   const [editNotes, setEditNotes] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editTags, setEditTags] = useState("");
+  const [editDeliveryMethod, setEditDeliveryMethod] = useState("");
   const [updateCustomerProfile, setUpdateCustomerProfile] = useState(false);
   const [editAddress, setEditAddress] = useState({
     first_name: "",
@@ -211,6 +214,20 @@ export default function OrderDetail() {
       return data as OrderFulfillment[];
     },
     enabled: !!id,
+  });
+
+  // Fetch delivery methods
+  const { data: deliveryMethods = [] } = useQuery({
+    queryKey: ["delivery-methods"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("delivery_methods")
+        .select("id, name, price")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const { data: allOrders } = useQuery({
@@ -410,6 +427,15 @@ export default function OrderDetail() {
   const handleSaveTags = async () => {
     await updateOrderField({ tags: editTags });
     setEditTagsOpen(false);
+  };
+
+  const handleSaveDeliveryMethod = async () => {
+    const selectedMethod = deliveryMethods.find(m => m.name === editDeliveryMethod);
+    await updateOrderField({ 
+      delivery_method: editDeliveryMethod,
+      shipping_fee: selectedMethod?.price ?? order?.shipping_fee
+    });
+    setEditDeliveryOpen(false);
   };
 
   const openNotesDialog = () => {
@@ -709,10 +735,16 @@ export default function OrderDetail() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
-                  <div className="flex gap-8">
-                    <span className="text-muted-foreground text-xs max-w-[200px] truncate">
-                      Standard shipping
-                    </span>
+                  <div className="flex gap-8 items-center">
+                    <button 
+                      onClick={() => {
+                        setEditDeliveryMethod(order.delivery_method || "");
+                        setEditDeliveryOpen(true);
+                      }}
+                      className="text-muted-foreground text-xs max-w-[200px] truncate hover:text-primary hover:underline"
+                    >
+                      {order.delivery_method || "Standard shipping"}
+                    </button>
                     <span className="w-24 text-right">{formatCurrency(order.shipping_fee || 0)}</span>
                   </div>
                 </div>
@@ -1163,6 +1195,36 @@ export default function OrderDetail() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditTagsOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveTags}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Delivery Method Dialog */}
+      <Dialog open={editDeliveryOpen} onOpenChange={setEditDeliveryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Delivery Method</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Delivery Method</Label>
+              <Select value={editDeliveryMethod} onValueChange={setEditDeliveryMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select delivery method" />
+                </SelectTrigger>
+                <SelectContent>
+                  {deliveryMethods.map((method) => (
+                    <SelectItem key={method.id} value={method.name}>
+                      {method.name} - {formatCurrency(method.price)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDeliveryOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveDeliveryMethod}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
