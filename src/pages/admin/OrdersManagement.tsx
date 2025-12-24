@@ -480,7 +480,12 @@ export default function OrdersManagement() {
                       />
                     </TableCell>
                     <TableCell className="font-medium">
-                      {order.order_number}
+                      <button
+                        onClick={() => navigate(`/admin/orders/${order.id}`)}
+                        className="text-primary hover:underline"
+                      >
+                        {order.order_number}
+                      </button>
                     </TableCell>
                     <TableCell>
                       {format(new Date(order.created_at), "MMM d, yyyy HH:mm")}
