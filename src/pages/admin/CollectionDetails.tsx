@@ -93,6 +93,7 @@ export default function CollectionDetails() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [manuallySelectedProducts, setManuallySelectedProducts] = useState<any[]>([]);
+  const [removedProductIds, setRemovedProductIds] = useState<Set<string>>(new Set());
 
   const { data: collection, isLoading } = useQuery({
     queryKey: ["collection", id],
@@ -241,23 +242,38 @@ export default function CollectionDetails() {
 
         if (error) throw error;
 
-        // If manual collection with new products, save product_collections
-        if (formData.collection_type === "manual" && manuallySelectedProducts.length > 0) {
-          const existingIds = new Set(linkedProducts.map((p: any) => p.id));
-          const newProducts = manuallySelectedProducts.filter(p => !existingIds.has(p.id));
-          
-          if (newProducts.length > 0) {
-            const productCollections = newProducts.map((product, index) => ({
-              collection_id: id,
-              product_id: product.id,
-              position: linkedProducts.length + index,
-            }));
-            
-            const { error: pcError } = await supabase
+        // If manual collection, handle product additions and removals
+        if (formData.collection_type === "manual") {
+          // Remove products marked for removal
+          if (removedProductIds.size > 0) {
+            const { error: deleteError } = await supabase
               .from("product_collections")
-              .insert(productCollections);
+              .delete()
+              .eq("collection_id", id)
+              .in("product_id", Array.from(removedProductIds));
             
-            if (pcError) console.error("Error saving product collections:", pcError);
+            if (deleteError) console.error("Error removing products:", deleteError);
+          }
+
+          // Add new products
+          if (manuallySelectedProducts.length > 0) {
+            const existingIds = new Set(linkedProducts.map((p: any) => p.id));
+            const newProducts = manuallySelectedProducts.filter(p => !existingIds.has(p.id));
+            
+            if (newProducts.length > 0) {
+              const remainingCount = linkedProducts.filter((p: any) => !removedProductIds.has(p.id)).length;
+              const productCollections = newProducts.map((product, index) => ({
+                collection_id: id,
+                product_id: product.id,
+                position: remainingCount + index,
+              }));
+              
+              const { error: pcError } = await supabase
+                .from("product_collections")
+                .insert(productCollections);
+              
+              if (pcError) console.error("Error saving product collections:", pcError);
+            }
           }
         }
 
@@ -266,8 +282,9 @@ export default function CollectionDetails() {
           description: "Your changes have been saved successfully.",
         });
         
-        // Clear manually selected after save
+        // Clear state after save
         setManuallySelectedProducts([]);
+        setRemovedProductIds(new Set());
       }
     } catch (error) {
       toast({
@@ -493,13 +510,17 @@ export default function CollectionDetails() {
     if (formData.collection_type === "smart" && previewedProducts !== null) {
       return previewedProducts;
     }
-    if (formData.collection_type === "manual" && manuallySelectedProducts.length > 0) {
+    
+    // Filter out removed products from linked products
+    const filteredLinkedProducts = linkedProducts.filter((p: any) => !removedProductIds.has(p.id));
+    
+    if (formData.collection_type === "manual") {
       // Combine existing linked products with newly selected ones
-      const existingIds = new Set(linkedProducts.map((p: any) => p.id));
+      const existingIds = new Set(filteredLinkedProducts.map((p: any) => p.id));
       const newProducts = manuallySelectedProducts.filter(p => !existingIds.has(p.id));
-      return [...linkedProducts, ...newProducts];
+      return [...filteredLinkedProducts, ...newProducts];
     }
-    return linkedProducts;
+    return filteredLinkedProducts;
   };
   
   const products = getProducts();
@@ -514,6 +535,17 @@ export default function CollectionDetails() {
   
   const removeManualProduct = (productId: string) => {
     setManuallySelectedProducts(prev => prev.filter(p => p.id !== productId));
+  };
+
+  const removeProductFromCollection = (productId: string) => {
+    // Check if it's a manually added product (not saved yet)
+    const isManuallyAdded = manuallySelectedProducts.some(p => p.id === productId);
+    if (isManuallyAdded) {
+      setManuallySelectedProducts(prev => prev.filter(p => p.id !== productId));
+    } else {
+      // It's an existing linked product - mark for removal
+      setRemovedProductIds(prev => new Set([...prev, productId]));
+    }
   };
 
   return (
@@ -769,12 +801,12 @@ export default function CollectionDetails() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          {formData.collection_type === "manual" && isManuallyAdded && (
+                          {formData.collection_type === "manual" && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => removeManualProduct(product.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                              onClick={() => removeProductFromCollection(product.id)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
