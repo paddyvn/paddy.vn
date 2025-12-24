@@ -246,10 +246,8 @@ export default function OrdersManagement() {
                       {order.shipping_address?.first_name}{" "}
                       {order.shipping_address?.last_name}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal">
-                        {order.items_count} {order.items_count === 1 ? "item" : "items"}
-                      </Badge>
+                    <TableCell className="text-muted-foreground">
+                      {order.items_count} {order.items_count === 1 ? "item" : "items"}
                     </TableCell>
                     <TableCell className="font-medium">
                       {formatCurrency(order.total)}
