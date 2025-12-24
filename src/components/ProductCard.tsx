@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingCart, Loader2 } from "lucide-react";
+import { Heart, PawPrint, ShoppingCart, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
@@ -27,18 +27,6 @@ interface ProductCardProps {
     reviews?: Array<{ rating: number }>;
   };
 }
-
-const CutePaw = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    {/* Heart-shaped main pad */}
-    <path d="M12 20c-4 0-6-3-6-5.5 0-2 1.5-3.5 3.5-3.5 1.2 0 2 .6 2.5 1.2.5-.6 1.3-1.2 2.5-1.2 2 0 3.5 1.5 3.5 3.5 0 2.5-2 5.5-6 5.5z" />
-    {/* Cute round toe beans */}
-    <circle cx="6.5" cy="8" r="2.2" />
-    <circle cx="17.5" cy="8" r="2.2" />
-    <circle cx="10" cy="5" r="1.8" />
-    <circle cx="14" cy="5" r="1.8" />
-  </svg>
-);
 
 const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
   <span 
@@ -174,7 +162,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
 
           <div className="flex items-center gap-1">
-            <CutePaw className="h-4 w-4 text-secondary" />
+            <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
             <span className="text-sm font-medium">
               {calculateAverageRating(product.reviews)}
             </span>
