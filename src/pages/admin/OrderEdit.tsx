@@ -19,13 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -36,9 +29,8 @@ import {
   Trash2,
   Package,
   CheckSquare,
-  Search,
 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { AddProductDialog } from "@/components/admin/AddProductDialog";
 
 interface OrderItem {
   id: string;
@@ -63,15 +55,6 @@ interface OrderItem {
   isRemoved?: boolean;
   originalQuantity?: number;
 }
-
-interface Product {
-  id: string;
-  name: string;
-  base_price: number;
-  product_images: { image_url: string; is_primary: boolean }[];
-  product_variants: { id: string; name: string; price: number; sku: string | null }[];
-}
-
 export default function OrderEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -83,7 +66,6 @@ export default function OrderEdit() {
   const [editReason, setEditReason] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState("");
   const [discountItemId, setDiscountItemId] = useState<string | null>(null);
   const [discountType, setDiscountType] = useState<"amount" | "percentage">("amount");
   const [discountValue, setDiscountValue] = useState("");
@@ -121,31 +103,6 @@ export default function OrderEdit() {
       return data as OrderItem[];
     },
     enabled: !!id,
-  });
-
-  // Search products for adding
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ["products-search", productSearch],
-    queryFn: async () => {
-      if (!productSearch || productSearch.length < 2) return [];
-      const { data, error } = await supabase
-        .from("products")
-        .select(`
-          id,
-          name,
-          base_price,
-          product_images(image_url, is_primary),
-          product_variants(id, name, price, sku)
-        `)
-        .or(`name.ilike.%${productSearch}%,sku.ilike.%${productSearch}%`)
-        .limit(10);
-      if (error) {
-        console.error("Product search error:", error);
-        throw error;
-      }
-      return data as Product[];
-    },
-    enabled: productSearch.length >= 2,
   });
 
   // Initialize edited items
@@ -207,25 +164,31 @@ export default function OrderEdit() {
     );
   };
 
-  const addProduct = (product: Product, variant?: { id: string; name: string; price: number }) => {
-    const newItem: OrderItem = {
-      id: `new-${Date.now()}`,
+  const handleAddProducts = (items: Array<{
+    productId: string;
+    productName: string;
+    variantId: string | null;
+    variantName: string | null;
+    price: number;
+    productImages: { image_url: string; is_primary: boolean }[];
+  }>) => {
+    const newItems: OrderItem[] = items.map((item, index) => ({
+      id: `new-${Date.now()}-${index}`,
       order_id: id!,
-      product_id: product.id,
-      product_name: product.name,
-      variant_id: variant?.id || null,
-      variant_name: variant?.name || null,
-      price: variant?.price || product.base_price,
+      product_id: item.productId,
+      product_name: item.productName,
+      variant_id: item.variantId,
+      variant_name: item.variantName,
+      price: item.price,
       quantity: 1,
-      subtotal: variant?.price || product.base_price,
+      subtotal: item.price,
       product: {
-        product_images: product.product_images,
+        product_images: item.productImages,
       },
       isNew: true,
-    };
-    setEditedItems([...editedItems, newItem]);
+    }));
+    setEditedItems([...editedItems, ...newItems]);
     setAddProductOpen(false);
-    setProductSearch("");
   };
 
   const applyDiscount = () => {
@@ -671,93 +634,11 @@ export default function OrderEdit() {
       </div>
 
       {/* Add Product Dialog */}
-      <Dialog open={addProductOpen} onOpenChange={setAddProductOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add product</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                placeholder="Search products..."
-                className="pl-10"
-              />
-            </div>
-            <ScrollArea className="h-64">
-              <div className="space-y-2">
-                {searchResults?.map((product) => (
-                  <div key={product.id} className="border rounded-lg p-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-muted rounded overflow-hidden">
-                        {product.product_images?.[0]?.image_url ? (
-                          <img 
-                            src={product.product_images[0].image_url} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{product.name}</p>
-                        {product.product_variants?.length > 0 ? (
-                          <div className="mt-2 space-y-1">
-                            {product.product_variants.map((variant) => (
-                              <button
-                                key={variant.id}
-                                className="w-full text-left text-xs p-2 rounded bg-muted/50 hover:bg-muted flex justify-between"
-                                onClick={() => addProduct(product, variant)}
-                              >
-                                <span>{variant.name}</span>
-                                <span>{formatCurrency(variant.price)}</span>
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => addProduct(product)}
-                          >
-                            Add • {formatCurrency(product.base_price)}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {productSearch.length >= 2 && isSearching && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Searching...
-                  </p>
-                )}
-                {productSearch.length >= 2 && !isSearching && searchResults?.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No products found
-                  </p>
-                )}
-                {productSearch.length < 2 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Type at least 2 characters to search
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddProductOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddProductDialog
+        open={addProductOpen}
+        onOpenChange={setAddProductOpen}
+        onAddProducts={handleAddProducts}
+      />
     </div>
   );
 }
