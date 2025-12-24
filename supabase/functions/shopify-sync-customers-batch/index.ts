@@ -22,6 +22,13 @@ interface ShopifyAddress {
   default: boolean;
 }
 
+interface SmsMarketingConsent {
+  state: string;
+  opt_in_level: string | null;
+  consent_updated_at: string | null;
+  consent_collected_from: string | null;
+}
+
 interface ShopifyCustomer {
   id: number;
   email: string;
@@ -38,6 +45,9 @@ interface ShopifyCustomer {
   created_at: string;
   updated_at: string;
   addresses: ShopifyAddress[];
+  state: string;
+  tax_exempt: boolean;
+  sms_marketing_consent: SmsMarketingConsent | null;
 }
 
 serve(async (req) => {
@@ -157,6 +167,9 @@ serve(async (req) => {
             verified_email: shopifyCustomer.verified_email,
             shopify_created_at: shopifyCustomer.created_at,
             shopify_updated_at: shopifyCustomer.updated_at,
+            state: shopifyCustomer.state || 'enabled',
+            tax_exempt: shopifyCustomer.tax_exempt || false,
+            sms_marketing_consent: shopifyCustomer.sms_marketing_consent,
             updated_at: new Date().toISOString(),
           }, {
             onConflict: 'shopify_customer_id',

@@ -859,7 +859,10 @@ export type Database = {
           shopify_created_at: string | null
           shopify_customer_id: string | null
           shopify_updated_at: string | null
+          sms_marketing_consent: Json | null
+          state: string | null
           tags: string | null
+          tax_exempt: boolean | null
           total_spent: number | null
           updated_at: string
           verified_email: boolean | null
@@ -878,7 +881,10 @@ export type Database = {
           shopify_created_at?: string | null
           shopify_customer_id?: string | null
           shopify_updated_at?: string | null
+          sms_marketing_consent?: Json | null
+          state?: string | null
           tags?: string | null
+          tax_exempt?: boolean | null
           total_spent?: number | null
           updated_at?: string
           verified_email?: boolean | null
@@ -897,7 +903,10 @@ export type Database = {
           shopify_created_at?: string | null
           shopify_customer_id?: string | null
           shopify_updated_at?: string | null
+          sms_marketing_consent?: Json | null
+          state?: string | null
           tags?: string | null
+          tax_exempt?: boolean | null
           total_spent?: number | null
           updated_at?: string
           verified_email?: boolean | null
