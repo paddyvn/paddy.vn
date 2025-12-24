@@ -81,16 +81,17 @@ serve(async (req) => {
     }
 
     // Verify admin authentication
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Authentication failed: Authorization header missing');
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization header' }),
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
+      global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: authError } = await authClient.auth.getUser();

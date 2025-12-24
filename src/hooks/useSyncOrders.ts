@@ -54,6 +54,9 @@ export const useSyncOrders = () => {
 
         const { data, error } = await supabase.functions.invoke('shopify-sync-orders-batch', {
           body,
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
         });
 
         if (error) throw error;
