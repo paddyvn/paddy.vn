@@ -136,7 +136,7 @@ serve(async (req) => {
 
     console.log('Admin authenticated:', user.id);
     
-    const { continueFrom, createdAtMin, createdAtMax, syncEvents = true } = await req.json();
+    const { continueFrom, updatedAtMin, createdAtMax, syncEvents = true } = await req.json();
 
     const batchSize = 50; // Process 50 orders at a time
     
@@ -144,9 +144,10 @@ serve(async (req) => {
     let url: string;
     if (continueFrom) {
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`;
-    } else if (createdAtMin) {
-      // Incremental sync - fetch orders created after the most recent one we have
-      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_min=${createdAtMin}`;
+    } else if (updatedAtMin) {
+      // Incremental sync - fetch orders updated after the most recent one we have
+      // This catches both new orders AND orders with status/fulfillment changes
+      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&updated_at_min=${updatedAtMin}`;
     } else if (createdAtMax) {
       // Backward sync - fetch orders created before the oldest one we have
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_max=${createdAtMax}`;

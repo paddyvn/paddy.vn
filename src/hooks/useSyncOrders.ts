@@ -25,17 +25,18 @@ export const useSyncOrders = () => {
       throw new Error("You must be logged in to sync orders");
     }
 
-    let createdAtMin: string | null = null;
+    let updatedAtMin: string | null = null;
     
     if (!fullSync) {
+      // Use updated_at to catch both new orders AND orders with status/fulfillment changes
       const { data: mostRecentOrder } = await supabase
         .from("orders")
-        .select("created_at")
-        .order("created_at", { ascending: false })
+        .select("updated_at")
+        .order("updated_at", { ascending: false })
         .limit(1)
         .single();
       
-      createdAtMin = mostRecentOrder?.created_at || null;
+      updatedAtMin = mostRecentOrder?.updated_at || null;
     }
 
     let nextBatch: string | null = null;
@@ -45,11 +46,11 @@ export const useSyncOrders = () => {
     let totalEvents = 0;
     let batchCount = 0;
 
-    if (createdAtMin && !fullSync) {
-      console.log(`Continuing sync from: ${createdAtMin}`);
+    if (updatedAtMin && !fullSync) {
+      console.log(`Continuing sync from: ${updatedAtMin}`);
       toast({
         title: "Incremental Sync",
-        description: "Syncing only new orders since last sync...",
+        description: "Syncing new and updated orders...",
       });
     } else {
       console.log("Starting full sync of all orders...");
@@ -66,8 +67,8 @@ export const useSyncOrders = () => {
       const body: any = {};
       if (nextBatch) {
         body.continueFrom = nextBatch;
-      } else if (createdAtMin && !fullSync) {
-        body.createdAtMin = createdAtMin;
+      } else if (updatedAtMin && !fullSync) {
+        body.updatedAtMin = updatedAtMin;
       }
       // For full sync, we don't send any date filters
 
