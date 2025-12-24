@@ -30,11 +30,13 @@ interface ProductCardProps {
 
 const CutePaw = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <ellipse cx="12" cy="17" rx="5" ry="4" />
-    <circle cx="6" cy="10" r="2.5" />
-    <circle cx="18" cy="10" r="2.5" />
-    <circle cx="9" cy="6" r="2" />
-    <circle cx="15" cy="6" r="2" />
+    {/* Heart-shaped main pad */}
+    <path d="M12 20c-4 0-6-3-6-5.5 0-2 1.5-3.5 3.5-3.5 1.2 0 2 .6 2.5 1.2.5-.6 1.3-1.2 2.5-1.2 2 0 3.5 1.5 3.5 3.5 0 2.5-2 5.5-6 5.5z" />
+    {/* Cute round toe beans */}
+    <circle cx="6.5" cy="8" r="2.2" />
+    <circle cx="17.5" cy="8" r="2.2" />
+    <circle cx="10" cy="5" r="1.8" />
+    <circle cx="14" cy="5" r="1.8" />
   </svg>
 );
 
