@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSyncOrders } from "@/hooks/useSyncOrders";
@@ -136,6 +137,16 @@ export default function OrdersManagement() {
           {syncOrders.isPending ? "Syncing..." : "Sync Orders"}
         </Button>
       </div>
+
+      {syncOrders.isPending && (
+        <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Syncing orders from Shopify...</span>
+            <span className="font-medium">{syncOrders.progress.current} orders synced</span>
+          </div>
+          <Progress value={100} className="h-2 [&>div]:animate-pulse" />
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
