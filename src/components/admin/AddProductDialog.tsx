@@ -257,7 +257,7 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
         </div>
 
         {/* Products list */}
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="h-[400px]">
           <div className="space-y-1">
             {isLoading ? (
               <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
