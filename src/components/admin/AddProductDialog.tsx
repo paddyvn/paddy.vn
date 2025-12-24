@@ -342,6 +342,29 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start font-normal"
+                  disabled={filters.some(f => f.type === "product_type")}
+                  onClick={() => setFilterPopoverOpen(false)}
+                >
+                  <Select
+                    onValueChange={(value) => {
+                      setFilters(prev => [...prev.filter(f => f.type !== "product_type"), { type: "product_type", value, label: value }]);
+                      setFilterPopoverOpen(false);
+                    }}
+                  >
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                      <span>Type</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start font-normal"
                   disabled={filters.some(f => f.type === "brand")}
                   onClick={() => setFilterPopoverOpen(false)}
                 >
@@ -386,29 +409,6 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
                     <SelectContent>
                       {collections.map(col => (
                         <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start font-normal"
-                  disabled={filters.some(f => f.type === "product_type")}
-                  onClick={() => setFilterPopoverOpen(false)}
-                >
-                  <Select
-                    onValueChange={(value) => {
-                      setFilters(prev => [...prev.filter(f => f.type !== "product_type"), { type: "product_type", value, label: value }]);
-                      setFilterPopoverOpen(false);
-                    }}
-                  >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
-                      <span>Type</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
