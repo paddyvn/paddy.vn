@@ -35,12 +35,16 @@ export const useOrders = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
+        .select("*, order_items(id)")
         .order("shopify_order_id", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Order[];
+      return data.map((order) => ({
+        ...order,
+        items_count: order.order_items?.length || 0,
+        order_items: undefined,
+      })) as (Order & { items_count: number })[];
     },
   });
 };

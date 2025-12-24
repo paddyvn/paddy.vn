@@ -192,6 +192,7 @@ export default function OrdersManagement() {
               <TableHead>Order</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Items</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -211,6 +212,9 @@ export default function OrdersManagement() {
                     <Skeleton className="h-4 w-40" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-12" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-4 w-20" />
                   </TableCell>
                   <TableCell>
@@ -223,7 +227,7 @@ export default function OrdersManagement() {
               ))
             ) : filteredOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <p className="text-muted-foreground">No orders found</p>
                 </TableCell>
               </TableRow>
@@ -241,6 +245,11 @@ export default function OrdersManagement() {
                     <TableCell>
                       {order.shipping_address?.first_name}{" "}
                       {order.shipping_address?.last_name}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-normal">
+                        {order.items_count} {order.items_count === 1 ? "item" : "items"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
                       {formatCurrency(order.total)}
