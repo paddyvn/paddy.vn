@@ -82,8 +82,13 @@ serve(async (req) => {
 
     // Verify admin authentication
     const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
+    const hasAuth = !!authHeader;
+    console.log(`Auth header present: ${hasAuth}`);
+
     if (!authHeader) {
       console.error('Authentication failed: Authorization header missing');
+      // Helpful debugging: list header names (not values)
+      console.error('Received headers:', Array.from(req.headers.keys()).join(', '));
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
