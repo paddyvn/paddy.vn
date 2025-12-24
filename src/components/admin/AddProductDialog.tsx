@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -20,8 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Package, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Package, ChevronDown, ChevronRight, Plus, X } from "lucide-react";
 
 interface ProductVariant {
   id: string;
@@ -34,6 +40,8 @@ interface Product {
   id: string;
   name: string;
   base_price: number;
+  product_type: string | null;
+  brand_id: string | null;
   product_images: { image_url: string; is_primary: boolean }[];
   product_variants: ProductVariant[];
 }
@@ -47,6 +55,12 @@ interface SelectedItem {
   productImages: { image_url: string; is_primary: boolean }[];
 }
 
+interface Filter {
+  type: "brand" | "collection" | "product_type";
+  value: string;
+  label: string;
+}
+
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,6 +72,8 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
   const [searchBy, setSearchBy] = useState("all");
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<Filter[]>([]);
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -65,12 +81,48 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
       setSearch("");
       setSelectedItems(new Map());
       setExpandedProducts(new Set());
+      setFilters([]);
     }
   }, [open]);
 
+  // Fetch brands for filter
+  const { data: brands = [] } = useQuery({
+    queryKey: ["brands-filter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("brands").select("id, name").order("name");
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  // Fetch collections for filter
+  const { data: collections = [] } = useQuery({
+    queryKey: ["collections-filter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id, name").order("name");
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  // Fetch product types for filter
+  const { data: productTypes = [] } = useQuery({
+    queryKey: ["product-types-filter"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("product_type")
+        .not("product_type", "is", null)
+        .order("product_type");
+      const uniqueTypes = [...new Set(data?.map(p => p.product_type).filter(Boolean))];
+      return uniqueTypes as string[];
+    },
+    enabled: open,
+  });
+
   // Fetch products
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["add-products-search", search, searchBy],
+    queryKey: ["add-products-search", search, searchBy, filters],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -78,6 +130,8 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
           id,
           name,
           base_price,
+          product_type,
+          brand_id,
           product_images(image_url, is_primary),
           product_variants(id, name, price, sku)
         `)
@@ -93,11 +147,36 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
         }
       }
 
+      // Apply filters
+      const brandFilter = filters.find(f => f.type === "brand");
+      if (brandFilter) {
+        query = query.eq("brand_id", brandFilter.value);
+      }
+
+      const typeFilter = filters.find(f => f.type === "product_type");
+      if (typeFilter) {
+        query = query.eq("product_type", typeFilter.value);
+      }
+
       query = query.limit(50);
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Product[];
+
+      let filteredProducts = data as Product[];
+
+      // Collection filter requires additional query
+      const collectionFilter = filters.find(f => f.type === "collection");
+      if (collectionFilter) {
+        const { data: productIds } = await supabase
+          .from("product_collections")
+          .select("product_id")
+          .eq("collection_id", collectionFilter.value);
+        const ids = productIds?.map(p => p.product_id) || [];
+        filteredProducts = filteredProducts.filter(p => ids.includes(p.id));
+      }
+
+      return filteredProducts;
     },
     enabled: open,
   });
@@ -246,6 +325,111 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
               <SelectItem value="sku">SKU</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Filter row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <Plus className="h-3 w-3 mr-1" />
+                Add filter
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-1" align="start">
+              <div className="space-y-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start font-normal"
+                  disabled={filters.some(f => f.type === "brand")}
+                  onClick={() => setFilterPopoverOpen(false)}
+                >
+                  <Select
+                    onValueChange={(value) => {
+                      const brand = brands.find(b => b.id === value);
+                      if (brand) {
+                        setFilters(prev => [...prev.filter(f => f.type !== "brand"), { type: "brand", value: brand.id, label: brand.name }]);
+                      }
+                      setFilterPopoverOpen(false);
+                    }}
+                  >
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                      <span>Brand</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map(brand => (
+                        <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start font-normal"
+                  disabled={filters.some(f => f.type === "collection")}
+                  onClick={() => setFilterPopoverOpen(false)}
+                >
+                  <Select
+                    onValueChange={(value) => {
+                      const collection = collections.find(c => c.id === value);
+                      if (collection) {
+                        setFilters(prev => [...prev.filter(f => f.type !== "collection"), { type: "collection", value: collection.id, label: collection.name }]);
+                      }
+                      setFilterPopoverOpen(false);
+                    }}
+                  >
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                      <span>Collection</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {collections.map(col => (
+                        <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start font-normal"
+                  disabled={filters.some(f => f.type === "product_type")}
+                  onClick={() => setFilterPopoverOpen(false)}
+                >
+                  <Select
+                    onValueChange={(value) => {
+                      setFilters(prev => [...prev.filter(f => f.type !== "product_type"), { type: "product_type", value, label: value }]);
+                      setFilterPopoverOpen(false);
+                    }}
+                  >
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                      <span>Type</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Active filters */}
+          {filters.map((filter) => (
+            <Badge key={`${filter.type}-${filter.value}`} variant="secondary" className="h-7 gap-1">
+              <span className="text-muted-foreground text-xs capitalize">{filter.type.replace("_", " ")}:</span>
+              {filter.label}
+              <button
+                onClick={() => setFilters(prev => prev.filter(f => !(f.type === filter.type && f.value === filter.value)))}
+                className="ml-1 hover:bg-muted rounded-full"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
         </div>
 
         {/* Table header */}
