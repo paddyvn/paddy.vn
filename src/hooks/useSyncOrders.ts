@@ -14,97 +14,110 @@ export const useSyncOrders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
-    mutationFn: async () => {
-      setProgress({ current: 0, total: 0 });
+  const syncOrders = async (fullSync = false) => {
+    setProgress({ current: 0, total: 0 });
 
-      // Ensure user is authenticated
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error("You must be logged in to sync orders");
-      }
+    // Ensure user is authenticated
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("You must be logged in to sync orders");
+    }
 
+    let createdAtMin: string | null = null;
+    
+    if (!fullSync) {
       const { data: mostRecentOrder } = await supabase
         .from("orders")
         .select("created_at")
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
+      
+      createdAtMin = mostRecentOrder?.created_at || null;
+    }
 
-      let nextBatch: string | null = null;
-      let createdAtMin: string | null = mostRecentOrder?.created_at || null;
-      let totalSynced = 0;
-      let totalItems = 0;
-      let totalFulfillments = 0;
-      let totalEvents = 0;
-      let batchCount = 0;
+    let nextBatch: string | null = null;
+    let totalSynced = 0;
+    let totalItems = 0;
+    let totalFulfillments = 0;
+    let totalEvents = 0;
+    let batchCount = 0;
 
-      if (createdAtMin) {
-        console.log(`Continuing sync from: ${createdAtMin}`);
-        toast({
-          title: "Incremental Sync",
-          description: "Syncing only new orders since last sync...",
-        });
+    if (createdAtMin && !fullSync) {
+      console.log(`Continuing sync from: ${createdAtMin}`);
+      toast({
+        title: "Incremental Sync",
+        description: "Syncing only new orders since last sync...",
+      });
+    } else {
+      console.log("Starting full sync of all orders...");
+      toast({
+        title: "Full Sync",
+        description: "Syncing all orders from Shopify...",
+      });
+    }
+
+    do {
+      batchCount++;
+      console.log(`Syncing orders batch ${batchCount}...`);
+
+      const body: any = {};
+      if (nextBatch) {
+        body.continueFrom = nextBatch;
+      } else if (createdAtMin && !fullSync) {
+        body.createdAtMin = createdAtMin;
+      }
+      // For full sync, we don't send any date filters
+
+      const response = await fetch(
+        `${SUPABASE_FUNCTIONS_BASE_URL}/shopify-sync-orders-batch`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        const msg =
+          (result && (result.error || result.message)) ||
+          `Orders sync failed (HTTP ${response.status})`;
+        throw new Error(msg);
       }
 
-      do {
-        batchCount++;
-        console.log(`Syncing orders batch ${batchCount}...`);
+      const data = result;
 
-        const body: any = {};
-        if (nextBatch) {
-          body.continueFrom = nextBatch;
-        } else if (createdAtMin) {
-          body.createdAtMin = createdAtMin;
-        }
+      if (data) {
+        totalSynced += data.stats.syncedOrders;
+        totalItems += data.stats.syncedItems;
+        totalFulfillments += data.stats.syncedFulfillments || 0;
+        totalEvents += data.stats.syncedEvents || 0;
+        setProgress({ current: totalSynced, total: totalSynced });
 
-        const response = await fetch(
-          `${SUPABASE_FUNCTIONS_BASE_URL}/shopify-sync-orders-batch`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              // Required by Supabase Functions gateway
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify(body),
-          }
+        nextBatch = data.hasMore ? data.nextBatch : null;
+
+        console.log(
+          `Batch ${batchCount}: ${data.stats.syncedOrders} orders, ${data.stats.syncedItems} items, ${data.stats.syncedEvents || 0} events (Total: ${totalSynced} orders)`
         );
+      }
 
-        const result = await response.json().catch(() => null);
-        if (!response.ok) {
-          const msg =
-            (result && (result.error || result.message)) ||
-            `Orders sync failed (HTTP ${response.status})`;
-          throw new Error(msg);
-        }
+      if (nextBatch) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    } while (nextBatch);
 
-        const data = result;
+    return { totalSynced, totalItems, totalFulfillments, totalEvents };
+  };
 
-        if (data) {
-          totalSynced += data.stats.syncedOrders;
-          totalItems += data.stats.syncedItems;
-          totalFulfillments += data.stats.syncedFulfillments || 0;
-          totalEvents += data.stats.syncedEvents || 0;
-          setProgress({ current: totalSynced, total: totalSynced });
-
-          nextBatch = data.hasMore ? data.nextBatch : null;
-
-          console.log(
-            `Batch ${batchCount}: ${data.stats.syncedOrders} orders, ${data.stats.syncedItems} items, ${data.stats.syncedEvents || 0} events (Total: ${totalSynced} orders)`
-          );
-        }
-
-        if (nextBatch) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-      } while (nextBatch);
-
-      return { totalSynced, totalItems, totalFulfillments, totalEvents };
-    },
+  const mutation = useMutation({
+    mutationFn: (fullSync: boolean = false) => syncOrders(fullSync),
     onSuccess: ({ totalSynced, totalItems, totalEvents }) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["order-events"] });
@@ -130,7 +143,8 @@ export const useSyncOrders = () => {
   });
 
   return {
-    ...mutation,
+    syncOrders: (fullSync = false) => mutation.mutate(fullSync),
+    isPending: mutation.isPending,
     progress,
   };
 };
