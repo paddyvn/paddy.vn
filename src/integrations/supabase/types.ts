@@ -1285,6 +1285,7 @@ export type Database = {
           currency: string | null
           customer_email: string | null
           customer_phone: string | null
+          delivery_method: string | null
           discount: number | null
           financial_status: string | null
           fulfillment_status: string | null
@@ -1311,6 +1312,7 @@ export type Database = {
           currency?: string | null
           customer_email?: string | null
           customer_phone?: string | null
+          delivery_method?: string | null
           discount?: number | null
           financial_status?: string | null
           fulfillment_status?: string | null
@@ -1337,6 +1339,7 @@ export type Database = {
           currency?: string | null
           customer_email?: string | null
           customer_phone?: string | null
+          delivery_method?: string | null
           discount?: number | null
           financial_status?: string | null
           fulfillment_status?: string | null

@@ -522,8 +522,8 @@ export default function OrdersManagement() {
                           ?.label || order.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground max-w-[150px] truncate" title={order.tags || ""}>
-                      {order.tags || "-"}
+                    <TableCell className="text-muted-foreground">
+                      {order.delivery_method || "-"}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
