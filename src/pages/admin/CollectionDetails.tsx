@@ -213,7 +213,7 @@ export default function CollectionDetails() {
         if (error) throw error;
 
         // If manual collection with products, save product_collections
-        if (formData.collection_type === "manual" && manuallySelectedProducts.length > 0) {
+        if (formData.collection_type !== "smart" && manuallySelectedProducts.length > 0) {
           const productCollections = manuallySelectedProducts.map((product, index) => ({
             collection_id: data.id,
             product_id: product.id,
@@ -243,7 +243,7 @@ export default function CollectionDetails() {
         if (error) throw error;
 
         // If manual collection, handle product additions and removals
-        if (formData.collection_type === "manual") {
+        if (formData.collection_type !== "smart") {
           // Remove products marked for removal
           if (removedProductIds.size > 0) {
             const { error: deleteError } = await supabase
@@ -500,6 +500,9 @@ export default function CollectionDetails() {
     );
   }
 
+  // Helper to check if collection is manual type (includes legacy "custom" value)
+  const isManualCollection = formData.collection_type !== "smart";
+
   // Use previewed products for smart collections if available, otherwise use linked products
   const linkedProducts = collection?.product_collections
     ?.map((pc: any) => pc.products)
@@ -514,7 +517,7 @@ export default function CollectionDetails() {
     // Filter out removed products from linked products
     const filteredLinkedProducts = linkedProducts.filter((p: any) => !removedProductIds.has(p.id));
     
-    if (formData.collection_type === "manual") {
+    if (isManualCollection) {
       // Combine existing linked products with newly selected ones
       const existingIds = new Set(filteredLinkedProducts.map((p: any) => p.id));
       const newProducts = manuallySelectedProducts.filter(p => !existingIds.has(p.id));
@@ -714,7 +717,7 @@ export default function CollectionDetails() {
             <h3 className="text-lg font-semibold">Products</h3>
             
             {/* Shopify-style search bar */}
-            {formData.collection_type === "manual" && (
+            {isManualCollection && (
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -801,11 +804,11 @@ export default function CollectionDetails() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          {formData.collection_type === "manual" && (
+                          {isManualCollection && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                              className="text-destructive hover:text-destructive"
                               onClick={() => removeProductFromCollection(product.id)}
                             >
                               <X className="h-4 w-4" />
