@@ -1128,6 +1128,94 @@ export type Database = {
         }
         Relationships: []
       }
+      order_events: {
+        Row: {
+          author: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string
+          order_id: string
+          shopify_event_id: string | null
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message: string
+          order_id: string
+          shopify_event_id?: string | null
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string
+          order_id?: string
+          shopify_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_fulfillments: {
+        Row: {
+          created_at: string
+          id: string
+          location_name: string | null
+          order_id: string
+          shipment_status: string | null
+          shopify_fulfillment_id: string | null
+          status: string | null
+          tracking_company: string | null
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_name?: string | null
+          order_id: string
+          shipment_status?: string | null
+          shopify_fulfillment_id?: string | null
+          status?: string | null
+          tracking_company?: string | null
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_name?: string | null
+          order_id?: string
+          shipment_status?: string | null
+          shopify_fulfillment_id?: string | null
+          status?: string | null
+          tracking_company?: string | null
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_fulfillments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1191,46 +1279,79 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancelled_at: string | null
+          closed_at: string | null
           created_at: string
+          currency: string | null
+          customer_email: string | null
+          customer_phone: string | null
           discount: number | null
+          financial_status: string | null
+          fulfillment_status: string | null
           id: string
           notes: string | null
           order_number: string
+          payment_gateway: string | null
+          processed_at: string | null
           shipping_address: Json
           shipping_fee: number | null
           shopify_order_id: string | null
+          source_name: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           subtotal: number
+          tags: string | null
           total: number
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          cancelled_at?: string | null
+          closed_at?: string | null
           created_at?: string
+          currency?: string | null
+          customer_email?: string | null
+          customer_phone?: string | null
           discount?: number | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
           id?: string
           notes?: string | null
           order_number: string
+          payment_gateway?: string | null
+          processed_at?: string | null
           shipping_address: Json
           shipping_fee?: number | null
           shopify_order_id?: string | null
+          source_name?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal: number
+          tags?: string | null
           total: number
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          cancelled_at?: string | null
+          closed_at?: string | null
           created_at?: string
+          currency?: string | null
+          customer_email?: string | null
+          customer_phone?: string | null
           discount?: number | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
           id?: string
           notes?: string | null
           order_number?: string
+          payment_gateway?: string | null
+          processed_at?: string | null
           shipping_address?: Json
           shipping_fee?: number | null
           shopify_order_id?: string | null
+          source_name?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal?: number
+          tags?: string | null
           total?: number
           updated_at?: string
           user_id?: string | null

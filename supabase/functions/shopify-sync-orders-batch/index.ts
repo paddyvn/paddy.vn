@@ -11,6 +11,9 @@ interface ShopifyOrder {
   name: string;
   created_at: string;
   updated_at: string;
+  processed_at: string | null;
+  cancelled_at: string | null;
+  closed_at: string | null;
   total_price: string;
   subtotal_price: string;
   total_shipping_price_set?: {
@@ -21,6 +24,16 @@ interface ShopifyOrder {
   fulfillment_status: string | null;
   note: string | null;
   shipping_address?: any;
+  gateway: string | null;
+  currency: string;
+  tags: string | null;
+  source_name: string | null;
+  customer?: {
+    email: string | null;
+    phone: string | null;
+  };
+  email: string | null;
+  phone: string | null;
   line_items: Array<{
     id: number;
     product_id: number | null;
@@ -30,6 +43,25 @@ interface ShopifyOrder {
     price: string;
     quantity: number;
   }>;
+  fulfillments?: Array<{
+    id: number;
+    status: string;
+    tracking_number: string | null;
+    tracking_url: string | null;
+    tracking_company: string | null;
+    location_id: number | null;
+    shipment_status: string | null;
+    created_at: string;
+    updated_at: string;
+  }>;
+}
+
+interface ShopifyEvent {
+  id: number;
+  created_at: string;
+  message: string;
+  author: string | null;
+  verb: string;
 }
 
 serve(async (req) => {
@@ -90,12 +122,11 @@ serve(async (req) => {
 
     console.log('Admin authenticated:', user.id);
     
-    const { continueFrom, createdAtMin, createdAtMax } = await req.json();
+    const { continueFrom, createdAtMin, createdAtMax, syncEvents = true } = await req.json();
 
     const batchSize = 50; // Process 50 orders at a time
     
     // Build Shopify API URL
-    // Note: When using page_info, we cannot include other parameters
     let url: string;
     if (continueFrom) {
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`;
@@ -152,27 +183,33 @@ serve(async (req) => {
     // Batch fetch all products and variants
     const { data: products } = await supabase
       .from('products')
-      .select('id, shopify_product_id')
-      .in('shopify_product_id', Array.from(productIds));
+      .select('id, source_id')
+      .in('source_id', Array.from(productIds));
 
     const { data: variants } = await supabase
       .from('product_variants')
-      .select('id, product_id, shopify_variant_id')
-      .in('shopify_variant_id', Array.from(variantIds));
+      .select('id, product_id, source_variant_id')
+      .in('source_variant_id', Array.from(variantIds));
 
     // Create lookup maps
-    const productMap = new Map(products?.map(p => [p.shopify_product_id, p.id]) || []);
-    const variantMap = new Map(variants?.map(v => [v.shopify_variant_id, v.id]) || []);
+    const productMap = new Map(products?.map(p => [p.source_id, p.id]) || []);
+    const variantMap = new Map(variants?.map(v => [v.source_variant_id, v.id]) || []);
 
     let syncedOrders = 0;
     let syncedItems = 0;
+    let syncedEvents = 0;
+    let syncedFulfillments = 0;
 
     // Process each order
     for (const shopifyOrder of orders) {
       try {
         const shippingFee = shopifyOrder.total_shipping_price_set?.shop_money?.amount || '0';
         
-        // Upsert order
+        // Get customer email/phone from customer object or order directly
+        const customerEmail = shopifyOrder.email || shopifyOrder.customer?.email || null;
+        const customerPhone = shopifyOrder.phone || shopifyOrder.customer?.phone || null;
+        
+        // Upsert order with all new fields
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .upsert({
@@ -186,6 +223,18 @@ serve(async (req) => {
             total: parseFloat(shopifyOrder.total_price),
             shipping_address: shopifyOrder.shipping_address || {},
             notes: shopifyOrder.note,
+            // New fields
+            financial_status: shopifyOrder.financial_status,
+            fulfillment_status: shopifyOrder.fulfillment_status || 'unfulfilled',
+            payment_gateway: shopifyOrder.gateway,
+            currency: shopifyOrder.currency || 'VND',
+            tags: shopifyOrder.tags,
+            source_name: shopifyOrder.source_name,
+            customer_email: customerEmail,
+            customer_phone: customerPhone,
+            cancelled_at: shopifyOrder.cancelled_at,
+            closed_at: shopifyOrder.closed_at,
+            processed_at: shopifyOrder.processed_at,
             created_at: shopifyOrder.created_at,
             updated_at: shopifyOrder.updated_at,
           }, {
@@ -238,6 +287,81 @@ serve(async (req) => {
         } else {
           console.error(`Error inserting items for order ${shopifyOrder.name}:`, itemsError);
         }
+
+        // Sync fulfillments
+        if (shopifyOrder.fulfillments && shopifyOrder.fulfillments.length > 0) {
+          // Delete existing fulfillments for this order
+          await supabase
+            .from('order_fulfillments')
+            .delete()
+            .eq('order_id', order.id);
+
+          const fulfillments = shopifyOrder.fulfillments.map(f => ({
+            order_id: order.id,
+            shopify_fulfillment_id: f.id.toString(),
+            status: f.status,
+            tracking_number: f.tracking_number,
+            tracking_url: f.tracking_url,
+            tracking_company: f.tracking_company,
+            shipment_status: f.shipment_status,
+            created_at: f.created_at,
+            updated_at: f.updated_at,
+          }));
+
+          const { error: fulfillmentError } = await supabase
+            .from('order_fulfillments')
+            .insert(fulfillments);
+
+          if (!fulfillmentError) {
+            syncedFulfillments += fulfillments.length;
+          } else {
+            console.error(`Error inserting fulfillments for order ${shopifyOrder.name}:`, fulfillmentError);
+          }
+        }
+
+        // Sync order events/timeline if enabled
+        if (syncEvents) {
+          try {
+            const eventsUrl = `https://${shopifyDomain}/admin/api/2024-01/orders/${shopifyOrder.id}/events.json`;
+            const eventsResponse = await fetch(eventsUrl, {
+              headers: { 'X-Shopify-Access-Token': shopifyToken },
+            });
+
+            if (eventsResponse.ok) {
+              const eventsData = await eventsResponse.json();
+              const events: ShopifyEvent[] = eventsData.events || [];
+
+              if (events.length > 0) {
+                // Delete existing events for this order
+                await supabase
+                  .from('order_events')
+                  .delete()
+                  .eq('order_id', order.id);
+
+                const orderEvents = events.map(event => ({
+                  order_id: order.id,
+                  shopify_event_id: event.id.toString(),
+                  event_type: event.verb,
+                  message: event.message,
+                  author: event.author,
+                  created_at: event.created_at,
+                }));
+
+                const { error: eventsError } = await supabase
+                  .from('order_events')
+                  .insert(orderEvents);
+
+                if (!eventsError) {
+                  syncedEvents += orderEvents.length;
+                } else {
+                  console.error(`Error inserting events for order ${shopifyOrder.name}:`, eventsError);
+                }
+              }
+            }
+          } catch (eventError) {
+            console.error(`Error fetching events for order ${shopifyOrder.name}:`, eventError);
+          }
+        }
       } catch (error) {
         console.error(`Error processing order ${shopifyOrder.name}:`, error);
       }
@@ -252,7 +376,7 @@ serve(async (req) => {
       nextBatch = match ? match[1] : null;
     }
 
-    console.log(`Batch complete: ${syncedOrders} orders, ${syncedItems} items`);
+    console.log(`Batch complete: ${syncedOrders} orders, ${syncedItems} items, ${syncedFulfillments} fulfillments, ${syncedEvents} events`);
 
     return new Response(
       JSON.stringify({
@@ -262,6 +386,8 @@ serve(async (req) => {
         stats: {
           syncedOrders,
           syncedItems,
+          syncedFulfillments,
+          syncedEvents,
         },
       }),
       {
