@@ -38,6 +38,10 @@ import {
   Truck,
   CreditCard,
   BookOpen,
+  Smile,
+  AtSign,
+  Hash,
+  Paperclip,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -814,34 +818,75 @@ export default function OrderDetail() {
               <CardTitle className="text-base">Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                  P
-                </div>
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handlePostComment();
-                      }
-                    }}
-                    placeholder="Leave a comment..."
-                    className="w-full bg-transparent border-none outline-none text-sm"
-                    disabled={isPostingComment}
-                  />
-                  {commentText.trim() && (
-                    <Button
-                      size="sm"
-                      onClick={handlePostComment}
+              <div className="border rounded-lg bg-muted/30">
+                <div className="flex items-start gap-3 p-3">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
+                    P
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handlePostComment();
+                        }
+                      }}
+                      placeholder="Leave a comment..."
+                      className="w-full bg-transparent border-none outline-none text-sm"
                       disabled={isPostingComment}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between px-3 pb-3">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      title="Add emoji"
                     >
-                      {isPostingComment ? "Posting..." : "Post"}
+                      <Smile className="h-4 w-4" />
                     </Button>
-                  )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      title="Mention staff"
+                    >
+                      <AtSign className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      title="Reference page"
+                    >
+                      <Hash className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      title="Attach file"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handlePostComment}
+                    disabled={isPostingComment || !commentText.trim()}
+                    className="text-xs"
+                  >
+                    {isPostingComment ? "Posting..." : "Post"}
+                  </Button>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-3">
