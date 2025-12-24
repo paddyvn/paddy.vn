@@ -76,6 +76,12 @@ interface OrderItem {
   price: number;
   quantity: number;
   subtotal: number;
+  product?: {
+    product_images: {
+      image_url: string;
+      is_primary: boolean;
+    }[];
+  } | null;
 }
 
 interface OrderEvent {
@@ -159,7 +165,12 @@ export default function OrderDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("order_items")
-        .select("*")
+        .select(`
+          *,
+          product:products(
+            product_images(image_url, is_primary)
+          )
+        `)
         .eq("order_id", id);
       if (error) throw error;
       return data as OrderItem[];
@@ -547,29 +558,42 @@ export default function OrderDetail() {
                 {itemsLoading ? (
                   <Skeleton className="h-20 w-full" />
                 ) : (
-                  orderItems?.map((item) => (
-                    <div key={item.id} className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
-                        <Package className="h-6 w-6 text-muted-foreground" />
+                  orderItems?.map((item) => {
+                    const primaryImage = item.product?.product_images?.find(img => img.is_primary)?.image_url 
+                      || item.product?.product_images?.[0]?.image_url;
+                    
+                    return (
+                      <div key={item.id} className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                          {primaryImage ? (
+                            <img 
+                              src={primaryImage} 
+                              alt={item.product_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Package className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{item.product_name}</p>
+                          {item.variant_name && (
+                            <p className="text-sm text-muted-foreground">{item.variant_name}</p>
+                          )}
+                        </div>
+                        <div className="text-sm text-right">
+                          <span>{formatCurrency(item.price)}</span>
+                          <span className="mx-2">×</span>
+                          <span className="inline-flex items-center justify-center w-6 h-6 border rounded text-xs">
+                            {item.quantity}
+                          </span>
+                        </div>
+                        <div className="text-sm font-medium w-24 text-right">
+                          {formatCurrency(item.subtotal)}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{item.product_name}</p>
-                        {item.variant_name && (
-                          <p className="text-sm text-muted-foreground">{item.variant_name}</p>
-                        )}
-                      </div>
-                      <div className="text-sm text-right">
-                        <span>{formatCurrency(item.price)}</span>
-                        <span className="mx-2">×</span>
-                        <span className="inline-flex items-center justify-center w-6 h-6 border rounded text-xs">
-                          {item.quantity}
-                        </span>
-                      </div>
-                      <div className="text-sm font-medium w-24 text-right">
-                        {formatCurrency(item.subtotal)}
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
