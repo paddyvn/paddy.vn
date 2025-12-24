@@ -40,11 +40,15 @@ export const useOrders = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data.map((order) => ({
-        ...order,
-        items_count: order.order_items?.length || 0,
-        order_items: undefined,
-      })) as (Order & { items_count: number })[];
+      
+      return data.map((order) => {
+        const orderItems = order.order_items as { id: string }[] | null;
+        return {
+          ...order,
+          items_count: Array.isArray(orderItems) ? orderItems.length : 0,
+          order_items: undefined,
+        };
+      }) as (Order & { items_count: number })[];
     },
   });
 };
