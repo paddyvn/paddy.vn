@@ -31,6 +31,7 @@ import {
   X
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -40,11 +41,6 @@ const PROVINCES = [
   "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
   "An Giang", "Bà Rịa - Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
   "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
-];
-
-const DELIVERY_METHODS = [
-  { id: "instant", name: "Giao hàng hỏa tốc", price: 50000, description: "Giao trong 2 giờ" },
-  { id: "fast", name: "Giao hàng nhanh", price: 30000, description: "Giao trong 24 giờ" },
 ];
 
 const PAYMENT_METHODS = [
@@ -106,7 +102,7 @@ export default function Checkout() {
   const [useNewAddress, setUseNewAddress] = useState(true);
   
   // Delivery & Payment
-  const [selectedDelivery, setSelectedDelivery] = useState("fast");
+  const [selectedDelivery, setSelectedDelivery] = useState<string>("");
   const [selectedPayment, setSelectedPayment] = useState("cod");
   const [orderNotes, setOrderNotes] = useState("");
   
@@ -120,7 +116,8 @@ export default function Checkout() {
   } | null>(null);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   
-  const { cart, isLoading } = useCart(userId);
+  const { cart, isLoading: cartLoading } = useCart(userId);
+  const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -163,6 +160,13 @@ export default function Checkout() {
     });
   }, [navigate]);
 
+  // Set default delivery method when loaded
+  useEffect(() => {
+    if (deliveryMethods.length > 0 && !selectedDelivery) {
+      setSelectedDelivery(deliveryMethods[0].id);
+    }
+  }, [deliveryMethods, selectedDelivery]);
+
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
     if (!images || images.length === 0) {
       return "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=100&h=100&fit=crop";
@@ -179,7 +183,7 @@ export default function Checkout() {
   };
 
   const subtotal = calculateSubtotal();
-  const deliveryMethod = DELIVERY_METHODS.find(m => m.id === selectedDelivery);
+  const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
   const shippingCost = deliveryMethod?.price || 0;
   
   // Calculate discount
@@ -438,7 +442,7 @@ export default function Checkout() {
     { number: 3, title: "Xác nhận", icon: Package },
   ];
 
-  if (isLoading) {
+  if (cartLoading || deliveryMethodsLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
@@ -692,7 +696,7 @@ export default function Checkout() {
                   <div className="space-y-3">
                     <Label>Phương thức giao hàng</Label>
                     <RadioGroup value={selectedDelivery} onValueChange={setSelectedDelivery}>
-                      {DELIVERY_METHODS.map((method) => (
+                      {deliveryMethods.map((method) => (
                         <div
                           key={method.id}
                           className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
