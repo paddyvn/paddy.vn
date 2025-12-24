@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft, FileCode, Sparkles, RefreshCw } from "lucide-react";
+import { Package, ShoppingCart, Users, Megaphone, Tag, FileText, BarChart3, Settings, ChevronDown, LogOut, LayoutDashboard, ExternalLink, PanelLeft, FileCode, Sparkles, RefreshCw, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -98,6 +98,13 @@ const mainItems = [
     subItems: [
       { title: "Sales", url: "/admin/analytics/sales" },
       { title: "Traffic", url: "/admin/analytics/traffic" },
+    ],
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    subItems: [
+      { title: "Delivery Methods", url: "/admin/settings/delivery-methods" },
     ],
   },
 ];
@@ -240,18 +247,6 @@ export function AdminSidebar() {
 
       <SidebarFooter className="border-t border-border">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-xs">
-              <NavLink
-                to="/admin/settings"
-                className="hover:bg-muted/50 text-xs"
-                activeClassName="bg-muted text-primary font-medium"
-              >
-                <Settings className="h-4 w-4" />
-                {!collapsed && <span className="text-xs">Settings</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="text-xs">
               <NavLink
