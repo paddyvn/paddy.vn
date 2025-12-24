@@ -6,12 +6,15 @@ export interface Order {
   order_number: string;
   user_id: string | null;
   status: string;
+  financial_status: string | null;
+  fulfillment_status: string | null;
   subtotal: number;
   shipping_fee: number | null;
   discount: number | null;
   total: number;
   shipping_address: any;
   notes: string | null;
+  tags: string | null;
   shopify_order_id: string | null;
   created_at: string;
   updated_at: string;
