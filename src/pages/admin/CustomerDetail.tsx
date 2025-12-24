@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,12 +35,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow, format } from "date-fns";
+import {
+  EditContactInfoDialog,
+  EditMarketingDialog,
+  EditTagsDialog,
+  EditNotesDialog,
+  EditCustomerNameDialog,
+} from "@/components/admin/CustomerEditDialogs";
 
 const CustomerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState("");
+
+  // Dialog states
+  const [editContactOpen, setEditContactOpen] = useState(false);
+  const [editMarketingOpen, setEditMarketingOpen] = useState(false);
+  const [editTagsOpen, setEditTagsOpen] = useState(false);
+  const [editNotesOpen, setEditNotesOpen] = useState(false);
+  const [editNameOpen, setEditNameOpen] = useState(false);
 
   // Fetch customer data
   const { data: customer, isLoading: customerLoading } = useQuery({
@@ -221,7 +236,7 @@ const CustomerDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit customer</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditNameOpen(true)}>Edit customer</DropdownMenuItem>
               <DropdownMenuItem>Merge customers</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive">Delete customer</DropdownMenuItem>
             </DropdownMenuContent>
@@ -466,9 +481,23 @@ const CustomerDetail = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">Customer</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditContactOpen(true)}>
+                    Edit contact information
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Manage addresses</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEditMarketingOpen(true)}>
+                    Edit marketing settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Edit tax details</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Contact Information */}
@@ -552,11 +581,10 @@ const CustomerDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Tags */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">Tags</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditTagsOpen(true)}>
                 <Edit className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -579,7 +607,7 @@ const CustomerDetail = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">Notes</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditNotesOpen(true)}>
                 <Edit className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -589,6 +617,33 @@ const CustomerDetail = () => {
           </Card>
         </div>
       </div>
+
+      {/* Edit Dialogs */}
+      <EditContactInfoDialog
+        open={editContactOpen}
+        onOpenChange={setEditContactOpen}
+        customer={customer}
+      />
+      <EditMarketingDialog
+        open={editMarketingOpen}
+        onOpenChange={setEditMarketingOpen}
+        customer={customer}
+      />
+      <EditTagsDialog
+        open={editTagsOpen}
+        onOpenChange={setEditTagsOpen}
+        customer={customer}
+      />
+      <EditNotesDialog
+        open={editNotesOpen}
+        onOpenChange={setEditNotesOpen}
+        customer={customer}
+      />
+      <EditCustomerNameDialog
+        open={editNameOpen}
+        onOpenChange={setEditNameOpen}
+        customer={customer}
+      />
     </div>
   );
 };
