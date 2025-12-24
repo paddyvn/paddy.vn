@@ -374,7 +374,7 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
                       setFilterPopoverOpen(false);
                     }}
                   >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto focus:ring-0 focus:ring-offset-0 w-full justify-between">
                       <span>Type</span>
                     </SelectTrigger>
                     <SelectContent>
@@ -400,7 +400,7 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
                       setFilterPopoverOpen(false);
                     }}
                   >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto focus:ring-0 focus:ring-offset-0 w-full justify-between">
                       <span>Brand</span>
                     </SelectTrigger>
                     <SelectContent>
@@ -426,7 +426,7 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
                       setFilterPopoverOpen(false);
                     }}
                   >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto">
+                    <SelectTrigger className="border-0 shadow-none p-0 h-auto focus:ring-0 focus:ring-offset-0 w-full justify-between">
                       <span>Collection</span>
                     </SelectTrigger>
                     <SelectContent>
