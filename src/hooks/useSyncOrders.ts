@@ -52,14 +52,24 @@ export const useSyncOrders = () => {
           body.createdAtMin = createdAtMin;
         }
 
-        const { data, error } = await supabase.functions.invoke('shopify-sync-orders-batch', {
-          body,
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
+        const response = await fetch(
+          "https://fexafkqzpbzjcupvbfhe.supabase.co/functions/v1/shopify-sync-orders-batch",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify(body),
+          }
+        );
 
-        if (error) throw error;
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result?.error || "Orders sync failed");
+        }
+
+        const data = result;
 
         if (data) {
           totalSynced += data.stats.syncedOrders;
