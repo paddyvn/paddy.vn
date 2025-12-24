@@ -342,6 +342,7 @@ export default function BrandDetails() {
               <RichTextEditor
                 value={formData.description}
                 onChange={(value) => setFormData({ ...formData, description: value })}
+                minHeight="400px"
               />
               {formErrors.description && (
                 <p className="text-sm text-destructive">{formErrors.description}</p>

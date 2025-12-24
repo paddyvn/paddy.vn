@@ -129,9 +129,10 @@ interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  minHeight?: string;
 }
 
-export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, placeholder, minHeight = "600px" }: RichTextEditorProps) {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
@@ -368,7 +369,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-background flex flex-col h-[600px]">
+    <div className="border rounded-lg overflow-hidden bg-background flex flex-col" style={{ height: minHeight }}>
       {/* Toolbar - Sticky */}
       <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 overflow-x-auto flex-shrink-0 sticky top-0 z-10">
         {/* Block Type Select */}
