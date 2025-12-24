@@ -23,6 +23,7 @@ import ProductEdit from "./pages/admin/ProductEdit";
 import CollectionsManagement from "./pages/admin/CollectionsManagement";
 import CollectionDetails from "./pages/admin/CollectionDetails";
 import OrdersManagement from "./pages/admin/OrdersManagement";
+import OrderDetail from "./pages/admin/OrderDetail";
 import CustomersManagement from "./pages/admin/CustomersManagement";
 import CustomerSegments from "./pages/admin/CustomerSegments";
 import AbandonedCheckouts from "./pages/admin/AbandonedCheckouts";
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="collections" element={<CollectionsManagement />} />
             <Route path="collections/:id" element={<CollectionDetails />} />
             <Route path="orders" element={<OrdersManagement />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="abandoned-checkouts" element={<AbandonedCheckouts />} />
             <Route path="customers" element={<CustomersManagement />} />
             <Route path="customers/segments" element={<CustomerSegments />} />
