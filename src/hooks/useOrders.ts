@@ -15,6 +15,7 @@ export interface Order {
   shipping_address: any;
   notes: string | null;
   tags: string | null;
+  delivery_method: string | null;
   shopify_order_id: string | null;
   created_at: string;
   updated_at: string;
