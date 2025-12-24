@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,6 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   ChevronLeft,
   ChevronUp,
@@ -108,6 +119,29 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Edit dialog states
+  const [editNotesOpen, setEditNotesOpen] = useState(false);
+  const [editContactOpen, setEditContactOpen] = useState(false);
+  const [editAddressOpen, setEditAddressOpen] = useState(false);
+  const [editTagsOpen, setEditTagsOpen] = useState(false);
+
+  // Form states
+  const [editNotes, setEditNotes] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editAddress, setEditAddress] = useState({
+    first_name: "",
+    last_name: "",
+    address1: "",
+    address2: "",
+    city: "",
+    province: "",
+    zip: "",
+    country: "",
+    phone: "",
+  });
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ["order", id],
@@ -205,6 +239,90 @@ export default function OrderDetail() {
         variant: "destructive",
       });
     }
+  };
+
+  const updateOrderField = async (updates: Record<string, any>) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update(updates)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["order", id] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      toast({
+        title: "Order Updated",
+        description: "Order has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update order.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    await updateOrderField({ notes: editNotes });
+    setEditNotesOpen(false);
+  };
+
+  const handleSaveContact = async () => {
+    await updateOrderField({ 
+      customer_email: editEmail, 
+      customer_phone: editPhone 
+    });
+    setEditContactOpen(false);
+  };
+
+  const handleSaveAddress = async () => {
+    const currentAddress = order?.shipping_address || {};
+    await updateOrderField({ 
+      shipping_address: { ...currentAddress, ...editAddress } 
+    });
+    setEditAddressOpen(false);
+  };
+
+  const handleSaveTags = async () => {
+    await updateOrderField({ tags: editTags });
+    setEditTagsOpen(false);
+  };
+
+  const openNotesDialog = () => {
+    setEditNotes(order?.notes || "");
+    setEditNotesOpen(true);
+  };
+
+  const openContactDialog = () => {
+    setEditEmail(order?.customer_email || "");
+    setEditPhone(order?.customer_phone || order?.shipping_address?.phone || "");
+    setEditContactOpen(true);
+  };
+
+  const openAddressDialog = () => {
+    const addr = order?.shipping_address || {};
+    setEditAddress({
+      first_name: addr.first_name || "",
+      last_name: addr.last_name || "",
+      address1: addr.address1 || "",
+      address2: addr.address2 || "",
+      city: addr.city || "",
+      province: addr.province || "",
+      zip: addr.zip || "",
+      country: addr.country || "",
+      phone: addr.phone || "",
+    });
+    setEditAddressOpen(true);
+  };
+
+  const openTagsDialog = () => {
+    setEditTags(order?.tags || "");
+    setEditTagsOpen(true);
   };
 
   if (orderLoading) {
@@ -558,7 +676,7 @@ export default function OrderDetail() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Notes</CardTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openNotesDialog}>
                   <Pencil className="h-4 w-4" />
                 </Button>
               </div>
@@ -588,7 +706,7 @@ export default function OrderDetail() {
               <div>
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-medium">Contact information</h4>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={openContactDialog}>
                     <Pencil className="h-3 w-3" />
                   </Button>
                 </div>
@@ -607,7 +725,7 @@ export default function OrderDetail() {
               <div>
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-medium">Shipping address</h4>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={openAddressDialog}>
                     <Pencil className="h-3 w-3" />
                   </Button>
                 </div>
@@ -623,9 +741,16 @@ export default function OrderDetail() {
                   <p>{shippingAddress.country}</p>
                   {shippingAddress.phone && <p>{shippingAddress.phone}</p>}
                 </div>
-                <Link to="#" className="text-sm text-primary hover:underline mt-2 block">
-                  View map
-                </Link>
+                {shippingAddress.latitude && shippingAddress.longitude && (
+                  <a 
+                    href={`https://www.google.com/maps?q=${shippingAddress.latitude},${shippingAddress.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline mt-2 block"
+                  >
+                    View map
+                  </a>
+                )}
               </div>
 
               <div>
@@ -662,19 +787,189 @@ export default function OrderDetail() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Tags</CardTitle>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openTagsDialog}>
                   <Pencil className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="border rounded-md p-2 min-h-[40px]">
-                <p className="text-sm text-muted-foreground">No tags</p>
+                {order.tags ? (
+                  <div className="flex flex-wrap gap-1">
+                    {order.tags.split(",").map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {tag.trim()}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No tags</p>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Edit Notes Dialog */}
+      <Dialog open={editNotesOpen} onOpenChange={setEditNotesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Notes</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              placeholder="Add notes about this order..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditNotesOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveNotes}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={editContactOpen} onOpenChange={setEditContactOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Contact Information</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="customer@example.com"
+                type="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+84..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditContactOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveContact}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Address Dialog */}
+      <Dialog open={editAddressOpen} onOpenChange={setEditAddressOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Shipping Address</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input
+                  value={editAddress.first_name}
+                  onChange={(e) => setEditAddress({ ...editAddress, first_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input
+                  value={editAddress.last_name}
+                  onChange={(e) => setEditAddress({ ...editAddress, last_name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Address Line 1</Label>
+              <Input
+                value={editAddress.address1}
+                onChange={(e) => setEditAddress({ ...editAddress, address1: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Address Line 2</Label>
+              <Input
+                value={editAddress.address2}
+                onChange={(e) => setEditAddress({ ...editAddress, address2: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>City</Label>
+                <Input
+                  value={editAddress.city}
+                  onChange={(e) => setEditAddress({ ...editAddress, city: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Province/State</Label>
+                <Input
+                  value={editAddress.province}
+                  onChange={(e) => setEditAddress({ ...editAddress, province: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Postal Code</Label>
+                <Input
+                  value={editAddress.zip}
+                  onChange={(e) => setEditAddress({ ...editAddress, zip: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input
+                  value={editAddress.country}
+                  onChange={(e) => setEditAddress({ ...editAddress, country: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={editAddress.phone}
+                onChange={(e) => setEditAddress({ ...editAddress, phone: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditAddressOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveAddress}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Tags Dialog */}
+      <Dialog open={editTagsOpen} onOpenChange={setEditTagsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Tags</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tags (comma-separated)</Label>
+              <Input
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+                placeholder="vip, wholesale, priority"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTagsOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveTags}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
