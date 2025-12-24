@@ -47,6 +47,16 @@ interface Order {
   shopify_order_id: string | null;
   created_at: string;
   updated_at: string;
+  financial_status: string | null;
+  fulfillment_status: string | null;
+  payment_gateway: string | null;
+  currency: string | null;
+  tags: string | null;
+  source_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  cancelled_at: string | null;
+  closed_at: string | null;
 }
 
 interface OrderItem {
@@ -59,6 +69,29 @@ interface OrderItem {
   price: number;
   quantity: number;
   subtotal: number;
+}
+
+interface OrderEvent {
+  id: string;
+  order_id: string;
+  shopify_event_id: string | null;
+  event_type: string;
+  message: string;
+  author: string | null;
+  created_at: string;
+}
+
+interface OrderFulfillment {
+  id: string;
+  order_id: string;
+  shopify_fulfillment_id: string | null;
+  status: string;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  tracking_company: string | null;
+  location_name: string | null;
+  shipment_status: string | null;
+  created_at: string;
 }
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; paymentLabel?: string; fulfillmentLabel?: string }> = {
@@ -99,6 +132,34 @@ export default function OrderDetail() {
         .eq("order_id", id);
       if (error) throw error;
       return data as OrderItem[];
+    },
+    enabled: !!id,
+  });
+
+  const { data: orderEvents } = useQuery({
+    queryKey: ["order-events", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_events")
+        .select("*")
+        .eq("order_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as OrderEvent[];
+    },
+    enabled: !!id,
+  });
+
+  const { data: orderFulfillments } = useQuery({
+    queryKey: ["order-fulfillments", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_fulfillments")
+        .select("*")
+        .eq("order_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as OrderFulfillment[];
     },
     enabled: !!id,
   });
@@ -179,6 +240,41 @@ export default function OrderDetail() {
   const shippingAddress = order.shipping_address || {};
   const totalItems = orderItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
+  // Use actual financial/fulfillment status from Shopify if available
+  const financialStatus = order.financial_status || statusInfo.paymentLabel || "pending";
+  const fulfillmentStatus = order.fulfillment_status || statusInfo.fulfillmentLabel || "unfulfilled";
+  
+  // Helper to format status for display
+  const formatStatus = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
+  };
+
+  // Get badge color based on status
+  const getFinancialBadgeClass = (status: string) => {
+    if (status === 'paid') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'refunded' || status === 'voided') return 'bg-red-50 text-red-700 border-red-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200';
+  };
+
+  const getFulfillmentBadgeClass = (status: string) => {
+    if (status === 'fulfilled') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'partial') return 'bg-blue-50 text-blue-700 border-blue-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200';
+  };
+
+  // Group events by date
+  const groupEventsByDate = (events: OrderEvent[]) => {
+    const groups: Record<string, OrderEvent[]> = {};
+    events.forEach(event => {
+      const date = format(new Date(event.created_at), 'MMM d, yyyy');
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(event);
+    });
+    return groups;
+  };
+
+  const eventsByDate = orderEvents ? groupEventsByDate(orderEvents) : {};
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -193,12 +289,17 @@ export default function OrderDetail() {
           </Button>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold">{order.order_number}</h1>
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-              {statusInfo.paymentLabel || "Paid"}
+            <Badge variant="outline" className={getFinancialBadgeClass(financialStatus)}>
+              {formatStatus(financialStatus)}
             </Badge>
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-              {statusInfo.fulfillmentLabel || "Fulfilled"}
+            <Badge variant="outline" className={getFulfillmentBadgeClass(fulfillmentStatus)}>
+              {formatStatus(fulfillmentStatus)}
             </Badge>
+            {order.closed_at && (
+              <Badge variant="outline" className="bg-muted text-muted-foreground">
+                Archived
+              </Badge>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -233,7 +334,7 @@ export default function OrderDetail() {
 
       {/* Date */}
       <p className="text-sm text-muted-foreground -mt-4 ml-14">
-        {format(new Date(order.created_at), "MMMM d, yyyy 'at' h:mm a")} from Online Store
+        {format(new Date(order.created_at), "MMMM d, yyyy 'at' h:mm a")} from {order.source_name || "Online Store"}
       </p>
 
       {/* Main Content */}
@@ -296,12 +397,41 @@ export default function OrderDetail() {
                 )}
               </div>
 
-              <div className="pt-4">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Truck className="h-4 w-4" />
-                  Add tracking
-                </Button>
-              </div>
+              {/* Tracking Info */}
+              {orderFulfillments && orderFulfillments.length > 0 ? (
+                <div className="pt-4 space-y-2">
+                  {orderFulfillments.map((fulfillment) => (
+                    <div key={fulfillment.id} className="flex items-center gap-2 text-sm">
+                      <Truck className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{fulfillment.tracking_company || "Carrier"}</span>
+                      {fulfillment.tracking_number && (
+                        fulfillment.tracking_url ? (
+                          <a 
+                            href={fulfillment.tracking_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {fulfillment.tracking_number}
+                          </a>
+                        ) : (
+                          <span>{fulfillment.tracking_number}</span>
+                        )
+                      )}
+                      <Badge variant="outline" className="text-xs">
+                        {fulfillment.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="pt-4">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Truck className="h-4 w-4" />
+                    Add tracking
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -309,10 +439,13 @@ export default function OrderDetail() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-muted gap-1">
+                <Badge variant="outline" className={`gap-1 ${getFinancialBadgeClass(financialStatus)}`}>
                   <CreditCard className="h-3 w-3" />
-                  {statusInfo.paymentLabel || "Paid"}
+                  {formatStatus(financialStatus)}
                 </Badge>
+                {order.payment_gateway && (
+                  <span className="text-xs text-muted-foreground">via {order.payment_gateway}</span>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -347,7 +480,7 @@ export default function OrderDetail() {
                   <span>{formatCurrency(order.total)}</span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t">
-                  <span className="text-muted-foreground">{statusInfo.paymentLabel || "Paid"}</span>
+                  <span className="text-muted-foreground">{formatStatus(financialStatus)}</span>
                   <span>{formatCurrency(order.total)}</span>
                 </div>
               </div>
@@ -376,19 +509,43 @@ export default function OrderDetail() {
                 Only you and other staff can see comments
               </p>
 
-              <div className="mt-6 space-y-4">
-                <div className="text-xs text-muted-foreground font-medium">Today</div>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1.5" />
-                    <div className="flex-1">
-                      <p className="text-sm">Order was created.</p>
+              <div className="mt-6 space-y-6">
+                {Object.keys(eventsByDate).length > 0 ? (
+                  Object.entries(eventsByDate).map(([date, events]) => (
+                    <div key={date} className="space-y-3">
+                      <div className="text-xs text-muted-foreground font-medium">{date}</div>
+                      {events.map((event) => (
+                        <div key={event.id} className="flex items-start gap-3">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1.5" />
+                          <div className="flex-1">
+                            <p className="text-sm">{event.message}</p>
+                            {event.author && (
+                              <p className="text-xs text-muted-foreground">by {event.author}</p>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {format(new Date(event.created_at), "h:mm a")}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(order.created_at), "h:mm a")}
-                    </span>
+                  ))
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-xs text-muted-foreground font-medium">
+                      {format(new Date(order.created_at), "MMM d, yyyy")}
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1.5" />
+                      <div className="flex-1">
+                        <p className="text-sm">Order was created.</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(order.created_at), "h:mm a")}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -436,13 +593,13 @@ export default function OrderDetail() {
                   </Button>
                 </div>
                 <div className="mt-2 space-y-1">
-                  {shippingAddress.email && (
-                    <Link to={`mailto:${shippingAddress.email}`} className="text-sm text-primary hover:underline block">
-                      {shippingAddress.email}
+                  {(order.customer_email || shippingAddress.email) && (
+                    <Link to={`mailto:${order.customer_email || shippingAddress.email}`} className="text-sm text-primary hover:underline block">
+                      {order.customer_email || shippingAddress.email}
                     </Link>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    {shippingAddress.phone || "No phone number"}
+                    {order.customer_phone || shippingAddress.phone || "No phone number"}
                   </p>
                 </div>
               </div>
