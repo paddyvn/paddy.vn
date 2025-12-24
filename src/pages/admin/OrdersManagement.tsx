@@ -4,6 +4,7 @@ import { useOrders } from "@/hooks/useOrders";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -20,6 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -31,7 +39,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +67,7 @@ export default function OrdersManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const { data: orders, isLoading } = useOrders();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -177,6 +186,32 @@ export default function OrdersManagement() {
     setCurrentPage(1);
   }, [searchQuery, statusFilter]);
 
+  // Bulk selection handlers
+  const isAllSelected = paginatedOrders.length > 0 && paginatedOrders.every((o) => selectedOrders.has(o.id));
+  const isSomeSelected = paginatedOrders.some((o) => selectedOrders.has(o.id));
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(paginatedOrders.map((o) => o.id)));
+    }
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    const newSelected = new Set(selectedOrders);
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId);
+    } else {
+      newSelected.add(orderId);
+    }
+    setSelectedOrders(newSelected);
+  };
+
+  const clearSelection = () => {
+    setSelectedOrders(new Set());
+  };
+
   const updateOrderStatus = async (
     orderId: string,
     newStatus: "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled"
@@ -201,6 +236,36 @@ export default function OrdersManagement() {
       toast({
         title: "Update Failed",
         description: "Failed to update order status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const bulkUpdateStatus = async (
+    newStatus: "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled"
+  ) => {
+    if (selectedOrders.size === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .in("id", Array.from(selectedOrders));
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      clearSelection();
+
+      toast({
+        title: "Orders Updated",
+        description: `${selectedOrders.size} orders updated to ${statusConfig[newStatus].label}.`,
+      });
+    } catch (error) {
+      console.error("Error updating orders:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update orders.",
         variant: "destructive",
       });
     }
@@ -272,10 +337,69 @@ export default function OrdersManagement() {
         </Select>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedOrders.size > 0 && (
+        <div className="bg-muted border rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">{selectedOrders.size} selected</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  Mark as
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("pending")}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Pending
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("processing")}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Processing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Confirmed
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("shipped")}>
+                  <Truck className="h-4 w-4 mr-2" />
+                  Shipped
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("delivered")}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Delivered
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => bulkUpdateStatus("cancelled")}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Cancelled
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <Button variant="ghost" size="sm" onClick={clearSelection}>
+            <X className="h-4 w-4 mr-1" />
+            Clear
+          </Button>
+        </div>
+      )}
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all orders"
+                  className={isSomeSelected && !isAllSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                />
+              </TableHead>
               <SortableHeader field="order_number">Order</SortableHeader>
               <SortableHeader field="created_at">Date</SortableHeader>
               <SortableHeader field="customer">Customer</SortableHeader>
@@ -289,6 +413,9 @@ export default function OrdersManagement() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
                   <TableCell>
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
@@ -314,15 +441,26 @@ export default function OrdersManagement() {
               ))
             ) : filteredOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <p className="text-muted-foreground">No orders found</p>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedOrders.map((order) => {
                 const StatusIcon = statusConfig[order.status as keyof typeof statusConfig]?.icon;
+                const isSelected = selectedOrders.has(order.id);
                 return (
-                  <TableRow key={order.id}>
+                  <TableRow 
+                    key={order.id} 
+                    className={isSelected ? "bg-muted/50" : ""}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => handleSelectOrder(order.id)}
+                        aria-label={`Select order ${order.order_number}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {order.order_number}
                     </TableCell>
