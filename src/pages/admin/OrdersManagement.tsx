@@ -128,14 +128,25 @@ export default function OrdersManagement() {
             Manage and track all your orders from Shopify
           </p>
         </div>
-        <Button
-          onClick={() => syncOrders.mutate()}
-          disabled={syncOrders.isPending}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${syncOrders.isPending ? "animate-spin" : ""}`} />
-          {syncOrders.isPending ? "Syncing..." : "Sync Orders"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => syncOrders.syncOrders(false)}
+            disabled={syncOrders.isPending}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncOrders.isPending ? "animate-spin" : ""}`} />
+            {syncOrders.isPending ? "Syncing..." : "Sync Orders"}
+          </Button>
+          <Button
+            onClick={() => syncOrders.syncOrders(true)}
+            disabled={syncOrders.isPending}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncOrders.isPending ? "animate-spin" : ""}`} />
+            Full Sync
+          </Button>
+        </div>
       </div>
 
       {syncOrders.isPending && (
