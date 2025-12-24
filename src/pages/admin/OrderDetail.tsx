@@ -143,6 +143,8 @@ export default function OrderDetail() {
   const [editPhone, setEditPhone] = useState("");
   const [editTags, setEditTags] = useState("");
   const [editDeliveryMethod, setEditDeliveryMethod] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [isPostingComment, setIsPostingComment] = useState(false);
   const [updateCustomerProfile, setUpdateCustomerProfile] = useState(false);
   const [editAddress, setEditAddress] = useState({
     first_name: "",
@@ -339,6 +341,43 @@ export default function OrderDetail() {
         description: "Failed to update order.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handlePostComment = async () => {
+    if (!commentText.trim() || !id) return;
+    
+    setIsPostingComment(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("order_events")
+        .insert({
+          order_id: id,
+          event_type: "comment",
+          message: commentText.trim(),
+          author: user?.email || "Staff",
+        });
+
+      if (error) throw error;
+
+      setCommentText("");
+      queryClient.invalidateQueries({ queryKey: ["order-events", id] });
+
+      toast({
+        title: "Comment Added",
+        description: "Your comment has been posted.",
+      });
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to post comment.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPostingComment(false);
     }
   };
 
@@ -779,12 +818,30 @@ export default function OrderDetail() {
                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
                   P
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 flex gap-2">
                   <input
                     type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handlePostComment();
+                      }
+                    }}
                     placeholder="Leave a comment..."
                     className="w-full bg-transparent border-none outline-none text-sm"
+                    disabled={isPostingComment}
                   />
+                  {commentText.trim() && (
+                    <Button
+                      size="sm"
+                      onClick={handlePostComment}
+                      disabled={isPostingComment}
+                    >
+                      {isPostingComment ? "Posting..." : "Post"}
+                    </Button>
+                  )}
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-3">
