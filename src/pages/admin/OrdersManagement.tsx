@@ -55,6 +55,16 @@ const statusConfig = {
   cancelled: { label: "Cancelled", variant: "destructive" as const, icon: XCircle },
 };
 
+const paymentStatusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  paid: { label: "Paid", variant: "default" },
+  pending: { label: "Payment pending", variant: "secondary" },
+  partially_paid: { label: "Partially paid", variant: "secondary" },
+  refunded: { label: "Refunded", variant: "outline" },
+  partially_refunded: { label: "Partially refunded", variant: "outline" },
+  voided: { label: "Voided", variant: "destructive" },
+  authorized: { label: "Authorized", variant: "secondary" },
+};
+
 const ORDERS_PER_PAGE = 50;
 
 type SortField = "order_number" | "created_at" | "customer" | "total" | "status";
@@ -405,7 +415,9 @@ export default function OrdersManagement() {
               <SortableHeader field="customer">Customer</SortableHeader>
               <TableHead>Items</TableHead>
               <SortableHeader field="total">Total</SortableHeader>
+              <TableHead>Payment</TableHead>
               <SortableHeader field="status">Status</SortableHeader>
+              <TableHead>Delivery method</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -432,7 +444,13 @@ export default function OrdersManagement() {
                     <Skeleton className="h-4 w-20" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-6 w-20" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-6 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-8 w-20 ml-auto" />
@@ -441,7 +459,7 @@ export default function OrdersManagement() {
               ))
             ) : filteredOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={10} className="text-center py-8">
                   <p className="text-muted-foreground">No orders found</p>
                 </TableCell>
               </TableRow>
@@ -481,6 +499,17 @@ export default function OrdersManagement() {
                       {formatCurrency(order.total)}
                     </TableCell>
                     <TableCell>
+                      {order.financial_status && (
+                        <Badge
+                          variant={
+                            paymentStatusConfig[order.financial_status]?.variant || "secondary"
+                          }
+                        >
+                          {paymentStatusConfig[order.financial_status]?.label || order.financial_status}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Badge
                         variant={
                           statusConfig[order.status as keyof typeof statusConfig]
@@ -492,6 +521,9 @@ export default function OrdersManagement() {
                         {statusConfig[order.status as keyof typeof statusConfig]
                           ?.label || order.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-[150px] truncate" title={order.tags || ""}>
+                      {order.tags || "-"}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
