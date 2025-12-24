@@ -20,6 +20,7 @@ interface Brand {
   name: string;
   slug: string;
   productCount: number;
+  logo_url?: string | null;
 }
 
 const ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'];
@@ -42,22 +43,34 @@ export default function Brands() {
     queryKey: ['all-brands-from-products'],
     queryFn: async () => {
       // Get all unique brands from products
-      const { data } = await supabase
+      const { data: productsData } = await supabase
         .from('products')
         .select('brand')
         .not('brand', 'is', null)
         .neq('brand', '')
         .eq('is_active', true);
       
-      if (!data) return [];
+      if (!productsData) return [];
 
       // Count occurrences and create unique brand list
       const brandCounts: Record<string, number> = {};
-      data.forEach((product) => {
+      productsData.forEach((product) => {
         const brand = product.brand?.trim();
         if (brand) {
           brandCounts[brand] = (brandCounts[brand] || 0) + 1;
         }
+      });
+
+      // Fetch brand logos from brands table
+      const { data: brandsData } = await supabase
+        .from('brands')
+        .select('name, logo_url')
+        .eq('is_active', true);
+
+      // Create a map of brand name to logo
+      const logoMap: Record<string, string | null> = {};
+      brandsData?.forEach((b) => {
+        logoMap[b.name.toLowerCase()] = b.logo_url;
       });
 
       // Convert to array and sort
@@ -66,6 +79,7 @@ export default function Brands() {
           name,
           slug: createSlug(name),
           productCount: count,
+          logo_url: logoMap[name.toLowerCase()] || null,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -154,10 +168,18 @@ export default function Brands() {
                       to={`/search?brand=${encodeURIComponent(brand.name)}`}
                       className="flex-shrink-0 w-48 border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all bg-background"
                     >
-                      <div className="h-24 flex items-center justify-center mb-2">
-                        <span className="text-lg font-semibold text-center">
-                          {brand.name}
-                        </span>
+                      <div className="h-16 flex items-center justify-center mb-2">
+                        {brand.logo_url ? (
+                          <img 
+                            src={brand.logo_url} 
+                            alt={brand.name}
+                            className="max-h-14 max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-lg font-semibold text-center">
+                            {brand.name}
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-center text-muted-foreground">
                         {brand.productCount} sản phẩm
