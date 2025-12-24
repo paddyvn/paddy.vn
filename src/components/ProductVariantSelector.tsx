@@ -81,11 +81,8 @@ export function ProductVariantSelector({
       <div key={optionKey} className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-base font-semibold">
-            Select {optionName || optionKey}
+            {optionName || optionKey}
           </label>
-          <button className="text-sm text-primary hover:underline">
-            Size Guide
-          </button>
         </div>
         <div className="flex flex-wrap gap-2">
           {values.map((value) => {
