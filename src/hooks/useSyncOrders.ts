@@ -12,6 +12,12 @@ export const useSyncOrders = () => {
     mutationFn: async () => {
       setProgress({ current: 0, total: 0 });
       
+      // Ensure user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('You must be logged in to sync orders');
+      }
+      
       const { data: mostRecentOrder } = await supabase
         .from('orders')
         .select('created_at')
