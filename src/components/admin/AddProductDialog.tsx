@@ -85,12 +85,34 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
     }
   }, [open]);
 
-  // Fetch brands for filter
+  // Get selected type filter
+  const selectedTypeFilter = filters.find(f => f.type === "product_type")?.value;
+
+  // Fetch brands for filter (filtered by selected type if any)
   const { data: brands = [] } = useQuery({
-    queryKey: ["brands-filter"],
+    queryKey: ["brands-filter", selectedTypeFilter],
     queryFn: async () => {
-      const { data } = await supabase.from("brands").select("id, name").order("name");
-      return data || [];
+      if (selectedTypeFilter) {
+        // Get brand IDs that have products of the selected type
+        const { data: productBrands } = await supabase
+          .from("products")
+          .select("brand_id")
+          .eq("product_type", selectedTypeFilter)
+          .not("brand_id", "is", null);
+        
+        const brandIds = [...new Set(productBrands?.map(p => p.brand_id).filter(Boolean))];
+        if (brandIds.length === 0) return [];
+        
+        const { data } = await supabase
+          .from("brands")
+          .select("id, name")
+          .in("id", brandIds)
+          .order("name");
+        return data || [];
+      } else {
+        const { data } = await supabase.from("brands").select("id, name").order("name");
+        return data || [];
+      }
     },
     enabled: open,
   });
