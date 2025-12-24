@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOrders } from "@/hooks/useOrders";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -84,6 +84,30 @@ export default function OrdersManagement() {
   const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
   const endIndex = startIndex + ORDERS_PER_PAGE;
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  const paginatedOrderIds = useMemo(
+    () => paginatedOrders.map((o) => o.id),
+    [paginatedOrders]
+  );
+
+  const { data: itemsCountByOrderId } = useQuery({
+    queryKey: ["order-items-counts", paginatedOrderIds],
+    enabled: paginatedOrderIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("order_id, quantity")
+        .in("order_id", paginatedOrderIds);
+
+      if (error) throw error;
+
+      const map: Record<string, number> = {};
+      for (const row of data ?? []) {
+        map[row.order_id] = (map[row.order_id] ?? 0) + (row.quantity ?? 0);
+      }
+      return map;
+    },
+  });
 
   // Reset to page 1 when filters change
   useMemo(() => {
@@ -247,7 +271,10 @@ export default function OrdersManagement() {
                       {order.shipping_address?.last_name}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {order.items_count} {order.items_count === 1 ? "item" : "items"}
+                      {itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0}{" "}
+                      {(itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0) === 1
+                        ? "item"
+                        : "items"}
                     </TableCell>
                     <TableCell className="font-medium">
                       {formatCurrency(order.total)}
