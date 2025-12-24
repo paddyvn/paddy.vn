@@ -124,7 +124,7 @@ export default function OrderEdit() {
   });
 
   // Search products for adding
-  const { data: searchResults } = useQuery({
+  const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ["products-search", productSearch],
     queryFn: async () => {
       if (!productSearch || productSearch.length < 2) return [];
@@ -137,10 +137,12 @@ export default function OrderEdit() {
           product_images(image_url, is_primary),
           product_variants(id, name, price, sku)
         `)
-        .ilike("name", `%${productSearch}%`)
-        .eq("is_active", true)
+        .or(`name.ilike.%${productSearch}%,sku.ilike.%${productSearch}%`)
         .limit(10);
-      if (error) throw error;
+      if (error) {
+        console.error("Product search error:", error);
+        throw error;
+      }
       return data as Product[];
     },
     enabled: productSearch.length >= 2,
@@ -731,7 +733,12 @@ export default function OrderEdit() {
                     </div>
                   </div>
                 ))}
-                {productSearch.length >= 2 && searchResults?.length === 0 && (
+                {productSearch.length >= 2 && isSearching && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Searching...
+                  </p>
+                )}
+                {productSearch.length >= 2 && !isSearching && searchResults?.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No products found
                   </p>
