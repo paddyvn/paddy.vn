@@ -67,17 +67,30 @@ export default function Brands() {
         .select('name, logo_url')
         .eq('is_active', true);
 
+      // Fetch brand collections from categories table
+      const { data: brandCollections } = await supabase
+        .from('categories')
+        .select('name, slug')
+        .eq('collection_type', 'brand')
+        .eq('is_active', true);
+
       // Create a map of brand name to logo
       const logoMap: Record<string, string | null> = {};
       brandsData?.forEach((b) => {
         logoMap[b.name.toLowerCase()] = b.logo_url;
       });
 
+      // Create a map of brand name to collection slug
+      const slugMap: Record<string, string> = {};
+      brandCollections?.forEach((c) => {
+        slugMap[c.name.toLowerCase()] = c.slug;
+      });
+
       // Convert to array and sort
       const brandsArray: Brand[] = Object.entries(brandCounts)
         .map(([name, count]) => ({
           name,
-          slug: createSlug(name),
+          slug: slugMap[name.toLowerCase()] || createSlug(name),
           productCount: count,
           logo_url: logoMap[name.toLowerCase()] || null,
         }))
@@ -279,7 +292,7 @@ export default function Brands() {
                         {letterBrands.map((brand) => (
                           <Link
                             key={brand.name}
-                            to={`/search?brand=${encodeURIComponent(brand.name)}`}
+                            to={`/collection/${brand.slug}`}
                             className="text-sm text-foreground hover:text-primary hover:underline transition-colors flex items-center justify-between"
                           >
                             <span>{brand.name}</span>
