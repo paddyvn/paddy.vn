@@ -761,6 +761,14 @@ export default function CollectionDetails() {
                           <Badge variant={product.is_active ? "default" : "secondary"}>
                             {product.is_active ? "Active" : "Inactive"}
                           </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => navigate(`/admin/products/${product.id}`)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           {formData.collection_type === "manual" && isManuallyAdded && (
                             <Button
                               variant="ghost"
