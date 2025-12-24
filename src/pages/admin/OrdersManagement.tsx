@@ -31,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useToast } from "@/hooks/use-toast";
@@ -49,11 +49,16 @@ const statusConfig = {
 
 const ORDERS_PER_PAGE = 50;
 
+type SortField = "order_number" | "created_at" | "customer" | "total" | "status";
+type SortDirection = "asc" | "desc";
+
 export default function OrdersManagement() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const { data: orders, isLoading } = useOrders();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -62,7 +67,7 @@ export default function OrdersManagement() {
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
 
-    return orders.filter((order) => {
+    let result = orders.filter((order) => {
       const matchesSearch =
         order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (order.shipping_address?.first_name || "")
@@ -77,7 +82,65 @@ export default function OrdersManagement() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [orders, searchQuery, statusFilter]);
+
+    // Apply sorting
+    result.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case "order_number":
+          comparison = a.order_number.localeCompare(b.order_number, undefined, { numeric: true });
+          break;
+        case "created_at":
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case "customer":
+          const nameA = `${a.shipping_address?.first_name || ""} ${a.shipping_address?.last_name || ""}`.trim();
+          const nameB = `${b.shipping_address?.first_name || ""} ${b.shipping_address?.last_name || ""}`.trim();
+          comparison = nameA.localeCompare(nameB);
+          break;
+        case "total":
+          comparison = a.total - b.total;
+          break;
+        case "status":
+          comparison = (a.status || "").localeCompare(b.status || "");
+          break;
+      }
+      
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  }, [orders, searchQuery, statusFilter, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === "asc" ? (
+            <ArrowUp className="h-4 w-4" />
+          ) : (
+            <ArrowDown className="h-4 w-4" />
+          )
+        ) : (
+          <ArrowUpDown className="h-4 w-4 opacity-50" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
@@ -213,12 +276,12 @@ export default function OrdersManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Customer</TableHead>
+              <SortableHeader field="order_number">Order</SortableHeader>
+              <SortableHeader field="created_at">Date</SortableHeader>
+              <SortableHeader field="customer">Customer</SortableHeader>
               <TableHead>Items</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
+              <SortableHeader field="total">Total</SortableHeader>
+              <SortableHeader field="status">Status</SortableHeader>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
