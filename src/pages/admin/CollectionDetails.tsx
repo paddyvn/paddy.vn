@@ -62,6 +62,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { CollectionTypeSelector } from "@/components/admin/CollectionTypeSelector";
 
 const collectionSchema = z.object({
   name: z.string().trim().min(1, "Title is required").max(100),
@@ -77,8 +78,6 @@ type CollectionRule = {
   operator: string;
   value: string;
 };
-
-import { CollectionTypeSelector } from "@/components/admin/CollectionTypeSelector";
 
 // Sortable Product Row Component
 interface SortableProductRowProps {
