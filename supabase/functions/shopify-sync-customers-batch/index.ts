@@ -48,13 +48,16 @@ serve(async (req) => {
       );
     }
 
+    // Extract JWT token from Authorization header
+    const token = authHeader.replace('Bearer ', '');
+    
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) {
-      console.error('Authentication failed:', authError?.message);
+      console.error('Authentication failed:', authError?.message || 'Auth session missing!');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
