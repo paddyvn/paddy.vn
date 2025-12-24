@@ -3,6 +3,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const SUPABASE_FUNCTIONS_BASE_URL =
+  "https://fexafkqzpbzjcupvbfhe.supabase.co/functions/v1";
+// Anon key is safe to ship to the client (it’s already used in browser requests)
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZleGFma3F6cGJ6amN1cHZiZmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNzU4NzksImV4cCI6MjA3OTk1MTg3OX0.4pGuz_-KaRXZkOf1-3FlOzLuSDMJRAReg9a88JpTuw4";
+
 export const useSyncOrders = () => {
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
@@ -11,17 +17,19 @@ export const useSyncOrders = () => {
   const mutation = useMutation({
     mutationFn: async () => {
       setProgress({ current: 0, total: 0 });
-      
+
       // Ensure user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
-        throw new Error('You must be logged in to sync orders');
+        throw new Error("You must be logged in to sync orders");
       }
-      
+
       const { data: mostRecentOrder } = await supabase
-        .from('orders')
-        .select('created_at')
-        .order('created_at', { ascending: false })
+        .from("orders")
+        .select("created_at")
+        .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
@@ -44,7 +52,7 @@ export const useSyncOrders = () => {
       do {
         batchCount++;
         console.log(`Syncing orders batch ${batchCount}...`);
-        
+
         const body: any = {};
         if (nextBatch) {
           body.continueFrom = nextBatch;
@@ -53,20 +61,26 @@ export const useSyncOrders = () => {
         }
 
         const response = await fetch(
-          "https://fexafkqzpbzjcupvbfhe.supabase.co/functions/v1/shopify-sync-orders-batch",
+          `${SUPABASE_FUNCTIONS_BASE_URL}/shopify-sync-orders-batch`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              // Required by Supabase Functions gateway
+              apikey: SUPABASE_ANON_KEY,
+              // Required by our function auth check
               Authorization: `Bearer ${session.access_token}`,
             },
             body: JSON.stringify(body),
           }
         );
 
-        const result = await response.json();
+        const result = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new Error(result?.error || "Orders sync failed");
+          const msg =
+            (result && (result.error || result.message)) ||
+            `Orders sync failed (HTTP ${response.status})`;
+          throw new Error(msg);
         }
 
         const data = result;
@@ -77,14 +91,16 @@ export const useSyncOrders = () => {
           totalFulfillments += data.stats.syncedFulfillments || 0;
           totalEvents += data.stats.syncedEvents || 0;
           setProgress({ current: totalSynced, total: totalSynced });
-          
+
           nextBatch = data.hasMore ? data.nextBatch : null;
-          
-          console.log(`Batch ${batchCount}: ${data.stats.syncedOrders} orders, ${data.stats.syncedItems} items, ${data.stats.syncedEvents || 0} events (Total: ${totalSynced} orders)`);
+
+          console.log(
+            `Batch ${batchCount}: ${data.stats.syncedOrders} orders, ${data.stats.syncedItems} items, ${data.stats.syncedEvents || 0} events (Total: ${totalSynced} orders)`
+          );
         }
 
         if (nextBatch) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } while (nextBatch);
 
@@ -96,14 +112,15 @@ export const useSyncOrders = () => {
       queryClient.invalidateQueries({ queryKey: ["order-fulfillments"] });
       toast({
         title: "Orders Sync Complete!",
-        description: totalSynced > 0 
-          ? `Synced ${totalSynced} orders, ${totalItems} items, ${totalEvents} timeline events.`
-          : "No new orders to sync.",
+        description:
+          totalSynced > 0
+            ? `Synced ${totalSynced} orders, ${totalItems} items, ${totalEvents} timeline events.`
+            : "No new orders to sync.",
       });
       setProgress({ current: 0, total: 0 });
     },
     onError: (error) => {
-      console.error('Orders sync error:', error);
+      console.error("Orders sync error:", error);
       toast({
         title: "Orders Sync Failed",
         description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -118,3 +135,4 @@ export const useSyncOrders = () => {
     progress,
   };
 };
+
