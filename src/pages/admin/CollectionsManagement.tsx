@@ -36,7 +36,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight, Tags, X } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight, Tags, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
@@ -78,11 +78,16 @@ const collectionSchema = z.object({
   image_url: z.string().url("Invalid URL").max(500, "URL too long").optional().or(z.literal("")),
 });
 
+type SortColumn = "name" | "collection_type" | "display_order" | "is_active";
+type SortDirection = "asc" | "desc";
+
 export default function CollectionsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("display_order");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [formData, setFormData] = useState({
@@ -100,8 +105,24 @@ export default function CollectionsManagement() {
   const syncProductCollections = useSyncProductCollections();
   const navigate = useNavigate();
 
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
+    return sortDirection === "asc" 
+      ? <ArrowUp className="ml-1 h-3 w-3" /> 
+      : <ArrowDown className="ml-1 h-3 w-3" />;
+  };
+
   const { data: collectionsData, isLoading, refetch } = useQuery({
-    queryKey: ["admin-collections", searchQuery, statusFilter, typeFilter, currentPage],
+    queryKey: ["admin-collections", searchQuery, statusFilter, typeFilter, currentPage, sortColumn, sortDirection],
     queryFn: async () => {
       // First get the total count
       let countQuery = supabase
@@ -141,7 +162,7 @@ export default function CollectionsManagement() {
           rules_match_type,
           product_collections(id)
         `)
-        .order("display_order", { ascending: true })
+        .order(sortColumn, { ascending: sortDirection === "asc", nullsFirst: false })
         .range(from, to);
 
       if (searchQuery) {
@@ -478,11 +499,44 @@ export default function CollectionsManagement() {
                 />
               </TableHead>
               <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead>Collection</TableHead>
-              <TableHead>Type</TableHead>
+              <TableHead>
+                <button 
+                  onClick={() => handleSort("name")} 
+                  className="flex items-center hover:text-foreground transition-colors"
+                >
+                  Collection
+                  <SortIcon column="name" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button 
+                  onClick={() => handleSort("collection_type")} 
+                  className="flex items-center hover:text-foreground transition-colors"
+                >
+                  Type
+                  <SortIcon column="collection_type" />
+                </button>
+              </TableHead>
               <TableHead>Conditions</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>
+                <button 
+                  onClick={() => handleSort("is_active")} 
+                  className="flex items-center hover:text-foreground transition-colors"
+                >
+                  Status
+                  <SortIcon column="is_active" />
+                </button>
+              </TableHead>
               <TableHead>Products</TableHead>
+              <TableHead>
+                <button 
+                  onClick={() => handleSort("display_order")} 
+                  className="flex items-center hover:text-foreground transition-colors"
+                >
+                  Order
+                  <SortIcon column="display_order" />
+                </button>
+              </TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -512,13 +566,16 @@ export default function CollectionsManagement() {
                     <Skeleton className="h-4 w-20" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-12" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-8 w-8" />
                   </TableCell>
                 </TableRow>
               ))
             ) : collections?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   No collections found. Create your first collection to get started.
                 </TableCell>
               </TableRow>
@@ -585,6 +642,11 @@ export default function CollectionsManagement() {
                   <TableCell>
                     <span className="text-sm">
                       {collection.product_collections.length} product{collection.product_collections.length !== 1 ? "s" : ""}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {collection.display_order ?? "—"}
                     </span>
                   </TableCell>
                   <TableCell>
