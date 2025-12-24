@@ -634,7 +634,6 @@ const CustomerDetail = () => {
         open={manageAddressesOpen}
         onOpenChange={setManageAddressesOpen}
         customer={customer}
-        addresses={orders?.[0]?.shipping_address ? [orders[0].shipping_address] : []}
       />
       <EditMarketingDialog
         open={editMarketingOpen}

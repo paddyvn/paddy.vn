@@ -749,6 +749,71 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_addresses: {
+        Row: {
+          address1: string
+          address2: string | null
+          city: string
+          company: string | null
+          country: string
+          country_code: string | null
+          created_at: string
+          customer_id: string
+          first_name: string | null
+          id: string
+          is_default: boolean | null
+          last_name: string | null
+          phone: string | null
+          postal_code: string | null
+          province: string | null
+          updated_at: string
+        }
+        Insert: {
+          address1: string
+          address2?: string | null
+          city: string
+          company?: string | null
+          country?: string
+          country_code?: string | null
+          created_at?: string
+          customer_id: string
+          first_name?: string | null
+          id?: string
+          is_default?: boolean | null
+          last_name?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address1?: string
+          address2?: string | null
+          city?: string
+          company?: string | null
+          country?: string
+          country_code?: string | null
+          created_at?: string
+          customer_id?: string
+          first_name?: string | null
+          id?: string
+          is_default?: boolean | null
+          last_name?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_addresses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_segments: {
         Row: {
           created_at: string | null

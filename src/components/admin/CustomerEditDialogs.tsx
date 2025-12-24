@@ -22,7 +22,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUpdateCustomer, Customer } from "@/hooks/useCustomers";
-import { AlertTriangle, Pencil, MoreHorizontal } from "lucide-react";
+import { 
+  useCustomerAddresses, 
+  useAddCustomerAddress, 
+  useUpdateCustomerAddress,
+  useDeleteCustomerAddress,
+  CustomerAddress 
+} from "@/hooks/useCustomerAddresses";
+import { AlertTriangle, Pencil, MoreHorizontal, Search, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface EditCustomerDialogProps {
   open: boolean;
@@ -166,41 +179,71 @@ interface ManageAddressesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   customer: Customer;
-  addresses?: any[];
 }
 
 export const ManageAddressesDialog = ({
   open,
   onOpenChange,
   customer,
-  addresses = [],
 }: ManageAddressesDialogProps) => {
-  // For now, we'll use the shipping address from orders as placeholder
-  // In a real implementation, you'd have a separate customer_addresses table
-  
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<CustomerAddress | null>(null);
+  const { data: addresses = [], isLoading } = useCustomerAddresses(customer.id);
+  const deleteAddress = useDeleteCustomerAddress();
+
+  const handleClose = () => {
+    setShowAddForm(false);
+    setEditingAddress(null);
+    onOpenChange(false);
+  };
+
+  if (showAddForm || editingAddress) {
+    return (
+      <AddEditAddressDialog
+        open={open}
+        onOpenChange={handleClose}
+        customerId={customer.id}
+        address={editingAddress}
+        onBack={() => {
+          setShowAddForm(false);
+          setEditingAddress(null);
+        }}
+      />
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Manage addresses</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          {addresses.length > 0 ? (
-            addresses.map((address, index) => (
-              <div key={index} className="border rounded-lg p-4 space-y-1">
-                {index === 0 && (
-                  <Badge variant="secondary" className="mb-2">Default</Badge>
+          {isLoading ? (
+            <div className="text-center py-4 text-muted-foreground">Loading...</div>
+          ) : addresses.length > 0 ? (
+            addresses.map((address) => (
+              <div key={address.id} className="border rounded-lg p-4 space-y-1">
+                {address.is_default && (
+                  <Badge className="mb-2 bg-yellow-400 text-yellow-900 hover:bg-yellow-400">Default</Badge>
                 )}
                 <div className="flex justify-between">
                   <div className="space-y-1 text-sm">
-                    <p className="font-medium">{address.name}</p>
+                    <p className="font-medium">
+                      {[address.first_name, address.last_name].filter(Boolean).join(" ") || "No name"}
+                    </p>
                     <p>{address.address1}</p>
                     {address.address2 && <p>{address.address2}</p>}
                     <p>{address.city}</p>
-                    <p>{address.country || "Vietnam"}</p>
-                    <p>{address.phone}</p>
+                    <p>{address.country}</p>
+                    {address.phone && <p>{address.phone}</p>}
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => setEditingAddress(address)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
@@ -216,13 +259,239 @@ export const ManageAddressesDialog = ({
 
           <div className="border rounded-lg p-4 flex items-center justify-between">
             <span className="text-sm">Vietnam</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Set as default country</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline">Add new address</Button>
+          <Button variant="outline" onClick={() => setShowAddForm(true)}>
+            Add new address
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface AddEditAddressDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  customerId: string;
+  address?: CustomerAddress | null;
+  onBack: () => void;
+}
+
+const AddEditAddressDialog = ({
+  open,
+  onOpenChange,
+  customerId,
+  address,
+  onBack,
+}: AddEditAddressDialogProps) => {
+  const [country, setCountry] = useState(address?.country || "Vietnam");
+  const [firstName, setFirstName] = useState(address?.first_name || "");
+  const [lastName, setLastName] = useState(address?.last_name || "");
+  const [company, setCompany] = useState(address?.company || "");
+  const [address1, setAddress1] = useState(address?.address1 || "");
+  const [address2, setAddress2] = useState(address?.address2 || "");
+  const [city, setCity] = useState(address?.city || "");
+  const [postalCode, setPostalCode] = useState(address?.postal_code || "");
+  const [phone, setPhone] = useState(address?.phone || "");
+  const [isDefault, setIsDefault] = useState(address?.is_default || false);
+
+  const addAddress = useAddCustomerAddress();
+  const updateAddress = useUpdateCustomerAddress();
+  const deleteAddress = useDeleteCustomerAddress();
+
+  const isEditing = !!address;
+
+  const handleSave = () => {
+    const addressData = {
+      customer_id: customerId,
+      country,
+      country_code: "VN",
+      first_name: firstName || null,
+      last_name: lastName || null,
+      company: company || null,
+      address1,
+      address2: address2 || null,
+      city,
+      province: null,
+      postal_code: postalCode || null,
+      phone: phone || null,
+      is_default: isDefault,
+    };
+
+    if (isEditing && address) {
+      updateAddress.mutate(
+        { id: address.id, customerId, updates: addressData },
+        { onSuccess: () => onBack() }
+      );
+    } else {
+      addAddress.mutate(addressData, { onSuccess: () => onBack() });
+    }
+  };
+
+  const handleDelete = () => {
+    if (address) {
+      deleteAddress.mutate(
+        { id: address.id, customerId },
+        { onSuccess: () => onBack() }
+      );
+    }
+  };
+
+  const isPending = addAddress.isPending || updateAddress.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Edit address" : "Add new address"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Country/region</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Vietnam">Vietnam</SelectItem>
+                <SelectItem value="United States">United States</SelectItem>
+                <SelectItem value="Japan">Japan</SelectItem>
+                <SelectItem value="South Korea">South Korea</SelectItem>
+                <SelectItem value="Thailand">Thailand</SelectItem>
+                <SelectItem value="Singapore">Singapore</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>First name</Label>
+              <Input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder=""
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Last name</Label>
+              <Input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder=""
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Company</Label>
+            <Input
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder=""
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Address</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={address1}
+                onChange={(e) => setAddress1(e.target.value)}
+                placeholder=""
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Apartment, suite, etc</Label>
+            <Input
+              value={address2}
+              onChange={(e) => setAddress2(e.target.value)}
+              placeholder=""
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>City</Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder=""
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Postal code</Label>
+              <Input
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                placeholder=""
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1 border rounded-md px-3 bg-muted/30">
+                <span className="text-lg">🇻🇳</span>
+              </div>
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder=""
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="is-default"
+              checked={isDefault}
+              onCheckedChange={(checked) => setIsDefault(checked as boolean)}
+            />
+            <Label htmlFor="is-default">Set as default address</Label>
+          </div>
+        </div>
+        <DialogFooter className="flex justify-between">
+          <div>
+            {isEditing && (
+              <Button 
+                variant="destructive" 
+                onClick={handleDelete}
+                disabled={deleteAddress.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onBack}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={isPending || !address1 || !city}
+            >
+              {isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
