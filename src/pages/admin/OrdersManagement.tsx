@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { useOrders, useOrderItems } from "@/hooks/useOrders";
+import { useNavigate } from "react-router-dom";
+import { useOrders } from "@/hooks/useOrders";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,13 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Pagination,
   PaginationContent,
@@ -55,12 +49,11 @@ const statusConfig = {
 const ORDERS_PER_PAGE = 50;
 
 export default function OrdersManagement() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: orders, isLoading } = useOrders();
-  const { data: orderItems } = useOrderItems(selectedOrder || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const syncOrders = useSyncOrders();
@@ -124,8 +117,6 @@ export default function OrdersManagement() {
       });
     }
   };
-
-  const selectedOrderData = orders?.find((o) => o.id === selectedOrder);
 
   return (
     <div className="space-y-6">
@@ -249,7 +240,7 @@ export default function OrdersManagement() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedOrder(order.id)}
+                        onClick={() => navigate(`/admin/orders/${order.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View
@@ -346,153 +337,6 @@ export default function OrdersManagement() {
           )}
         </div>
       )}
-
-      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
-            <DialogDescription>
-              {selectedOrderData?.order_number} •{" "}
-              {selectedOrderData &&
-                format(new Date(selectedOrderData.created_at), "MMM d, yyyy 'at' h:mm a")}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedOrderData && (
-            <div className="space-y-6">
-              {/* Order Status */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Order Status
-                </label>
-                <Select
-                  value={selectedOrderData.status}
-                  onValueChange={(value: "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled") =>
-                    updateOrderStatus(selectedOrderData.id, value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Order Items */}
-              <div>
-                <h3 className="font-semibold mb-3">Items</h3>
-                <div className="border rounded-lg divide-y">
-                  {orderItems?.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-4 flex justify-between items-start"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{item.product_name}</p>
-                        {item.variant_name && (
-                          <p className="text-sm text-muted-foreground">
-                            {item.variant_name}
-                          </p>
-                        )}
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(item.price)} × {item.quantity}
-                        </p>
-                      </div>
-                      <p className="font-medium">
-                        {formatCurrency(item.subtotal)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Summary */}
-              <div className="border rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{formatCurrency(selectedOrderData.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span>
-                    {formatCurrency(selectedOrderData.shipping_fee || 0)}
-                  </span>
-                </div>
-                {selectedOrderData.discount && selectedOrderData.discount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Discount</span>
-                    <span className="text-destructive">
-                      -{formatCurrency(selectedOrderData.discount)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between font-semibold pt-2 border-t">
-                  <span>Total</span>
-                  <span>{formatCurrency(selectedOrderData.total)}</span>
-                </div>
-              </div>
-
-              {/* Customer Info */}
-              <div>
-                <h3 className="font-semibold mb-3">Customer</h3>
-                <div className="border rounded-lg p-4 space-y-2">
-                  <p className="font-medium">
-                    {selectedOrderData.shipping_address?.first_name}{" "}
-                    {selectedOrderData.shipping_address?.last_name}
-                  </p>
-                  {selectedOrderData.shipping_address?.phone && (
-                    <p className="text-sm text-muted-foreground">
-                      {selectedOrderData.shipping_address.phone}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Shipping Address */}
-              <div>
-                <h3 className="font-semibold mb-3">Shipping Address</h3>
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm">
-                    {selectedOrderData.shipping_address?.address1}
-                  </p>
-                  {selectedOrderData.shipping_address?.address2 && (
-                    <p className="text-sm">
-                      {selectedOrderData.shipping_address.address2}
-                    </p>
-                  )}
-                  <p className="text-sm">
-                    {selectedOrderData.shipping_address?.city}
-                    {selectedOrderData.shipping_address?.province &&
-                      `, ${selectedOrderData.shipping_address.province}`}
-                    {selectedOrderData.shipping_address?.zip &&
-                      ` ${selectedOrderData.shipping_address.zip}`}
-                  </p>
-                  <p className="text-sm">
-                    {selectedOrderData.shipping_address?.country}
-                  </p>
-                </div>
-              </div>
-
-              {/* Notes */}
-              {selectedOrderData.notes && (
-                <div>
-                  <h3 className="font-semibold mb-3">Notes</h3>
-                  <div className="border rounded-lg p-4">
-                    <p className="text-sm">{selectedOrderData.notes}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
