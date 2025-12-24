@@ -6,6 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ShopifyAddress {
+  id: number;
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+  address1: string;
+  address2: string | null;
+  city: string;
+  province: string | null;
+  country: string;
+  country_code: string | null;
+  zip: string | null;
+  phone: string | null;
+  default: boolean;
+}
+
 interface ShopifyCustomer {
   id: number;
   email: string;
@@ -21,6 +37,7 @@ interface ShopifyCustomer {
   verified_email: boolean;
   created_at: string;
   updated_at: string;
+  addresses: ShopifyAddress[];
 }
 
 serve(async (req) => {
@@ -123,7 +140,7 @@ serve(async (req) => {
     // Process each customer
     for (const shopifyCustomer of customers) {
       try {
-        const { error: customerError } = await supabase
+        const { data: customerData, error: customerError } = await supabase
           .from('customers')
           .upsert({
             shopify_customer_id: shopifyCustomer.id.toString(),
@@ -144,11 +161,43 @@ serve(async (req) => {
           }, {
             onConflict: 'shopify_customer_id',
             ignoreDuplicates: false,
-          });
+          })
+          .select('id')
+          .single();
 
-        if (customerError) {
+        if (customerError || !customerData) {
           console.error(`Error upserting customer ${shopifyCustomer.email}:`, customerError);
           continue;
+        }
+
+        // Sync customer addresses
+        if (shopifyCustomer.addresses && shopifyCustomer.addresses.length > 0) {
+          for (const address of shopifyCustomer.addresses) {
+            const { error: addressError } = await supabase
+              .from('customer_addresses')
+              .upsert({
+                customer_id: customerData.id,
+                first_name: address.first_name,
+                last_name: address.last_name,
+                company: address.company,
+                address1: address.address1,
+                address2: address.address2,
+                city: address.city,
+                province: address.province,
+                country: address.country || 'Vietnam',
+                country_code: address.country_code || 'VN',
+                postal_code: address.zip,
+                phone: address.phone,
+                is_default: address.default,
+              }, {
+                onConflict: 'customer_id,address1,city',
+                ignoreDuplicates: false,
+              });
+
+            if (addressError) {
+              console.error(`Error upserting address for customer ${shopifyCustomer.email}:`, addressError);
+            }
+          }
         }
 
         syncedCustomers++;
