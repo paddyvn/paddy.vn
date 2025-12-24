@@ -42,9 +42,9 @@ const PROVINCES = [
   "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
 ];
 
-const SHIPPING_RATES = [
-  { id: "standard", name: "Giao hàng tiêu chuẩn", price: 30000, days: "3-5 ngày" },
-  { id: "express", name: "Giao hàng nhanh", price: 50000, days: "1-2 ngày" },
+const DELIVERY_METHODS = [
+  { id: "instant", name: "Giao hàng hỏa tốc", price: 50000, description: "Giao trong 2 giờ" },
+  { id: "fast", name: "Giao hàng nhanh", price: 30000, description: "Giao trong 24 giờ" },
 ];
 
 const PAYMENT_METHODS = [
@@ -105,8 +105,8 @@ export default function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [useNewAddress, setUseNewAddress] = useState(true);
   
-  // Shipping & Payment
-  const [selectedShipping, setSelectedShipping] = useState("standard");
+  // Delivery & Payment
+  const [selectedDelivery, setSelectedDelivery] = useState("fast");
   const [selectedPayment, setSelectedPayment] = useState("cod");
   const [orderNotes, setOrderNotes] = useState("");
   
@@ -179,8 +179,8 @@ export default function Checkout() {
   };
 
   const subtotal = calculateSubtotal();
-  const shippingRate = SHIPPING_RATES.find(r => r.id === selectedShipping);
-  const shippingCost = shippingRate?.price || 0;
+  const deliveryMethod = DELIVERY_METHODS.find(m => m.id === selectedDelivery);
+  const shippingCost = deliveryMethod?.price || 0;
   
   // Calculate discount
   const calculateDiscount = () => {
@@ -351,6 +351,7 @@ export default function Checkout() {
           total: total,
           status: "pending",
           notes: orderNotes || null,
+          delivery_method: deliveryMethod?.name || null,
           shipping_address: useNewAddress 
             ? {
                 full_name: addressForm.fullName,
@@ -690,25 +691,25 @@ export default function Checkout() {
                   <Separator />
                   <div className="space-y-3">
                     <Label>Phương thức giao hàng</Label>
-                    <RadioGroup value={selectedShipping} onValueChange={setSelectedShipping}>
-                      {SHIPPING_RATES.map((rate) => (
+                    <RadioGroup value={selectedDelivery} onValueChange={setSelectedDelivery}>
+                      {DELIVERY_METHODS.map((method) => (
                         <div
-                          key={rate.id}
+                          key={method.id}
                           className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
-                            selectedShipping === rate.id 
+                            selectedDelivery === method.id 
                               ? "border-primary bg-primary/5" 
                               : "hover:border-primary/50"
                           }`}
-                          onClick={() => setSelectedShipping(rate.id)}
+                          onClick={() => setSelectedDelivery(method.id)}
                         >
                           <div className="flex items-center gap-3">
-                            <RadioGroupItem value={rate.id} id={rate.id} />
+                            <RadioGroupItem value={method.id} id={method.id} />
                             <div>
-                              <p className="font-medium">{rate.name}</p>
-                              <p className="text-sm text-muted-foreground">{rate.days}</p>
+                              <p className="font-medium">{method.name}</p>
+                              <p className="text-sm text-muted-foreground">{method.description}</p>
                             </div>
                           </div>
-                          <span className="font-semibold">{formatPrice(rate.price)}₫</span>
+                          <span className="font-semibold">{formatPrice(method.price)}₫</span>
                         </div>
                       ))}
                     </RadioGroup>
