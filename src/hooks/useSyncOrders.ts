@@ -8,7 +8,7 @@ export const useSyncOrders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async () => {
       setProgress({ current: 0, total: 0 });
       
@@ -93,4 +93,9 @@ export const useSyncOrders = () => {
       setProgress({ current: 0, total: 0 });
     },
   });
+
+  return {
+    ...mutation,
+    progress,
+  };
 };
