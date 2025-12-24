@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, PawPrint, ShoppingCart, Loader2 } from "lucide-react";
+import { Heart, ShoppingCart, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
@@ -27,6 +27,16 @@ interface ProductCardProps {
     reviews?: Array<{ rating: number }>;
   };
 }
+
+const CutePaw = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <ellipse cx="12" cy="17" rx="5" ry="4" />
+    <circle cx="6" cy="10" r="2.5" />
+    <circle cx="18" cy="10" r="2.5" />
+    <circle cx="9" cy="6" r="2" />
+    <circle cx="15" cy="6" r="2" />
+  </svg>
+);
 
 const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
   <span 
@@ -162,7 +172,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
 
           <div className="flex items-center gap-1">
-            <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
+            <CutePaw className="h-4 w-4 text-secondary" />
             <span className="text-sm font-medium">
               {calculateAverageRating(product.reviews)}
             </span>
