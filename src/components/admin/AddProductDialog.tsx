@@ -34,6 +34,7 @@ interface ProductVariant {
   name: string;
   price: number;
   sku: string | null;
+  stock_quantity: number | null;
 }
 
 interface Product {
@@ -155,7 +156,7 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
           product_type,
           brand_id,
           product_images(image_url, is_primary),
-          product_variants(id, name, price, sku)
+          product_variants(id, name, price, sku, stock_quantity)
         `)
         .order("name");
 
@@ -550,7 +551,7 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <span className="text-sm">{variant.name}</span>
-                              <div className="text-center text-sm text-muted-foreground">-</div>
+                              <div className="text-center text-sm text-muted-foreground">{variant.stock_quantity ?? "-"}</div>
                               <div className="text-right text-sm">
                                 {formatCurrency(variant.price)}
                               </div>
