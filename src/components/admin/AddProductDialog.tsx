@@ -361,81 +361,60 @@ export function AddProductDialog({ open, onOpenChange, onAddProducts }: AddProdu
             </PopoverTrigger>
             <PopoverContent className="w-48 p-1" align="start">
               <div className="space-y-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start font-normal"
+                <Select
                   disabled={filters.some(f => f.type === "product_type")}
-                  onClick={() => setFilterPopoverOpen(false)}
+                  onValueChange={(value) => {
+                    setFilters(prev => [...prev.filter(f => f.type !== "product_type"), { type: "product_type", value, label: value }]);
+                    setFilterPopoverOpen(false);
+                  }}
                 >
-                  <Select
-                    onValueChange={(value) => {
-                      setFilters(prev => [...prev.filter(f => f.type !== "product_type"), { type: "product_type", value, label: value }]);
-                      setFilterPopoverOpen(false);
-                    }}
-                  >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto focus:ring-0 focus:ring-offset-0 w-full justify-between">
-                      <span>Type</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start font-normal"
+                  <SelectTrigger className="border-0 shadow-none h-9 px-3 hover:bg-muted focus:ring-0 focus:ring-offset-0 w-full justify-between bg-transparent">
+                    <span>Type</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
                   disabled={filters.some(f => f.type === "brand")}
-                  onClick={() => setFilterPopoverOpen(false)}
+                  onValueChange={(value) => {
+                    const brand = brands.find(b => b.id === value);
+                    if (brand) {
+                      setFilters(prev => [...prev.filter(f => f.type !== "brand"), { type: "brand", value: brand.id, label: brand.name }]);
+                    }
+                    setFilterPopoverOpen(false);
+                  }}
                 >
-                  <Select
-                    onValueChange={(value) => {
-                      const brand = brands.find(b => b.id === value);
-                      if (brand) {
-                        setFilters(prev => [...prev.filter(f => f.type !== "brand"), { type: "brand", value: brand.id, label: brand.name }]);
-                      }
-                      setFilterPopoverOpen(false);
-                    }}
-                  >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto focus:ring-0 focus:ring-offset-0 w-full justify-between">
-                      <span>Brand</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {brands.map(brand => (
-                        <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start font-normal"
+                  <SelectTrigger className="border-0 shadow-none h-9 px-3 hover:bg-muted focus:ring-0 focus:ring-offset-0 w-full justify-between bg-transparent">
+                    <span>Brand</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brands.map(brand => (
+                      <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
                   disabled={filters.some(f => f.type === "collection")}
-                  onClick={() => setFilterPopoverOpen(false)}
+                  onValueChange={(value) => {
+                    const collection = collections.find(c => c.id === value);
+                    if (collection) {
+                      setFilters(prev => [...prev.filter(f => f.type !== "collection"), { type: "collection", value: collection.id, label: collection.name }]);
+                    }
+                    setFilterPopoverOpen(false);
+                  }}
                 >
-                  <Select
-                    onValueChange={(value) => {
-                      const collection = collections.find(c => c.id === value);
-                      if (collection) {
-                        setFilters(prev => [...prev.filter(f => f.type !== "collection"), { type: "collection", value: collection.id, label: collection.name }]);
-                      }
-                      setFilterPopoverOpen(false);
-                    }}
-                  >
-                    <SelectTrigger className="border-0 shadow-none p-0 h-auto focus:ring-0 focus:ring-offset-0 w-full justify-between">
-                      <span>Collection</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {collections.map(col => (
-                        <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Button>
+                  <SelectTrigger className="border-0 shadow-none h-9 px-3 hover:bg-muted focus:ring-0 focus:ring-offset-0 w-full justify-between bg-transparent">
+                    <span>Collection</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {collections.map(col => (
+                      <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </PopoverContent>
           </Popover>
