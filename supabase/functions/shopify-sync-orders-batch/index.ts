@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.86.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -98,14 +98,16 @@ serve(async (req) => {
       `Authorization format ok: ${authHeader.startsWith('Bearer ')} | length: ${authHeader.length}`
     );
 
-    // Create client WITH user auth context from the incoming request.
-    // This is the recommended pattern for Edge Functions.
+    // In Edge runtime, don't rely on session storage. Parse the JWT and pass it explicitly.
+    // Also handle cases where proxies concatenate duplicate headers.
+    const bearerValue = authHeader.includes(',') ? authHeader.split(',')[0].trim() : authHeader;
+    const jwt = bearerValue.replace(/^Bearer\s+/i, '').trim();
+
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     });
 
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    const { data: { user }, error: authError } = await authClient.auth.getUser(jwt);
     if (authError || !user) {
       console.error('Authentication failed:', authError?.message);
       return new Response(
