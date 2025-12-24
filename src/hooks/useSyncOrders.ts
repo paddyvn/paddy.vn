@@ -22,7 +22,7 @@ export const useSyncOrders = () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) {
+      if (!session?.access_token) {
         throw new Error("You must be logged in to sync orders");
       }
 
@@ -68,8 +68,9 @@ export const useSyncOrders = () => {
               "Content-Type": "application/json",
               // Required by Supabase Functions gateway
               apikey: SUPABASE_ANON_KEY,
-              // Use lowercase key to avoid any intermediary/header-normalization issues
+              // Send both casings to avoid any intermediary/header-normalization issues
               authorization: `Bearer ${session.access_token}`,
+              Authorization: `Bearer ${session.access_token}`,
             },
             body: JSON.stringify(body),
           }
