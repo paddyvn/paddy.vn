@@ -36,11 +36,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow, format } from "date-fns";
 import {
-  EditContactInfoDialog,
+  EditCustomerDialog,
   EditMarketingDialog,
   EditTagsDialog,
   EditNotesDialog,
-  EditCustomerNameDialog,
+  ManageAddressesDialog,
+  EditTaxDetailsDialog,
 } from "@/components/admin/CustomerEditDialogs";
 
 const CustomerDetail = () => {
@@ -51,11 +52,12 @@ const CustomerDetail = () => {
   const [commentText, setCommentText] = useState("");
 
   // Dialog states
-  const [editContactOpen, setEditContactOpen] = useState(false);
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editMarketingOpen, setEditMarketingOpen] = useState(false);
   const [editTagsOpen, setEditTagsOpen] = useState(false);
   const [editNotesOpen, setEditNotesOpen] = useState(false);
-  const [editNameOpen, setEditNameOpen] = useState(false);
+  const [manageAddressesOpen, setManageAddressesOpen] = useState(false);
+  const [editTaxOpen, setEditTaxOpen] = useState(false);
 
   // Fetch customer data
   const { data: customer, isLoading: customerLoading } = useQuery({
@@ -236,7 +238,7 @@ const CustomerDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditNameOpen(true)}>Edit customer</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditCustomerOpen(true)}>Edit customer</DropdownMenuItem>
               <DropdownMenuItem>Merge customers</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive">Delete customer</DropdownMenuItem>
             </DropdownMenuContent>
@@ -488,14 +490,18 @@ const CustomerDetail = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditContactOpen(true)}>
+                  <DropdownMenuItem onClick={() => setEditCustomerOpen(true)}>
                     Edit contact information
                   </DropdownMenuItem>
-                  <DropdownMenuItem>Manage addresses</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setManageAddressesOpen(true)}>
+                    Manage addresses
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setEditMarketingOpen(true)}>
                     Edit marketing settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem>Edit tax details</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEditTaxOpen(true)}>
+                    Edit tax details
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </CardHeader>
@@ -619,14 +625,25 @@ const CustomerDetail = () => {
       </div>
 
       {/* Edit Dialogs */}
-      <EditContactInfoDialog
-        open={editContactOpen}
-        onOpenChange={setEditContactOpen}
+      <EditCustomerDialog
+        open={editCustomerOpen}
+        onOpenChange={setEditCustomerOpen}
         customer={customer}
+      />
+      <ManageAddressesDialog
+        open={manageAddressesOpen}
+        onOpenChange={setManageAddressesOpen}
+        customer={customer}
+        addresses={orders?.[0]?.shipping_address ? [orders[0].shipping_address] : []}
       />
       <EditMarketingDialog
         open={editMarketingOpen}
         onOpenChange={setEditMarketingOpen}
+        customer={customer}
+      />
+      <EditTaxDetailsDialog
+        open={editTaxOpen}
+        onOpenChange={setEditTaxOpen}
         customer={customer}
       />
       <EditTagsDialog
@@ -637,11 +654,6 @@ const CustomerDetail = () => {
       <EditNotesDialog
         open={editNotesOpen}
         onOpenChange={setEditNotesOpen}
-        customer={customer}
-      />
-      <EditCustomerNameDialog
-        open={editNameOpen}
-        onOpenChange={setEditNameOpen}
         customer={customer}
       />
     </div>
