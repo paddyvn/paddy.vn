@@ -36,13 +36,9 @@ import {
   MapPin,
   CheckSquare,
   Truck,
-  User,
-  Mail,
-  Phone,
-  FileText,
-  Clock,
   CreditCard,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Order {
   id: string;
@@ -131,6 +127,7 @@ export default function OrderDetail() {
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editTags, setEditTags] = useState("");
+  const [updateCustomerProfile, setUpdateCustomerProfile] = useState(false);
   const [editAddress, setEditAddress] = useState({
     first_name: "",
     last_name: "",
@@ -277,7 +274,68 @@ export default function OrderDetail() {
       customer_email: editEmail, 
       customer_phone: editPhone 
     });
+
+    // If checkbox is checked, also update the customer profile
+    if (updateCustomerProfile) {
+      try {
+        // Find customer by phone or email
+        const originalPhone = order?.customer_phone || order?.shipping_address?.phone;
+        const originalEmail = order?.customer_email;
+        
+        let customerId: string | null = null;
+        
+        // Try to find by phone first
+        if (originalPhone) {
+          const { data: customerByPhone } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("phone", originalPhone)
+            .maybeSingle();
+          if (customerByPhone) customerId = customerByPhone.id;
+        }
+        
+        // If not found, try by email
+        if (!customerId && originalEmail) {
+          const { data: customerByEmail } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("email", originalEmail)
+            .maybeSingle();
+          if (customerByEmail) customerId = customerByEmail.id;
+        }
+
+        if (customerId) {
+          const updates: Record<string, string | null> = {};
+          if (editEmail) updates.email = editEmail;
+          if (editPhone) updates.phone = editPhone;
+          
+          const { error: customerError } = await supabase
+            .from("customers")
+            .update(updates)
+            .eq("id", customerId);
+
+          if (customerError) {
+            console.error("Error updating customer:", customerError);
+            toast({
+              title: "Customer Update Failed",
+              description: "Order updated, but failed to update customer profile.",
+              variant: "destructive",
+            });
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["customers"] });
+            toast({
+              title: "Customer Updated",
+              description: "Customer profile has also been updated.",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error finding/updating customer:", error);
+      }
+    }
+
     setEditContactOpen(false);
+    setUpdateCustomerProfile(false);
   };
 
   const handleSaveAddress = async () => {
@@ -849,12 +907,25 @@ export default function OrderDetail() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Phone</Label>
+              <Label>Phone number</Label>
               <Input
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
                 placeholder="+84..."
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="updateCustomerProfile"
+                checked={updateCustomerProfile}
+                onCheckedChange={(checked) => setUpdateCustomerProfile(checked === true)}
+              />
+              <label
+                htmlFor="updateCustomerProfile"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Update customer profile
+              </label>
             </div>
           </div>
           <DialogFooter>
