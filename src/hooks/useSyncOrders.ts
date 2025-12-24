@@ -68,8 +68,7 @@ export const useSyncOrders = () => {
               "Content-Type": "application/json",
               // Required by Supabase Functions gateway
               apikey: SUPABASE_ANON_KEY,
-              // Single authorization header (avoid duplicate header concatenation)
-              authorization: `Bearer ${session.access_token}`,
+              Authorization: `Bearer ${session.access_token}`,
             },
             body: JSON.stringify(body),
           }

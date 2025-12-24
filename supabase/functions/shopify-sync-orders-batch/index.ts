@@ -81,7 +81,7 @@ serve(async (req) => {
     }
 
     // Verify admin authentication
-    let authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
+    const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
     const keys = Array.from(req.headers.keys());
     console.log(`Received headers: ${keys.join(', ')}`);
 
@@ -93,23 +93,19 @@ serve(async (req) => {
       );
     }
 
-    // If proxies concatenate duplicate headers, keep only the first value.
-    if (authHeader.includes(',')) {
-      console.log('Authorization header contained multiple values; using first.');
-      authHeader = authHeader.split(',')[0].trim();
-    }
-
     // Safe diagnostics (no token leakage)
     console.log(
       `Authorization format ok: ${authHeader.startsWith('Bearer ')} | length: ${authHeader.length}`
     );
 
-    // In Edge runtime there is no persisted session storage, so pass the JWT explicitly.
-    const jwt = authHeader.replace(/^Bearer\s+/i, '').trim();
+    // Create client WITH user auth context from the incoming request.
+    // This is the recommended pattern for Edge Functions.
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
 
-    const authClient = createClient(supabaseUrl, supabaseAnonKey);
-
-    const { data: { user }, error: authError } = await authClient.auth.getUser(jwt);
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
       console.error('Authentication failed:', authError?.message);
       return new Response(
