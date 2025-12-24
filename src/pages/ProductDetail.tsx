@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,7 +179,12 @@ export default function ProductDetail() {
                 {product.brand && (
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">Thương hiệu:</span>
-                    <span className="font-medium text-foreground">{product.brand}</span>
+                    <Link 
+                      to={`/collections/${product.brand.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="font-medium text-foreground hover:text-primary hover:underline transition-colors"
+                    >
+                      {product.brand}
+                    </Link>
                   </div>
                 )}
                 {product.product_origins && (
