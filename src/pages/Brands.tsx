@@ -292,7 +292,7 @@ export default function Brands() {
                         {letterBrands.map((brand) => (
                           <Link
                             key={brand.name}
-                            to={`/collection/${brand.slug}`}
+                            to={`/collections/${brand.slug}`}
                             className="text-sm text-foreground hover:text-primary hover:underline transition-colors flex items-center justify-between"
                           >
                             <span>{brand.name}</span>
