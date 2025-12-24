@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star, ShoppingCart, Loader2 } from "lucide-react";
+import { Heart, PawPrint, ShoppingCart, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
@@ -162,7 +162,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
 
           <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-secondary text-secondary" />
+            <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
             <span className="text-sm font-medium">
               {calculateAverageRating(product.reviews)}
             </span>
