@@ -98,11 +98,12 @@ serve(async (req) => {
       `Authorization format ok: ${authHeader.startsWith('Bearer ')} | length: ${authHeader.length}`
     );
 
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // In Edge runtime there is no persisted session storage, so pass the JWT explicitly.
+    const jwt = authHeader.replace(/^Bearer\s+/i, '');
 
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    const authClient = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data: { user }, error: authError } = await authClient.auth.getUser(jwt);
     if (authError || !user) {
       console.error('Authentication failed:', authError?.message);
       return new Response(
