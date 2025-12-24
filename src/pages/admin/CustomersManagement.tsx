@@ -205,7 +205,7 @@ export default function CustomersManagement() {
                 >
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">
+                      <span className="font-medium text-primary hover:underline">
                         {customer.first_name} {customer.last_name}
                       </span>
                       <span className="text-sm text-muted-foreground">
