@@ -228,7 +228,7 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = "600p
         },
         attributes: {
             class:
-            "prose prose-sm max-w-none h-[600px] overflow-y-auto p-4 focus:outline-none text-sm [&_p]:text-sm [&_p]:my-3 [&_li]:text-sm [&_li]:my-0 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_ul]:my-0 [&_ol]:my-0 [&_li::marker]:text-muted-foreground",
+            "prose prose-sm max-w-none h-full p-4 focus:outline-none text-sm [&_p]:text-sm [&_p]:my-3 [&_li]:text-sm [&_li]:my-0 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_ul]:my-0 [&_ol]:my-0 [&_li::marker]:text-muted-foreground",
           "data-placeholder": placeholder || "",
         },
       },
