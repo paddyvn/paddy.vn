@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -23,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil, ChevronDown, Search } from "lucide-react";
+import { ArrowLeft, Upload, X, Save, Eye, Plus, Trash2, Copy, MoreHorizontal, Pencil, ChevronDown, Search, GripVertical } from "lucide-react";
 import { ProductSelectorDialog } from "@/components/admin/ProductSelectorDialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +44,24 @@ import {
   ConditionValueSelector,
   getFieldType,
 } from "@/components/admin/ConditionFieldSelector";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 const collectionSchema = z.object({
   name: z.string().trim().min(1, "Title is required").max(100),
@@ -60,6 +79,107 @@ type CollectionRule = {
 };
 
 import { CollectionTypeSelector } from "@/components/admin/CollectionTypeSelector";
+
+// Sortable Product Row Component
+interface SortableProductRowProps {
+  product: any;
+  index: number;
+  isSelected: boolean;
+  onToggleSelect: () => void;
+  onEdit: () => void;
+  onRemove: () => void;
+  isManualCollection: boolean;
+  getPrimaryImage: (images: Array<{ image_url: string; is_primary: boolean }>) => string | undefined;
+}
+
+function SortableProductRow({
+  product,
+  index,
+  isSelected,
+  onToggleSelect,
+  onEdit,
+  onRemove,
+  isManualCollection,
+  getPrimaryImage,
+}: SortableProductRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: product.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group ${
+        isDragging ? 'bg-muted shadow-lg z-50' : ''
+      }`}
+    >
+      {isManualCollection && (
+        <>
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={onToggleSelect}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </>
+      )}
+      <span className="text-sm text-muted-foreground w-6">
+        {index + 1}.
+      </span>
+      {getPrimaryImage(product.product_images) ? (
+        <img
+          src={getPrimaryImage(product.product_images)}
+          alt={product.name}
+          className="w-12 h-12 rounded object-cover"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded bg-muted" />
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">{product.name}</p>
+      </div>
+      <Badge variant={product.is_active ? "default" : "secondary"}>
+        {product.is_active ? "Active" : "Inactive"}
+      </Badge>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={onEdit}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      {isManualCollection && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive"
+          onClick={onRemove}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function CollectionDetails() {
   const { id } = useParams<{ id: string }>();
@@ -94,6 +214,16 @@ export default function CollectionDetails() {
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [manuallySelectedProducts, setManuallySelectedProducts] = useState<any[]>([]);
   const [removedProductIds, setRemovedProductIds] = useState<Set<string>>(new Set());
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [reorderedProducts, setReorderedProducts] = useState<any[] | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const { data: collection, isLoading } = useQuery({
     queryKey: ["collection", id],
@@ -510,6 +640,11 @@ export default function CollectionDetails() {
   
   // For manual collections, combine linked products with manually selected ones
   const getProducts = () => {
+    // If user has reordered, use that order
+    if (reorderedProducts !== null) {
+      return reorderedProducts;
+    }
+
     if (formData.collection_type === "smart" && previewedProducts !== null) {
       return previewedProducts;
     }
@@ -534,6 +669,8 @@ export default function CollectionDetails() {
       const newProducts = selectedProducts.filter(p => !existingIds.has(p.id));
       return [...prev, ...newProducts];
     });
+    // Clear reordered state when adding new products
+    setReorderedProducts(null);
   };
   
   const removeManualProduct = (productId: string) => {
@@ -548,6 +685,57 @@ export default function CollectionDetails() {
     } else {
       // It's an existing linked product - mark for removal
       setRemovedProductIds(prev => new Set([...prev, productId]));
+    }
+    // Also remove from selection
+    setSelectedProductIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(productId);
+      return newSet;
+    });
+    // Update reordered list if exists
+    if (reorderedProducts) {
+      setReorderedProducts(prev => prev?.filter(p => p.id !== productId) || null);
+    }
+  };
+
+  // Bulk selection handlers
+  const toggleSelectAll = () => {
+    if (selectedProductIds.size === products.length) {
+      setSelectedProductIds(new Set());
+    } else {
+      setSelectedProductIds(new Set(products.map((p: any) => p.id)));
+    }
+  };
+
+  const toggleSelectProduct = (productId: string) => {
+    setSelectedProductIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkRemove = () => {
+    selectedProductIds.forEach(productId => {
+      removeProductFromCollection(productId);
+    });
+    setSelectedProductIds(new Set());
+  };
+
+  // Drag and drop handler
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = products.findIndex((p: any) => p.id === active.id);
+      const newIndex = products.findIndex((p: any) => p.id === over.id);
+      
+      const newProducts = arrayMove(products, oldIndex, newIndex);
+      setReorderedProducts(newProducts);
     }
   };
 
@@ -768,56 +956,72 @@ export default function CollectionDetails() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  {products
-                    .slice((productsPage - 1) * PRODUCTS_PER_PAGE, productsPage * PRODUCTS_PER_PAGE)
-                    .map((product: any, index: number) => {
-                      const isManuallyAdded = manuallySelectedProducts.some(p => p.id === product.id);
-                      return (
-                        <div
-                          key={product.id}
-                          className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
-                        >
-                          <span className="text-sm text-muted-foreground w-6">
-                            {(productsPage - 1) * PRODUCTS_PER_PAGE + index + 1}.
-                          </span>
-                          {getPrimaryImage(product.product_images) ? (
-                            <img
-                              src={getPrimaryImage(product.product_images)}
-                              alt={product.name}
-                              className="w-12 h-12 rounded object-cover"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded bg-muted" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{product.name}</p>
-                          </div>
-                          <Badge variant={product.is_active ? "default" : "secondary"}>
-                            {product.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => navigate(`/admin/products/${product.id}`)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {isManualCollection && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => removeProductFromCollection(product.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
+                {/* Bulk actions bar */}
+                {isManualCollection && selectedProductIds.size > 0 && (
+                  <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                    <span className="text-sm font-medium">
+                      {selectedProductIds.size} product{selectedProductIds.size > 1 ? 's' : ''} selected
+                    </span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkRemove}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remove selected
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedProductIds(new Set())}
+                    >
+                      Clear selection
+                    </Button>
+                  </div>
+                )}
+
+                {/* Select all header */}
+                {isManualCollection && products.length > 0 && (
+                  <div className="flex items-center gap-4 px-3 py-2 border-b">
+                    <Checkbox
+                      checked={selectedProductIds.size === products.length && products.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {selectedProductIds.size === products.length ? 'Deselect all' : 'Select all'}
+                    </span>
+                  </div>
+                )}
+
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  modifiers={isManualCollection ? [restrictToVerticalAxis] : []}
+                >
+                  <SortableContext
+                    items={products.slice((productsPage - 1) * PRODUCTS_PER_PAGE, productsPage * PRODUCTS_PER_PAGE).map((p: any) => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-1">
+                      {products
+                        .slice((productsPage - 1) * PRODUCTS_PER_PAGE, productsPage * PRODUCTS_PER_PAGE)
+                        .map((product: any, index: number) => (
+                          <SortableProductRow
+                            key={product.id}
+                            product={product}
+                            index={(productsPage - 1) * PRODUCTS_PER_PAGE + index}
+                            isSelected={selectedProductIds.has(product.id)}
+                            onToggleSelect={() => toggleSelectProduct(product.id)}
+                            onEdit={() => navigate(`/admin/products/${product.id}`)}
+                            onRemove={() => removeProductFromCollection(product.id)}
+                            isManualCollection={isManualCollection}
+                            getPrimaryImage={getPrimaryImage}
+                          />
+                        ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
                 
                 {/* Pagination */}
                 {products.length > PRODUCTS_PER_PAGE && (
