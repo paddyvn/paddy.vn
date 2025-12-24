@@ -13,7 +13,7 @@ import {
   ArrowLeft,
   ChevronUp,
   ChevronDown,
-  MoreHorizontal,
+  ChevronDownIcon,
   MapPin,
   Mail,
   Phone,
@@ -27,6 +27,11 @@ import {
   Hash,
   Paperclip,
   ExternalLink,
+  CreditCard,
+  GitMerge,
+  FileText,
+  Eraser,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -234,13 +239,34 @@ const CustomerDetail = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 More actions
-                <MoreHorizontal className="h-4 w-4 ml-2" />
+                <ChevronDownIcon className="h-4 w-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditCustomerOpen(true)}>Edit customer</DropdownMenuItem>
-              <DropdownMenuItem>Merge customers</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Delete customer</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem>
+                <Mail className="h-4 w-4 mr-2" />
+                Send account invite
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <CreditCard className="h-4 w-4 mr-2" />
+                Issue store credit
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <GitMerge className="h-4 w-4 mr-2" />
+                Merge customer
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="h-4 w-4 mr-2" />
+                Request customer data
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Eraser className="h-4 w-4 mr-2" />
+                Erase personal data
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete customer
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -486,7 +512,7 @@ const CustomerDetail = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
