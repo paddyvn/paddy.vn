@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCustomers, useUpdateCustomer, Customer } from "@/hooks/useCustomers";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ import { formatCurrency } from "@/lib/utils";
 const CUSTOMERS_PER_PAGE = 50;
 
 export default function CustomersManagement() {
+  const navigate = useNavigate();
   const { data: customers, isLoading } = useCustomers();
   const updateCustomer = useUpdateCustomer();
   const syncCustomers = useSyncCustomers();
@@ -199,7 +201,7 @@ export default function CustomersManagement() {
                 <TableRow
                   key={customer.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => openCustomerDialog(customer)}
+                  onClick={() => navigate(`/admin/customers/${customer.id}`)}
                 >
                   <TableCell>
                     <div className="flex flex-col">

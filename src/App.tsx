@@ -27,6 +27,7 @@ import OrderDetail from "./pages/admin/OrderDetail";
 import OrderEdit from "./pages/admin/OrderEdit";
 import CustomersManagement from "./pages/admin/CustomersManagement";
 import CustomerSegments from "./pages/admin/CustomerSegments";
+import CustomerDetail from "./pages/admin/CustomerDetail";
 import AbandonedCheckouts from "./pages/admin/AbandonedCheckouts";
 import ContentMetaobjects from "./pages/admin/ContentMetaobjects";
 import ContentFiles from "./pages/admin/ContentFiles";
@@ -97,6 +98,7 @@ const App = () => (
             <Route path="orders/:id/edit" element={<OrderEdit />} />
             <Route path="abandoned-checkouts" element={<AbandonedCheckouts />} />
             <Route path="customers" element={<CustomersManagement />} />
+            <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="customers/segments" element={<CustomerSegments />} />
             <Route path="content/metaobjects" element={<ContentMetaobjects />} />
             <Route path="content/files" element={<ContentFiles />} />
