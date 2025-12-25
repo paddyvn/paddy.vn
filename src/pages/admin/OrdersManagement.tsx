@@ -425,6 +425,12 @@ export default function OrdersManagement() {
                 if (col.id === "customer") {
                   return <SortableHeader key={col.id} field="customer">Customer</SortableHeader>;
                 }
+                if (col.id === "customer_email") {
+                  return <TableHead key={col.id}>Email</TableHead>;
+                }
+                if (col.id === "customer_phone") {
+                  return <TableHead key={col.id}>Phone</TableHead>;
+                }
                 if (col.id === "items") {
                   return <TableHead key={col.id}>Items</TableHead>;
                 }
@@ -439,6 +445,18 @@ export default function OrdersManagement() {
                 }
                 if (col.id === "delivery_method") {
                   return <TableHead key={col.id}>Delivery method</TableHead>;
+                }
+                if (col.id === "source") {
+                  return <TableHead key={col.id}>Source</TableHead>;
+                }
+                if (col.id === "tags") {
+                  return <TableHead key={col.id}>Tags</TableHead>;
+                }
+                if (col.id === "notes") {
+                  return <TableHead key={col.id}>Notes</TableHead>;
+                }
+                if (col.id === "currency") {
+                  return <TableHead key={col.id}>Currency</TableHead>;
                 }
                 if (col.id === "actions") {
                   return <TableHead key={col.id} className="text-right">Actions</TableHead>;
@@ -511,6 +529,20 @@ export default function OrdersManagement() {
                           </TableCell>
                         );
                       }
+                      if (col.id === "customer_email") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground">
+                            {order.customer_email || "-"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "customer_phone") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground">
+                            {order.customer_phone || "-"}
+                          </TableCell>
+                        );
+                      }
                       if (col.id === "items") {
                         const count = itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0;
                         return (
@@ -562,6 +594,34 @@ export default function OrdersManagement() {
                         return (
                           <TableCell key={col.id} className="text-muted-foreground">
                             {order.delivery_method || "-"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "source") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground">
+                            {order.source_name || "-"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "tags") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground max-w-[150px] truncate">
+                            {order.tags || "-"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "notes") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground max-w-[150px] truncate">
+                            {order.notes || "-"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "currency") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground">
+                            {order.currency || "-"}
                           </TableCell>
                         );
                       }
