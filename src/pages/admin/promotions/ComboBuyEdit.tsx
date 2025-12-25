@@ -203,7 +203,7 @@ export default function ComboBuyEdit() {
       title={isNew ? "Create Combo Buy" : formData.title || "Edit Combo Buy"}
       typeLabel="Combo Buy"
       formData={formData}
-      setFormData={(data) => setFormData({ ...formData, ...data })}
+      setFormData={(data) => setFormData((prev) => ({ ...prev, ...data }))}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}

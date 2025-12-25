@@ -202,7 +202,7 @@ export default function DiscountsEdit() {
       title={isNew ? "Create Discount" : formData.title || "Edit Discount"}
       typeLabel="Discount"
       formData={formData}
-      setFormData={(data) => setFormData({ ...formData, ...data })}
+      setFormData={(data) => setFormData((prev) => ({ ...prev, ...data }))}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}
