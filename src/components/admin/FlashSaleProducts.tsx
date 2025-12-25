@@ -94,6 +94,7 @@ export function FlashSaleProducts({
           base_price,
           category_id,
           brand_id,
+          brand,
           product_type,
           product_images(image_url, is_primary),
           product_variants(id, name, price, compare_at_price, stock_quantity),
@@ -127,20 +128,6 @@ export function FlashSaleProducts({
     },
   });
 
-  // Fetch brands
-  const { data: brands = [] } = useQuery({
-    queryKey: ["flash-sale-brands"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("brands")
-        .select("id, name")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   // Get unique product types from products
   const productTypes = Array.from(
     new Set(products.map((p) => p.product_type).filter(Boolean))
@@ -151,17 +138,17 @@ export function FlashSaleProducts({
     ? products 
     : products.filter((p) => p.product_type === typeFilter);
 
-  // Get available brands based on type filter
-  const availableBrands = brands.filter((brand) =>
-    productsFilteredByType.some((p) => p.brand_id === brand.id)
-  );
+  // Get available brands based on type filter (using brand text field)
+  const availableBrands = Array.from(
+    new Set(productsFilteredByType.map((p) => p.brand).filter(Boolean))
+  ).sort() as string[];
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase());
     const matchesBrand =
-      brandFilter === "all" || p.brand_id === brandFilter;
+      brandFilter === "all" || p.brand === brandFilter;
     const matchesType =
       typeFilter === "all" || p.product_type === typeFilter;
     const matchesCollection =
@@ -714,8 +701,8 @@ export function FlashSaleProducts({
                   <SelectContent>
                     <SelectItem value="all">Tất cả thương hiệu</SelectItem>
                     {availableBrands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.id}>
-                        {brand.name}
+                      <SelectItem key={brand} value={brand}>
+                        {brand}
                       </SelectItem>
                     ))}
                   </SelectContent>
