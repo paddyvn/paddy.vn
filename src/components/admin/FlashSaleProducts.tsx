@@ -792,7 +792,7 @@ export function FlashSaleProducts({
                           }`}
                           onClick={() => toggleProductSelection(product.id)}
                         >
-                          <TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={() =>
