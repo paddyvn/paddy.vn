@@ -2,16 +2,34 @@ import { Facebook, Instagram, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import govSeal from "@/assets/gov-seal.png";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FooterProps {
   hideNewsletter?: boolean;
 }
 
 export const Footer = ({ hideNewsletter = false }: FooterProps) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const showNewsletter = !hideNewsletter && !isLoggedIn;
+
   return (
     <footer className="bg-muted/30">
-      {/* Newsletter Section */}
-      {!hideNewsletter && (
+      {/* Newsletter Section - only for guest users */}
+      {showNewsletter && (
         <div className="bg-background border-b">
         <div className="container mx-auto px-4 py-12 md:py-16">
           <div className="max-w-3xl mx-auto text-center">
