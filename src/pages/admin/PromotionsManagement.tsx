@@ -29,12 +29,12 @@ import { toast } from "sonner";
 
 const PROMO_TYPE_MAP: Record<string, { label: string; dbValue: string }> = {
   "flash-sale": { label: "Flash Sale", dbValue: "flash_sale" },
-  "discounts": { label: "Discounts", dbValue: "discounts" },
-  "vouchers": { label: "Vouchers", dbValue: "vouchers" },
-  "combo-buy": { label: "Combo Buy", dbValue: "combo_buy" },
-  "buy-more-save-more": { label: "Buy More Save More", dbValue: "buy_more_save_more" },
-  "free-shipping": { label: "Free Shipping", dbValue: "free_shipping" },
-  "subscription-deals": { label: "Subscription Deals", dbValue: "subscription_deals" },
+  "discounts": { label: "Discounts", dbValue: "deal" },
+  "vouchers": { label: "Vouchers", dbValue: "deal" },
+  "combo-buy": { label: "Combo Buy", dbValue: "deal" },
+  "buy-more-save-more": { label: "Buy More Save More", dbValue: "deal" },
+  "free-shipping": { label: "Free Shipping", dbValue: "deal" },
+  "subscription-deals": { label: "Subscription Deals", dbValue: "deal" },
   "clearance": { label: "Clearance", dbValue: "clearance" },
 };
 
@@ -58,12 +58,8 @@ const SUB_TYPES: Record<string, { label: string; value: string }[]> = {
 
 const ALL_PROMO_TYPES = [
   { label: "Flash Sale", value: "flash_sale" },
-  { label: "Discounts", value: "discounts" },
-  { label: "Vouchers", value: "vouchers" },
-  { label: "Combo Buy", value: "combo_buy" },
-  { label: "Buy More Save More", value: "buy_more_save_more" },
-  { label: "Free Shipping", value: "free_shipping" },
-  { label: "Subscription Deals", value: "subscription_deals" },
+  { label: "Deal", value: "deal" },
+  { label: "Seasonal", value: "seasonal" },
   { label: "Clearance", value: "clearance" },
 ];
 
