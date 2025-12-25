@@ -17,21 +17,18 @@ const Promotions = () => {
     return true;
   });
 
-  const getLink = (linkType: string, linkDestination: string) => {
-    switch (linkType) {
-      case "collection":
-        return `/collections/${linkDestination}`;
-      case "product":
-        return `/products/${linkDestination}`;
-      case "page":
-        return `/pages/${linkDestination}`;
-      case "flash_sale":
-        return "/flash-sale";
-      case "external":
-        return linkDestination;
-      default:
-        return `/collections/${linkDestination}`;
+  const getLink = (promo: { promo_type: string; link_type: string; link_destination: string }) => {
+    // Special promo types with dedicated pages
+    if (promo.promo_type === "flash_sale") return "/flash-sale";
+    if (promo.promo_type === "subscription_deals") return "/subscription-deals";
+
+    // Other types use collections
+    if (promo.link_destination) {
+      return `/collections/${promo.link_destination}`;
     }
+
+    // Fallback to collections with promo_type slug
+    return `/collections/${promo.promo_type.replace("_", "-")}`;
   };
 
   return (
@@ -66,7 +63,7 @@ const Promotions = () => {
             {activePromotions.map((promo) => (
               <Link
                 key={promo.id}
-                to={getLink(promo.link_type, promo.link_destination)}
+                to={getLink(promo)}
                 className="group relative aspect-square rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
                 style={{
                   background: `linear-gradient(135deg, ${promo.gradient_from}, ${promo.gradient_to})`,
