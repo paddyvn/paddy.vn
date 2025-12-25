@@ -378,6 +378,9 @@ export function SimpleProductPicker({
                   )}
                   <TableHead className="text-center w-20">Kho hàng</TableHead>
                   {showDiscountSettings && (
+                    <TableHead className="text-center w-28">SL khuyến mãi</TableHead>
+                  )}
+                  {showDiscountSettings && (
                     <TableHead className="text-center w-20">Bật/Tắt</TableHead>
                   )}
                   <TableHead className="w-16 text-center">Thao tác</TableHead>
@@ -545,6 +548,41 @@ export function SimpleProductPicker({
                           <TableCell className="text-center text-sm">
                             {variant.stock_quantity || 0}
                           </TableCell>
+                          {showDiscountSettings && (
+                            <TableCell className="text-center">
+                              <Input
+                                type="number"
+                                value={variantSetting?.stockLimit ?? ""}
+                                onChange={(e) => {
+                                  if (onProductSettingsChange) {
+                                    const val = e.target.value === "" ? undefined : parseInt(e.target.value) || 0;
+                                    const newSettings = [...productSettings];
+                                    const idx = newSettings.findIndex(
+                                      s => s.productId === product.id && s.variantId === variant.id
+                                    );
+                                    if (idx >= 0) {
+                                      newSettings[idx] = { ...newSettings[idx], stockLimit: val };
+                                    } else {
+                                      newSettings.push({
+                                        productId: product.id,
+                                        variantId: variant.id,
+                                        discountType: effectiveDiscountType,
+                                        discountValue: effectiveDiscountValue,
+                                        isEnabled: true,
+                                        stockLimit: val,
+                                      });
+                                    }
+                                    onProductSettingsChange(newSettings);
+                                  }
+                                }}
+                                className="w-20 h-8 text-center text-sm"
+                                placeholder="--"
+                                min={0}
+                                max={variant.stock_quantity || 0}
+                                disabled={isOutOfStock}
+                              />
+                            </TableCell>
+                          )}
                           {showDiscountSettings && (
                             <TableCell className="text-center">
                               <Switch
