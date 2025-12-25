@@ -69,9 +69,8 @@ export function FlashSaleProducts({
 }: FlashSaleProductsProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [brandFilter, setBrandFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
   const [collectionFilter, setCollectionFilter] = useState<string>("all");
   const [tempSelected, setTempSelected] = useState<string[]>([]);
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
@@ -151,15 +150,13 @@ export function FlashSaleProducts({
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "all" || p.category_id === categoryFilter;
     const matchesBrand =
       brandFilter === "all" || p.brand_id === brandFilter;
     const matchesType =
       typeFilter === "all" || p.product_type === typeFilter;
     const matchesCollection =
       collectionFilter === "all" || p.collectionIds?.includes(collectionFilter);
-    return matchesSearch && matchesCategory && matchesBrand && matchesType && matchesCollection;
+    return matchesSearch && matchesBrand && matchesType && matchesCollection;
   });
 
   const formatPrice = (price: number) => {
@@ -169,9 +166,8 @@ export function FlashSaleProducts({
   const openDialog = () => {
     setTempSelected(selectedProducts.map((p) => p.productId));
     setSearch("");
-    setCategoryFilter("all");
-    setBrandFilter("all");
     setTypeFilter("all");
+    setBrandFilter("all");
     setCollectionFilter("all");
     setIsDialogOpen(true);
   };
@@ -684,16 +680,16 @@ export function FlashSaleProducts({
           <div className="space-y-3 mb-4">
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Danh mục</span>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Loại</span>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Tất cả" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả danh mục</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
+                    <SelectItem value="all">Tất cả loại</SelectItem>
+                    {productTypes.map((type) => (
+                      <SelectItem key={type} value={type as string}>
+                        {type}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -710,22 +706,6 @@ export function FlashSaleProducts({
                     {brands.map((brand) => (
                       <SelectItem key={brand.id} value={brand.id}>
                         {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Loại</span>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="Tất cả" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả loại</SelectItem>
-                    {productTypes.map((type) => (
-                      <SelectItem key={type} value={type as string}>
-                        {type}
                       </SelectItem>
                     ))}
                   </SelectContent>
