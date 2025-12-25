@@ -141,66 +141,71 @@ export const FlashSaleSection = () => {
   return (
     <section className="py-8 bg-background">
       <div className="container mx-auto px-4">
-        {/* Flash Sale Banner */}
+        {/* Flash Sale Card with Products Inside */}
         <div
-          className="rounded-xl p-6 mb-6"
+          className="rounded-xl overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${flashSale?.gradient_from || "#EF4444"}, ${flashSale?.gradient_to || "#F59E0B"})`,
           }}
         >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-3 rounded-full">
-                <Zap className="h-8 w-8 text-white fill-white" />
+          {/* Flash Sale Header */}
+          <div className="p-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-3 rounded-full">
+                  <Zap className="h-8 w-8 text-white fill-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+                    ⚡ {flashSale?.title || "Flash Sale"}
+                  </h2>
+                  {flashSale?.subtitle && (
+                    <p className="text-white/90 text-sm md:text-base">
+                      {flashSale.subtitle}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
-                  ⚡ {flashSale?.title || "Flash Sale"}
-                </h2>
-                {flashSale?.subtitle && (
-                  <p className="text-white/90 text-sm md:text-base">
-                    {flashSale.subtitle}
-                  </p>
-                )}
-              </div>
-            </div>
 
-            {flashSale?.end_date && (
-              <div className="flex flex-col items-center md:items-end gap-2">
-                <span className="text-white/80 text-sm">Kết thúc sau:</span>
-                <CountdownTimer endDate={flashSale.end_date} />
+              {flashSale?.end_date && (
+                <div className="flex flex-col items-center md:items-end gap-2">
+                  <span className="text-white/80 text-sm">Kết thúc sau:</span>
+                  <CountdownTimer endDate={flashSale.end_date} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Flash Sale Products - Inside the card */}
+          <div className="bg-background rounded-t-xl p-4 md:p-6">
+            {isLoadingProducts ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="aspect-square rounded-xl" />
+                ))}
               </div>
-            )}
+            ) : products && products.length > 0 ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+                  {products.slice(0, 4).map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                {flashSale?.link_destination && (
+                  <div className="flex justify-center mt-6">
+                    <Link
+                      to={`/collections/${flashSale.link_destination}`}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full font-medium hover:opacity-90 transition-opacity"
+                    >
+                      Xem tất cả Flash Sale
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                )}
+              </>
+            ) : null}
           </div>
         </div>
-
-        {/* Flash Sale Products */}
-        {isLoadingProducts ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="aspect-square rounded-xl" />
-            ))}
-          </div>
-        ) : products && products.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-              {products.slice(0, 4).map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-            {flashSale?.link_destination && (
-              <div className="flex justify-center mt-6">
-                <Link
-                  to={`/collections/${flashSale.link_destination}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full font-medium hover:opacity-90 transition-opacity"
-                >
-                  Xem tất cả Flash Sale
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            )}
-          </>
-        ) : null}
       </div>
     </section>
   );
