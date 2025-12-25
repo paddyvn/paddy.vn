@@ -1,16 +1,24 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import { ImageIcon, X } from "lucide-react";
 import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon, FishIcon } from "@/components/PaddyIconPatterns";
+import { ImagePickerDialog } from "./ImagePickerDialog";
 
 interface DealCardAppearanceCardProps {
   gradientFrom: string;
   gradientTo: string;
   iconType: string;
+  topIconUrl?: string;
+  bottomIconUrl?: string;
   onGradientFromChange: (value: string) => void;
   onGradientToChange: (value: string) => void;
   onIconTypeChange: (value: string) => void;
+  onTopIconUrlChange?: (value: string) => void;
+  onBottomIconUrlChange?: (value: string) => void;
 }
 
 const iconOptions = [
@@ -38,10 +46,19 @@ export function DealCardAppearanceCard({
   gradientFrom,
   gradientTo,
   iconType,
+  topIconUrl,
+  bottomIconUrl,
   onGradientFromChange,
   onGradientToChange,
   onIconTypeChange,
+  onTopIconUrlChange,
+  onBottomIconUrlChange,
 }: DealCardAppearanceCardProps) {
+  const [topIconPickerOpen, setTopIconPickerOpen] = useState(false);
+  const [bottomIconPickerOpen, setBottomIconPickerOpen] = useState(false);
+
+  const useCustomIcons = iconType === "custom" && (topIconUrl || bottomIconUrl);
+
   return (
     <Card>
       <CardContent className="p-6 space-y-6">
@@ -56,18 +73,37 @@ export function DealCardAppearanceCard({
               background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
             }}
           >
-            {/* Show selected icons */}
-            {(() => {
-              const selected = iconOptions.find((opt) => opt.value === iconType);
-              if (!selected) return null;
-              const { TopIcon, BottomIcon } = selected;
-              return (
-                <>
-                  <TopIcon className="absolute -top-2 -right-2 w-12 h-12 text-white/20 rotate-12" />
-                  <BottomIcon className="absolute -bottom-2 -left-2 w-10 h-10 text-white/15 -rotate-12" />
-                </>
-              );
-            })()}
+            {/* Show custom images or selected icons */}
+            {useCustomIcons ? (
+              <>
+                {topIconUrl && (
+                  <img 
+                    src={topIconUrl} 
+                    alt="Top icon" 
+                    className="absolute -top-2 -right-2 w-12 h-12 object-contain opacity-30 rotate-12"
+                  />
+                )}
+                {bottomIconUrl && (
+                  <img 
+                    src={bottomIconUrl} 
+                    alt="Bottom icon" 
+                    className="absolute -bottom-2 -left-2 w-10 h-10 object-contain opacity-20 -rotate-12"
+                  />
+                )}
+              </>
+            ) : (
+              (() => {
+                const selected = iconOptions.find((opt) => opt.value === iconType);
+                if (!selected) return null;
+                const { TopIcon, BottomIcon } = selected;
+                return (
+                  <>
+                    <TopIcon className="absolute -top-2 -right-2 w-12 h-12 text-white/20 rotate-12" />
+                    <BottomIcon className="absolute -bottom-2 -left-2 w-10 h-10 text-white/15 -rotate-12" />
+                  </>
+                );
+              })()
+            )}
             <div className="relative z-10 h-full flex flex-col items-center justify-center p-3 text-center">
               <p className="text-white text-sm font-bold drop-shadow-md">Flash Sale</p>
               <p className="text-white/90 text-xs mt-1 drop-shadow-md">50% OFF</p>
@@ -140,9 +176,88 @@ export function DealCardAppearanceCard({
         {/* Icon Selection */}
         <div className="space-y-3">
           <Label>Background Icons</Label>
+          
+          {/* Custom Image Option */}
+          {onTopIconUrlChange && onBottomIconUrlChange && (
+            <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+              <Label className="text-xs text-muted-foreground">Custom Images (from Files)</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Top Icon */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Top Right Icon</Label>
+                  {topIconUrl ? (
+                    <div className="relative w-16 h-16 rounded-lg border overflow-hidden group">
+                      <img src={topIconUrl} alt="Top icon" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => onTopIconUrlChange("")}
+                        className="absolute top-1 right-1 p-0.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-10"
+                      onClick={() => {
+                        onIconTypeChange("custom");
+                        setTopIconPickerOpen(true);
+                      }}
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Select
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Bottom Icon */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Bottom Left Icon</Label>
+                  {bottomIconUrl ? (
+                    <div className="relative w-16 h-16 rounded-lg border overflow-hidden group">
+                      <img src={bottomIconUrl} alt="Bottom icon" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => onBottomIconUrlChange("")}
+                        className="absolute top-1 right-1 p-0.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-10"
+                      onClick={() => {
+                        onIconTypeChange("custom");
+                        setBottomIconPickerOpen(true);
+                      }}
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Select
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <Label className="text-xs text-muted-foreground">Or use preset icons</Label>
           <RadioGroup
             value={iconType}
-            onValueChange={onIconTypeChange}
+            onValueChange={(value) => {
+              onIconTypeChange(value);
+              // Clear custom icons when selecting preset
+              if (value !== "custom") {
+                onTopIconUrlChange?.("");
+                onBottomIconUrlChange?.("");
+              }
+            }}
             className="grid grid-cols-2 gap-2"
           >
             {iconOptions.map((opt) => (
@@ -167,6 +282,26 @@ export function DealCardAppearanceCard({
           </RadioGroup>
         </div>
       </CardContent>
+
+      {/* Image Picker Dialogs */}
+      <ImagePickerDialog
+        open={topIconPickerOpen}
+        onOpenChange={setTopIconPickerOpen}
+        onSelect={(url) => {
+          onTopIconUrlChange?.(url);
+          setTopIconPickerOpen(false);
+        }}
+        currentImage={topIconUrl}
+      />
+      <ImagePickerDialog
+        open={bottomIconPickerOpen}
+        onOpenChange={setBottomIconPickerOpen}
+        onSelect={(url) => {
+          onBottomIconUrlChange?.(url);
+          setBottomIconPickerOpen(false);
+        }}
+        currentImage={bottomIconUrl}
+      />
     </Card>
   );
 }

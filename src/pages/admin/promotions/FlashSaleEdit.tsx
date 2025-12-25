@@ -30,6 +30,8 @@ type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' |
   gradient_from: string;
   gradient_to: string;
   icon_type: string;
+  top_icon_url: string;
+  bottom_icon_url: string;
 };
 
 const getDefaultFormData = (): FlashSaleFormData => ({
@@ -48,6 +50,8 @@ const getDefaultFormData = (): FlashSaleFormData => ({
   gradient_from: "#FF6B6B",
   gradient_to: "#EE5A24",
   icon_type: "dog_cat",
+  top_icon_url: "",
+  bottom_icon_url: "",
 });
 
 export default function FlashSaleEdit() {
@@ -380,9 +384,13 @@ export default function FlashSaleEdit() {
             gradientFrom={formData.gradient_from}
             gradientTo={formData.gradient_to}
             iconType={formData.icon_type}
+            topIconUrl={formData.top_icon_url}
+            bottomIconUrl={formData.bottom_icon_url}
             onGradientFromChange={(value) => setFormData({ ...formData, gradient_from: value })}
             onGradientToChange={(value) => setFormData({ ...formData, gradient_to: value })}
             onIconTypeChange={(value) => setFormData({ ...formData, icon_type: value })}
+            onTopIconUrlChange={(value) => setFormData({ ...formData, top_icon_url: value })}
+            onBottomIconUrlChange={(value) => setFormData({ ...formData, bottom_icon_url: value })}
           />
         </>
       }
