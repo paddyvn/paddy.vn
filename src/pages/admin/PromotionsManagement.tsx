@@ -87,6 +87,9 @@ export default function PromotionsManagement() {
 
   const { data: promotions, isLoading, isError, error } = useQuery({
     queryKey: ["promotions", promoType, typeConfig?.programKind, selectedPromoType],
+    // Admin lists should reflect latest server-side changes immediately
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       let query = supabase
         .from("promotions")
@@ -102,6 +105,10 @@ export default function PromotionsManagement() {
 
       const { data, error } = await query;
       if (error) throw error;
+      // Safety: also filter client-side to prevent stale/unfiltered cached results
+      if (typeConfig && data) {
+        return data.filter((p) => p.program_kind === typeConfig.programKind);
+      }
       return data;
     },
   });
