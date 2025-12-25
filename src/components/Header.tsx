@@ -230,7 +230,7 @@ export const Header = () => {
               </a>
             </div>
             <div className="text-secondary font-semibold text-sm">
-              Free delivery on first-time orders over 500k VND
+              Tiết kiệm đến 25% khi là thành viên Paddy
             </div>
           </nav>
 
