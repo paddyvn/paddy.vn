@@ -389,6 +389,8 @@ export default function FlashSaleEdit() {
             gradientTo={formData.gradient_to}
             iconType={formData.icon_type}
             customIcons={formData.custom_icons}
+            title={formData.title}
+            subtitle={formData.subtitle}
             onGradientFromChange={(value) => setFormData({ ...formData, gradient_from: value })}
             onGradientToChange={(value) => setFormData({ ...formData, gradient_to: value })}
             onIconTypeChange={(value) => setFormData({ ...formData, icon_type: value })}
