@@ -93,10 +93,20 @@ export const FlashSaleSection = () => {
   });
 
   const { data: products, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ["flash-sale-products", flashSale?.link_destination],
-    enabled: !!flashSale?.link_destination,
+    queryKey: ["flash-sale-products", flashSale?.id],
+    enabled: !!flashSale?.id,
     queryFn: async () => {
-      // Fetch products from the flash sale collection
+      // Fetch products linked to this flash sale promotion
+      const { data: promotionProducts, error: ppError } = await supabase
+        .from("promotion_products")
+        .select("product_id")
+        .eq("promotion_id", flashSale!.id);
+
+      if (ppError) throw ppError;
+      if (!promotionProducts || promotionProducts.length === 0) return [];
+
+      const productIds = promotionProducts.map((pp) => pp.product_id);
+
       const { data, error } = await supabase
         .from("products")
         .select(`
@@ -104,6 +114,7 @@ export const FlashSaleSection = () => {
           product_images(image_url, is_primary, display_order),
           product_variants(id, price, compare_at_price)
         `)
+        .in("id", productIds)
         .eq("is_active", true)
         .limit(8);
 
