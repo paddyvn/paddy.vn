@@ -279,6 +279,45 @@ export default function FlashSaleEdit() {
           <p className="font-medium">{formData.show_countdown ? "Enabled" : "Disabled"}</p>
         </div>
       }
+      rightColumnExtra={
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <h3 className="font-semibold">Flash Sale Settings</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Show Countdown Timer</Label>
+                  <p className="text-sm text-muted-foreground">Display countdown on product pages</p>
+                </div>
+                <Switch
+                  checked={formData.show_countdown}
+                  onCheckedChange={(checked) => setFormData({ ...formData, show_countdown: checked })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Urgency Message</Label>
+                <Input
+                  value={formData.urgency_message}
+                  onChange={(e) => setFormData({ ...formData, urgency_message: e.target.value })}
+                  placeholder="e.g., Hurry! Sale ends soon"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Limit Per Customer</Label>
+                <Input
+                  type="number"
+                  value={formData.limit_per_customer || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, limit_per_customer: e.target.value ? parseInt(e.target.value) : null })
+                  }
+                  placeholder="No limit"
+                />
+                <p className="text-sm text-muted-foreground">Maximum items per customer (leave empty for no limit)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      }
     >
       {/* Flash Sale Date & Time */}
       <Card>
@@ -338,45 +377,6 @@ export default function FlashSaleEdit() {
         selectedProducts={formData.flashSaleProducts}
         onProductsChange={(products) => setFormData({ ...formData, flashSaleProducts: products })}
       />
-
-      {/* Flash Sale specific fields */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <h3 className="font-semibold">Flash Sale Settings</h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Show Countdown Timer</Label>
-                <p className="text-sm text-muted-foreground">Display countdown on product pages</p>
-              </div>
-              <Switch
-                checked={formData.show_countdown}
-                onCheckedChange={(checked) => setFormData({ ...formData, show_countdown: checked })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Urgency Message</Label>
-              <Input
-                value={formData.urgency_message}
-                onChange={(e) => setFormData({ ...formData, urgency_message: e.target.value })}
-                placeholder="e.g., Hurry! Sale ends soon"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Limit Per Customer</Label>
-              <Input
-                type="number"
-                value={formData.limit_per_customer || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, limit_per_customer: e.target.value ? parseInt(e.target.value) : null })
-                }
-                placeholder="No limit"
-              />
-              <p className="text-sm text-muted-foreground">Maximum items per customer (leave empty for no limit)</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </PromotionFormBase>
   );
 }

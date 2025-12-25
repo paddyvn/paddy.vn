@@ -35,6 +35,7 @@ type PromotionFormBaseProps = {
   backUrl: string;
   children?: ReactNode; // Type-specific form fields
   summaryExtra?: ReactNode; // Extra summary info
+  rightColumnExtra?: ReactNode; // Extra content for right column (below Status card)
   hideDatePickers?: boolean; // Hide default date pickers (for custom date/time UI)
   hideAppliesTo?: boolean; // Hide default applies to section
   scheduleSummary?: string; // Custom schedule summary text
@@ -52,6 +53,7 @@ export function PromotionFormBase({
   backUrl,
   children,
   summaryExtra,
+  rightColumnExtra,
   hideDatePickers,
   hideAppliesTo,
   scheduleSummary,
@@ -331,6 +333,8 @@ export function PromotionFormBase({
               </div>
             </CardContent>
           </Card>
+
+          {rightColumnExtra}
         </div>
       </div>
     </div>
