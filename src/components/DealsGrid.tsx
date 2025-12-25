@@ -2,6 +2,17 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { usePromotions } from "@/hooks/usePromotions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon } from "@/components/PaddyIconPatterns";
+
+// Array of icon patterns to cycle through
+const iconPatterns = [
+  { TopRight: DogIcon, BottomLeft: CatIcon },
+  { TopRight: CatIcon, BottomLeft: DogIcon },
+  { TopRight: DogFace2Icon, BottomLeft: CatFace2Icon },
+  { TopRight: CatFace2Icon, BottomLeft: DogFace2Icon },
+  { TopRight: PawIcon, BottomLeft: BoneIcon },
+  { TopRight: BoneIcon, BottomLeft: PawIcon },
+];
 
 export const DealsGrid = () => {
   const { data: promotions, isLoading } = usePromotions();
@@ -66,40 +77,16 @@ export const DealsGrid = () => {
               }}
             >
               {/* Decorative brand pattern icons */}
-              {/* Paw icon - top right */}
-              <svg 
-                className="absolute -top-2 -right-2 w-14 h-14 text-white/15 rotate-12"
-                viewBox="0 0 100 100" 
-                fill="currentColor"
-              >
-                <ellipse cx="50" cy="65" rx="22" ry="18" />
-                <circle cx="25" cy="35" r="12" />
-                <circle cx="75" cy="35" r="12" />
-                <circle cx="35" cy="18" r="10" />
-                <circle cx="65" cy="18" r="10" />
-              </svg>
-              {/* Bone icon - bottom left */}
-              <svg 
-                className="absolute -bottom-3 -left-3 w-16 h-16 text-white/10 -rotate-45"
-                viewBox="0 0 100 50" 
-                fill="currentColor"
-              >
-                <circle cx="15" cy="12" r="10" />
-                <circle cx="15" cy="38" r="10" />
-                <circle cx="85" cy="12" r="10" />
-                <circle cx="85" cy="38" r="10" />
-                <rect x="15" y="15" width="70" height="20" rx="3" />
-              </svg>
-              {/* Fish icon - top left small */}
-              <svg 
-                className="absolute top-3 left-2 w-8 h-8 text-white/10 rotate-12"
-                viewBox="0 0 100 60" 
-                fill="currentColor"
-              >
-                <ellipse cx="45" cy="30" rx="35" ry="22" />
-                <polygon points="85,30 100,10 100,50" />
-                <circle cx="25" cy="25" r="4" fill="currentColor" opacity="0.5" />
-              </svg>
+              {(() => {
+                const patternIndex = promotions.indexOf(promo) % iconPatterns.length;
+                const { TopRight, BottomLeft } = iconPatterns[patternIndex];
+                return (
+                  <>
+                    <TopRight className="absolute -top-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
+                    <BottomLeft className="absolute -bottom-3 -left-3 w-14 h-14 text-white/10 -rotate-12" />
+                  </>
+                );
+              })()}
               
               {/* Content */}
               <div className="relative z-10 h-full flex flex-col items-center justify-center p-3 text-center">
