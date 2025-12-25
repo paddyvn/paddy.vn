@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface TimePickerProps {
   value: string;
@@ -54,20 +54,19 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <div className="flex">
-          <div className="flex flex-col">
-            <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-              Hour
-            </div>
-            <ScrollArea className="h-56">
-              <div className="p-1">
+        <div className="p-3 space-y-3">
+          {/* Hours */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Hour</p>
+            <ScrollArea className="w-[400px]">
+              <div className="flex gap-1 pb-2">
                 {hoursArray.map((hour) => (
                   <Button
                     key={hour}
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-12 justify-center font-normal",
+                      "h-9 w-9 p-0 shrink-0 rounded-full font-normal",
                       hours === hour && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     )}
                     onClick={() => handleHourSelect(hour)}
@@ -76,21 +75,22 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
                   </Button>
                 ))}
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </div>
-          <div className="flex flex-col border-l">
-            <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-              Minute
-            </div>
-            <ScrollArea className="h-56">
-              <div className="p-1">
+
+          {/* Minutes */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Minute</p>
+            <ScrollArea className="w-[400px]">
+              <div className="flex gap-1 pb-2">
                 {minutesArray.map((minute) => (
                   <Button
                     key={minute}
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-12 justify-center font-normal",
+                      "h-9 w-9 p-0 shrink-0 rounded-full font-normal",
                       minutes === minute && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     )}
                     onClick={() => handleMinuteSelect(minute)}
@@ -99,6 +99,7 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
                   </Button>
                 ))}
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </div>
         </div>
