@@ -116,7 +116,7 @@ export function PromotionFormBase({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Start Date</Label>
+                      <Label>Start Date & Time</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -127,22 +127,47 @@ export function PromotionFormBase({
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.start_date ? format(formData.start_date, "PPP") : "No start date"}
+                            {formData.start_date ? format(formData.start_date, "PPP HH:mm") : "No start date"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={formData.start_date || undefined}
-                            onSelect={(date) => setFormData({ ...formData, start_date: date || null })}
+                            onSelect={(date) => {
+                              if (date) {
+                                const existing = formData.start_date;
+                                if (existing) {
+                                  date.setHours(existing.getHours(), existing.getMinutes(), existing.getSeconds());
+                                }
+                              }
+                              setFormData({ ...formData, start_date: date || null });
+                            }}
                             initialFocus
                             className="pointer-events-auto"
                           />
+                          <div className="border-t p-3">
+                            <Label className="text-xs text-muted-foreground">Time</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Input
+                                type="time"
+                                step="1"
+                                value={formData.start_date ? format(formData.start_date, "HH:mm:ss") : ""}
+                                onChange={(e) => {
+                                  const [hours, minutes, seconds] = e.target.value.split(":").map(Number);
+                                  const newDate = formData.start_date ? new Date(formData.start_date) : new Date();
+                                  newDate.setHours(hours || 0, minutes || 0, seconds || 0);
+                                  setFormData({ ...formData, start_date: newDate });
+                                }}
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
                         </PopoverContent>
                       </Popover>
                     </div>
                     <div className="space-y-2">
-                      <Label>End Date</Label>
+                      <Label>End Date & Time</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -153,17 +178,42 @@ export function PromotionFormBase({
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.end_date ? format(formData.end_date, "PPP") : "No end date"}
+                            {formData.end_date ? format(formData.end_date, "PPP HH:mm") : "No end date"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={formData.end_date || undefined}
-                            onSelect={(date) => setFormData({ ...formData, end_date: date || null })}
+                            onSelect={(date) => {
+                              if (date) {
+                                const existing = formData.end_date;
+                                if (existing) {
+                                  date.setHours(existing.getHours(), existing.getMinutes(), existing.getSeconds());
+                                }
+                              }
+                              setFormData({ ...formData, end_date: date || null });
+                            }}
                             initialFocus
                             className="pointer-events-auto"
                           />
+                          <div className="border-t p-3">
+                            <Label className="text-xs text-muted-foreground">Time</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Input
+                                type="time"
+                                step="1"
+                                value={formData.end_date ? format(formData.end_date, "HH:mm:ss") : ""}
+                                onChange={(e) => {
+                                  const [hours, minutes, seconds] = e.target.value.split(":").map(Number);
+                                  const newDate = formData.end_date ? new Date(formData.end_date) : new Date();
+                                  newDate.setHours(hours || 0, minutes || 0, seconds || 0);
+                                  setFormData({ ...formData, end_date: newDate });
+                                }}
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
                         </PopoverContent>
                       </Popover>
                     </div>
