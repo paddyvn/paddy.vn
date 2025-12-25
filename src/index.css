@@ -292,3 +292,14 @@ All colors MUST be HSL.
 .admin-layout > .flex-1 textarea {
   font-size: 0.8125rem; /* 13px */
 }
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
