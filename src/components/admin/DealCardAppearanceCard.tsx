@@ -19,6 +19,8 @@ interface DealCardAppearanceCardProps {
   gradientTo: string;
   iconType: string;
   customIcons?: CustomIcon[];
+  title?: string;
+  subtitle?: string;
   onGradientFromChange: (value: string) => void;
   onGradientToChange: (value: string) => void;
   onIconTypeChange: (value: string) => void;
@@ -65,6 +67,8 @@ export function DealCardAppearanceCard({
   gradientTo,
   iconType,
   customIcons = [],
+  title,
+  subtitle,
   onGradientFromChange,
   onGradientToChange,
   onIconTypeChange,
@@ -151,8 +155,8 @@ export function DealCardAppearanceCard({
               })()
             )}
             <div className="relative z-10 h-full flex flex-col items-center justify-center p-3 text-center">
-              <p className="text-white text-sm font-bold drop-shadow-md">Flash Sale</p>
-              <p className="text-white/90 text-xs mt-1 drop-shadow-md">50% OFF</p>
+              <p className="text-white text-sm font-bold drop-shadow-md">{title || "Flash Sale"}</p>
+              <p className="text-white/90 text-xs mt-1 drop-shadow-md">{subtitle || "50% OFF"}</p>
             </div>
           </div>
         </div>
