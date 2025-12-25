@@ -12,6 +12,7 @@ import Brands from "./pages/Brands";
 import Blog from "./pages/Blog";
 import BlogPostDetail from "./pages/BlogPostDetail";
 import Search from "./pages/Search";
+import FlashSale from "./pages/FlashSale";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import { Navigate } from "react-router-dom";
@@ -77,6 +78,7 @@ const App = () => (
           <Route path="/collections/:slug" element={<Collection />} />
           <Route path="/brands-thuong-hieu-thu-cung" element={<Brands />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/flash-sale" element={<FlashSale />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
