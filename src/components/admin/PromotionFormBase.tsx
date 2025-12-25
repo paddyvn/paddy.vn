@@ -99,7 +99,7 @@ export function PromotionFormBase({
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
         {/* Left Panel - Main Settings */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-8 space-y-6">
           {/* Base Fields Card */}
           <Card>
             <CardContent className="p-6">
@@ -260,7 +260,7 @@ export function PromotionFormBase({
         </div>
 
         {/* Right Panel - Summary */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           <Card className="bg-muted/30">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Summary</CardTitle>
