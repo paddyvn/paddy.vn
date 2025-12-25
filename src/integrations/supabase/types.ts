@@ -2203,6 +2203,7 @@ export type Database = {
           is_active: boolean | null
           link_destination: string
           link_type: string
+          program_kind: string | null
           promo_type: string | null
           start_date: string | null
           subtitle: string | null
@@ -2223,6 +2224,7 @@ export type Database = {
           is_active?: boolean | null
           link_destination: string
           link_type?: string
+          program_kind?: string | null
           promo_type?: string | null
           start_date?: string | null
           subtitle?: string | null
@@ -2243,6 +2245,7 @@ export type Database = {
           is_active?: boolean | null
           link_destination?: string
           link_type?: string
+          program_kind?: string | null
           promo_type?: string | null
           start_date?: string | null
           subtitle?: string | null

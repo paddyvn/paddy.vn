@@ -124,6 +124,7 @@ export default function DiscountsEdit() {
         link_type: "collection",
         link_destination: "",
         promo_type: "deal",
+        program_kind: "discount",
         is_active: data.is_active,
         display_order: data.display_order,
         start_date: data.start_date?.toISOString() || null,
