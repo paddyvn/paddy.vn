@@ -44,10 +44,10 @@ const positionOptions = [
 ];
 
 const positionStyles: Record<string, string> = {
-  top_left: "top-1 left-1",
-  top_right: "top-1 right-1",
-  bottom_left: "bottom-1 left-1",
-  bottom_right: "bottom-1 right-1",
+  top_left: "-top-2 -left-2",
+  top_right: "-top-2 -right-2",
+  bottom_left: "-bottom-2 -left-2",
+  bottom_right: "-bottom-2 -right-2",
 };
 
 // Preset gradient colors
@@ -138,7 +138,7 @@ export function DealCardAppearanceCard({
                   key={icon.position}
                   src={icon.url} 
                   alt={`${icon.position} icon`} 
-                  className={`absolute w-10 h-10 object-contain opacity-30 ${positionStyles[icon.position]}`}
+                  className={`absolute w-12 h-12 object-contain opacity-30 ${positionStyles[icon.position]}`}
                 />
               ))
             ) : (
