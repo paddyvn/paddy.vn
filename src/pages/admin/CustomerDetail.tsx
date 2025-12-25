@@ -43,11 +43,11 @@ import { formatDistanceToNow, format } from "date-fns";
 import {
   EditCustomerDialog,
   EditMarketingDialog,
-  EditTagsDialog,
   EditNotesDialog,
   ManageAddressesDialog,
   EditTaxDetailsDialog,
 } from "@/components/admin/CustomerEditDialogs";
+import { CustomerTagsInput } from "@/components/admin/CustomerTagsInput";
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -59,7 +59,7 @@ const CustomerDetail = () => {
   // Dialog states
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editMarketingOpen, setEditMarketingOpen] = useState(false);
-  const [editTagsOpen, setEditTagsOpen] = useState(false);
+  
   const [editNotesOpen, setEditNotesOpen] = useState(false);
   const [manageAddressesOpen, setManageAddressesOpen] = useState(false);
   const [editTaxOpen, setEditTaxOpen] = useState(false);
@@ -613,27 +613,7 @@ const CustomerDetail = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base">Tags</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditTagsOpen(true)}>
-                <Edit className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {customer.tags ? (
-                <div className="flex flex-wrap gap-1">
-                  {customer.tags.split(",").map((tag: string, i: number) => (
-                    <Badge key={i} variant="secondary" className="text-xs">
-                      {tag.trim()}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <Input placeholder="Add tags..." className="text-sm" />
-              )}
-            </CardContent>
-          </Card>
+          <CustomerTagsInput customerId={customer.id} initialTags={customer.tags} />
 
           {/* Notes */}
           <Card>
@@ -669,11 +649,6 @@ const CustomerDetail = () => {
       <EditTaxDetailsDialog
         open={editTaxOpen}
         onOpenChange={setEditTaxOpen}
-        customer={customer}
-      />
-      <EditTagsDialog
-        open={editTagsOpen}
-        onOpenChange={setEditTagsOpen}
         customer={customer}
       />
       <EditNotesDialog
