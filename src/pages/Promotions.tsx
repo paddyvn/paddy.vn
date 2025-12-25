@@ -69,9 +69,29 @@ const Promotions = () => {
                   background: `linear-gradient(135deg, ${promo.gradient_from}, ${promo.gradient_to})`,
                 }}
               >
-                {/* Decorative elements */}
-                <div className="absolute top-0 left-0 w-10 h-10 bg-white/20 rounded-br-2xl" />
-                <div className="absolute bottom-0 right-0 w-10 h-10 bg-white/20 rounded-tl-2xl" />
+                {/* Decorative paw patterns */}
+                <svg 
+                  className="absolute -top-2 -right-2 w-20 h-20 text-white/20 rotate-12"
+                  viewBox="0 0 24 24" 
+                  fill="currentColor"
+                >
+                  <ellipse cx="12" cy="17" rx="4" ry="3.5" />
+                  <ellipse cx="5.5" cy="10" rx="2.5" ry="2" />
+                  <ellipse cx="18.5" cy="10" rx="2.5" ry="2" />
+                  <ellipse cx="8" cy="6" rx="2" ry="1.8" />
+                  <ellipse cx="16" cy="6" rx="2" ry="1.8" />
+                </svg>
+                <svg 
+                  className="absolute -bottom-4 -left-4 w-24 h-24 text-white/15 -rotate-45"
+                  viewBox="0 0 24 24" 
+                  fill="currentColor"
+                >
+                  <ellipse cx="12" cy="17" rx="4" ry="3.5" />
+                  <ellipse cx="5.5" cy="10" rx="2.5" ry="2" />
+                  <ellipse cx="18.5" cy="10" rx="2.5" ry="2" />
+                  <ellipse cx="8" cy="6" rx="2" ry="1.8" />
+                  <ellipse cx="16" cy="6" rx="2" ry="1.8" />
+                </svg>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                 
                 {/* Content */}
