@@ -223,7 +223,7 @@ export default function BuyMoreSaveMoreEdit() {
       title={isNew ? "Create Buy More Save More" : formData.title || "Edit Buy More Save More"}
       typeLabel="Buy More Save More"
       formData={formData}
-      setFormData={(data) => setFormData({ ...formData, ...data })}
+      setFormData={(data) => setFormData((prev) => ({ ...prev, ...data }))}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}

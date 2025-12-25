@@ -206,7 +206,7 @@ export default function VouchersEdit() {
       title={isNew ? "Create Voucher" : formData.title || "Edit Voucher"}
       typeLabel="Voucher"
       formData={formData}
-      setFormData={(data) => setFormData({ ...formData, ...data })}
+      setFormData={(data) => setFormData((prev) => ({ ...prev, ...data }))}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}

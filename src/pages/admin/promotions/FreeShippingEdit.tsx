@@ -187,7 +187,7 @@ export default function FreeShippingEdit() {
       title={isNew ? "Create Free Shipping" : formData.title || "Edit Free Shipping"}
       typeLabel="Free Shipping"
       formData={formData}
-      setFormData={(data) => setFormData({ ...formData, ...data })}
+      setFormData={(data) => setFormData((prev) => ({ ...prev, ...data }))}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}
