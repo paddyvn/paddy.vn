@@ -17,7 +17,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { FlashSaleProducts, FlashSaleProduct } from "@/components/admin/FlashSaleProducts";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DealCardAppearanceCard } from "@/components/admin/DealCardAppearanceCard";
+import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
 
 type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' | 'selectedProducts'> & {
   show_countdown: boolean;
@@ -30,8 +30,7 @@ type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' |
   gradient_from: string;
   gradient_to: string;
   icon_type: string;
-  top_icon_url: string;
-  bottom_icon_url: string;
+  custom_icons: CustomIcon[];
 };
 
 const getDefaultFormData = (): FlashSaleFormData => ({
@@ -50,8 +49,7 @@ const getDefaultFormData = (): FlashSaleFormData => ({
   gradient_from: "#FF6B6B",
   gradient_to: "#EE5A24",
   icon_type: "dog_cat",
-  top_icon_url: "",
-  bottom_icon_url: "",
+  custom_icons: [],
 });
 
 export default function FlashSaleEdit() {
@@ -169,8 +167,9 @@ export default function FlashSaleEdit() {
         gradient_from: promotion.gradient_from || "#FF6B6B",
         gradient_to: promotion.gradient_to || "#EE5A24",
         icon_type: promotion.icon_type || "dog_cat",
-        top_icon_url: (promotion as { top_icon_url?: string }).top_icon_url || "",
-        bottom_icon_url: (promotion as { bottom_icon_url?: string }).bottom_icon_url || "",
+        custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
+          ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
+          : []),
       }));
     }
   }, [promotion]);
@@ -225,8 +224,7 @@ export default function FlashSaleEdit() {
         gradient_from: data.gradient_from,
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
-        top_icon_url: data.top_icon_url || null,
-        bottom_icon_url: data.bottom_icon_url || null,
+        custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
       };
 
       let promotionId = id;
@@ -234,13 +232,15 @@ export default function FlashSaleEdit() {
       if (isNew) {
         const { data: newPromo, error } = await supabase
           .from("promotions")
-          .insert(payload)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert(payload as any)
           .select("id")
           .single();
         if (error) throw error;
         promotionId = newPromo.id;
       } else {
-        const { error } = await supabase.from("promotions").update(payload).eq("id", id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await supabase.from("promotions").update(payload as any).eq("id", id);
         if (error) throw error;
       }
 
@@ -388,13 +388,11 @@ export default function FlashSaleEdit() {
             gradientFrom={formData.gradient_from}
             gradientTo={formData.gradient_to}
             iconType={formData.icon_type}
-            topIconUrl={formData.top_icon_url}
-            bottomIconUrl={formData.bottom_icon_url}
+            customIcons={formData.custom_icons}
             onGradientFromChange={(value) => setFormData({ ...formData, gradient_from: value })}
             onGradientToChange={(value) => setFormData({ ...formData, gradient_to: value })}
             onIconTypeChange={(value) => setFormData({ ...formData, icon_type: value })}
-            onTopIconUrlChange={(value) => setFormData({ ...formData, top_icon_url: value })}
-            onBottomIconUrlChange={(value) => setFormData({ ...formData, bottom_icon_url: value })}
+            onCustomIconsChange={(icons) => setFormData({ ...formData, custom_icons: icons })}
           />
         </>
       }

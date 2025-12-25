@@ -4,21 +4,25 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageIcon, Plus, X } from "lucide-react";
 import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon, FishIcon } from "@/components/PaddyIconPatterns";
 import { ImagePickerDialog } from "./ImagePickerDialog";
+
+export interface CustomIcon {
+  position: "top_left" | "top_right" | "bottom_left" | "bottom_right";
+  url: string;
+}
 
 interface DealCardAppearanceCardProps {
   gradientFrom: string;
   gradientTo: string;
   iconType: string;
-  topIconUrl?: string;
-  bottomIconUrl?: string;
+  customIcons?: CustomIcon[];
   onGradientFromChange: (value: string) => void;
   onGradientToChange: (value: string) => void;
   onIconTypeChange: (value: string) => void;
-  onTopIconUrlChange?: (value: string) => void;
-  onBottomIconUrlChange?: (value: string) => void;
+  onCustomIconsChange?: (icons: CustomIcon[]) => void;
 }
 
 const iconOptions = [
@@ -29,6 +33,20 @@ const iconOptions = [
   { value: "bone_paw", label: "Bone & Paw", TopIcon: BoneIcon, BottomIcon: PawIcon },
   { value: "fish_paw", label: "Fish & Paw", TopIcon: FishIcon, BottomIcon: PawIcon },
 ];
+
+const positionOptions = [
+  { value: "top_left", label: "Top Left" },
+  { value: "top_right", label: "Top Right" },
+  { value: "bottom_left", label: "Bottom Left" },
+  { value: "bottom_right", label: "Bottom Right" },
+];
+
+const positionStyles: Record<string, string> = {
+  top_left: "top-1 left-1",
+  top_right: "top-1 right-1",
+  bottom_left: "bottom-1 left-1",
+  bottom_right: "bottom-1 right-1",
+};
 
 // Preset gradient colors
 const gradientPresets = [
@@ -46,18 +64,54 @@ export function DealCardAppearanceCard({
   gradientFrom,
   gradientTo,
   iconType,
-  topIconUrl,
-  bottomIconUrl,
+  customIcons = [],
   onGradientFromChange,
   onGradientToChange,
   onIconTypeChange,
-  onTopIconUrlChange,
-  onBottomIconUrlChange,
+  onCustomIconsChange,
 }: DealCardAppearanceCardProps) {
-  const [topIconPickerOpen, setTopIconPickerOpen] = useState(false);
-  const [bottomIconPickerOpen, setBottomIconPickerOpen] = useState(false);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [pendingPosition, setPendingPosition] = useState<CustomIcon["position"] | null>(null);
+  const [addingIcon, setAddingIcon] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<CustomIcon["position"]>("top_right");
 
-  const useCustomIcons = iconType === "custom" && (topIconUrl || bottomIconUrl);
+  const useCustomIcons = iconType === "custom" && customIcons.length > 0;
+
+  // Get positions that are already used
+  const usedPositions = customIcons.map(icon => icon.position);
+  const availablePositions = positionOptions.filter(p => !usedPositions.includes(p.value as CustomIcon["position"]));
+
+  const handleAddIcon = () => {
+    if (availablePositions.length === 0) return;
+    setAddingIcon(true);
+    setSelectedPosition(availablePositions[0].value as CustomIcon["position"]);
+  };
+
+  const handlePositionConfirm = () => {
+    setPendingPosition(selectedPosition);
+    setImagePickerOpen(true);
+    setAddingIcon(false);
+  };
+
+  const handleImageSelect = (url: string) => {
+    if (pendingPosition && onCustomIconsChange) {
+      const newIcons = [...customIcons, { position: pendingPosition, url }];
+      onCustomIconsChange(newIcons);
+      onIconTypeChange("custom");
+    }
+    setPendingPosition(null);
+    setImagePickerOpen(false);
+  };
+
+  const handleRemoveIcon = (position: CustomIcon["position"]) => {
+    if (onCustomIconsChange) {
+      const newIcons = customIcons.filter(icon => icon.position !== position);
+      onCustomIconsChange(newIcons);
+      if (newIcons.length === 0) {
+        onIconTypeChange("dog_cat");
+      }
+    }
+  };
 
   return (
     <Card>
@@ -75,22 +129,14 @@ export function DealCardAppearanceCard({
           >
             {/* Show custom images or selected icons */}
             {useCustomIcons ? (
-              <>
-                {topIconUrl && (
-                  <img 
-                    src={topIconUrl} 
-                    alt="Top icon" 
-                    className="absolute -top-2 -right-2 w-12 h-12 object-contain opacity-30 rotate-12"
-                  />
-                )}
-                {bottomIconUrl && (
-                  <img 
-                    src={bottomIconUrl} 
-                    alt="Bottom icon" 
-                    className="absolute -bottom-2 -left-2 w-10 h-10 object-contain opacity-20 -rotate-12"
-                  />
-                )}
-              </>
+              customIcons.map((icon) => (
+                <img 
+                  key={icon.position}
+                  src={icon.url} 
+                  alt={`${icon.position} icon`} 
+                  className={`absolute w-10 h-10 object-contain opacity-30 ${positionStyles[icon.position]}`}
+                />
+              ))
             ) : (
               (() => {
                 const selected = iconOptions.find((opt) => opt.value === iconType);
@@ -177,73 +223,76 @@ export function DealCardAppearanceCard({
         <div className="space-y-3">
           <Label>Background Icons</Label>
           
-          {/* Custom Image Option */}
-          {onTopIconUrlChange && onBottomIconUrlChange && (
-            <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+          {/* Custom Icons Section */}
+          {onCustomIconsChange && (
+            <div className="space-y-3 p-3 rounded-lg border bg-muted/30">
               <Label className="text-xs text-muted-foreground">Custom Images (from Files)</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Top Icon */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Top Right Icon</Label>
-                  {topIconUrl ? (
-                    <div className="relative w-16 h-16 rounded-lg border overflow-hidden group">
-                      <img src={topIconUrl} alt="Top icon" className="w-full h-full object-contain" />
+              
+              {/* Display added icons */}
+              {customIcons.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {customIcons.map((icon) => (
+                    <div key={icon.position} className="flex items-center gap-2 p-2 rounded-lg border bg-background">
+                      <img src={icon.url} alt={icon.position} className="w-10 h-10 object-contain rounded" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium capitalize">{icon.position.replace("_", " ")}</p>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => onTopIconUrlChange("")}
-                        className="absolute top-1 right-1 p-0.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveIcon(icon.position)}
+                        className="p-1 rounded-full hover:bg-destructive/10 text-destructive"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-10"
-                      onClick={() => {
-                        onIconTypeChange("custom");
-                        setTopIconPickerOpen(true);
-                      }}
-                    >
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Select
-                    </Button>
-                  )}
+                  ))}
                 </div>
-                
-                {/* Bottom Icon */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Bottom Left Icon</Label>
-                  {bottomIconUrl ? (
-                    <div className="relative w-16 h-16 rounded-lg border overflow-hidden group">
-                      <img src={bottomIconUrl} alt="Bottom icon" className="w-full h-full object-contain" />
-                      <button
-                        type="button"
-                        onClick={() => onBottomIconUrlChange("")}
-                        className="absolute top-1 right-1 p-0.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-10"
-                      onClick={() => {
-                        onIconTypeChange("custom");
-                        setBottomIconPickerOpen(true);
-                      }}
-                    >
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Select
-                    </Button>
-                  )}
+              )}
+
+              {/* Add Icon Flow */}
+              {addingIcon ? (
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedPosition}
+                    onValueChange={(value) => setSelectedPosition(value as CustomIcon["position"])}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePositions.map((pos) => (
+                        <SelectItem key={pos.value} value={pos.value}>
+                          {pos.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" onClick={handlePositionConfirm}>
+                    <ImageIcon className="w-4 h-4 mr-1" />
+                    Select Image
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setAddingIcon(false)}>
+                    Cancel
+                  </Button>
                 </div>
-              </div>
+              ) : (
+                availablePositions.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleAddIcon}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Icon
+                  </Button>
+                )
+              )}
+
+              {customIcons.length === 4 && (
+                <p className="text-xs text-muted-foreground text-center">All positions filled</p>
+              )}
             </div>
           )}
           
@@ -253,9 +302,8 @@ export function DealCardAppearanceCard({
             onValueChange={(value) => {
               onIconTypeChange(value);
               // Clear custom icons when selecting preset
-              if (value !== "custom") {
-                onTopIconUrlChange?.("");
-                onBottomIconUrlChange?.("");
+              if (value !== "custom" && onCustomIconsChange) {
+                onCustomIconsChange([]);
               }
             }}
             className="grid grid-cols-2 gap-2"
@@ -283,24 +331,11 @@ export function DealCardAppearanceCard({
         </div>
       </CardContent>
 
-      {/* Image Picker Dialogs */}
+      {/* Image Picker Dialog */}
       <ImagePickerDialog
-        open={topIconPickerOpen}
-        onOpenChange={setTopIconPickerOpen}
-        onSelect={(url) => {
-          onTopIconUrlChange?.(url);
-          setTopIconPickerOpen(false);
-        }}
-        currentImage={topIconUrl}
-      />
-      <ImagePickerDialog
-        open={bottomIconPickerOpen}
-        onOpenChange={setBottomIconPickerOpen}
-        onSelect={(url) => {
-          onBottomIconUrlChange?.(url);
-          setBottomIconPickerOpen(false);
-        }}
-        currentImage={bottomIconUrl}
+        open={imagePickerOpen}
+        onOpenChange={setImagePickerOpen}
+        onSelect={handleImageSelect}
       />
     </Card>
   );
