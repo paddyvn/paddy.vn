@@ -237,17 +237,18 @@ export default function FlashSaleEdit() {
     : "Not scheduled";
 
   // Count enabled variants
-  const enabledVariants = formData.flashSaleProducts.reduce(
-    (acc, p) => acc + p.variants.filter((v) => v.isEnabled).length,
+  const flashSaleProducts = formData.flashSaleProducts || [];
+  const enabledVariants = flashSaleProducts.reduce(
+    (acc, p) => acc + (p.variants || []).filter((v) => v.isEnabled).length,
     0
   );
-  const totalVariants = formData.flashSaleProducts.reduce(
-    (acc, p) => acc + p.variants.length,
+  const totalVariants = flashSaleProducts.reduce(
+    (acc, p) => acc + (p.variants || []).length,
     0
   );
 
   // Build applies summary
-  const appliesSummary = formData.flashSaleProducts.length > 0
+  const appliesSummary = flashSaleProducts.length > 0
     ? `${formData.flashSaleProducts.length} product(s), ${enabledVariants}/${totalVariants} variants`
     : "—";
 
