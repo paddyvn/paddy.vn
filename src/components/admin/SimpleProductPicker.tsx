@@ -329,16 +329,11 @@ export function SimpleProductPicker({
       <CardContent className="p-0">
         {/* Batch Settings Bar - Shopee style */}
         {showDiscountSettings && (
-          <div className="border-y bg-muted/30 px-6 py-4">
+          <div className="border-y bg-muted/30 px-6 py-4 space-y-3">
             <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground min-w-fit">
-                  Thiết lập hàng loạt
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {selectedForBatch.length} sản phẩm đã chọn
-                </span>
-              </div>
+              <span className="text-sm font-medium text-muted-foreground min-w-fit">
+                Thiết lập hàng loạt
+              </span>
 
               <div className="flex items-center gap-2">
                 <span className="text-sm">Khuyến Mãi</span>
@@ -417,6 +412,9 @@ export function SimpleProductPicker({
                   Xóa
                 </Button>
               </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {selectedForBatch.length} sản phẩm đã chọn
             </div>
           </div>
         )}
