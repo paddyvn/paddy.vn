@@ -79,15 +79,52 @@ export default function FlashSaleEdit() {
     enabled: !isNew && !!id,
   });
 
-  const { data: existingProducts = [] } = useQuery({
-    queryKey: ["promotion-products", id],
+  const { data: existingProductsData = [] } = useQuery({
+    queryKey: ["promotion-products-full", id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get product IDs linked to this promotion
+      const { data: ppData, error: ppError } = await supabase
         .from("promotion_products")
         .select("product_id")
         .eq("promotion_id", id);
-      if (error) throw error;
-      return data.map((d) => d.product_id);
+      if (ppError) throw ppError;
+      if (!ppData || ppData.length === 0) return [];
+
+      const productIds = ppData.map((d) => d.product_id);
+
+      // Fetch full product data with variants
+      const { data: products, error: prodError } = await supabase
+        .from("products")
+        .select(`
+          id,
+          name,
+          product_images(image_url, is_primary, display_order),
+          product_variants(id, name, price, compare_at_price, stock_quantity)
+        `)
+        .in("id", productIds);
+      if (prodError) throw prodError;
+
+      // Transform to FlashSaleProduct format
+      return (products || []).map((p) => {
+        const primaryImage = p.product_images?.find((img: { is_primary: boolean }) => img.is_primary) 
+          || p.product_images?.[0];
+        return {
+          productId: p.id,
+          productName: p.name,
+          imageUrl: primaryImage?.image_url || null,
+          variants: (p.product_variants || []).map((v: { id: string; name: string; price: number; compare_at_price: number | null; stock_quantity: number | null }) => ({
+            variantId: v.id,
+            variantName: v.name,
+            originalPrice: v.compare_at_price || v.price,
+            salePrice: v.price,
+            discountPercent: v.compare_at_price ? Math.round((1 - v.price / v.compare_at_price) * 100) : 0,
+            promoQuantity: v.stock_quantity || 0,
+            stockQuantity: v.stock_quantity || 0,
+            orderLimit: 0,
+            isEnabled: true,
+          })),
+        } as FlashSaleProduct;
+      });
     },
     enabled: !isNew && !!id,
   });
@@ -131,8 +168,14 @@ export default function FlashSaleEdit() {
     }
   }, [existingCollections]);
 
-  // TODO: In a real implementation, you would also fetch flash sale product details
-  // from a dedicated table that stores variant-level pricing
+  useEffect(() => {
+    if (existingProductsData.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        flashSaleProducts: existingProductsData,
+      }));
+    }
+  }, [existingProductsData]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: FlashSaleFormData) => {
