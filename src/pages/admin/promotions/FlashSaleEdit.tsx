@@ -3,16 +3,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 
-type FlashSaleFormData = BasePromotionFormData & {
+type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date'> & {
   show_countdown: boolean;
   urgency_message: string;
   limit_per_customer: number | null;
+  sale_date: Date | null;
+  start_time: string;
+  end_time: string;
 };
 
 const getDefaultFormData = (): FlashSaleFormData => ({
@@ -20,13 +29,14 @@ const getDefaultFormData = (): FlashSaleFormData => ({
   subtitle: "",
   is_active: true,
   display_order: 0,
-  start_date: null,
-  end_date: null,
   selectedCollections: [],
   selectedProducts: [],
   show_countdown: true,
   urgency_message: "Hurry! Sale ends soon",
   limit_per_customer: null,
+  sale_date: null,
+  start_time: "00:00",
+  end_time: "23:59",
 });
 
 export default function FlashSaleEdit() {
@@ -80,14 +90,30 @@ export default function FlashSaleEdit() {
 
   useEffect(() => {
     if (promotion) {
+      // Parse start_date and end_date into sale_date and times
+      let saleDate: Date | null = null;
+      let startTime = "00:00";
+      let endTime = "23:59";
+      
+      if (promotion.start_date) {
+        const startDate = new Date(promotion.start_date);
+        saleDate = startDate;
+        startTime = format(startDate, "HH:mm");
+      }
+      if (promotion.end_date) {
+        const endDate = new Date(promotion.end_date);
+        endTime = format(endDate, "HH:mm");
+      }
+      
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
         subtitle: promotion.subtitle || "",
         is_active: promotion.is_active ?? true,
         display_order: promotion.display_order || 0,
-        start_date: promotion.start_date ? new Date(promotion.start_date) : null,
-        end_date: promotion.end_date ? new Date(promotion.end_date) : null,
+        sale_date: saleDate,
+        start_time: startTime,
+        end_time: endTime,
       }));
     }
   }, [promotion]);
@@ -104,6 +130,23 @@ export default function FlashSaleEdit() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: FlashSaleFormData) => {
+      // Combine sale_date with start_time and end_time
+      let startDateTime: string | null = null;
+      let endDateTime: string | null = null;
+      
+      if (data.sale_date) {
+        const [startHour, startMin] = data.start_time.split(":").map(Number);
+        const [endHour, endMin] = data.end_time.split(":").map(Number);
+        
+        const startDate = new Date(data.sale_date);
+        startDate.setHours(startHour, startMin, 0, 0);
+        startDateTime = startDate.toISOString();
+        
+        const endDate = new Date(data.sale_date);
+        endDate.setHours(endHour, endMin, 59, 999);
+        endDateTime = endDate.toISOString();
+      }
+      
       const payload = {
         title: data.title,
         subtitle: data.subtitle || null,
@@ -112,8 +155,8 @@ export default function FlashSaleEdit() {
         promo_type: "flash_sale",
         is_active: data.is_active,
         display_order: data.display_order,
-        start_date: data.start_date?.toISOString() || null,
-        end_date: data.end_date?.toISOString() || null,
+        start_date: startDateTime,
+        end_date: endDateTime,
       };
 
       let promotionId = id;
@@ -167,16 +210,43 @@ export default function FlashSaleEdit() {
     saveMutation.mutate(formData);
   };
 
+  // Build a BasePromotionFormData for the base component
+  const baseFormData = {
+    title: formData.title,
+    subtitle: formData.subtitle,
+    is_active: formData.is_active,
+    display_order: formData.display_order,
+    start_date: null as Date | null,
+    end_date: null as Date | null,
+    selectedCollections: formData.selectedCollections,
+    selectedProducts: formData.selectedProducts,
+  };
+
+  // Build schedule summary
+  const scheduleSummary = formData.sale_date
+    ? `${format(formData.sale_date, "MMM d, yyyy")} • ${formData.start_time} - ${formData.end_time}`
+    : "Not scheduled";
+
   return (
     <PromotionFormBase
       title={isNew ? "Create Flash Sale" : formData.title || "Edit Flash Sale"}
       typeLabel="Flash Sale"
-      formData={formData}
-      setFormData={(data) => setFormData({ ...formData, ...data })}
+      formData={baseFormData}
+      setFormData={(data) => setFormData({ 
+        ...formData, 
+        title: data.title,
+        subtitle: data.subtitle,
+        is_active: data.is_active,
+        display_order: data.display_order,
+        selectedCollections: data.selectedCollections,
+        selectedProducts: data.selectedProducts,
+      })}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}
       backUrl="/admin/promotions/flash-sale"
+      hideDatePickers
+      scheduleSummary={scheduleSummary}
       summaryExtra={
         <div>
           <p className="text-sm text-muted-foreground">Countdown</p>
@@ -184,6 +254,59 @@ export default function FlashSaleEdit() {
         </div>
       }
     >
+      {/* Flash Sale Date & Time */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <h3 className="font-semibold">Schedule</h3>
+            <div className="space-y-2">
+              <Label>Sale Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.sale_date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.sale_date ? format(formData.sale_date, "PPP") : "Select date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.sale_date || undefined}
+                    onSelect={(date) => setFormData({ ...formData, sale_date: date || null })}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Input
+                  type="time"
+                  value={formData.start_time}
+                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Time</Label>
+                <Input
+                  type="time"
+                  value={formData.end_time}
+                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Flash Sale specific fields */}
       <Card>
         <CardContent className="p-6">
