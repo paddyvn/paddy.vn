@@ -403,7 +403,7 @@ export function SimpleProductPicker({
                   {showDiscountSettings && (
                     <>
                       <TableHead className="text-center w-40">Giảm giá</TableHead>
-                      <TableHead className="text-right w-28">Giá sau giảm</TableHead>
+                      <TableHead className="text-right w-32">Giá sau giảm</TableHead>
                     </>
                   )}
                   <TableHead className="text-center w-20">Kho hàng</TableHead>
