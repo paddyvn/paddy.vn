@@ -2193,6 +2193,7 @@ export type Database = {
         Row: {
           bottom_icon_url: string | null
           created_at: string
+          custom_icons: Json | null
           display_order: number | null
           end_date: string | null
           gradient_from: string | null
@@ -2212,6 +2213,7 @@ export type Database = {
         Insert: {
           bottom_icon_url?: string | null
           created_at?: string
+          custom_icons?: Json | null
           display_order?: number | null
           end_date?: string | null
           gradient_from?: string | null
@@ -2231,6 +2233,7 @@ export type Database = {
         Update: {
           bottom_icon_url?: string | null
           created_at?: string
+          custom_icons?: Json | null
           display_order?: number | null
           end_date?: string | null
           gradient_from?: string | null
