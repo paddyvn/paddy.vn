@@ -146,6 +146,16 @@ export function FlashSaleProducts({
     new Set(products.map((p) => p.product_type).filter(Boolean))
   ).sort();
 
+  // Get products filtered by type (for brand filter options)
+  const productsFilteredByType = typeFilter === "all" 
+    ? products 
+    : products.filter((p) => p.product_type === typeFilter);
+
+  // Get available brands based on type filter
+  const availableBrands = brands.filter((brand) =>
+    productsFilteredByType.some((p) => p.brand_id === brand.id)
+  );
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -681,7 +691,7 @@ export function FlashSaleProducts({
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">Loại</span>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <Select value={typeFilter} onValueChange={(value) => { setTypeFilter(value); setBrandFilter("all"); }}>
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Tất cả" />
                   </SelectTrigger>
@@ -703,7 +713,7 @@ export function FlashSaleProducts({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả thương hiệu</SelectItem>
-                    {brands.map((brand) => (
+                    {availableBrands.map((brand) => (
                       <SelectItem key={brand.id} value={brand.id}>
                         {brand.name}
                       </SelectItem>
