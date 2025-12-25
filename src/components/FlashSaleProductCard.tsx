@@ -22,10 +22,11 @@ interface FlashSaleProductCardProps {
     option3_name?: string | null;
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
   };
+  discountPercent?: number; // Flash sale discount percentage
   soldPercentage?: number; // 0-100
 }
 
-export const FlashSaleProductCard = ({ product, soldPercentage = Math.floor(Math.random() * 80) + 10 }: FlashSaleProductCardProps) => {
+export const FlashSaleProductCard = ({ product, discountPercent = 30, soldPercentage = Math.floor(Math.random() * 80) + 10 }: FlashSaleProductCardProps) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | undefined>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -61,10 +62,11 @@ export const FlashSaleProductCard = ({ product, soldPercentage = Math.floor(Math
     return primary?.image_url || images[0]?.image_url;
   };
 
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
-  const discountPercentage = hasDiscount 
-    ? Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100)
-    : 0;
+  // Use the flash sale discount, not the product's compare_at_price
+  const hasDiscount = discountPercent > 0;
+  const originalPrice = hasDiscount 
+    ? Math.round(product.base_price / (1 - discountPercent / 100))
+    : product.compare_at_price || product.base_price;
 
   const getSellingLabel = () => {
     if (soldPercentage >= 70) return "SẮP HẾT";
@@ -96,7 +98,7 @@ export const FlashSaleProductCard = ({ product, soldPercentage = Math.floor(Math
 
             {hasDiscount && (
               <div className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs font-bold px-1.5 py-0.5 rounded">
-                -{discountPercentage}%
+                -{discountPercent}%
               </div>
             )}
           </div>
@@ -114,7 +116,7 @@ export const FlashSaleProductCard = ({ product, soldPercentage = Math.floor(Math
             <div className="flex flex-col flex-1">
               {hasDiscount && (
                 <span className="text-xs text-muted-foreground line-through">
-                  {formatPrice(product.compare_at_price!)}₫
+                  {formatPrice(originalPrice)}₫
                 </span>
               )}
               <span className="text-base font-bold text-primary">
