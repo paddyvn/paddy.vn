@@ -230,12 +230,6 @@ export default function DiscountsEdit() {
         />
       }
     >
-      {/* Flash Sale-style Product Picker */}
-      <SimpleProductPicker
-        selectedProductIds={formData.selectedProducts}
-        onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
-        title="Sản phẩm áp dụng giảm giá"
-      />
       <Card>
         <CardContent className="p-6">
           <div className="space-y-4">
@@ -289,6 +283,13 @@ export default function DiscountsEdit() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Flash Sale-style Product Picker */}
+      <SimpleProductPicker
+        selectedProductIds={formData.selectedProducts}
+        onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
+        title="Sản phẩm áp dụng giảm giá"
+      />
     </PromotionFormBase>
   );
 }
