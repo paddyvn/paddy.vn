@@ -23,10 +23,10 @@ interface FlashSaleProductCardProps {
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
   };
   discountPercent?: number; // Flash sale discount percentage
-  soldPercentage?: number; // 0-100
+  soldCount?: number; // Number of items sold
 }
 
-export const FlashSaleProductCard = ({ product, discountPercent = 30, soldPercentage = Math.floor(Math.random() * 80) + 10 }: FlashSaleProductCardProps) => {
+export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount = Math.floor(Math.random() * 50) + 1 }: FlashSaleProductCardProps) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | undefined>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -69,10 +69,13 @@ export const FlashSaleProductCard = ({ product, discountPercent = 30, soldPercen
     : product.compare_at_price || product.base_price;
 
   const getSellingLabel = () => {
-    if (soldPercentage >= 70) return "SẮP HẾT";
-    if (soldPercentage >= 40) return "ĐANG BÁN CHẠY";
-    return `ĐÃ BÁN ${soldPercentage}%`;
+    if (soldCount >= 30) return "SẮP HẾT";
+    if (soldCount >= 15) return "ĐANG BÁN CHẠY";
+    return `ĐÃ BÁN ${soldCount}`;
   };
+
+  // Calculate bar fill percentage based on sold count (assume max ~50 for visual)
+  const barFillPercent = Math.min((soldCount / 50) * 100, 100);
 
   return (
     <Card
@@ -141,7 +144,7 @@ export const FlashSaleProductCard = ({ product, discountPercent = 30, soldPercen
           <div className="relative w-full h-5 bg-primary/20 rounded-full overflow-hidden">
             <div 
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(soldPercentage, 100)}%` }}
+              style={{ width: `${barFillPercent}%` }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-[10px] font-bold text-white drop-shadow-sm">
