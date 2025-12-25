@@ -14,16 +14,17 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
-import { FlashSaleProducts } from "@/components/admin/FlashSaleProducts";
+import { FlashSaleProducts, FlashSaleProduct } from "@/components/admin/FlashSaleProducts";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date'> & {
+type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' | 'selectedProducts'> & {
   show_countdown: boolean;
   urgency_message: string;
   limit_per_customer: number | null;
   sale_date: Date | null;
   start_time: string;
   end_time: string;
+  flashSaleProducts: FlashSaleProduct[];
 };
 
 const getDefaultFormData = (): FlashSaleFormData => ({
@@ -32,13 +33,13 @@ const getDefaultFormData = (): FlashSaleFormData => ({
   is_active: true,
   display_order: 0,
   selectedCollections: [],
-  selectedProducts: [],
   show_countdown: true,
   urgency_message: "Hurry! Sale ends soon",
   limit_per_customer: null,
   sale_date: null,
   start_time: "00:00",
   end_time: "23:59",
+  flashSaleProducts: [],
 });
 
 export default function FlashSaleEdit() {
@@ -121,14 +122,16 @@ export default function FlashSaleEdit() {
   }, [promotion]);
 
   useEffect(() => {
-    if (existingCollections.length > 0 || existingProducts.length > 0) {
+    if (existingCollections.length > 0) {
       setFormData((prev) => ({
         ...prev,
         selectedCollections: existingCollections,
-        selectedProducts: existingProducts,
       }));
     }
-  }, [existingCollections, existingProducts]);
+  }, [existingCollections]);
+
+  // TODO: In a real implementation, you would also fetch flash sale product details
+  // from a dedicated table that stores variant-level pricing
 
   const saveMutation = useMutation({
     mutationFn: async (data: FlashSaleFormData) => {
@@ -188,11 +191,15 @@ export default function FlashSaleEdit() {
         );
       }
 
-      if (data.selectedProducts.length > 0) {
+      // Save product IDs from flash sale products
+      const productIds = data.flashSaleProducts.map((p) => p.productId);
+      if (productIds.length > 0) {
         await supabase.from("promotion_products").insert(
-          data.selectedProducts.map((pid) => ({ promotion_id: promotionId, product_id: pid }))
+          productIds.map((pid) => ({ promotion_id: promotionId, product_id: pid }))
         );
       }
+
+      // TODO: In a real implementation, also save variant-level pricing to a dedicated table
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promotions"] });
@@ -221,7 +228,7 @@ export default function FlashSaleEdit() {
     start_date: null as Date | null,
     end_date: null as Date | null,
     selectedCollections: formData.selectedCollections,
-    selectedProducts: formData.selectedProducts,
+    selectedProducts: [] as string[],
   };
 
   // Build schedule summary
@@ -229,9 +236,19 @@ export default function FlashSaleEdit() {
     ? `${format(formData.sale_date, "MMM d, yyyy")} • ${formData.start_time} - ${formData.end_time}`
     : "Not scheduled";
 
+  // Count enabled variants
+  const enabledVariants = formData.flashSaleProducts.reduce(
+    (acc, p) => acc + p.variants.filter((v) => v.isEnabled).length,
+    0
+  );
+  const totalVariants = formData.flashSaleProducts.reduce(
+    (acc, p) => acc + p.variants.length,
+    0
+  );
+
   // Build applies summary
-  const appliesSummary = formData.selectedProducts.length > 0
-    ? `${formData.selectedProducts.length} product(s)`
+  const appliesSummary = formData.flashSaleProducts.length > 0
+    ? `${formData.flashSaleProducts.length} product(s), ${enabledVariants}/${totalVariants} variants`
     : "—";
 
   return (
@@ -246,7 +263,6 @@ export default function FlashSaleEdit() {
         is_active: data.is_active,
         display_order: data.display_order,
         selectedCollections: data.selectedCollections,
-        selectedProducts: data.selectedProducts,
       })}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
@@ -317,20 +333,10 @@ export default function FlashSaleEdit() {
       </Card>
 
       {/* Flash Sale Products */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Flash Sale Products</CardTitle>
-          <CardDescription>
-            Select which products to include in this flash sale
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FlashSaleProducts
-            selectedProducts={formData.selectedProducts}
-            onProductsChange={(ids) => setFormData({ ...formData, selectedProducts: ids })}
-          />
-        </CardContent>
-      </Card>
+      <FlashSaleProducts
+        selectedProducts={formData.flashSaleProducts}
+        onProductsChange={(products) => setFormData({ ...formData, flashSaleProducts: products })}
+      />
 
       {/* Flash Sale specific fields */}
       <Card>
