@@ -70,6 +70,9 @@ export function FlashSaleProducts({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [collectionFilter, setCollectionFilter] = useState<string>("all");
   const [tempSelected, setTempSelected] = useState<string[]>([]);
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
 
@@ -91,8 +94,11 @@ export function FlashSaleProducts({
           slug,
           base_price,
           category_id,
+          brand_id,
+          product_type,
           product_images(image_url, is_primary),
-          product_variants(id, name, price, compare_at_price, stock_quantity)
+          product_variants(id, name, price, compare_at_price, stock_quantity),
+          product_collections(collection_id)
         `)
         .eq("is_active", true)
         .order("name")
@@ -103,6 +109,7 @@ export function FlashSaleProducts({
         image_url:
           p.product_images?.find((img: any) => img.is_primary)?.image_url ||
           p.product_images?.[0]?.image_url,
+        collectionIds: p.product_collections?.map((pc: any) => pc.collection_id) || [],
       }));
     },
   });
@@ -121,13 +128,38 @@ export function FlashSaleProducts({
     },
   });
 
+  // Fetch brands
+  const { data: brands = [] } = useQuery({
+    queryKey: ["flash-sale-brands"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Get unique product types from products
+  const productTypes = Array.from(
+    new Set(products.map((p) => p.product_type).filter(Boolean))
+  ).sort();
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase());
     const matchesCategory =
       categoryFilter === "all" || p.category_id === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesBrand =
+      brandFilter === "all" || p.brand_id === brandFilter;
+    const matchesType =
+      typeFilter === "all" || p.product_type === typeFilter;
+    const matchesCollection =
+      collectionFilter === "all" || p.collectionIds?.includes(collectionFilter);
+    return matchesSearch && matchesCategory && matchesBrand && matchesType && matchesCollection;
   });
 
   const formatPrice = (price: number) => {
@@ -138,6 +170,9 @@ export function FlashSaleProducts({
     setTempSelected(selectedProducts.map((p) => p.productId));
     setSearch("");
     setCategoryFilter("all");
+    setBrandFilter("all");
+    setTypeFilter("all");
+    setCollectionFilter("all");
     setIsDialogOpen(true);
   };
 
@@ -646,26 +681,76 @@ export function FlashSaleProducts({
             <DialogTitle>Chọn Sản Phẩm</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Danh mục</span>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Tất cả danh mục" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả danh mục</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-3 mb-4">
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Danh mục</span>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả danh mục</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Thương hiệu</span>
+                <Select value={brandFilter} onValueChange={setBrandFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả thương hiệu</SelectItem>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Loại</span>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả loại</SelectItem>
+                    {productTypes.map((type) => (
+                      <SelectItem key={type} value={type as string}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Collection</span>
+                <Select value={collectionFilter} onValueChange={setCollectionFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả collection</SelectItem>
+                    {categories.map((col) => (
+                      <SelectItem key={col.id} value={col.id}>
+                        {col.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex items-center gap-2 flex-1">
+            <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Tìm</span>
-              <div className="relative flex-1 max-w-sm">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Tên sản phẩm..."
