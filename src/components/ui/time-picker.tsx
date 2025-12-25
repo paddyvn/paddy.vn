@@ -61,14 +61,14 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
               Hour
             </div>
             <ScrollArea className="h-56">
-              <div className="p-1">
+              <div className="flex flex-col p-1">
                 {hoursArray.map((hour) => (
                   <Button
                     key={hour}
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-12 justify-center font-normal rounded-full",
+                      "h-9 w-12 justify-center font-normal rounded-full",
                       hours === hour && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     )}
                     onClick={() => handleHourSelect(hour)}
@@ -86,14 +86,14 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
               Minute
             </div>
             <ScrollArea className="h-56">
-              <div className="p-1">
+              <div className="flex flex-col p-1">
                 {minutesArray.map((minute) => (
                   <Button
                     key={minute}
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-12 justify-center font-normal rounded-full",
+                      "h-9 w-12 justify-center font-normal rounded-full",
                       minutes === minute && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     )}
                     onClick={() => handleMinuteSelect(minute)}
