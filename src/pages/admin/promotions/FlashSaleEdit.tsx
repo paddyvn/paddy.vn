@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
+import { FlashSaleProducts } from "@/components/admin/FlashSaleProducts";
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date'> & {
   show_countdown: boolean;
@@ -227,6 +229,11 @@ export default function FlashSaleEdit() {
     ? `${format(formData.sale_date, "MMM d, yyyy")} • ${formData.start_time} - ${formData.end_time}`
     : "Not scheduled";
 
+  // Build applies summary
+  const appliesSummary = formData.selectedProducts.length > 0
+    ? `${formData.selectedProducts.length} product(s)`
+    : "—";
+
   return (
     <PromotionFormBase
       title={isNew ? "Create Flash Sale" : formData.title || "Edit Flash Sale"}
@@ -246,7 +253,9 @@ export default function FlashSaleEdit() {
       isLoading={!isNew && isLoading}
       backUrl="/admin/promotions/flash-sale"
       hideDatePickers
+      hideAppliesTo
       scheduleSummary={scheduleSummary}
+      appliesSummary={appliesSummary}
       summaryExtra={
         <div>
           <p className="text-sm text-muted-foreground">Countdown</p>
@@ -304,6 +313,22 @@ export default function FlashSaleEdit() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Flash Sale Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Flash Sale Products</CardTitle>
+          <CardDescription>
+            Select which products to include in this flash sale
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FlashSaleProducts
+            selectedProducts={formData.selectedProducts}
+            onProductsChange={(ids) => setFormData({ ...formData, selectedProducts: ids })}
+          />
         </CardContent>
       </Card>
 

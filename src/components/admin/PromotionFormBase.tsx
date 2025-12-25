@@ -36,7 +36,9 @@ type PromotionFormBaseProps = {
   children?: ReactNode; // Type-specific form fields
   summaryExtra?: ReactNode; // Extra summary info
   hideDatePickers?: boolean; // Hide default date pickers (for custom date/time UI)
+  hideAppliesTo?: boolean; // Hide default applies to section
   scheduleSummary?: string; // Custom schedule summary text
+  appliesSummary?: string; // Custom applies to summary text
 };
 
 export function PromotionFormBase({
@@ -51,7 +53,9 @@ export function PromotionFormBase({
   children,
   summaryExtra,
   hideDatePickers,
+  hideAppliesTo,
   scheduleSummary,
+  appliesSummary,
 }: PromotionFormBaseProps) {
   const navigate = useNavigate();
 
@@ -233,22 +237,24 @@ export function PromotionFormBase({
           {children}
 
           {/* Applies To Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Applies To</CardTitle>
-              <CardDescription>
-                Select which collections or products this promotion applies to
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PromotionAppliesTo
-                selectedCollections={formData.selectedCollections}
-                selectedProducts={formData.selectedProducts}
-                onCollectionsChange={(ids) => setFormData({ ...formData, selectedCollections: ids })}
-                onProductsChange={(ids) => setFormData({ ...formData, selectedProducts: ids })}
-              />
-            </CardContent>
-          </Card>
+          {!hideAppliesTo && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Applies To</CardTitle>
+                <CardDescription>
+                  Select which collections or products this promotion applies to
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PromotionAppliesTo
+                  selectedCollections={formData.selectedCollections}
+                  selectedProducts={formData.selectedProducts}
+                  onCollectionsChange={(ids) => setFormData({ ...formData, selectedCollections: ids })}
+                  onProductsChange={(ids) => setFormData({ ...formData, selectedProducts: ids })}
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Panel - Summary */}
@@ -270,10 +276,16 @@ export function PromotionFormBase({
               <div>
                 <p className="text-sm text-muted-foreground">Applies to</p>
                 <p className="font-medium">
-                  {formData.selectedCollections.length > 0 && `${formData.selectedCollections.length} collection(s)`}
-                  {formData.selectedCollections.length > 0 && formData.selectedProducts.length > 0 && ", "}
-                  {formData.selectedProducts.length > 0 && `${formData.selectedProducts.length} product(s)`}
-                  {formData.selectedCollections.length === 0 && formData.selectedProducts.length === 0 && "—"}
+                  {appliesSummary ? (
+                    appliesSummary
+                  ) : (
+                    <>
+                      {formData.selectedCollections.length > 0 && `${formData.selectedCollections.length} collection(s)`}
+                      {formData.selectedCollections.length > 0 && formData.selectedProducts.length > 0 && ", "}
+                      {formData.selectedProducts.length > 0 && `${formData.selectedProducts.length} product(s)`}
+                      {formData.selectedCollections.length === 0 && formData.selectedProducts.length === 0 && "—"}
+                    </>
+                  )}
                 </p>
               </div>
               <div>
