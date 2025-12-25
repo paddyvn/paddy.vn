@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X, Package, FolderOpen, Plus, ImageIcon, Loader2 } from "lucide-react";
+import { Search, X, Package, FolderOpen, Plus, ImageIcon } from "lucide-react";
 
 interface SelectedItem {
   id: string;
@@ -43,8 +43,7 @@ export function PromotionAppliesTo({
   onProductsChange,
 }: PromotionAppliesToProps) {
   const [collectionSearch, setCollectionSearch] = useState("");
-  const [productSearch, setProductSearch] = useState("");
-  
+
   // Product picker dialog state
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [dialogSearch, setDialogSearch] = useState("");
@@ -128,12 +127,6 @@ export function PromotionAppliesTo({
     (c) =>
       c.name.toLowerCase().includes(collectionSearch.toLowerCase()) ||
       c.slug.toLowerCase().includes(collectionSearch.toLowerCase())
-  );
-
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      p.slug.toLowerCase().includes(productSearch.toLowerCase())
   );
 
   const toggleCollection = (id: string) => {
@@ -292,15 +285,12 @@ export function PromotionAppliesTo({
         </TabsContent>
 
         <TabsContent value="products" className="mt-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Sản phẩm áp dụng</p>
+              <p className="text-sm text-muted-foreground">
+                Đã chọn {selectedProducts.length} sản phẩm
+              </p>
             </div>
             <Button
               variant="outline"
@@ -308,23 +298,21 @@ export function PromotionAppliesTo({
               className="text-primary border-primary hover:bg-primary/5"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Browse Products
+              Thêm sản phẩm
             </Button>
           </div>
-          
-          {/* Selected products with images */}
-          {selectedProducts.length > 0 && (
-            <div className="border rounded-md divide-y">
+
+          {/* Selected products list */}
+          {selectedProducts.length > 0 ? (
+            <div className="border rounded-lg divide-y">
               {selectedProductItems.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center gap-3 p-3"
-                >
+                <div key={product.id} className="flex items-center gap-3 p-3">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
                       alt={product.name}
                       className="w-10 h-10 object-cover rounded"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
@@ -346,13 +334,11 @@ export function PromotionAppliesTo({
                 </div>
               ))}
             </div>
-          )}
-          
-          {selectedProducts.length === 0 && (
-            <div className="border rounded-md p-8 text-center">
+          ) : (
+            <div className="border rounded-lg p-8 text-center">
               <Package className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No products selected</p>
-              <p className="text-xs text-muted-foreground mt-1">Click "Browse Products" to add products</p>
+              <p className="text-sm text-muted-foreground">Chưa chọn sản phẩm</p>
+              <p className="text-xs text-muted-foreground mt-1">Nhấn “Thêm sản phẩm” để chọn</p>
             </div>
           )}
         </TabsContent>
@@ -361,9 +347,9 @@ export function PromotionAppliesTo({
       {/* Product Picker Dialog */}
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Select Products</DialogTitle>
-          </DialogHeader>
+           <DialogHeader>
+             <DialogTitle>Chọn sản phẩm</DialogTitle>
+           </DialogHeader>
 
           <div className="space-y-4">
             {/* Filters */}
@@ -467,16 +453,14 @@ export function PromotionAppliesTo({
           <DialogFooter className="mt-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                {tempSelectedProducts.length} product(s) selected
+                Đã chọn {tempSelectedProducts.length} sản phẩm
               </span>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setIsProductDialogOpen(false)}>
-                Cancel
+                Hủy
               </Button>
-              <Button onClick={confirmProductSelection}>
-                Confirm
-              </Button>
+              <Button onClick={confirmProductSelection}>Xác nhận</Button>
             </div>
           </DialogFooter>
         </DialogContent>
