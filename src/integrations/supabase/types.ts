@@ -2191,6 +2191,7 @@ export type Database = {
       }
       promotions: {
         Row: {
+          bottom_icon_url: string | null
           created_at: string
           display_order: number | null
           end_date: string | null
@@ -2205,9 +2206,11 @@ export type Database = {
           start_date: string | null
           subtitle: string | null
           title: string
+          top_icon_url: string | null
           updated_at: string
         }
         Insert: {
+          bottom_icon_url?: string | null
           created_at?: string
           display_order?: number | null
           end_date?: string | null
@@ -2222,9 +2225,11 @@ export type Database = {
           start_date?: string | null
           subtitle?: string | null
           title: string
+          top_icon_url?: string | null
           updated_at?: string
         }
         Update: {
+          bottom_icon_url?: string | null
           created_at?: string
           display_order?: number | null
           end_date?: string | null
@@ -2239,6 +2244,7 @@ export type Database = {
           start_date?: string | null
           subtitle?: string | null
           title?: string
+          top_icon_url?: string | null
           updated_at?: string
         }
         Relationships: []

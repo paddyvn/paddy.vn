@@ -169,6 +169,8 @@ export default function FlashSaleEdit() {
         gradient_from: promotion.gradient_from || "#FF6B6B",
         gradient_to: promotion.gradient_to || "#EE5A24",
         icon_type: promotion.icon_type || "dog_cat",
+        top_icon_url: (promotion as { top_icon_url?: string }).top_icon_url || "",
+        bottom_icon_url: (promotion as { bottom_icon_url?: string }).bottom_icon_url || "",
       }));
     }
   }, [promotion]);
@@ -223,6 +225,8 @@ export default function FlashSaleEdit() {
         gradient_from: data.gradient_from,
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
+        top_icon_url: data.top_icon_url || null,
+        bottom_icon_url: data.bottom_icon_url || null,
       };
 
       let promotionId = id;
