@@ -26,7 +26,7 @@ interface FlashSaleProductCardProps {
   soldCount?: number; // Number of items sold
 }
 
-export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount = Math.floor(Math.random() * 50) + 1 }: FlashSaleProductCardProps) => {
+export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount = 0 }: FlashSaleProductCardProps) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | undefined>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);

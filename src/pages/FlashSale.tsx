@@ -6,6 +6,7 @@ import { FlashSaleProductCard } from "@/components/FlashSaleProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Zap } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useFlashSaleSoldCounts } from "@/hooks/useFlashSaleSoldCounts";
 
 interface FlashSalePromotion {
   id: string;
@@ -121,6 +122,13 @@ const FlashSale = () => {
     },
   });
 
+  const productIds = products?.map((p) => p.id) || [];
+  const { data: soldCounts } = useFlashSaleSoldCounts(
+    productIds,
+    flashSale?.start_date || null,
+    flashSale?.end_date || null
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -186,7 +194,7 @@ const FlashSale = () => {
             ) : products && products.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                 {products.map((product) => (
-                  <FlashSaleProductCard key={product.id} product={product} />
+                  <FlashSaleProductCard key={product.id} product={product} soldCount={soldCounts?.[product.id] || 0} />
                 ))}
               </div>
             ) : (
