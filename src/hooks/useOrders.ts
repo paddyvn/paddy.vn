@@ -17,6 +17,10 @@ export interface Order {
   tags: string | null;
   delivery_method: string | null;
   shopify_order_id: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  source_name: string | null;
+  currency: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -36,11 +36,17 @@ const DEFAULT_COLUMNS: OrderColumn[] = [
   { id: "order_number", label: "Order", visible: true, required: true },
   { id: "created_at", label: "Date", visible: true },
   { id: "customer", label: "Customer", visible: true },
+  { id: "customer_email", label: "Email", visible: false },
+  { id: "customer_phone", label: "Phone", visible: false },
   { id: "items", label: "Items", visible: true },
   { id: "total", label: "Total", visible: true },
   { id: "payment", label: "Payment", visible: true },
   { id: "status", label: "Status", visible: true },
   { id: "delivery_method", label: "Delivery method", visible: true },
+  { id: "source", label: "Source", visible: false },
+  { id: "tags", label: "Tags", visible: false },
+  { id: "notes", label: "Notes", visible: false },
+  { id: "currency", label: "Currency", visible: false },
   { id: "actions", label: "Actions", visible: true, required: true },
 ];
 
