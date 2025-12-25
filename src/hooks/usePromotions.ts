@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface CustomIcon {
+  position: "top_left" | "top_right" | "bottom_left" | "bottom_right";
+  url: string;
+}
+
 export interface Promotion {
   id: string;
   title: string;
@@ -15,6 +20,7 @@ export interface Promotion {
   end_date: string | null;
   promo_type: string;
   icon_type: string | null;
+  custom_icons: CustomIcon[] | null;
 }
 
 export const usePromotions = () => {
@@ -27,7 +33,12 @@ export const usePromotions = () => {
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data as Promotion[];
+      
+      // Transform custom_icons from Json to typed array
+      return (data || []).map(promo => ({
+        ...promo,
+        custom_icons: Array.isArray(promo.custom_icons) ? (promo.custom_icons as unknown as CustomIcon[]) : null,
+      })) as Promotion[];
     },
   });
 };

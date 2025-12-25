@@ -4,6 +4,18 @@ import { usePromotions } from "@/hooks/usePromotions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon, FishIcon } from "@/components/PaddyIconPatterns";
 
+interface CustomIcon {
+  position: "top_left" | "top_right" | "bottom_left" | "bottom_right";
+  url: string;
+}
+
+const positionStyles: Record<string, string> = {
+  top_left: "top-1 left-1",
+  top_right: "top-1 right-1",
+  bottom_left: "bottom-1 left-1",
+  bottom_right: "bottom-1 right-1",
+};
+
 // Map icon_type to icon components
 const iconTypeMap: Record<string, { TopIcon: React.FC<{ className?: string }>; BottomIcon: React.FC<{ className?: string }> }> = {
   dog_cat: { TopIcon: DogIcon, BottomIcon: CatIcon },
@@ -86,7 +98,21 @@ export const DealsGrid = () => {
             >
               {/* Decorative brand pattern icons */}
               {(() => {
-                // Use icon_type from database if set, otherwise fallback to cycling
+                // Check for custom_icons first
+                const customIcons = Array.isArray(promo.custom_icons) ? promo.custom_icons as CustomIcon[] : [];
+                
+                if (customIcons.length > 0) {
+                  return customIcons.map((icon) => (
+                    <img 
+                      key={icon.position}
+                      src={icon.url} 
+                      alt="" 
+                      className={`absolute w-12 h-12 object-contain opacity-20 ${positionStyles[icon.position]}`}
+                    />
+                  ));
+                }
+                
+                // Fallback to icon_type from database or cycling
                 const iconConfig = promo.icon_type && iconTypeMap[promo.icon_type]
                   ? iconTypeMap[promo.icon_type]
                   : iconPatterns[promotions.indexOf(promo) % iconPatterns.length];
