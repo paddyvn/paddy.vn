@@ -184,11 +184,14 @@ export function SimpleProductPicker({
 
   const calculateDiscountedPrice = (originalPrice: number, dType: string, dValue: number) => {
     if (dType === "percentage") {
+      if (dValue === 0) return originalPrice;
       return originalPrice * (1 - dValue / 100);
     } else if (dType === "fixed_amount") {
+      if (dValue === 0) return originalPrice;
       return Math.max(0, originalPrice - dValue);
     } else {
-      return dValue; // special_price
+      // special_price - if value is 0 or not set, show original price
+      return dValue > 0 ? dValue : originalPrice;
     }
   };
 
