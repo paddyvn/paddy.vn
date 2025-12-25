@@ -27,15 +27,16 @@ import { Plus, Pencil, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-const PROMO_TYPE_MAP: Record<string, { label: string; dbValue: string }> = {
-  "flash-sale": { label: "Flash Sale", dbValue: "flash_sale" },
-  "discounts": { label: "Discounts", dbValue: "deal" },
-  "vouchers": { label: "Vouchers", dbValue: "deal" },
-  "combo-buy": { label: "Combo Buy", dbValue: "deal" },
-  "buy-more-save-more": { label: "Buy More Save More", dbValue: "deal" },
-  "free-shipping": { label: "Free Shipping", dbValue: "deal" },
-  "subscription-deals": { label: "Subscription Deals", dbValue: "deal" },
-  "clearance": { label: "Clearance", dbValue: "clearance" },
+// program_kind values for filtering by program type
+const PROMO_TYPE_MAP: Record<string, { label: string; programKind: string }> = {
+  "flash-sale": { label: "Flash Sale", programKind: "flash_sale" },
+  "discounts": { label: "Discounts", programKind: "discount" },
+  "vouchers": { label: "Vouchers", programKind: "voucher" },
+  "combo-buy": { label: "Combo Buy", programKind: "combo_buy" },
+  "buy-more-save-more": { label: "Buy More Save More", programKind: "buy_more_save_more" },
+  "free-shipping": { label: "Free Shipping", programKind: "free_shipping" },
+  "subscription-deals": { label: "Subscription Deals", programKind: "subscription_deal" },
+  "clearance": { label: "Clearance", programKind: "clearance" },
 };
 
 const SUB_TYPES: Record<string, { label: string; value: string }[]> = {
@@ -85,15 +86,16 @@ export default function PromotionsManagement() {
     : "Manage deals and promotional banners";
 
   const { data: promotions, isLoading, isError, error } = useQuery({
-    queryKey: ["promotions", promoType, typeConfig?.dbValue, selectedPromoType],
+    queryKey: ["promotions", promoType, typeConfig?.programKind, selectedPromoType],
     queryFn: async () => {
       let query = supabase
         .from("promotions")
         .select("*")
         .order("display_order", { ascending: true });
 
+      // Filter by program_kind for specific program type pages
       if (typeConfig) {
-        query = query.eq("promo_type", typeConfig.dbValue);
+        query = query.eq("program_kind", typeConfig.programKind);
       } else if (selectedPromoType) {
         query = query.eq("promo_type", selectedPromoType);
       }
@@ -126,8 +128,8 @@ export default function PromotionsManagement() {
     navigate(url);
   };
 
-  const handleEdit = (promoId: string, promoTypeValue?: string) => {
-    const typeSlug = promoTypeValue ? Object.entries(PROMO_TYPE_MAP).find(([_, v]) => v.dbValue === promoTypeValue)?.[0] : null;
+  const handleEdit = (promoId: string, programKind?: string) => {
+    const typeSlug = programKind ? Object.entries(PROMO_TYPE_MAP).find(([_, v]) => v.programKind === programKind)?.[0] : null;
     const url = typeSlug 
       ? `/admin/promotions/${typeSlug}/${promoId}/edit`
       : `/admin/promotions/${promoId}/edit`;
@@ -286,7 +288,7 @@ export default function PromotionsManagement() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleEdit(promo.id, promo.promo_type)}
+                        onClick={() => handleEdit(promo.id, promo.program_kind)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
