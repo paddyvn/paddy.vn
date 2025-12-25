@@ -397,7 +397,7 @@ export function SimpleProductPicker({
                           onCheckedChange={() => toggleBatchSelection(product.id)}
                         />
                       </TableCell>
-                      <TableCell colSpan={showDiscountSettings ? 5 : 2}>
+                      <TableCell colSpan={showDiscountSettings ? 4 : 2}>
                         <div className="flex items-center gap-3">
                           {product.image_url ? (
                             <img
@@ -415,6 +415,8 @@ export function SimpleProductPicker({
                           </span>
                         </div>
                       </TableCell>
+                      <TableCell></TableCell>
+                      {showDiscountSettings && <TableCell></TableCell>}
                       {showDiscountSettings && (
                         <TableCell className="text-center">
                           <Switch
