@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlashSaleProductCard } from "@/components/FlashSaleProductCard";
+import { useFlashSaleSoldCounts } from "@/hooks/useFlashSaleSoldCounts";
 
 interface FlashSalePromotion {
   id: string;
@@ -96,7 +97,6 @@ export const FlashSaleSection = () => {
     queryKey: ["flash-sale-products", flashSale?.id],
     enabled: !!flashSale?.id,
     queryFn: async () => {
-      // Fetch products linked to this flash sale promotion
       const { data: promotionProducts, error: ppError } = await supabase
         .from("promotion_products")
         .select("product_id")
@@ -122,6 +122,13 @@ export const FlashSaleSection = () => {
       return data;
     },
   });
+
+  const productIds = products?.map((p) => p.id) || [];
+  const { data: soldCounts } = useFlashSaleSoldCounts(
+    productIds,
+    flashSale?.start_date || null,
+    flashSale?.end_date || null
+  );
 
   // Don't show if no active flash sale
   if (!isLoadingPromo && !flashSale) {
@@ -195,7 +202,7 @@ export const FlashSaleSection = () => {
               <>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
                   {products.slice(0, 6).map((product) => (
-                    <FlashSaleProductCard key={product.id} product={product} />
+                    <FlashSaleProductCard key={product.id} product={product} soldCount={soldCounts?.[product.id] || 0} />
                   ))}
                 </div>
                 <div className="flex justify-center mt-4 md:hidden">
