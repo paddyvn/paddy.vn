@@ -49,7 +49,7 @@ export const DealsGrid = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-primary">Year-end Deals at Paddy</h2>
           <Link 
-            to="/collections/deals" 
+            to="/promotions" 
             className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
           >
             Xem tất cả
