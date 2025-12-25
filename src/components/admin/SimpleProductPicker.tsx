@@ -96,6 +96,7 @@ export function SimpleProductPicker({
   const [collectionFilter, setCollectionFilter] = useState<string>("all");
   const [tempSelected, setTempSelected] = useState<string[]>([]);
   const [batchDiscountValue, setBatchDiscountValue] = useState<number>(0);
+  const [batchStockLimit, setBatchStockLimit] = useState<string>("");
   const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
 
   // Fetch products with images and variants
@@ -233,26 +234,38 @@ export function SimpleProductPicker({
     if (!onProductSettingsChange || selectedForBatch.length === 0) return;
 
     const newSettings = [...productSettings];
+    const stockLimitValue = batchStockLimit === "" ? undefined : parseInt(batchStockLimit) || 0;
+    
     selectedForBatch.forEach(productId => {
-      const existingIndex = newSettings.findIndex(s => s.productId === productId && !s.variantId);
-      if (existingIndex >= 0) {
-        newSettings[existingIndex] = {
-          ...newSettings[existingIndex],
-          discountType,
-          discountValue: batchDiscountValue,
-        };
-      } else {
-        newSettings.push({
-          productId,
-          discountType,
-          discountValue: batchDiscountValue,
-          isEnabled: true,
-        });
-      }
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      // Apply to all variants of the product
+      product.variants.forEach(variant => {
+        const existingIndex = newSettings.findIndex(s => s.productId === productId && s.variantId === variant.id);
+        if (existingIndex >= 0) {
+          newSettings[existingIndex] = {
+            ...newSettings[existingIndex],
+            discountType,
+            discountValue: batchDiscountValue,
+            ...(stockLimitValue !== undefined && { stockLimit: stockLimitValue }),
+          };
+        } else {
+          newSettings.push({
+            productId,
+            variantId: variant.id,
+            discountType,
+            discountValue: batchDiscountValue,
+            isEnabled: true,
+            ...(stockLimitValue !== undefined && { stockLimit: stockLimitValue }),
+          });
+        }
+      });
     });
     onProductSettingsChange(newSettings);
     setSelectedForBatch([]);
     setBatchDiscountValue(0);
+    setBatchStockLimit("");
   };
 
   const removeSelectedProducts = () => {
@@ -328,6 +341,20 @@ export function SimpleProductPicker({
                   <span className="px-2 text-sm text-muted-foreground border-l">
                     {discountType === "percentage" ? "%GIẢM" : "₫"}
                   </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm">SL khuyến mãi</span>
+                <div className="flex items-center border rounded-md bg-background">
+                  <Input
+                    type="number"
+                    value={batchStockLimit}
+                    onChange={(e) => setBatchStockLimit(e.target.value)}
+                    className="w-20 border-0 text-center"
+                    placeholder="--"
+                    min={0}
+                  />
                 </div>
               </div>
 
