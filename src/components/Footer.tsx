@@ -1,6 +1,7 @@
 import { Facebook, Instagram, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 import govSeal from "@/assets/gov-seal.png";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,29 +61,29 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
             <h3 className="font-bold text-lg mb-4">Shop</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/collections/cho" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Dành Cho Chó
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/collections/meo" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Dành Cho Mèo
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/brands-thuong-hieu-thu-cung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Thương Hiệu
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/blogs" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Blogs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/collections" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Bộ Sưu Tập
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -92,24 +93,24 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
             <h3 className="font-bold text-lg mb-4">Paddy Pet Shop</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/gioi-thieu" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Giới Thiệu
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/auth" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Thành Viên Paddier
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/dieu-khoan-su-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Điều Khoản Sử Dụng
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/tuyen-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Tuyển Dụng
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -119,29 +120,29 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
             <h3 className="font-bold text-lg mb-4">Hỗ Trợ Khách Hàng</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/chinh-sach-doi-tra-hang" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Đổi Trả Hàng
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/phuong-thuc-van-chuyen" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Phương Thức Vận Chuyển
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/chinh-sach-bao-mat" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Bảo Mật
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/phuong-thuc-thanh-toan" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Phương Thức Thanh Toán
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/chinh-sach-hoan-tien" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Hoàn Tiền
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
