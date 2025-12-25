@@ -3,13 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
-import { SimpleProductPicker } from "@/components/admin/SimpleProductPicker";
+import { SimpleProductPicker, ProductDiscountSetting } from "@/components/admin/SimpleProductPicker";
 
 type DiscountsFormData = BasePromotionFormData & {
   discount_type: "percentage" | "fixed_amount" | "special_price";
@@ -19,6 +15,7 @@ type DiscountsFormData = BasePromotionFormData & {
   gradient_to: string;
   icon_type: string;
   custom_icons: CustomIcon[];
+  productSettings: ProductDiscountSetting[];
 };
 
 const getDefaultFormData = (): DiscountsFormData => ({
@@ -37,6 +34,7 @@ const getDefaultFormData = (): DiscountsFormData => ({
   gradient_to: "#764BA2",
   icon_type: "dog_cat",
   custom_icons: [],
+  productSettings: [],
 });
 
 export default function DiscountsEdit() {
@@ -230,65 +228,18 @@ export default function DiscountsEdit() {
         />
       }
     >
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <h3 className="font-semibold">Discount Settings</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Discount Type</Label>
-                <Select
-                  value={formData.discount_type}
-                  onValueChange={(value: "percentage" | "fixed_amount" | "special_price") =>
-                    setFormData({ ...formData, discount_type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                    <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
-                    <SelectItem value="special_price">Special Price</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  {formData.discount_type === "percentage"
-                    ? "Discount Percentage (%)"
-                    : formData.discount_type === "fixed_amount"
-                    ? "Discount Amount (₫)"
-                    : "Special Price (₫)"}
-                </Label>
-                <Input
-                  type="number"
-                  value={formData.discount_value}
-                  onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Minimum Purchase (₫)</Label>
-              <Input
-                type="number"
-                value={formData.min_purchase || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, min_purchase: e.target.value ? parseFloat(e.target.value) : null })
-                }
-                placeholder="No minimum"
-              />
-              <p className="text-sm text-muted-foreground">Minimum order value to apply discount</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Flash Sale-style Product Picker */}
+      {/* Shopee-style Product Picker with integrated discount settings */}
       <SimpleProductPicker
         selectedProductIds={formData.selectedProducts}
         onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
-        title="Sản phẩm áp dụng giảm giá"
+        productSettings={formData.productSettings}
+        onProductSettingsChange={(settings) => setFormData((prev) => ({ ...prev, productSettings: settings }))}
+        discountType={formData.discount_type}
+        discountValue={formData.discount_value}
+        onDiscountTypeChange={(type) => setFormData((prev) => ({ ...prev, discount_type: type }))}
+        onDiscountValueChange={(value) => setFormData((prev) => ({ ...prev, discount_value: value }))}
+        title="Sản phẩm khuyến mãi"
+        showDiscountSettings={true}
       />
     </PromotionFormBase>
   );
