@@ -176,12 +176,12 @@ export const FlashSaleSection = () => {
             </div>
           </div>
 
-          {/* Flash Sale Products - Inside the card */}
-          <div className="bg-background rounded-t-xl p-4 md:p-6">
+          {/* Flash Sale Products - Inside the gradient */}
+          <div className="px-4 md:px-6 pb-6">
             {isLoadingProducts ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-xl" />
+                  <Skeleton key={i} className="aspect-square rounded-xl bg-white/20" />
                 ))}
               </div>
             ) : products && products.length > 0 ? (
@@ -195,7 +195,7 @@ export const FlashSaleSection = () => {
                   <div className="flex justify-center mt-6">
                     <Link
                       to={`/collections/${flashSale.link_destination}`}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full font-medium hover:opacity-90 transition-opacity"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary rounded-full font-medium hover:bg-white/90 transition-opacity"
                     >
                       Xem tất cả Flash Sale
                       <ArrowRight className="h-4 w-4" />
