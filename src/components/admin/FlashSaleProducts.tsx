@@ -762,7 +762,7 @@ export function FlashSaleProducts({
             </div>
           </div>
 
-          <ScrollArea className="flex-1 border rounded-md">
+          <ScrollArea className="h-[400px] border rounded-md">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
