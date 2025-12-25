@@ -69,30 +69,11 @@ const Promotions = () => {
                   background: `linear-gradient(135deg, ${promo.gradient_from}, ${promo.gradient_to})`,
                 }}
               >
-                {/* Decorative paw patterns */}
-                <svg 
-                  className="absolute -top-2 -right-2 w-20 h-20 text-white/20 rotate-12"
-                  viewBox="0 0 24 24" 
-                  fill="currentColor"
-                >
-                  <ellipse cx="12" cy="17" rx="4" ry="3.5" />
-                  <ellipse cx="5.5" cy="10" rx="2.5" ry="2" />
-                  <ellipse cx="18.5" cy="10" rx="2.5" ry="2" />
-                  <ellipse cx="8" cy="6" rx="2" ry="1.8" />
-                  <ellipse cx="16" cy="6" rx="2" ry="1.8" />
-                </svg>
-                <svg 
-                  className="absolute -bottom-4 -left-4 w-24 h-24 text-white/15 -rotate-45"
-                  viewBox="0 0 24 24" 
-                  fill="currentColor"
-                >
-                  <ellipse cx="12" cy="17" rx="4" ry="3.5" />
-                  <ellipse cx="5.5" cy="10" rx="2.5" ry="2" />
-                  <ellipse cx="18.5" cy="10" rx="2.5" ry="2" />
-                  <ellipse cx="8" cy="6" rx="2" ry="1.8" />
-                  <ellipse cx="16" cy="6" rx="2" ry="1.8" />
-                </svg>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                {/* Decorative circle patterns */}
+                <div className="absolute -top-4 -right-4 w-14 h-14 bg-white/15 rounded-full" />
+                <div className="absolute top-6 right-8 w-6 h-6 bg-white/20 rounded-full" />
+                <div className="absolute -bottom-5 -left-5 w-16 h-16 bg-white/10 rounded-full" />
+                <div className="absolute bottom-8 left-6 w-5 h-5 bg-white/15 rounded-full" />
                 
                 {/* Content */}
                 <div className="relative z-10 h-full flex flex-col items-center justify-center p-4 text-center">
