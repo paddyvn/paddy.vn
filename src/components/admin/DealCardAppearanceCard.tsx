@@ -300,38 +300,6 @@ export function DealCardAppearanceCard({
             </div>
           )}
           
-          <Label className="text-xs text-muted-foreground">Or use preset icons</Label>
-          <RadioGroup
-            value={iconType}
-            onValueChange={(value) => {
-              onIconTypeChange(value);
-              // Clear custom icons when selecting preset
-              if (value !== "custom" && onCustomIconsChange) {
-                onCustomIconsChange([]);
-              }
-            }}
-            className="grid grid-cols-2 gap-2"
-          >
-            {iconOptions.map((opt) => (
-              <div key={opt.value} className="relative">
-                <RadioGroupItem
-                  value={opt.value}
-                  id={opt.value}
-                  className="peer sr-only"
-                />
-                <Label
-                  htmlFor={opt.value}
-                  className="flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-1">
-                    <opt.TopIcon className="w-5 h-5 text-foreground/70" />
-                    <opt.BottomIcon className="w-4 h-4 text-foreground/50" />
-                  </div>
-                  <span className="text-xs">{opt.label}</span>
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
         </div>
       </CardContent>
 
