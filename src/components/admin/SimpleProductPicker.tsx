@@ -97,6 +97,8 @@ export function SimpleProductPicker({
   const [tempSelected, setTempSelected] = useState<string[]>([]);
   const [batchDiscountValue, setBatchDiscountValue] = useState<number>(0);
   const [batchStockLimit, setBatchStockLimit] = useState<string>("");
+  const [batchPurchaseLimitType, setBatchPurchaseLimitType] = useState<"unlimited" | "limited">("unlimited");
+  const [batchPurchaseLimitValue, setBatchPurchaseLimitValue] = useState<string>("");
   const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
 
   // Fetch products with images and variants
@@ -238,6 +240,9 @@ export function SimpleProductPicker({
 
     const newSettings = [...productSettings];
     const stockLimitValue = batchStockLimit === "" ? undefined : parseInt(batchStockLimit) || 0;
+    const purchaseLimitValue = batchPurchaseLimitType === "unlimited" 
+      ? undefined 
+      : (batchPurchaseLimitValue === "" ? undefined : parseInt(batchPurchaseLimitValue) || 0);
     
     selectedForBatch.forEach(productId => {
       const product = products.find(p => p.id === productId);
@@ -252,6 +257,7 @@ export function SimpleProductPicker({
             discountType,
             discountValue: batchDiscountValue,
             ...(stockLimitValue !== undefined && { stockLimit: stockLimitValue }),
+            ...(purchaseLimitValue !== undefined && { purchaseLimit: purchaseLimitValue }),
           };
         } else {
           newSettings.push({
@@ -261,6 +267,7 @@ export function SimpleProductPicker({
             discountValue: batchDiscountValue,
             isEnabled: true,
             ...(stockLimitValue !== undefined && { stockLimit: stockLimitValue }),
+            ...(purchaseLimitValue !== undefined && { purchaseLimit: purchaseLimitValue }),
           });
         }
       });
@@ -269,6 +276,8 @@ export function SimpleProductPicker({
     setSelectedForBatch([]);
     setBatchDiscountValue(0);
     setBatchStockLimit("");
+    setBatchPurchaseLimitType("unlimited");
+    setBatchPurchaseLimitValue("");
   };
 
   const removeSelectedProducts = () => {
@@ -358,6 +367,34 @@ export function SimpleProductPicker({
                     placeholder="--"
                     min={0}
                   />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Giới hạn mua</span>
+                <div className="flex items-center gap-1">
+                  <Select
+                    value={batchPurchaseLimitType}
+                    onValueChange={(val: "unlimited" | "limited") => setBatchPurchaseLimitType(val)}
+                  >
+                    <SelectTrigger className="w-[120px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unlimited">Không giới hạn</SelectItem>
+                      <SelectItem value="limited">Giới hạn</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {batchPurchaseLimitType === "limited" && (
+                    <Input
+                      type="number"
+                      value={batchPurchaseLimitValue}
+                      onChange={(e) => setBatchPurchaseLimitValue(e.target.value)}
+                      className="w-20 h-9 text-center"
+                      placeholder="0"
+                      min={1}
+                    />
+                  )}
                 </div>
               </div>
 
