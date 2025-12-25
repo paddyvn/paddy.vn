@@ -84,20 +84,20 @@ export default function PromotionsManagement() {
     ? `Manage ${typeConfig.label.toLowerCase()} promotions` 
     : "Manage deals and promotional banners";
 
-  const { data: promotions, isLoading } = useQuery({
-    queryKey: ["promotions", promoType, selectedPromoType],
+  const { data: promotions, isLoading, isError, error } = useQuery({
+    queryKey: ["promotions", promoType, typeConfig?.dbValue, selectedPromoType],
     queryFn: async () => {
       let query = supabase
         .from("promotions")
         .select("*")
         .order("display_order", { ascending: true });
-      
+
       if (typeConfig) {
         query = query.eq("promo_type", typeConfig.dbValue);
       } else if (selectedPromoType) {
         query = query.eq("promo_type", selectedPromoType);
       }
-      
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -214,6 +214,10 @@ export default function PromotionsManagement() {
             <div className="flex items-center justify-center h-32">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
+          ) : isError ? (
+            <p className="text-destructive text-center py-8">
+              Failed to load promotions: {(error as any)?.message || "Unknown error"}
+            </p>
           ) : !promotions?.length ? (
             <p className="text-muted-foreground text-center py-8">
               No {typeConfig ? typeConfig.label.toLowerCase() : "promotions"} yet
