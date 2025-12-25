@@ -45,6 +45,7 @@ import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
+import { OrderColumnsSelector, useOrderColumns } from "@/components/admin/OrderColumnsSelector";
 
 const statusConfig = {
   pending: { label: "Pending", variant: "secondary" as const, icon: Package },
@@ -82,6 +83,7 @@ export default function OrdersManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const syncOrders = useSyncOrders();
+  const { columns, setColumns, isColumnVisible, visibleColumns } = useOrderColumns();
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -331,20 +333,23 @@ export default function OrdersManagement() {
             className="pl-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <OrderColumnsSelector columns={columns} onColumnsChange={setColumns} />
+        </div>
       </div>
 
       {/* Bulk Actions Bar */}
@@ -410,15 +415,36 @@ export default function OrdersManagement() {
                   className={isSomeSelected && !isAllSelected ? "data-[state=checked]:bg-primary/50" : ""}
                 />
               </TableHead>
-              <SortableHeader field="order_number">Order</SortableHeader>
-              <SortableHeader field="created_at">Date</SortableHeader>
-              <SortableHeader field="customer">Customer</SortableHeader>
-              <TableHead>Items</TableHead>
-              <SortableHeader field="total">Total</SortableHeader>
-              <TableHead>Payment</TableHead>
-              <SortableHeader field="status">Status</SortableHeader>
-              <TableHead>Delivery method</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {visibleColumns.map((col) => {
+                if (col.id === "order_number") {
+                  return <SortableHeader key={col.id} field="order_number">Order</SortableHeader>;
+                }
+                if (col.id === "created_at") {
+                  return <SortableHeader key={col.id} field="created_at">Date</SortableHeader>;
+                }
+                if (col.id === "customer") {
+                  return <SortableHeader key={col.id} field="customer">Customer</SortableHeader>;
+                }
+                if (col.id === "items") {
+                  return <TableHead key={col.id}>Items</TableHead>;
+                }
+                if (col.id === "total") {
+                  return <SortableHeader key={col.id} field="total">Total</SortableHeader>;
+                }
+                if (col.id === "payment") {
+                  return <TableHead key={col.id}>Payment</TableHead>;
+                }
+                if (col.id === "status") {
+                  return <SortableHeader key={col.id} field="status">Status</SortableHeader>;
+                }
+                if (col.id === "delivery_method") {
+                  return <TableHead key={col.id}>Delivery method</TableHead>;
+                }
+                if (col.id === "actions") {
+                  return <TableHead key={col.id} className="text-right">Actions</TableHead>;
+                }
+                return null;
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -428,38 +454,16 @@ export default function OrdersManagement() {
                   <TableCell>
                     <Skeleton className="h-4 w-4" />
                   </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-32" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-40" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-12" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-6 w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-6 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-32" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8 w-20 ml-auto" />
-                  </TableCell>
+                  {visibleColumns.map((col) => (
+                    <TableCell key={col.id}>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : filteredOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8">
+                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8">
                   <p className="text-muted-foreground">No orders found</p>
                 </TableCell>
               </TableRow>
@@ -479,67 +483,104 @@ export default function OrdersManagement() {
                         aria-label={`Select order ${order.order_number}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      <button
-                        onClick={() => navigate(`/admin/orders/${order.id}`)}
-                        className="text-primary hover:underline"
-                      >
-                        {order.order_number}
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(order.created_at), "MMM d, yyyy HH:mm")}
-                    </TableCell>
-                    <TableCell>
-                      {order.shipping_address?.first_name}{" "}
-                      {order.shipping_address?.last_name}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0}{" "}
-                      {(itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0) === 1
-                        ? "item"
-                        : "items"}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(order.total)}
-                    </TableCell>
-                    <TableCell>
-                      {order.financial_status && (
-                        <Badge
-                          variant={
-                            paymentStatusConfig[order.financial_status]?.variant || "secondary"
-                          }
-                        >
-                          {paymentStatusConfig[order.financial_status]?.label || order.financial_status}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          statusConfig[order.status as keyof typeof statusConfig]
-                            ?.variant || "secondary"
-                        }
-                        className="gap-1"
-                      >
-                        {StatusIcon && <StatusIcon className="h-3 w-3" />}
-                        {statusConfig[order.status as keyof typeof statusConfig]
-                          ?.label || order.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {order.delivery_method || "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/admin/orders/${order.id}`)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </TableCell>
+                    {visibleColumns.map((col) => {
+                      if (col.id === "order_number") {
+                        return (
+                          <TableCell key={col.id} className="font-medium">
+                            <button
+                              onClick={() => navigate(`/admin/orders/${order.id}`)}
+                              className="text-primary hover:underline"
+                            >
+                              {order.order_number}
+                            </button>
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "created_at") {
+                        return (
+                          <TableCell key={col.id}>
+                            {format(new Date(order.created_at), "MMM d, yyyy HH:mm")}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "customer") {
+                        return (
+                          <TableCell key={col.id}>
+                            {order.shipping_address?.first_name}{" "}
+                            {order.shipping_address?.last_name}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "items") {
+                        const count = itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0;
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground">
+                            {count} {count === 1 ? "item" : "items"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "total") {
+                        return (
+                          <TableCell key={col.id} className="font-medium">
+                            {formatCurrency(order.total)}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "payment") {
+                        return (
+                          <TableCell key={col.id}>
+                            {order.financial_status && (
+                              <Badge
+                                variant={
+                                  paymentStatusConfig[order.financial_status]?.variant || "secondary"
+                                }
+                              >
+                                {paymentStatusConfig[order.financial_status]?.label || order.financial_status}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "status") {
+                        return (
+                          <TableCell key={col.id}>
+                            <Badge
+                              variant={
+                                statusConfig[order.status as keyof typeof statusConfig]
+                                  ?.variant || "secondary"
+                              }
+                              className="gap-1"
+                            >
+                              {StatusIcon && <StatusIcon className="h-3 w-3" />}
+                              {statusConfig[order.status as keyof typeof statusConfig]
+                                ?.label || order.status}
+                            </Badge>
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "delivery_method") {
+                        return (
+                          <TableCell key={col.id} className="text-muted-foreground">
+                            {order.delivery_method || "-"}
+                          </TableCell>
+                        );
+                      }
+                      if (col.id === "actions") {
+                        return (
+                          <TableCell key={col.id} className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/admin/orders/${order.id}`)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          </TableCell>
+                        );
+                      }
+                      return null;
+                    })}
                   </TableRow>
                 );
               })
