@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
+import { SimpleProductPicker } from "@/components/admin/SimpleProductPicker";
 
 type DiscountsFormData = BasePromotionFormData & {
   discount_type: "percentage" | "fixed_amount" | "special_price";
@@ -207,6 +208,7 @@ export default function DiscountsEdit() {
       isSaving={saveMutation.isPending}
       isLoading={!isNew && isLoading}
       backUrl="/admin/promotions/discounts"
+      hideAppliesTo={true}
       summaryExtra={
         <div>
           <p className="text-sm text-muted-foreground">Discount</p>
@@ -228,6 +230,12 @@ export default function DiscountsEdit() {
         />
       }
     >
+      {/* Flash Sale-style Product Picker */}
+      <SimpleProductPicker
+        selectedProductIds={formData.selectedProducts}
+        onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
+        title="Sản phẩm áp dụng giảm giá"
+      />
       <Card>
         <CardContent className="p-6">
           <div className="space-y-4">
