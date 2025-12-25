@@ -168,24 +168,18 @@ export const FlashSaleSection = () => {
               </div>
 
               {flashSale?.end_date && (
-                <div className="flex flex-col items-center md:items-end gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="text-center">
-                      <span className="text-white/80 text-xs">Kết thúc sau:</span>
-                      <div className="mt-1">
-                        <CountdownTimer endDate={flashSale.end_date} />
-                      </div>
-                    </div>
-                    {flashSale?.link_destination && (
-                      <Link
-                        to={`/collections/${flashSale.link_destination}`}
-                        className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 bg-white text-primary rounded-full font-medium text-sm hover:bg-white/90 transition-opacity whitespace-nowrap"
-                      >
-                        Xem tất cả
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    )}
-                  </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-white/80 text-xs text-left w-full">Kết thúc sau:</span>
+                  <CountdownTimer endDate={flashSale.end_date} />
+                  {flashSale?.link_destination && (
+                    <Link
+                      to={`/collections/${flashSale.link_destination}`}
+                      className="hidden md:inline-flex items-center gap-1 text-white text-sm font-medium hover:underline mt-1"
+                    >
+                      Xem tất cả
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
