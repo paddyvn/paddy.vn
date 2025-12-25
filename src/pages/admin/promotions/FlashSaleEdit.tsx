@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TimePicker } from "@/components/ui/time-picker";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { FlashSaleProducts, FlashSaleProduct } from "@/components/admin/FlashSaleProducts";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -353,18 +354,16 @@ export default function FlashSaleEdit() {
               </div>
               <div className="space-y-2">
                 <Label>Start Time</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={formData.start_time}
-                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, start_time: value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>End Time</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={formData.end_time}
-                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, end_time: value })}
                 />
               </div>
             </div>
