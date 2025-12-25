@@ -123,7 +123,7 @@ export default function DiscountsEdit() {
         subtitle: data.subtitle || null,
         link_type: "collection",
         link_destination: "",
-        promo_type: "discounts",
+        promo_type: "deal",
         is_active: data.is_active,
         display_order: data.display_order,
         start_date: data.start_date?.toISOString() || null,
