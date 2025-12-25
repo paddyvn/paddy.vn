@@ -17,6 +17,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { FlashSaleProducts, FlashSaleProduct } from "@/components/admin/FlashSaleProducts";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DealCardAppearanceCard } from "@/components/admin/DealCardAppearanceCard";
 
 type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' | 'selectedProducts'> & {
   show_countdown: boolean;
@@ -26,6 +27,9 @@ type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' |
   start_time: string;
   end_time: string;
   flashSaleProducts: FlashSaleProduct[];
+  gradient_from: string;
+  gradient_to: string;
+  icon_type: string;
 };
 
 const getDefaultFormData = (): FlashSaleFormData => ({
@@ -41,6 +45,9 @@ const getDefaultFormData = (): FlashSaleFormData => ({
   start_time: "00:00",
   end_time: "23:59",
   flashSaleProducts: [],
+  gradient_from: "#FF6B6B",
+  gradient_to: "#EE5A24",
+  icon_type: "dog_cat",
 });
 
 export default function FlashSaleEdit() {
@@ -155,6 +162,9 @@ export default function FlashSaleEdit() {
         sale_date: saleDate,
         start_time: startTime,
         end_time: endTime,
+        gradient_from: promotion.gradient_from || "#FF6B6B",
+        gradient_to: promotion.gradient_to || "#EE5A24",
+        icon_type: promotion.icon_type || "dog_cat",
       }));
     }
   }, [promotion]);
@@ -206,6 +216,9 @@ export default function FlashSaleEdit() {
         display_order: data.display_order,
         start_date: startDateTime,
         end_date: endDateTime,
+        gradient_from: data.gradient_from,
+        gradient_to: data.gradient_to,
+        icon_type: data.icon_type,
       };
 
       let promotionId = id;
@@ -324,43 +337,54 @@ export default function FlashSaleEdit() {
         </div>
       }
       rightColumnExtra={
-        <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <h3 className="font-semibold">Flash Sale Settings</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Show Countdown Timer</Label>
-                  <p className="text-sm text-muted-foreground">Display countdown on product pages</p>
+        <>
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <h3 className="font-semibold">Flash Sale Settings</h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Show Countdown Timer</Label>
+                    <p className="text-sm text-muted-foreground">Display countdown on product pages</p>
+                  </div>
+                  <Switch
+                    checked={formData.show_countdown}
+                    onCheckedChange={(checked) => setFormData({ ...formData, show_countdown: checked })}
+                  />
                 </div>
-                <Switch
-                  checked={formData.show_countdown}
-                  onCheckedChange={(checked) => setFormData({ ...formData, show_countdown: checked })}
-                />
+                <div className="space-y-2">
+                  <Label>Urgency Message</Label>
+                  <Input
+                    value={formData.urgency_message}
+                    onChange={(e) => setFormData({ ...formData, urgency_message: e.target.value })}
+                    placeholder="e.g., Hurry! Sale ends soon"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Limit Per Customer</Label>
+                  <Input
+                    type="number"
+                    value={formData.limit_per_customer || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, limit_per_customer: e.target.value ? parseInt(e.target.value) : null })
+                    }
+                    placeholder="No limit"
+                  />
+                  <p className="text-sm text-muted-foreground">Maximum items per customer (leave empty for no limit)</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Urgency Message</Label>
-                <Input
-                  value={formData.urgency_message}
-                  onChange={(e) => setFormData({ ...formData, urgency_message: e.target.value })}
-                  placeholder="e.g., Hurry! Sale ends soon"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Limit Per Customer</Label>
-                <Input
-                  type="number"
-                  value={formData.limit_per_customer || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, limit_per_customer: e.target.value ? parseInt(e.target.value) : null })
-                  }
-                  placeholder="No limit"
-                />
-                <p className="text-sm text-muted-foreground">Maximum items per customer (leave empty for no limit)</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          
+          <DealCardAppearanceCard
+            gradientFrom={formData.gradient_from}
+            gradientTo={formData.gradient_to}
+            iconType={formData.icon_type}
+            onGradientFromChange={(value) => setFormData({ ...formData, gradient_from: value })}
+            onGradientToChange={(value) => setFormData({ ...formData, gradient_to: value })}
+            onIconTypeChange={(value) => setFormData({ ...formData, icon_type: value })}
+          />
+        </>
       }
     >
       {/* Flash Sale Date & Time */}

@@ -2196,6 +2196,7 @@ export type Database = {
           end_date: string | null
           gradient_from: string | null
           gradient_to: string | null
+          icon_type: string | null
           id: string
           is_active: boolean | null
           link_destination: string
@@ -2212,6 +2213,7 @@ export type Database = {
           end_date?: string | null
           gradient_from?: string | null
           gradient_to?: string | null
+          icon_type?: string | null
           id?: string
           is_active?: boolean | null
           link_destination: string
@@ -2228,6 +2230,7 @@ export type Database = {
           end_date?: string | null
           gradient_from?: string | null
           gradient_to?: string | null
+          icon_type?: string | null
           id?: string
           is_active?: boolean | null
           link_destination?: string

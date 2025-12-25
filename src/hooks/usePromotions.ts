@@ -14,6 +14,7 @@ export interface Promotion {
   start_date: string | null;
   end_date: string | null;
   promo_type: string;
+  icon_type: string | null;
 }
 
 export const usePromotions = () => {
