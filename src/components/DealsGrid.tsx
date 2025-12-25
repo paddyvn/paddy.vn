@@ -2,16 +2,24 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { usePromotions } from "@/hooks/usePromotions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon } from "@/components/PaddyIconPatterns";
+import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon, FishIcon } from "@/components/PaddyIconPatterns";
 
-// Array of icon patterns to cycle through
+// Map icon_type to icon components
+const iconTypeMap: Record<string, { TopIcon: React.FC<{ className?: string }>; BottomIcon: React.FC<{ className?: string }> }> = {
+  dog_cat: { TopIcon: DogIcon, BottomIcon: CatIcon },
+  cat_dog: { TopIcon: CatIcon, BottomIcon: DogIcon },
+  dog_face_2: { TopIcon: DogFace2Icon, BottomIcon: CatFace2Icon },
+  paw_bone: { TopIcon: PawIcon, BottomIcon: BoneIcon },
+  bone_paw: { TopIcon: BoneIcon, BottomIcon: PawIcon },
+  fish_paw: { TopIcon: FishIcon, BottomIcon: PawIcon },
+};
+
+// Fallback cycling for promotions without icon_type
 const iconPatterns = [
-  { TopRight: DogIcon, BottomLeft: CatIcon },
-  { TopRight: CatIcon, BottomLeft: DogIcon },
-  { TopRight: DogFace2Icon, BottomLeft: CatFace2Icon },
-  { TopRight: CatFace2Icon, BottomLeft: DogFace2Icon },
-  { TopRight: PawIcon, BottomLeft: BoneIcon },
-  { TopRight: BoneIcon, BottomLeft: PawIcon },
+  { TopIcon: DogIcon, BottomIcon: CatIcon },
+  { TopIcon: CatIcon, BottomIcon: DogIcon },
+  { TopIcon: DogFace2Icon, BottomIcon: CatFace2Icon },
+  { TopIcon: PawIcon, BottomIcon: BoneIcon },
 ];
 
 export const DealsGrid = () => {
@@ -78,12 +86,15 @@ export const DealsGrid = () => {
             >
               {/* Decorative brand pattern icons */}
               {(() => {
-                const patternIndex = promotions.indexOf(promo) % iconPatterns.length;
-                const { TopRight, BottomLeft } = iconPatterns[patternIndex];
+                // Use icon_type from database if set, otherwise fallback to cycling
+                const iconConfig = promo.icon_type && iconTypeMap[promo.icon_type]
+                  ? iconTypeMap[promo.icon_type]
+                  : iconPatterns[promotions.indexOf(promo) % iconPatterns.length];
+                const { TopIcon, BottomIcon } = iconConfig;
                 return (
                   <>
-                    <TopRight className="absolute -top-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
-                    <BottomLeft className="absolute -bottom-3 -left-3 w-14 h-14 text-white/10 -rotate-12" />
+                    <TopIcon className="absolute -top-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
+                    <BottomIcon className="absolute -bottom-3 -left-3 w-14 h-14 text-white/10 -rotate-12" />
                   </>
                 );
               })()}
