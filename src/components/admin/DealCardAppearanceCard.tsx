@@ -79,7 +79,7 @@ export function DealCardAppearanceCard({
   const [addingIcon, setAddingIcon] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<CustomIcon["position"]>("top_right");
 
-  const useCustomIcons = iconType === "custom" && customIcons.length > 0;
+  const useCustomIcons = customIcons.length > 0;
 
   // Get positions that are already used
   const usedPositions = customIcons.map(icon => icon.position);
