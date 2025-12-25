@@ -4,7 +4,7 @@ import { Zap, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProductCard } from "@/components/ProductCard";
+import { FlashSaleProductCard } from "@/components/FlashSaleProductCard";
 
 interface FlashSalePromotion {
   id: string;
@@ -51,21 +51,21 @@ const CountdownTimer = ({ endDate }: { endDate: string }) => {
 
   const TimeBox = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
-      <div className="bg-white text-primary font-bold text-lg md:text-xl px-2 md:px-3 py-1 rounded-md min-w-[40px] text-center shadow-sm">
+      <div className="bg-white text-primary font-bold text-sm md:text-lg px-2 py-0.5 rounded-md min-w-[32px] md:min-w-[40px] text-center shadow-sm">
         {String(value).padStart(2, "0")}
       </div>
-      <span className="text-white/80 text-xs mt-1">{label}</span>
+      <span className="text-white/80 text-[10px] mt-0.5">{label}</span>
     </div>
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <TimeBox value={timeLeft.days} label="Ngày" />
-      <span className="text-white text-xl font-bold">:</span>
+      <span className="text-white text-lg font-bold">:</span>
       <TimeBox value={timeLeft.hours} label="Giờ" />
-      <span className="text-white text-xl font-bold">:</span>
+      <span className="text-white text-lg font-bold">:</span>
       <TimeBox value={timeLeft.minutes} label="Phút" />
-      <span className="text-white text-xl font-bold">:</span>
+      <span className="text-white text-lg font-bold">:</span>
       <TimeBox value={timeLeft.seconds} label="Giây" />
     </div>
   );
@@ -116,7 +116,7 @@ export const FlashSaleSection = () => {
         `)
         .in("id", productIds)
         .eq("is_active", true)
-        .limit(8);
+        .limit(6);
 
       if (error) throw error;
       return data;
@@ -149,18 +149,18 @@ export const FlashSaleSection = () => {
           }}
         >
           {/* Flash Sale Header */}
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-3 rounded-full">
-                  <Zap className="h-8 w-8 text-white fill-white" />
+                <div className="bg-white/20 p-2.5 rounded-full">
+                  <Zap className="h-6 w-6 text-white fill-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+                  <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
                     ⚡ {flashSale?.title || "Flash Sale"}
                   </h2>
                   {flashSale?.subtitle && (
-                    <p className="text-white/90 text-sm md:text-base">
+                    <p className="text-white/90 text-sm">
                       {flashSale.subtitle}
                     </p>
                   )}
@@ -169,33 +169,48 @@ export const FlashSaleSection = () => {
 
               {flashSale?.end_date && (
                 <div className="flex flex-col items-center md:items-end gap-2">
-                  <span className="text-white/80 text-sm">Kết thúc sau:</span>
-                  <CountdownTimer endDate={flashSale.end_date} />
+                  <div className="flex items-center gap-3">
+                    <div className="text-center">
+                      <span className="text-white/80 text-xs">Kết thúc sau:</span>
+                      <div className="mt-1">
+                        <CountdownTimer endDate={flashSale.end_date} />
+                      </div>
+                    </div>
+                    {flashSale?.link_destination && (
+                      <Link
+                        to={`/collections/${flashSale.link_destination}`}
+                        className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 bg-white text-primary rounded-full font-medium text-sm hover:bg-white/90 transition-opacity whitespace-nowrap"
+                      >
+                        Xem tất cả
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Flash Sale Products - Inside the gradient */}
-          <div className="px-4 md:px-6 pb-6">
+          <div className="px-3 md:px-6 pb-4 md:pb-6">
             {isLoadingProducts ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-xl bg-white/20" />
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="aspect-[3/4] rounded-xl bg-white/20" />
                 ))}
               </div>
             ) : products && products.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-                  {products.slice(0, 4).map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+                  {products.slice(0, 6).map((product) => (
+                    <FlashSaleProductCard key={product.id} product={product} />
                   ))}
                 </div>
                 {flashSale?.link_destination && (
-                  <div className="flex justify-center mt-6">
+                  <div className="flex justify-center mt-4 md:hidden">
                     <Link
                       to={`/collections/${flashSale.link_destination}`}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary rounded-full font-medium hover:bg-white/90 transition-opacity"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-primary rounded-full font-medium text-sm hover:bg-white/90 transition-opacity"
                     >
                       Xem tất cả Flash Sale
                       <ArrowRight className="h-4 w-4" />
