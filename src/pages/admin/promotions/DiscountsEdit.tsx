@@ -8,11 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
+import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
 
 type DiscountsFormData = BasePromotionFormData & {
   discount_type: "percentage" | "fixed_amount" | "special_price";
   discount_value: number;
   min_purchase: number | null;
+  gradient_from: string;
+  gradient_to: string;
+  icon_type: string;
+  custom_icons: CustomIcon[];
 };
 
 const getDefaultFormData = (): DiscountsFormData => ({
@@ -27,6 +32,10 @@ const getDefaultFormData = (): DiscountsFormData => ({
   discount_type: "percentage",
   discount_value: 0,
   min_purchase: null,
+  gradient_from: "#667EEA",
+  gradient_to: "#764BA2",
+  icon_type: "dog_cat",
+  custom_icons: [],
 });
 
 export default function DiscountsEdit() {
@@ -88,6 +97,12 @@ export default function DiscountsEdit() {
         display_order: promotion.display_order || 0,
         start_date: promotion.start_date ? new Date(promotion.start_date) : null,
         end_date: promotion.end_date ? new Date(promotion.end_date) : null,
+        gradient_from: promotion.gradient_from || "#667EEA",
+        gradient_to: promotion.gradient_to || "#764BA2",
+        icon_type: promotion.icon_type || "dog_cat",
+        custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
+          ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
+          : []),
       }));
     }
   }, [promotion]);
@@ -114,6 +129,10 @@ export default function DiscountsEdit() {
         display_order: data.display_order,
         start_date: data.start_date?.toISOString() || null,
         end_date: data.end_date?.toISOString() || null,
+        gradient_from: data.gradient_from,
+        gradient_to: data.gradient_to,
+        icon_type: data.icon_type,
+        custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
       };
 
       let promotionId = id;
@@ -121,13 +140,15 @@ export default function DiscountsEdit() {
       if (isNew) {
         const { data: newPromo, error } = await supabase
           .from("promotions")
-          .insert(payload)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .insert(payload as any)
           .select("id")
           .single();
         if (error) throw error;
         promotionId = newPromo.id;
       } else {
-        const { error } = await supabase.from("promotions").update(payload).eq("id", id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await supabase.from("promotions").update(payload as any).eq("id", id);
         if (error) throw error;
       }
 
@@ -191,6 +212,20 @@ export default function DiscountsEdit() {
           <p className="text-sm text-muted-foreground">Discount</p>
           <p className="font-medium">{getDiscountLabel()}</p>
         </div>
+      }
+      rightColumnExtra={
+        <DealCardAppearanceCard
+          gradientFrom={formData.gradient_from}
+          gradientTo={formData.gradient_to}
+          iconType={formData.icon_type}
+          customIcons={formData.custom_icons}
+          title={formData.title}
+          subtitle={formData.subtitle}
+          onGradientFromChange={(value) => setFormData((prev) => ({ ...prev, gradient_from: value }))}
+          onGradientToChange={(value) => setFormData((prev) => ({ ...prev, gradient_to: value }))}
+          onIconTypeChange={(value) => setFormData((prev) => ({ ...prev, icon_type: value }))}
+          onCustomIconsChange={(icons) => setFormData((prev) => ({ ...prev, custom_icons: icons }))}
+        />
       }
     >
       <Card>
