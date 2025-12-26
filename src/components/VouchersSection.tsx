@@ -101,10 +101,17 @@ const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn
               {getConditionText()}
             </p>
             
-            {/* Product badge */}
-            <Badge variant="outline" className="mt-2 text-xs border-destructive/30 text-destructive">
-              {getBadgeText()}
-            </Badge>
+            {/* Voucher code and type badge */}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {voucher.voucher_code && (
+                <Badge variant="secondary" className="text-xs font-mono bg-muted">
+                  {voucher.voucher_code}
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-xs border-destructive/30 text-destructive">
+                {getBadgeText()}
+              </Badge>
+            </div>
           </div>
           
           {/* Save button and count */}
