@@ -238,12 +238,17 @@ export default function DiscountsEdit() {
   };
 
   const getDiscountLabel = () => {
+    // Get max discount value from product settings, fallback to formData.discount_value
+    const maxDiscount = formData.productSettings.length > 0
+      ? Math.max(...formData.productSettings.map(s => s.discountValue || 0))
+      : formData.discount_value;
+    
     if (formData.discount_type === "percentage") {
-      return `${formData.discount_value}% off`;
+      return `${maxDiscount}% off`;
     } else if (formData.discount_type === "fixed_amount") {
-      return `${formData.discount_value.toLocaleString()}₫ off`;
+      return `${maxDiscount.toLocaleString()}₫ off`;
     } else {
-      return `Fixed price: ${formData.discount_value.toLocaleString()}₫`;
+      return `Fixed price: ${maxDiscount.toLocaleString()}₫`;
     }
   };
 
