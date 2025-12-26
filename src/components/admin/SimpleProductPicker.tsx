@@ -120,7 +120,7 @@ export function SimpleProductPicker({
         `)
         .eq("is_active", true)
         .order("name")
-        .limit(500);
+        .limit(5000);
       if (error) throw error;
       return data.map((p): ProductWithDetails => ({
         id: p.id,
