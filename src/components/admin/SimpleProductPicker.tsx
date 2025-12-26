@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -706,7 +706,7 @@ export function SimpleProductPicker({
 
       {/* Product Selection Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col min-h-0">
           <DialogHeader>
             <DialogTitle>Chọn sản phẩm</DialogTitle>
           </DialogHeader>
@@ -767,7 +767,7 @@ export function SimpleProductPicker({
           </div>
 
           {/* Products Table */}
-          <ScrollArea className="flex-1 border rounded-lg h-[400px]">
+          <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -832,6 +832,7 @@ export function SimpleProductPicker({
                               src={product.image_url}
                               alt={product.name}
                               className="w-10 h-10 rounded object-cover"
+                              loading="lazy"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
@@ -854,7 +855,7 @@ export function SimpleProductPicker({
                 </TableBody>
               </Table>
             )}
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="pt-4">
             <p className="text-sm text-muted-foreground mr-auto">
