@@ -122,7 +122,7 @@ export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount 
                   {formatPrice(originalPrice)}₫
                 </span>
               )}
-              <span className="text-base font-bold text-primary">
+              <span className="text-sm font-bold text-primary">
                 {formatPrice(product.base_price)}₫
               </span>
             </div>
