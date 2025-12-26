@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, MapPin, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ import {
   useDeleteStore,
   Store,
 } from "@/hooks/useStores";
+import { ImagePickerDialog } from "@/components/admin/ImagePickerDialog";
 
 interface StoreFormData {
   name: string;
@@ -69,6 +70,7 @@ export default function StoresManagement() {
   const deleteStore = useDeleteStore();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [formData, setFormData] = useState<StoreFormData>(defaultFormData);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -265,15 +267,45 @@ export default function StoresManagement() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image_url">Image URL</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, image_url: e.target.value })
-                }
-                placeholder="https://..."
-              />
+              <Label>Store Image</Label>
+              {formData.image_url ? (
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
+                  <img
+                    src={formData.image_url}
+                    alt="Store"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8"
+                    onClick={() => setFormData({ ...formData, image_url: "" })}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsImagePickerOpen(true)}
+                  className="w-full aspect-video rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors bg-muted/50"
+                >
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Click to select image</span>
+                </button>
+              )}
+              {formData.image_url && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsImagePickerOpen(true)}
+                  className="w-full"
+                >
+                  Change Image
+                </Button>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="map_url">Google Maps URL</Label>
@@ -351,6 +383,14 @@ export default function StoresManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Picker Dialog */}
+      <ImagePickerDialog
+        open={isImagePickerOpen}
+        onOpenChange={setIsImagePickerOpen}
+        onSelect={(url) => setFormData({ ...formData, image_url: url })}
+        currentImage={formData.image_url}
+      />
     </div>
   );
 }
