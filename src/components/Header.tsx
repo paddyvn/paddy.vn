@@ -133,7 +133,7 @@ export const Header = () => {
             />
 
             {/* Profile - positioned independently on mobile */}
-            <div className="md:hidden absolute right-12">
+            <div className="md:hidden absolute right-10">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-1 text-primary-foreground">
