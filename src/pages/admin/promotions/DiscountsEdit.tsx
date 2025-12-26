@@ -73,15 +73,29 @@ export default function DiscountsEdit() {
     enabled: !isNew && !!id,
   });
 
-  const { data: existingProducts = [] } = useQuery({
+  const { data: existingProductData = { productIds: [], settings: [] } } = useQuery({
     queryKey: ["promotion-products", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("promotion_products")
-        .select("product_id")
+        .select("product_id, variant_id, discount_type, discount_value, stock_limit, purchase_limit, is_enabled")
         .eq("promotion_id", id);
       if (error) throw error;
-      return data.map((d) => d.product_id);
+      
+      const productIds = [...new Set(data.map((d) => d.product_id))];
+      const settings: ProductDiscountSetting[] = data
+        .filter(d => d.variant_id)
+        .map(d => ({
+          productId: d.product_id,
+          variantId: d.variant_id!,
+          discountType: (d.discount_type as "percentage" | "fixed_amount" | "special_price") || "percentage",
+          discountValue: d.discount_value || 0,
+          isEnabled: d.is_enabled ?? true,
+          stockLimit: d.stock_limit ?? undefined,
+          purchaseLimit: d.purchase_limit ?? undefined,
+        }));
+      
+      return { productIds, settings };
     },
     enabled: !isNew && !!id,
   });
@@ -107,14 +121,15 @@ export default function DiscountsEdit() {
   }, [promotion]);
 
   useEffect(() => {
-    if (existingCollections.length > 0 || existingProducts.length > 0) {
+    if (existingCollections.length > 0 || existingProductData.productIds.length > 0) {
       setFormData((prev) => ({
         ...prev,
         selectedCollections: existingCollections,
-        selectedProducts: existingProducts,
+        selectedProducts: existingProductData.productIds,
+        productSettings: existingProductData.settings,
       }));
     }
-  }, [existingCollections, existingProducts]);
+  }, [existingCollections, existingProductData]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: DiscountsFormData) => {
@@ -163,10 +178,45 @@ export default function DiscountsEdit() {
         );
       }
 
+      // Insert product settings with variant-level discounts
       if (data.selectedProducts.length > 0) {
-        await supabase.from("promotion_products").insert(
-          data.selectedProducts.map((pid) => ({ promotion_id: promotionId, product_id: pid }))
-        );
+        // Group settings by product
+        const productSettingsMap = new Map<string, ProductDiscountSetting[]>();
+        data.productSettings.forEach(setting => {
+          const existing = productSettingsMap.get(setting.productId) || [];
+          existing.push(setting);
+          productSettingsMap.set(setting.productId, existing);
+        });
+
+        const insertData = data.selectedProducts.flatMap((productId) => {
+          const settings = productSettingsMap.get(productId) || [];
+          if (settings.length > 0) {
+            // Insert each variant setting
+            return settings.map(setting => ({
+              promotion_id: promotionId,
+              product_id: productId,
+              variant_id: setting.variantId,
+              discount_type: setting.discountType,
+              discount_value: setting.discountValue,
+              stock_limit: setting.stockLimit ?? null,
+              purchase_limit: setting.purchaseLimit ?? null,
+              is_enabled: setting.isEnabled,
+            }));
+          } else {
+            // Insert product without variant settings (for backward compatibility)
+            return [{
+              promotion_id: promotionId,
+              product_id: productId,
+              variant_id: null,
+              discount_type: data.discount_type,
+              discount_value: data.discount_value,
+              is_enabled: true,
+            }];
+          }
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await supabase.from("promotion_products").insert(insertData as any);
       }
     },
     onSuccess: () => {

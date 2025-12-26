@@ -11,6 +11,10 @@ export interface ProductPromotion {
   gradient_to: string | null;
   start_date: string | null;
   end_date: string | null;
+  // New discount fields
+  discount_type: "percentage" | "fixed_amount" | "special_price" | null;
+  discount_value: number | null;
+  is_enabled: boolean;
 }
 
 // Fetch active promotions for a single product
@@ -27,6 +31,10 @@ export const useProductPromotion = (productId: string | undefined) => {
         .select(`
           promotion_id,
           product_id,
+          variant_id,
+          discount_type,
+          discount_value,
+          is_enabled,
           promotions!inner (
             id,
             title,
@@ -45,12 +53,13 @@ export const useProductPromotion = (productId: string | undefined) => {
       if (error) throw error;
       if (!data || data.length === 0) return null;
 
-      // Filter for promotions that are currently active (within date range)
+      // Filter for promotions that are currently active (within date range) and enabled
       const activePromos = data.filter((item: any) => {
         const promo = item.promotions;
         const startOk = !promo.start_date || new Date(promo.start_date) <= new Date();
         const endOk = !promo.end_date || new Date(promo.end_date) >= new Date();
-        return startOk && endOk;
+        const isEnabled = item.is_enabled !== false;
+        return startOk && endOk && isEnabled;
       });
 
       if (activePromos.length === 0) return null;
@@ -58,6 +67,15 @@ export const useProductPromotion = (productId: string | undefined) => {
       // Prioritize flash_sale over other types
       const flashSale = activePromos.find((p: any) => p.promotions.promo_type === "flash_sale");
       const promo = flashSale || activePromos[0];
+
+      // Get the highest discount value if there are multiple variants
+      const maxDiscountItem = activePromos.reduce((max: any, current: any) => {
+        if (!max) return current;
+        if ((current.discount_value || 0) > (max.discount_value || 0)) {
+          return current;
+        }
+        return max;
+      }, null);
 
       return {
         promotion_id: promo.promotion_id,
@@ -69,6 +87,9 @@ export const useProductPromotion = (productId: string | undefined) => {
         gradient_to: promo.promotions.gradient_to,
         start_date: promo.promotions.start_date,
         end_date: promo.promotions.end_date,
+        discount_type: maxDiscountItem?.discount_type || null,
+        discount_value: maxDiscountItem?.discount_value || null,
+        is_enabled: maxDiscountItem?.is_enabled ?? true,
       } as ProductPromotion;
     },
     enabled: !!productId,
@@ -87,6 +108,10 @@ export const useProductsPromotions = (productIds: string[]) => {
         .select(`
           promotion_id,
           product_id,
+          variant_id,
+          discount_type,
+          discount_value,
+          is_enabled,
           promotions!inner (
             id,
             title,
@@ -105,20 +130,24 @@ export const useProductsPromotions = (productIds: string[]) => {
       if (error) throw error;
       if (!data) return {};
 
-      // Build a map of product_id -> promotion
+      // Build a map of product_id -> promotion with discount info
       const promotionsMap: Record<string, ProductPromotion> = {};
 
       data.forEach((item: any) => {
         const promo = item.promotions;
         const startOk = !promo.start_date || new Date(promo.start_date) <= new Date();
         const endOk = !promo.end_date || new Date(promo.end_date) >= new Date();
+        const isEnabled = item.is_enabled !== false;
         
-        if (!startOk || !endOk) return;
+        if (!startOk || !endOk || !isEnabled) return;
 
         const productId = item.product_id;
         
-        // If already have a promotion, prioritize flash_sale
+        // If already have a promotion, prioritize flash_sale or higher discount
         if (promotionsMap[productId]) {
+          const existingDiscount = promotionsMap[productId].discount_value || 0;
+          const newDiscount = item.discount_value || 0;
+          
           if (promo.promo_type === "flash_sale" && promotionsMap[productId].promo_type !== "flash_sale") {
             promotionsMap[productId] = {
               promotion_id: item.promotion_id,
@@ -130,7 +159,14 @@ export const useProductsPromotions = (productIds: string[]) => {
               gradient_to: promo.gradient_to,
               start_date: promo.start_date,
               end_date: promo.end_date,
+              discount_type: item.discount_type,
+              discount_value: item.discount_value,
+              is_enabled: item.is_enabled ?? true,
             };
+          } else if (newDiscount > existingDiscount) {
+            // Use higher discount value
+            promotionsMap[productId].discount_type = item.discount_type;
+            promotionsMap[productId].discount_value = item.discount_value;
           }
         } else {
           promotionsMap[productId] = {
@@ -143,6 +179,9 @@ export const useProductsPromotions = (productIds: string[]) => {
             gradient_to: promo.gradient_to,
             start_date: promo.start_date,
             end_date: promo.end_date,
+            discount_type: item.discount_type,
+            discount_value: item.discount_value,
+            is_enabled: item.is_enabled ?? true,
           };
         }
       });

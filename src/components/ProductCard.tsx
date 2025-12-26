@@ -96,12 +96,33 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
     return primary?.image_url || images[0]?.image_url;
   };
 
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
-  // Show "Sale" badge if product has a promotion OR has a compare_at_price discount
-  const showSaleBadge = promotion || hasDiscount;
-  const discountPercentage = hasDiscount 
-    ? Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100)
-    : 0;
+  // Calculate discount from promotion or compare_at_price
+  const hasCompareAtDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
+  const hasPromotionDiscount = promotion?.discount_value && promotion.discount_value > 0;
+  const showSaleBadge = hasPromotionDiscount || hasCompareAtDiscount;
+
+  // Calculate discounted price and percentage
+  let displayPrice = product.base_price;
+  let originalPrice = product.base_price;
+  let discountPercentage = 0;
+
+  if (hasPromotionDiscount && promotion) {
+    originalPrice = product.base_price;
+    if (promotion.discount_type === "percentage") {
+      displayPrice = product.base_price * (1 - promotion.discount_value! / 100);
+      discountPercentage = Math.round(promotion.discount_value!);
+    } else if (promotion.discount_type === "fixed_amount") {
+      displayPrice = Math.max(0, product.base_price - promotion.discount_value!);
+      discountPercentage = Math.round((promotion.discount_value! / product.base_price) * 100);
+    } else if (promotion.discount_type === "special_price") {
+      displayPrice = promotion.discount_value!;
+      discountPercentage = Math.round(((product.base_price - promotion.discount_value!) / product.base_price) * 100);
+    }
+  } else if (hasCompareAtDiscount) {
+    originalPrice = product.compare_at_price!;
+    displayPrice = product.base_price;
+    discountPercentage = Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100);
+  }
   const petTypes = getPetTypes(product.pet_type);
 
   return (
@@ -177,16 +198,16 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
 
           <div className="flex items-end justify-between mt-auto">
             <div className="flex flex-col items-start">
-              {hasDiscount && (
+              {showSaleBadge && discountPercentage > 0 && (
                 <span className="text-sm text-muted-foreground line-through">
-                  {formatPrice(product.compare_at_price!)}₫
+                  {formatPrice(originalPrice)}₫
                 </span>
               )}
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold text-primary">
-                  {formatPrice(product.base_price)}₫
+                  {formatPrice(displayPrice)}₫
                 </span>
-                {hasDiscount && (
+                {showSaleBadge && discountPercentage > 0 && (
                   <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
                     -{discountPercentage}%
                   </Badge>

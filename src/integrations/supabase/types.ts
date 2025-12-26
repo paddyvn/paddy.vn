@@ -2156,21 +2156,39 @@ export type Database = {
       promotion_products: {
         Row: {
           created_at: string | null
+          discount_type: string | null
+          discount_value: number | null
           id: string
+          is_enabled: boolean | null
           product_id: string
           promotion_id: string
+          purchase_limit: number | null
+          stock_limit: number | null
+          variant_id: string | null
         }
         Insert: {
           created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           id?: string
+          is_enabled?: boolean | null
           product_id: string
           promotion_id: string
+          purchase_limit?: number | null
+          stock_limit?: number | null
+          variant_id?: string | null
         }
         Update: {
           created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           id?: string
+          is_enabled?: boolean | null
           product_id?: string
           promotion_id?: string
+          purchase_limit?: number | null
+          stock_limit?: number | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -2185,6 +2203,13 @@ export type Database = {
             columns: ["promotion_id"]
             isOneToOne: false
             referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_products_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
