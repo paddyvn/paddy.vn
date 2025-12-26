@@ -131,29 +131,15 @@ export function DealCardAppearanceCard({
               background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
             }}
           >
-            {/* Show custom images or selected icons */}
-            {useCustomIcons ? (
-              customIcons.map((icon) => (
-                <img 
-                  key={icon.position}
-                  src={icon.url} 
-                  alt={`${icon.position} icon`} 
-                  className={`absolute w-12 h-12 object-contain opacity-30 ${positionStyles[icon.position]}`}
-                />
-              ))
-            ) : (
-              (() => {
-                const selected = iconOptions.find((opt) => opt.value === iconType);
-                if (!selected) return null;
-                const { TopIcon, BottomIcon } = selected;
-                return (
-                  <>
-                    <TopIcon className="absolute -top-2 -right-2 w-12 h-12 text-white/20 rotate-12" />
-                    <BottomIcon className="absolute -bottom-2 -left-2 w-10 h-10 text-white/15 -rotate-12" />
-                  </>
-                );
-              })()
-            )}
+            {/* Show custom images only when added */}
+            {customIcons.map((icon) => (
+              <img 
+                key={icon.position}
+                src={icon.url} 
+                alt={`${icon.position} icon`} 
+                className={`absolute w-12 h-12 object-contain opacity-30 ${positionStyles[icon.position]}`}
+              />
+            ))}
             <div className="relative z-10 h-full flex flex-col items-center justify-center p-3 text-center">
               <p className="text-white text-sm font-bold drop-shadow-md">{title || "Flash Sale"}</p>
               <p className="text-white/90 text-xs mt-1 drop-shadow-md">{subtitle || "50% OFF"}</p>
