@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, PawPrint, ShoppingCart, Loader2 } from "lucide-react";
+import { Heart, PawPrint, ShoppingCart, Loader2, Ticket } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QuickAddToCartDialog } from "./QuickAddToCartDialog";
 
 import { ProductPromotion } from "@/hooks/useProductPromotions";
+import { ProductVoucher } from "@/hooks/useProductVouchers";
 
 interface ProductCardProps {
   product: {
@@ -29,6 +30,7 @@ interface ProductCardProps {
     reviews?: Array<{ rating: number }>;
   };
   promotion?: ProductPromotion | null;
+  vouchers?: ProductVoucher[];
 }
 
 const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
@@ -53,7 +55,7 @@ const getPetTypes = (petType: string | null | undefined): ('dog' | 'cat')[] => {
   return types;
 };
 
-export const ProductCard = ({ product, promotion }: ProductCardProps) => {
+export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | undefined>();
@@ -196,7 +198,7 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
             </span>
           </div>
 
-          <div className="flex items-end justify-between mt-auto">
+          <div className="flex items-end justify-between">
             <div className="flex flex-col items-start">
               {showSaleBadge && discountPercentage > 0 && (
                 <span className="text-sm text-muted-foreground line-through">
@@ -227,6 +229,36 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
               )}
             </Button>
           </div>
+
+          {/* Applicable vouchers */}
+          {vouchers.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-dashed">
+              {vouchers.slice(0, 2).map((voucher) => (
+                <div
+                  key={voucher.id}
+                  className="flex items-center gap-1 px-2 py-1 bg-destructive/10 rounded text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Ticket className="h-3 w-3 text-destructive" />
+                  <span className="text-destructive font-medium">
+                    {voucher.discount_type === "percentage"
+                      ? `-${voucher.discount_value}%`
+                      : `-${formatPrice(voucher.discount_value || 0)}₫`}
+                  </span>
+                  {voucher.voucher_code && (
+                    <span className="text-muted-foreground font-mono text-[10px]">
+                      {voucher.voucher_code}
+                    </span>
+                  )}
+                </div>
+              ))}
+              {vouchers.length > 2 && (
+                <span className="text-xs text-muted-foreground self-center">
+                  +{vouchers.length - 2}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
 
