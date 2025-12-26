@@ -115,14 +115,14 @@ export const Header = () => {
       {/* Top Header Bar */}
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between gap-6">
+          <div className="flex h-16 items-center justify-between gap-6 relative">
             {/* Mobile Menu Button - in blue bar */}
             <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/90">
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Logo - offset to left on mobile to balance with right icons */}
-            <a href="/" className="flex-shrink-0 absolute left-[38%] -translate-x-1/2 md:static md:translate-x-0">
+            {/* Logo - centered on mobile */}
+            <a href="/" className="flex-shrink-0 absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
               <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto brightness-0 invert" />
             </a>
 
@@ -132,8 +132,8 @@ export const Header = () => {
               inputClassName="w-full pr-12 h-11 bg-background text-foreground rounded-md"
             />
 
-            {/* Right Actions - pushed to edge */}
-            <div className="flex items-center gap-3 md:gap-1">
+            {/* Right Actions - at far right edge on mobile */}
+            <div className="flex items-center gap-4 md:gap-1 absolute right-0 md:static">
               <Button 
                 variant="ghost" 
                 className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
