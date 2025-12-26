@@ -12,9 +12,11 @@ import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/Pro
 import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
 import { SimpleProductPicker, ProductDiscountSetting } from "@/components/admin/SimpleProductPicker";
 
+type VoucherType = "shop_wide" | "product" | "private" | "livestream" | "video" | "new_customer" | "returning_customer";
+
 type VouchersFormData = BasePromotionFormData & {
   voucher_code: string;
-  voucher_type: "public" | "private" | "influencer";
+  voucher_type: VoucherType;
   usage_limit: number | null;
   one_per_customer: boolean;
   discount_percentage: number;
@@ -35,7 +37,7 @@ const getDefaultFormData = (): VouchersFormData => ({
   selectedCollections: [],
   selectedProducts: [],
   voucher_code: "",
-  voucher_type: "public",
+  voucher_type: "shop_wide",
   usage_limit: null,
   one_per_customer: true,
   discount_percentage: 10,
@@ -316,10 +318,10 @@ export default function VouchersEdit() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Voucher Type</Label>
+                <Label>Loại Voucher</Label>
                 <Select
                   value={formData.voucher_type}
-                  onValueChange={(value: "public" | "private" | "influencer") =>
+                  onValueChange={(value: VoucherType) =>
                     setFormData({ ...formData, voucher_type: value })
                   }
                 >
@@ -327,9 +329,13 @@ export default function VouchersEdit() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                    <SelectItem value="influencer">Influencer</SelectItem>
+                    <SelectItem value="shop_wide">Voucher toàn Shop</SelectItem>
+                    <SelectItem value="product">Voucher sản phẩm</SelectItem>
+                    <SelectItem value="private">Voucher riêng tư</SelectItem>
+                    <SelectItem value="livestream">Voucher Livestream</SelectItem>
+                    <SelectItem value="video">Voucher Video</SelectItem>
+                    <SelectItem value="new_customer">Voucher Khách hàng mới</SelectItem>
+                    <SelectItem value="returning_customer">Voucher Khách hàng mua lại</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
