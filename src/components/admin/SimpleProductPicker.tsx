@@ -101,13 +101,20 @@ export function SimpleProductPicker({
   const [batchPurchaseLimitValue, setBatchPurchaseLimitValue] = useState<string>("");
   const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
 
-  // Fetch products with images and variants
+  // Fetch products with images and variants (server-filtered to avoid missing items due to large catalogs)
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["simple-product-picker-products-with-variants"],
+    queryKey: [
+      "simple-product-picker-products-with-variants",
+      search,
+      typeFilter,
+      brandFilter,
+      collectionFilter,
+    ],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
-        .select(`
+        .select(
+          `
           id, 
           name, 
           slug,
@@ -117,12 +124,32 @@ export function SimpleProductPicker({
           product_images(image_url, is_primary),
           product_variants(id, name, price, stock_quantity, option1, option2, option3),
           product_collections(collection_id)
-        `)
-        .eq("is_active", true)
-        .order("name")
-        .limit(5000);
+        `,
+        )
+        .eq("is_active", true);
+
+      if (search.trim()) {
+        // Search by name or slug
+        query = query.or(`name.ilike.%${search.trim()}%,slug.ilike.%${search.trim()}%`);
+      }
+
+      if (typeFilter !== "all") {
+        query = query.eq("product_type", typeFilter);
+      }
+
+      if (brandFilter !== "all") {
+        query = query.eq("brand", brandFilter);
+      }
+
+      // Filter by collection (via embedded relationship)
+      if (collectionFilter !== "all") {
+        query = query.eq("product_collections.collection_id", collectionFilter);
+      }
+
+      const { data, error } = await query.order("name").limit(5000);
       if (error) throw error;
-      return data.map((p): ProductWithDetails => ({
+
+      return (data || []).map((p): ProductWithDetails => ({
         id: p.id,
         name: p.name,
         slug: p.slug,
@@ -132,8 +159,13 @@ export function SimpleProductPicker({
         image_url:
           p.product_images?.find((img: { is_primary: boolean }) => img.is_primary)?.image_url ||
           p.product_images?.[0]?.image_url,
-        collectionIds: p.product_collections?.map((pc: { collection_id: string }) => pc.collection_id) || [],
-        totalStock: p.product_variants?.reduce((sum: number, v: { stock_quantity: number | null }) => sum + (v.stock_quantity || 0), 0) || 0,
+        collectionIds:
+          p.product_collections?.map((pc: { collection_id: string }) => pc.collection_id) || [],
+        totalStock:
+          p.product_variants?.reduce(
+            (sum: number, v: { stock_quantity: number | null }) => sum + (v.stock_quantity || 0),
+            0,
+          ) || 0,
         variants: p.product_variants || [],
       }));
     },
