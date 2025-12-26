@@ -375,7 +375,7 @@ export default function VouchersEdit() {
                     value={formData.discount_type}
                     onValueChange={(value: DiscountType) => setFormData({ ...formData, discount_type: value })}
                   >
-                    <SelectTrigger className="w-[140px] rounded-r-none border-r-0">
+                    <SelectTrigger className="w-[140px] rounded-r-none border-r-0 focus:ring-0 focus:ring-offset-0">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
