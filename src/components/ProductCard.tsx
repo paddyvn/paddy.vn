@@ -204,7 +204,7 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
                 </span>
               )}
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-primary">
+                <span className="text-base font-bold text-primary">
                   {formatPrice(displayPrice)}₫
                 </span>
                 {showSaleBadge && discountPercentage > 0 && (
