@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { MapPin, Clock, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,9 +62,24 @@ export const StoreLocations = () => {
                 <h3 className="font-semibold text-lg text-foreground mb-2">
                   {store.name}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4 flex-1">
+                <p className="text-sm text-muted-foreground mb-2">
                   {store.address}
                 </p>
+                {store.opening_hours && (
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    <span>{store.opening_hours}</span>
+                  </div>
+                )}
+                {store.phone && (
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
+                    <Phone className="h-3.5 w-3.5 text-primary" />
+                    <a href={`tel:${store.phone}`} className="hover:text-primary transition-colors">
+                      {store.phone}
+                    </a>
+                  </div>
+                )}
+                <div className="flex-1" />
                 {store.map_url && (
                   <Button asChild className="self-start">
                     <a href={store.map_url} target="_blank" rel="noopener noreferrer">
