@@ -375,17 +375,33 @@ export default function VouchersEdit() {
         </CardContent>
       </Card>
 
-      {/* Product Picker */}
-      <SimpleProductPicker
-        selectedProductIds={formData.selectedProducts}
-        onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
-        productSettings={formData.productSettings}
-        onProductSettingsChange={(settings) => setFormData((prev) => ({ ...prev, productSettings: settings }))}
-        discountType="percentage"
-        discountValue={formData.discount_percentage}
-        title="Sản phẩm áp dụng"
-        showDiscountSettings={true}
-      />
+      {/* Product Picker - only show for product-specific vouchers */}
+      {formData.voucher_type === "product" ? (
+        <SimpleProductPicker
+          selectedProductIds={formData.selectedProducts}
+          onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
+          productSettings={formData.productSettings}
+          onProductSettingsChange={(settings) => setFormData((prev) => ({ ...prev, productSettings: settings }))}
+          discountType="percentage"
+          discountValue={formData.discount_percentage}
+          title="Sản phẩm áp dụng"
+          showDiscountSettings={true}
+        />
+      ) : (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-semibold mb-2">Sản phẩm được áp dụng</h3>
+            <p className="text-muted-foreground">
+              {formData.voucher_type === "shop_wide" && "Tất cả sản phẩm - Voucher áp dụng cho toàn bộ sản phẩm trong Shop"}
+              {formData.voucher_type === "private" && "Voucher riêng tư - Chỉ chia sẻ qua mã voucher"}
+              {formData.voucher_type === "livestream" && "Voucher Livestream - Áp dụng trong các buổi livestream"}
+              {formData.voucher_type === "video" && "Voucher Video - Áp dụng qua video quảng cáo"}
+              {formData.voucher_type === "new_customer" && "Voucher Khách hàng mới - Chỉ áp dụng cho khách hàng mới"}
+              {formData.voucher_type === "returning_customer" && "Voucher Khách hàng mua lại - Chỉ áp dụng cho khách hàng đã mua hàng"}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </PromotionFormBase>
   );
 }
