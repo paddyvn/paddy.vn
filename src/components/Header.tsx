@@ -136,13 +136,10 @@ export const Header = () => {
             <div className="md:hidden absolute right-8">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
-                  >
-                    <User className="h-4 w-4" />
+                  <button className="flex items-center gap-1 text-primary-foreground">
+                    <User className="h-5 w-5" />
                     <ChevronDown className="h-4 w-4" />
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-background">
                   {userId ? (
