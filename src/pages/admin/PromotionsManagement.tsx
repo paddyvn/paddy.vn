@@ -284,6 +284,19 @@ export default function PromotionsManagement() {
                     )}
                     <TableCell>
                       {(() => {
+                        // For vouchers, use discount from promotions table
+                        const promoData = promo as unknown as Record<string, unknown>;
+                        if (promo.program_kind === "voucher") {
+                          const discountValue = promoData.discount_value as number;
+                          const discountType = promoData.discount_type as string;
+                          if (!discountValue) return <span className="text-muted-foreground">—</span>;
+                          if (discountType === "percentage") {
+                            return <span className="font-medium">{discountValue}%</span>;
+                          } else {
+                            return <span className="font-medium">-{new Intl.NumberFormat("vi-VN").format(discountValue)}₫</span>;
+                          }
+                        }
+                        // For other promos, use promotion_products
                         const products = promo.promotion_products || [];
                         if (products.length === 0) return <span className="text-muted-foreground">—</span>;
                         const maxDiscount = Math.max(...products.map((pp: any) => pp.discount_value || 0));
@@ -298,9 +311,21 @@ export default function PromotionsManagement() {
                       })()}
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">
-                        {(promo.promotion_products || []).length}
-                      </span>
+                      {(() => {
+                        // For vouchers, show "All" if shop-wide, otherwise show product count
+                        const promoData = promo as unknown as Record<string, unknown>;
+                        if (promo.program_kind === "voucher") {
+                          const voucherType = promoData.voucher_type as string;
+                          if (voucherType === "shop_wide") {
+                            return <span className="text-muted-foreground">Tất cả</span>;
+                          }
+                        }
+                        return (
+                          <span className="font-medium">
+                            {(promo.promotion_products || []).length}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
