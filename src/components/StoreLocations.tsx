@@ -45,7 +45,7 @@ export const StoreLocations = () => {
               key={store.id} 
               className="group overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300"
             >
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
+              <div className="aspect-[16/9] overflow-hidden bg-muted">
                 {store.image_url ? (
                   <img
                     src={store.image_url}
