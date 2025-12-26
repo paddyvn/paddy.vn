@@ -267,6 +267,9 @@ export default function VouchersEdit() {
       isLoading={!isNew && isLoading}
       backUrl="/admin/promotions/vouchers"
       hideAppliesTo={true}
+      appliesSummary={formData.voucher_type === "product" 
+        ? `${formData.selectedProducts.length} sản phẩm` 
+        : "Tất cả sản phẩm"}
       summaryExtra={
         <>
           <div>
