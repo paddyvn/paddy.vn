@@ -41,7 +41,8 @@ import {
   XCircle,
   Loader2,
   PawPrint,
-  CalendarIcon
+  CalendarIcon,
+  Ticket
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -125,13 +126,14 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; icon: a
 
 const ORDER_STEPS: OrderStatus[] = ["pending", "processing", "confirmed", "shipped", "delivered"];
 
-type MenuSection = "profile" | "boss" | "addresses" | "orders" | "wishlist";
+type MenuSection = "profile" | "boss" | "addresses" | "orders" | "vouchers" | "wishlist";
 
 const menuItems: { key: MenuSection; label: string; icon: React.ElementType }[] = [
   { key: "profile", label: "Sen", icon: User },
   { key: "boss", label: "Boss", icon: PawPrint },
   { key: "addresses", label: "Sổ địa chỉ", icon: MapPin },
   { key: "orders", label: "Đơn hàng của tôi", icon: Package },
+  { key: "vouchers", label: "Mã giảm giá của tôi", icon: Ticket },
   { key: "wishlist", label: "Sản phẩm yêu thích", icon: Heart },
 ];
 
@@ -240,6 +242,34 @@ const Profile = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Pet[];
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch user saved vouchers with full voucher details
+  const { data: savedVouchers, isLoading: savedVouchersLoading } = useQuery({
+    queryKey: ["saved-vouchers-full", userId],
+    queryFn: async () => {
+      // First get saved voucher IDs
+      const { data: savedData, error: savedError } = await supabase
+        .from("user_saved_vouchers")
+        .select("promotion_id")
+        .eq("user_id", userId!);
+
+      if (savedError) throw savedError;
+      if (!savedData || savedData.length === 0) return [];
+
+      const promotionIds = savedData.map((d) => d.promotion_id);
+
+      // Then fetch the voucher details
+      const { data: vouchers, error: vouchersError } = await supabase
+        .from("promotions")
+        .select("*")
+        .in("id", promotionIds)
+        .eq("program_kind", "voucher");
+
+      if (vouchersError) throw vouchersError;
+      return vouchers || [];
     },
     enabled: !!userId,
   });
@@ -1371,6 +1401,122 @@ const Profile = () => {
                       </p>
                       <Button onClick={() => navigate("/")} size="sm">
                         Mua sắm ngay
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Vouchers Section */}
+            {activeSection === "vouchers" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mã giảm giá của tôi</CardTitle>
+                  <CardDescription>Các mã giảm giá bạn đã lưu</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {savedVouchersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : savedVouchers && savedVouchers.length > 0 ? (
+                    <div className="space-y-4">
+                      {savedVouchers.map((voucher: any) => {
+                        const discountType = voucher.discount_type || "percentage";
+                        const discountValue = voucher.discount_value || 0;
+                        const minOrderValue = voucher.min_order_value || 0;
+                        const maxDiscount = voucher.max_discount;
+                        const usageLimit = voucher.usage_limit || 0;
+                        const usedCount = voucher.used_count || 0;
+                        const usagePercent = usageLimit > 0 ? Math.min(100, Math.round((usedCount / usageLimit) * 100)) : 0;
+                        const remaining = usageLimit > 0 ? usageLimit - usedCount : null;
+                        
+                        const now = new Date();
+                        const endDate = voucher.end_date ? new Date(voucher.end_date) : null;
+                        const isExpired = endDate && endDate < now;
+                        const isFullyUsed = usageLimit > 0 && usedCount >= usageLimit;
+                        const isAvailable = voucher.is_active && !isExpired && !isFullyUsed;
+
+                        const getDiscountText = () => {
+                          if (discountType === "percentage") {
+                            return `Giảm ${discountValue}%`;
+                          } else {
+                            return `Giảm ${formatPrice(discountValue)}đ`;
+                          }
+                        };
+
+                        const getConditionText = () => {
+                          const conditions: string[] = [];
+                          if (minOrderValue > 0) {
+                            conditions.push(`Đơn tối thiểu ${formatPrice(minOrderValue)}đ`);
+                          }
+                          if (maxDiscount && discountType === "percentage") {
+                            conditions.push(`Giảm tối đa ${formatPrice(maxDiscount)}đ`);
+                          }
+                          return conditions.length > 0 ? conditions.join(" · ") : "Áp dụng cho tất cả sản phẩm";
+                        };
+
+                        return (
+                          <div
+                            key={voucher.id}
+                            className={cn(
+                              "relative border rounded-lg p-4 transition-colors",
+                              isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
+                            )}
+                          >
+                            {/* Ticket notch design */}
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
+                            
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 pl-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3 className="text-lg font-bold text-destructive">
+                                    {getDiscountText()}
+                                  </h3>
+                                  {!isAvailable && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {isExpired ? "Hết hạn" : isFullyUsed ? "Hết lượt" : "Không khả dụng"}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {getConditionText()}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                  {voucher.voucher_code && (
+                                    <Badge variant="secondary" className="font-mono text-xs">
+                                      {voucher.voucher_code}
+                                    </Badge>
+                                  )}
+                                  {endDate && (
+                                    <span className="text-xs text-muted-foreground">
+                                      HSD: {format(endDate, "dd/MM/yyyy")}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="text-right pr-2">
+                                {remaining !== null && (
+                                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                    Còn {remaining} lượt
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Chưa có mã giảm giá nào</p>
+                      <p className="text-sm mb-4">Lưu mã giảm giá từ trang chủ để sử dụng</p>
+                      <Button onClick={() => navigate("/")} size="sm">
+                        Khám phá mã giảm giá
                       </Button>
                     </div>
                   )}
