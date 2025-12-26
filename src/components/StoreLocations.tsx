@@ -43,7 +43,7 @@ export const StoreLocations = () => {
           {stores.map((store) => (
             <Card 
               key={store.id} 
-              className="group overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300"
+              className="group overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300 flex flex-col"
             >
               <div className="aspect-[16/9] overflow-hidden bg-muted">
                 {store.image_url ? (
@@ -58,15 +58,15 @@ export const StoreLocations = () => {
                   </div>
                 )}
               </div>
-              <CardContent className="p-4">
+              <CardContent className="p-4 flex flex-col flex-1">
                 <h3 className="font-semibold text-lg text-foreground mb-2">
                   {store.name}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4 min-h-[3rem]">
+                <p className="text-sm text-muted-foreground mb-4 flex-1">
                   {store.address}
                 </p>
                 {store.map_url && (
-                  <Button asChild>
+                  <Button asChild className="self-start">
                     <a href={store.map_url} target="_blank" rel="noopener noreferrer">
                       Chỉ Đường
                     </a>
