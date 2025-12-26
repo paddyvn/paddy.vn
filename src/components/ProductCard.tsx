@@ -97,6 +97,8 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
   };
 
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
+  // Show "Sale" badge if product has a promotion OR has a compare_at_price discount
+  const showSaleBadge = promotion || hasDiscount;
   const discountPercentage = hasDiscount 
     ? Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100)
     : 0;
@@ -116,31 +118,18 @@ export const ProductCard = ({ product, promotion }: ProductCardProps) => {
               className="w-full h-full object-cover transition-smooth group-hover:scale-110"
             />
             
-            {/* Priority: Promotion > Featured > Sale */}
-            {promotion ? (
+            {/* Show Sale badge for products with promotion or discount */}
+            {showSaleBadge ? (
               <Badge 
-                className="absolute top-3 left-3 text-white hover:opacity-90"
-                style={{
-                  background: promotion.gradient_from && promotion.gradient_to
-                    ? `linear-gradient(135deg, ${promotion.gradient_from}, ${promotion.gradient_to})`
-                    : promotion.promo_type === 'flash_sale' 
-                      ? 'linear-gradient(135deg, #ef4444, #f97316)'
-                      : 'linear-gradient(135deg, #3b82f6, #8b5cf6)'
-                }}
+                className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
               >
-                {promotion.title}
+                Sale
               </Badge>
             ) : product.is_featured ? (
               <Badge 
                 className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
               >
                 Featured
-              </Badge>
-            ) : hasDiscount ? (
-              <Badge 
-                className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
-              >
-                Sale
               </Badge>
             ) : null}
             
