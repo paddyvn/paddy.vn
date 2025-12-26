@@ -107,6 +107,33 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
             </div>
           </div>
 
+          {/* Paddy Pet Shop */}
+          <div>
+            <h3 className="font-bold text-lg mb-4">Paddy Pet Shop</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/pages/gioi-thieu" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                  Giới Thiệu
+                </Link>
+              </li>
+              <li>
+                <Link to="/auth" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                  Thành Viên Paddier
+                </Link>
+              </li>
+              <li>
+                <Link to="/pages/dieu-khoan-su-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                  Điều Khoản Sử Dụng
+                </Link>
+              </li>
+              <li>
+                <Link to="/pages/tuyen-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                  Tuyển Dụng
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Shop */}
           <div>
             <h3 className="font-bold text-lg mb-4">Shop</h3>
@@ -134,33 +161,6 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
               <li>
                 <Link to="/collections" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Bộ Sưu Tập
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Paddy Pet Shop */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Paddy Pet Shop</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/pages/gioi-thieu" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Giới Thiệu
-                </Link>
-              </li>
-              <li>
-                <Link to="/auth" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Thành Viên Paddier
-                </Link>
-              </li>
-              <li>
-                <Link to="/pages/dieu-khoan-su-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Điều Khoản Sử Dụng
-                </Link>
-              </li>
-              <li>
-                <Link to="/pages/tuyen-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Tuyển Dụng
                 </Link>
               </li>
             </ul>
