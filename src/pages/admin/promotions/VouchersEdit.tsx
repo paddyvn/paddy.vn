@@ -3,14 +3,21 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
 import { SimpleProductPicker, ProductDiscountSetting } from "@/components/admin/SimpleProductPicker";
+import { cn } from "@/lib/utils";
 
 type VoucherType = "shop_wide" | "product" | "private" | "livestream" | "video" | "new_customer" | "returning_customer";
 
@@ -26,6 +33,8 @@ type VouchersFormData = BasePromotionFormData & {
   custom_icons: CustomIcon[];
   productSettings: ProductDiscountSetting[];
   applies_to_all_products: boolean;
+  allow_save_before_usage: boolean;
+  save_start_date: Date | null;
 };
 
 const getDefaultFormData = (): VouchersFormData => ({
@@ -48,6 +57,8 @@ const getDefaultFormData = (): VouchersFormData => ({
   custom_icons: [],
   productSettings: [],
   applies_to_all_products: true,
+  allow_save_before_usage: false,
+  save_start_date: null,
 });
 
 export default function VouchersEdit() {
@@ -377,6 +388,80 @@ export default function VouchersEdit() {
                 checked={formData.one_per_customer}
                 onCheckedChange={(checked) => setFormData({ ...formData, one_per_customer: checked })}
               />
+            </div>
+            {/* Allow save before usage toggle */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="allow-save"
+                  checked={formData.allow_save_before_usage}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ 
+                    ...prev, 
+                    allow_save_before_usage: checked === true,
+                    save_start_date: checked ? prev.save_start_date : null 
+                  }))}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="allow-save" className="cursor-pointer">
+                    Cho phép lưu mã trước Thời gian sử dụng
+                  </Label>
+                </div>
+              </div>
+              
+              {formData.allow_save_before_usage && (
+                <div className="ml-6 space-y-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.save_start_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.save_start_date ? format(formData.save_start_date, "HH:mm dd-MM-yyyy") : "Chọn thời gian"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.save_start_date || undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const existing = formData.save_start_date;
+                            if (existing) {
+                              date.setHours(existing.getHours(), existing.getMinutes(), existing.getSeconds());
+                            }
+                          }
+                          setFormData((prev) => ({ ...prev, save_start_date: date || null }));
+                        }}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                      <div className="border-t p-3">
+                        <Label className="text-xs text-muted-foreground">Time</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            type="time"
+                            value={formData.save_start_date ? format(formData.save_start_date, "HH:mm") : ""}
+                            onChange={(e) => {
+                              const [hours, minutes] = e.target.value.split(":").map(Number);
+                              const newDate = formData.save_start_date ? new Date(formData.save_start_date) : new Date();
+                              newDate.setHours(hours || 0, minutes || 0, 0);
+                              setFormData((prev) => ({ ...prev, save_start_date: newDate }));
+                            }}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">
+                    Khi voucher có hiệu lực sử dụng, mục này sẽ không được chỉnh sửa
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
