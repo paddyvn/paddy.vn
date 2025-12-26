@@ -172,6 +172,7 @@ export default function VouchersEdit() {
         link_type: "collection",
         link_destination: "",
         promo_type: "vouchers",
+        program_kind: "voucher",
         is_active: data.is_active,
         display_order: data.display_order,
         start_date: data.start_date?.toISOString() || null,
