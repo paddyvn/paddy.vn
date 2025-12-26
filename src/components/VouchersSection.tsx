@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 interface VoucherCardProps {
   voucher: Voucher;
   isSaved: boolean;
-  saveCount: number;
   onSave: () => void;
   isSaving: boolean;
   isLoggedIn: boolean;
@@ -22,7 +21,7 @@ const formatPrice = (price: number) => {
   return new Intl.NumberFormat("vi-VN").format(price);
 };
 
-const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn }: VoucherCardProps) => {
+const VoucherCard = ({ voucher, isSaved, onSave, isSaving, isLoggedIn }: VoucherCardProps) => {
   const navigate = useNavigate();
   
   // Calculate discount display
@@ -114,10 +113,10 @@ const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn
             </div>
           </div>
           
-          {/* Save button and count */}
+          {/* Save button and available count */}
           <div className="flex flex-col items-center gap-1 ml-3">
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-              x{saveCount}
+              x{usageLimit > 0 ? usageLimit - usedCount : "∞"}
             </span>
             <Button
               size="sm"
@@ -155,7 +154,6 @@ const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn
 
 export const VouchersSection = () => {
   const [userId, setUserId] = useState<string | undefined>();
-  const [saveCounts, setSaveCounts] = useState<Record<string, number>>({});
   
   const { data: vouchers, isLoading } = useActiveVouchers();
   const { data: savedVoucherIds = [] } = useUserSavedVouchers(userId);
@@ -166,24 +164,6 @@ export const VouchersSection = () => {
       setUserId(data.user?.id);
     });
   }, []);
-
-  // Fetch save counts for all vouchers
-  useEffect(() => {
-    if (vouchers && vouchers.length > 0) {
-      const fetchCounts = async () => {
-        const counts: Record<string, number> = {};
-        for (const voucher of vouchers) {
-          const { count } = await supabase
-            .from("user_saved_vouchers")
-            .select("*", { count: "exact", head: true })
-            .eq("promotion_id", voucher.id);
-          counts[voucher.id] = count || 0;
-        }
-        setSaveCounts(counts);
-      };
-      fetchCounts();
-    }
-  }, [vouchers]);
 
   // Don't show if no vouchers
   if (!isLoading && (!vouchers || vouchers.length === 0)) {
@@ -233,7 +213,6 @@ export const VouchersSection = () => {
               key={voucher.id}
               voucher={voucher}
               isSaved={savedVoucherIds.includes(voucher.id)}
-              saveCount={saveCounts[voucher.id] || 0}
               onSave={() => userId && saveVoucherMutation.mutate({ userId, promotionId: voucher.id })}
               isSaving={saveVoucherMutation.isPending}
               isLoggedIn={!!userId}
