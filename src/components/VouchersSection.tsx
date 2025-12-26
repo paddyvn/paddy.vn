@@ -3,19 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { Ticket, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useActiveVouchers, useUserSavedVouchers, useSaveVoucher } from "@/hooks/useVouchers";
+import { useActiveVouchers, useUserSavedVouchers, useSaveVoucher, Voucher } from "@/hooks/useVouchers";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 interface VoucherCardProps {
-  voucher: {
-    id: string;
-    title: string;
-    subtitle: string | null;
-    end_date: string | null;
-  };
+  voucher: Voucher;
   isSaved: boolean;
   saveCount: number;
   onSave: () => void;
@@ -23,16 +18,23 @@ interface VoucherCardProps {
   isLoggedIn: boolean;
 }
 
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat("vi-VN").format(price);
+};
+
 const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn }: VoucherCardProps) => {
   const navigate = useNavigate();
   
-  // Parse title to extract discount info (assuming format like "Giảm 10%" or "Giảm 50k")
-  const discountMatch = voucher.title.match(/(\d+)(%|k|đ)?/i);
-  const discountValue = discountMatch ? discountMatch[1] : "";
-  const discountUnit = discountMatch ? (discountMatch[2] || "%") : "%";
+  // Calculate discount display
+  const discountType = voucher.discount_type || "percentage";
+  const discountValue = voucher.discount_value || 0;
+  const minOrderValue = voucher.min_order_value || 0;
+  const maxDiscount = voucher.max_discount;
+  const usageLimit = voucher.usage_limit || 0;
+  const usedCount = voucher.used_count || 0;
   
-  // Mock usage percentage (in real app, this would come from backend)
-  const usagePercent = Math.floor(Math.random() * 40) + 50; // 50-90%
+  // Calculate usage percentage
+  const usagePercent = usageLimit > 0 ? Math.min(100, Math.round((usedCount / usageLimit) * 100)) : 0;
   
   const handleSave = () => {
     if (!isLoggedIn) {
@@ -40,6 +42,43 @@ const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn
       return;
     }
     onSave();
+  };
+
+  // Format discount text
+  const getDiscountText = () => {
+    if (discountType === "percentage") {
+      return `Giảm ${discountValue}%`;
+    } else {
+      return `Giảm ${formatPrice(discountValue)}đ`;
+    }
+  };
+
+  // Format subtitle/conditions
+  const getConditionText = () => {
+    const conditions: string[] = [];
+    if (minOrderValue > 0) {
+      conditions.push(`Đơn Tối Thiểu ${formatPrice(minOrderValue)}đ`);
+    }
+    if (maxDiscount && discountType === "percentage") {
+      conditions.push(`Giảm tối đa ${formatPrice(maxDiscount)}đ`);
+    }
+    return conditions.length > 0 ? conditions.join(" · ") : voucher.subtitle || "Áp dụng cho tất cả sản phẩm";
+  };
+
+  // Determine badge text based on voucher type
+  const getBadgeText = () => {
+    switch (voucher.voucher_type) {
+      case "shop_wide":
+        return "Toàn Shop";
+      case "product":
+        return "Sản phẩm nhất định";
+      case "new_customer":
+        return "Khách hàng mới";
+      case "returning_customer":
+        return "Khách mua lại";
+      default:
+        return "Sản phẩm nhất định";
+    }
   };
 
   return (
@@ -54,17 +93,17 @@ const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn
           <div className="flex-1">
             {/* Discount title */}
             <h3 className="text-lg font-bold text-destructive">
-              Giảm {discountValue}{discountUnit === "%" ? "%" : "k"}
+              {getDiscountText()}
             </h3>
             
-            {/* Subtitle with min order */}
+            {/* Subtitle with conditions */}
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {voucher.subtitle || `Đơn Tối Thiểu 0đ`}
+              {getConditionText()}
             </p>
             
             {/* Product badge */}
             <Badge variant="outline" className="mt-2 text-xs border-destructive/30 text-destructive">
-              Sản phẩm nhất định
+              {getBadgeText()}
             </Badge>
           </div>
           
@@ -88,15 +127,19 @@ const VoucherCard = ({ voucher, isSaved, saveCount, onSave, isSaving, isLoggedIn
         {/* Progress bar and expiry */}
         <div className="mt-3 pt-3 border-t border-dashed">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-            <span className="text-destructive">Đã dùng {usagePercent}%</span>
+            <span className="text-destructive">
+              {usageLimit > 0 ? `Đã dùng ${usagePercent}%` : "Không giới hạn"}
+            </span>
             {voucher.end_date && (
               <span>HSD: {format(new Date(voucher.end_date), "dd.MM.yyyy")}</span>
             )}
           </div>
-          <Progress 
-            value={usagePercent} 
-            className="h-1.5 bg-muted"
-          />
+          {usageLimit > 0 && (
+            <Progress 
+              value={usagePercent} 
+              className="h-1.5 bg-muted"
+            />
+          )}
         </div>
       </div>
     </div>

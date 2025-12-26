@@ -135,6 +135,7 @@ export default function VouchersEdit() {
 
   useEffect(() => {
     if (promotion) {
+      const promo = promotion as unknown as Record<string, unknown>;
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
@@ -149,6 +150,15 @@ export default function VouchersEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        // Load voucher-specific fields
+        voucher_code: (promo.voucher_code as string) || "",
+        voucher_type: ((promo.voucher_type as string) || "shop_wide") as VoucherType,
+        discount_type: ((promo.discount_type as string) || "percentage") as DiscountType,
+        discount_value: (promo.discount_value as number) || 10,
+        min_order_value: (promo.min_order_value as number) || null,
+        usage_limit: (promo.usage_limit as number) || null,
+        usage_limit_per_customer: (promo.usage_limit_per_customer as number) || 1,
+        display_visibility: ((promo.display_visibility as string) || "public") as DisplayVisibility,
       }));
     }
   }, [promotion]);
@@ -181,6 +191,15 @@ export default function VouchersEdit() {
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
         custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
+        // Voucher-specific fields
+        voucher_code: data.voucher_code || null,
+        voucher_type: data.voucher_type,
+        discount_type: data.discount_type,
+        discount_value: data.discount_value,
+        min_order_value: data.min_order_value || 0,
+        usage_limit: data.usage_limit || null,
+        usage_limit_per_customer: data.usage_limit_per_customer || 1,
+        display_visibility: data.display_visibility,
       };
 
       let promotionId = id;

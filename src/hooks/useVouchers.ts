@@ -12,6 +12,16 @@ export interface Voucher {
   end_date: string | null;
   is_active: boolean | null;
   display_order: number | null;
+  // Voucher-specific fields
+  voucher_code: string | null;
+  voucher_type: string | null;
+  discount_type: string | null;
+  discount_value: number | null;
+  min_order_value: number | null;
+  max_discount: number | null;
+  usage_limit: number | null;
+  used_count: number | null;
+  display_visibility: string | null;
 }
 
 export const useActiveVouchers = () => {
@@ -24,13 +34,14 @@ export const useActiveVouchers = () => {
         .select("*")
         .eq("program_kind", "voucher")
         .eq("is_active", true)
+        .or(`display_visibility.is.null,display_visibility.eq.public`)
         .or(`start_date.is.null,start_date.lte.${now}`)
         .or(`end_date.is.null,end_date.gte.${now}`)
         .order("display_order", { ascending: true })
         .limit(6);
 
       if (error) throw error;
-      return data as Voucher[];
+      return (data || []) as Voucher[];
     },
   });
 };

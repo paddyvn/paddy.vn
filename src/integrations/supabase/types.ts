@@ -2219,7 +2219,10 @@ export type Database = {
           bottom_icon_url: string | null
           created_at: string
           custom_icons: Json | null
+          discount_type: string | null
+          discount_value: number | null
           display_order: number | null
+          display_visibility: string | null
           end_date: string | null
           gradient_from: string | null
           gradient_to: string | null
@@ -2228,6 +2231,8 @@ export type Database = {
           is_active: boolean | null
           link_destination: string
           link_type: string
+          max_discount: number | null
+          min_order_value: number | null
           program_kind: string | null
           promo_type: string | null
           start_date: string | null
@@ -2235,12 +2240,20 @@ export type Database = {
           title: string
           top_icon_url: string | null
           updated_at: string
+          usage_limit: number | null
+          usage_limit_per_customer: number | null
+          used_count: number | null
+          voucher_code: string | null
+          voucher_type: string | null
         }
         Insert: {
           bottom_icon_url?: string | null
           created_at?: string
           custom_icons?: Json | null
+          discount_type?: string | null
+          discount_value?: number | null
           display_order?: number | null
+          display_visibility?: string | null
           end_date?: string | null
           gradient_from?: string | null
           gradient_to?: string | null
@@ -2249,6 +2262,8 @@ export type Database = {
           is_active?: boolean | null
           link_destination: string
           link_type?: string
+          max_discount?: number | null
+          min_order_value?: number | null
           program_kind?: string | null
           promo_type?: string | null
           start_date?: string | null
@@ -2256,12 +2271,20 @@ export type Database = {
           title: string
           top_icon_url?: string | null
           updated_at?: string
+          usage_limit?: number | null
+          usage_limit_per_customer?: number | null
+          used_count?: number | null
+          voucher_code?: string | null
+          voucher_type?: string | null
         }
         Update: {
           bottom_icon_url?: string | null
           created_at?: string
           custom_icons?: Json | null
+          discount_type?: string | null
+          discount_value?: number | null
           display_order?: number | null
+          display_visibility?: string | null
           end_date?: string | null
           gradient_from?: string | null
           gradient_to?: string | null
@@ -2270,6 +2293,8 @@ export type Database = {
           is_active?: boolean | null
           link_destination?: string
           link_type?: string
+          max_discount?: number | null
+          min_order_value?: number | null
           program_kind?: string | null
           promo_type?: string | null
           start_date?: string | null
@@ -2277,6 +2302,11 @@ export type Database = {
           title?: string
           top_icon_url?: string | null
           updated_at?: string
+          usage_limit?: number | null
+          usage_limit_per_customer?: number | null
+          used_count?: number | null
+          voucher_code?: string | null
+          voucher_type?: string | null
         }
         Relationships: []
       }
