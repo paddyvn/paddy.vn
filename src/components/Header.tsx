@@ -133,7 +133,7 @@ export const Header = () => {
             />
 
             {/* Profile - positioned independently on mobile */}
-            <div className="md:hidden absolute right-16">
+            <div className="md:hidden absolute right-12">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
