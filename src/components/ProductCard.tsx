@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddToCartDialog } from "./QuickAddToCartDialog";
 
+import { ProductPromotion } from "@/hooks/useProductPromotions";
+
 interface ProductCardProps {
   product: {
     id: string;
@@ -26,6 +28,7 @@ interface ProductCardProps {
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
     reviews?: Array<{ rating: number }>;
   };
+  promotion?: ProductPromotion | null;
 }
 
 const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
@@ -50,7 +53,7 @@ const getPetTypes = (petType: string | null | undefined): ('dog' | 'cat')[] => {
   return types;
 };
 
-export const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, promotion }: ProductCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | undefined>();
@@ -113,21 +116,33 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               className="w-full h-full object-cover transition-smooth group-hover:scale-110"
             />
             
-            {product.is_featured && (
+            {/* Priority: Promotion > Featured > Sale */}
+            {promotion ? (
+              <Badge 
+                className="absolute top-3 left-3 text-white hover:opacity-90"
+                style={{
+                  background: promotion.gradient_from && promotion.gradient_to
+                    ? `linear-gradient(135deg, ${promotion.gradient_from}, ${promotion.gradient_to})`
+                    : promotion.promo_type === 'flash_sale' 
+                      ? 'linear-gradient(135deg, #ef4444, #f97316)'
+                      : 'linear-gradient(135deg, #3b82f6, #8b5cf6)'
+                }}
+              >
+                {promotion.title}
+              </Badge>
+            ) : product.is_featured ? (
               <Badge 
                 className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
               >
                 Featured
               </Badge>
-            )}
-            
-            {hasDiscount && !product.is_featured && (
+            ) : hasDiscount ? (
               <Badge 
                 className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
               >
                 Sale
               </Badge>
-            )}
+            ) : null}
             
             <Button
               size="icon"

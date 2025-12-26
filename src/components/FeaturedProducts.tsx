@@ -1,10 +1,19 @@
+import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "@/components/ProductCard";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
 
 export const FeaturedProducts = () => {
   const { data: products, isLoading } = useProducts();
+  
+  // Get product IDs for promotion lookup
+  const productIds = useMemo(() => 
+    products?.slice(0, 10).map(p => p.id) || [], 
+    [products]
+  );
+  const { data: promotionsMap } = useProductsPromotions(productIds);
 
   if (isLoading) {
     return (
@@ -59,7 +68,10 @@ export const FeaturedProducts = () => {
               className="animate-in fade-in zoom-in duration-500"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <ProductCard product={product} />
+              <ProductCard 
+                product={product} 
+                promotion={promotionsMap?.[product.id]}
+              />
             </div>
           ))}
         </div>
