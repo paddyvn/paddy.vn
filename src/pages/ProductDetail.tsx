@@ -153,22 +153,6 @@ export default function ProductDetail() {
 
           {/* Right Column - Product Info */}
           <div className="space-y-5">
-            {/* Promotion Badge */}
-            {promotion && (
-              <Badge 
-                className="text-white text-sm px-3 py-1"
-                style={{
-                  background: promotion.gradient_from && promotion.gradient_to
-                    ? `linear-gradient(135deg, ${promotion.gradient_from}, ${promotion.gradient_to})`
-                    : promotion.promo_type === 'flash_sale' 
-                      ? 'linear-gradient(135deg, #ef4444, #f97316)'
-                      : 'linear-gradient(135deg, #3b82f6, #8b5cf6)'
-                }}
-              >
-                {promotion.title}
-              </Badge>
-            )}
-
             {/* Product Name */}
             <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
               {product.name}
