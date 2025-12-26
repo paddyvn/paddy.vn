@@ -246,8 +246,12 @@ export default function PromotionsManagement() {
               </TableHeader>
               <TableBody>
                 {promotions.map((promo) => (
-                  <TableRow key={promo.id}>
-                    <TableCell>
+                  <TableRow 
+                    key={promo.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleEdit(promo.id, promo.program_kind)}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                     </TableCell>
                     <TableCell>
@@ -291,7 +295,7 @@ export default function PromotionsManagement() {
                         {promo.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
