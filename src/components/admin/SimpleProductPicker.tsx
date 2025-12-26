@@ -236,18 +236,21 @@ export function SimpleProductPicker({
   };
 
   const applyBatchSettings = () => {
-    if (!onProductSettingsChange || selectedForBatch.length === 0) return;
+    if (!onProductSettingsChange) return;
+
+    const targets = selectedForBatch.length > 0 ? selectedForBatch : selectedProductIds;
+    if (targets.length === 0) return;
 
     const newSettings = [...productSettings];
     const stockLimitValue = batchStockLimit === "" ? undefined : parseInt(batchStockLimit) || 0;
-    const purchaseLimitValue = batchPurchaseLimitType === "unlimited" 
-      ? undefined 
+    const purchaseLimitValue = batchPurchaseLimitType === "unlimited"
+      ? undefined
       : (batchPurchaseLimitValue === "" ? undefined : parseInt(batchPurchaseLimitValue) || 0);
-    
-    selectedForBatch.forEach(productId => {
+
+    targets.forEach(productId => {
       const product = products.find(p => p.id === productId);
       if (!product) return;
-      
+
       // Apply to all variants of the product
       product.variants.forEach(variant => {
         const existingIndex = newSettings.findIndex(s => s.productId === productId && s.variantId === variant.id);
@@ -272,7 +275,9 @@ export function SimpleProductPicker({
         }
       });
     });
+
     onProductSettingsChange(newSettings);
+    onDiscountValueChange?.(batchDiscountValue);
     setSelectedForBatch([]);
     setBatchDiscountValue(0);
     setBatchStockLimit("");
@@ -398,7 +403,7 @@ export function SimpleProductPicker({
                   variant="outline"
                   size="sm"
                   onClick={applyBatchSettings}
-                  disabled={selectedForBatch.length === 0}
+                  disabled={selectedProductIds.length === 0}
                 >
                   Cập nhật hàng loạt
                 </Button>
@@ -414,7 +419,9 @@ export function SimpleProductPicker({
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
-              {selectedForBatch.length} sản phẩm đã chọn
+              {selectedForBatch.length > 0
+                ? `${selectedForBatch.length} sản phẩm đã chọn`
+                : `Áp dụng cho tất cả (${selectedProductIds.length}) sản phẩm`}
             </div>
           </div>
         )}
