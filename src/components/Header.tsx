@@ -1,4 +1,4 @@
-import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut, ChevronDown, HelpCircle, X } from "lucide-react";
+import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut, ChevronDown, HelpCircle, X, Gift, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import paddyLogo from "@/assets/paddy-logo.avif";
 import { useState, useEffect } from "react";
@@ -148,6 +148,14 @@ export const Header = () => {
                         <Package className="mr-2 h-4 w-4" />
                         My Orders
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/profile?tab=rewards')} className="cursor-pointer">
+                        <Gift className="mr-2 h-4 w-4" />
+                        Điểm thưởng
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/profile?tab=vouchers')} className="cursor-pointer">
+                        <Ticket className="mr-2 h-4 w-4" />
+                        Mã giảm giá
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
                         Profile Settings
@@ -205,6 +213,14 @@ export const Header = () => {
                         <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
                           <Package className="mr-2 h-4 w-4" />
                           My Orders
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile?tab=rewards')} className="cursor-pointer">
+                          <Gift className="mr-2 h-4 w-4" />
+                          Điểm thưởng
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile?tab=vouchers')} className="cursor-pointer">
+                          <Ticket className="mr-2 h-4 w-4" />
+                          Mã giảm giá
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                           <Settings className="mr-2 h-4 w-4" />
