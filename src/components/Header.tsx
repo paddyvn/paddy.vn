@@ -89,12 +89,17 @@ export const Header = () => {
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between gap-6">
-            {/* Logo */}
-            <a href="/" className="flex-shrink-0">
+            {/* Mobile Menu Button - in blue bar */}
+            <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/90">
+              <Menu className="h-5 w-5" />
+            </Button>
+
+            {/* Logo - centered on mobile */}
+            <a href="/" className="flex-shrink-0 md:flex-shrink-0 absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
               <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto brightness-0 invert" />
             </a>
 
-            {/* Search Bar - Centered */}
+            {/* Search Bar - Centered (desktop only) */}
             <SearchAutocomplete
               className="hidden md:block flex-1 max-w-lg"
               inputClassName="w-full pr-12 h-11 bg-background text-foreground rounded-md"
@@ -234,12 +239,6 @@ export const Header = () => {
             </div>
           </nav>
 
-          {/* Mobile Menu Button */}
-          <div className="flex md:hidden h-12 items-center justify-between">
-            <Button variant="ghost" size="icon" className="text-foreground">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
         </div>
 
         {/* Mega Menus */}
