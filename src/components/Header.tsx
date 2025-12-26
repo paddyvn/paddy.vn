@@ -25,7 +25,7 @@ export const Header = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollLevel, setScrollLevel] = useState<'top' | 'partial' | 'full'>('top');
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
@@ -34,10 +34,17 @@ export const Header = () => {
   const { data: announcements = [] } = useActiveBanners('announcement');
   const activeAnnouncement = announcements[0]; // Show first active announcement
 
-  // Hide announcement bar on scroll
+  // Progressive header hiding on scroll
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const scrollY = window.scrollY;
+      if (scrollY <= 20) {
+        setScrollLevel('top');
+      } else if (scrollY <= 100) {
+        setScrollLevel('partial'); // Hide search & announcement
+      } else {
+        setScrollLevel('full'); // Hide entire header
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -94,7 +101,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-primary">
+    <header className={`sticky top-0 z-50 w-full bg-primary transition-transform duration-300 ${scrollLevel === 'full' ? '-translate-y-full' : 'translate-y-0'}`}>
       {/* Top Header Bar */}
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-4">
@@ -267,7 +274,7 @@ export const Header = () => {
       </div>
 
       {/* Mobile Search */}
-      <div className="md:hidden bg-primary-foreground border-t border-border/20 px-4 py-3">
+      <div className={`md:hidden bg-primary-foreground border-t border-border/20 px-4 py-3 transition-all duration-300 overflow-hidden ${scrollLevel !== 'top' ? 'max-h-0 py-0' : 'max-h-20'}`}>
         <SearchAutocomplete
           inputClassName="w-full pr-12 h-10"
           isMobile
@@ -275,7 +282,7 @@ export const Header = () => {
       </div>
 
       {/* Announcement Bar */}
-      <div className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'max-h-0' : 'max-h-20'}`}>
+      <div className={`transition-all duration-300 overflow-hidden ${scrollLevel !== 'top' ? 'max-h-0' : 'max-h-20'}`}>
         {activeAnnouncement && !dismissedAnnouncement ? (
           <div 
             className="relative"
