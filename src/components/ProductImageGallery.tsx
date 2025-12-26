@@ -15,9 +15,10 @@ interface ProductImageGalleryProps {
   images: ProductImage[];
   productName: string;
   isFeatured?: boolean;
+  isOnSale?: boolean;
 }
 
-export function ProductImageGallery({ images, productName, isFeatured }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, productName, isFeatured, isOnSale }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
@@ -56,7 +57,12 @@ export function ProductImageGallery({ images, productName, isFeatured }: Product
         className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 cursor-zoom-in"
         onClick={() => setIsZoomOpen(true)}
       >
-        {isFeatured && (
+        {isOnSale && (
+          <Badge className="absolute top-4 left-4 z-10 bg-secondary text-secondary-foreground hover:bg-secondary font-semibold px-3 py-1">
+            Sale
+          </Badge>
+        )}
+        {isFeatured && !isOnSale && (
           <Badge className="absolute top-4 left-4 z-10 bg-green-500 hover:bg-green-500 text-white font-semibold px-3 py-1">
             BEST SELLER
           </Badge>
