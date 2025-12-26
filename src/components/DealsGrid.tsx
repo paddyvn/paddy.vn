@@ -96,7 +96,7 @@ export const DealsGrid = () => {
                 background: `linear-gradient(to bottom right, ${promo.gradient_from}, ${promo.gradient_to})`,
               }}
             >
-              {/* Decorative brand pattern icons */}
+              {/* Decorative brand pattern icons - only render if explicitly set */}
               {(() => {
                 // Check for custom_icons first
                 const customIcons = Array.isArray(promo.custom_icons) ? promo.custom_icons as CustomIcon[] : [];
@@ -112,17 +112,19 @@ export const DealsGrid = () => {
                   ));
                 }
                 
-                // Fallback to icon_type from database or cycling
-                const iconConfig = promo.icon_type && iconTypeMap[promo.icon_type]
-                  ? iconTypeMap[promo.icon_type]
-                  : iconPatterns[promotions.indexOf(promo) % iconPatterns.length];
-                const { TopIcon, BottomIcon } = iconConfig;
-                return (
-                  <>
-                    <TopIcon className="absolute -top-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
-                    <BottomIcon className="absolute -bottom-3 -left-3 w-14 h-14 text-white/10 -rotate-12" />
-                  </>
-                );
+                // Only show icons if icon_type is explicitly set
+                if (promo.icon_type && iconTypeMap[promo.icon_type]) {
+                  const { TopIcon, BottomIcon } = iconTypeMap[promo.icon_type];
+                  return (
+                    <>
+                      <TopIcon className="absolute -top-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
+                      <BottomIcon className="absolute -bottom-3 -left-3 w-14 h-14 text-white/10 -rotate-12" />
+                    </>
+                  );
+                }
+                
+                // No icons if nothing is set
+                return null;
               })()}
               
               {/* Content */}
