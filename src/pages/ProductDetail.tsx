@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Heart, CheckCircle, Leaf, Truck, Award } from "lucide-react";
+import { ShoppingCart, Heart, CheckCircle, Leaf, Truck, Award, Ticket, Copy } from "lucide-react";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { ProductReviews } from "@/components/ProductReviews";
@@ -19,6 +19,7 @@ import { ProductBreadcrumb } from "@/components/ProductBreadcrumb";
 import { useToast } from "@/hooks/use-toast";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { useProductPromotion } from "@/hooks/useProductPromotions";
+import { useProductVouchers } from "@/hooks/useProductVouchers";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -39,6 +40,15 @@ export default function ProductDetail() {
 
   const { addToCart } = useCart(session?.user?.id);
   const { data: promotion } = useProductPromotion(product?.id);
+  const { data: vouchers = [] } = useProductVouchers(product?.id);
+
+  const copyVoucherCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast({
+      title: "Đã sao chép!",
+      description: `Mã ${code} đã được sao chép vào clipboard`,
+    });
+  };
 
   useEffect(() => {
     if (product?.product_variants?.[0]) {
@@ -208,6 +218,46 @@ export default function ProductDetail() {
                 </>
               )}
             </div>
+
+            {/* Applicable Vouchers */}
+            {vouchers.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Ticket className="h-4 w-4 text-destructive" />
+                  Mã giảm giá có thể áp dụng:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {vouchers.map((voucher) => (
+                    <div
+                      key={voucher.id}
+                      className="flex items-center gap-2 px-3 py-2 bg-destructive/10 border border-destructive/20 rounded-lg"
+                    >
+                      <span className="text-destructive font-semibold">
+                        {voucher.discount_type === "percentage"
+                          ? `-${voucher.discount_value}%`
+                          : `-${(voucher.discount_value || 0).toLocaleString('vi-VN')}₫`}
+                      </span>
+                      {voucher.voucher_code && (
+                        <>
+                          <span className="text-xs text-muted-foreground">|</span>
+                          <code className="text-sm font-mono bg-background px-2 py-0.5 rounded">
+                            {voucher.voucher_code}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => copyVoucherCode(voucher.voucher_code!)}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Short Description (from meta_description) */}
             {product.meta_description && (
