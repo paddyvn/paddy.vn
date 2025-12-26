@@ -278,7 +278,7 @@ export const Header = () => {
               {activeAnnouncement.link_url ? (
                 <a 
                   href={activeAnnouncement.link_url}
-                  className="text-sm font-medium hover:underline"
+                  className="text-xs md:text-sm font-medium hover:underline"
                 >
                   {activeAnnouncement.title}
                   {activeAnnouncement.link_text && (
@@ -286,7 +286,7 @@ export const Header = () => {
                   )}
                 </a>
               ) : (
-                <p className="text-sm font-medium">{activeAnnouncement.title}</p>
+                <p className="text-xs md:text-sm font-medium">{activeAnnouncement.title}</p>
               )}
             </div>
           </div>
