@@ -121,8 +121,8 @@ export const Header = () => {
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Logo - centered on mobile */}
-            <a href="/" className="flex-shrink-0 md:flex-shrink-0 absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
+            {/* Logo - slightly left of center on mobile to give room for icons */}
+            <a href="/" className="flex-shrink-0 absolute left-1/2 -translate-x-[60%] md:static md:translate-x-0">
               <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto brightness-0 invert" />
             </a>
 
@@ -133,7 +133,7 @@ export const Header = () => {
             />
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1 md:gap-1 ml-auto">
+            <div className="flex items-center gap-2 md:gap-1 ml-auto pr-0 md:pr-0">
               <Button 
                 variant="ghost" 
                 className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
