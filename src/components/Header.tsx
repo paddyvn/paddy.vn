@@ -132,8 +132,8 @@ export const Header = () => {
               inputClassName="w-full pr-12 h-11 bg-background text-foreground rounded-md"
             />
 
-            {/* Right Actions - at far right edge on mobile */}
-            <div className="flex items-center gap-4 md:gap-1 -mr-2 md:mr-0">
+            {/* Right Actions */}
+            <div className="flex items-center gap-6 md:gap-1">
               <Button 
                 variant="ghost" 
                 className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
