@@ -114,7 +114,7 @@ export const Header = () => {
     <header className={`sticky top-0 z-50 w-full bg-primary transition-transform duration-300 ${hideHeader ? '-translate-y-full' : 'translate-y-0'}`}>
       {/* Top Header Bar */}
       <div className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-2 md:px-4">
           <div className="flex h-16 items-center justify-between gap-6 relative">
             {/* Mobile Menu Button - in blue bar */}
             <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/90">
