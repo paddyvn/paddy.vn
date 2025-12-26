@@ -318,6 +318,13 @@ export default function ProductDetail() {
               </label>
             </div>
 
+            {/* Stock Quantity Display */}
+            {selectedVariant?.stock_quantity != null && (
+              <p className="text-sm text-muted-foreground">
+                Số lượng sản phẩm có sẵn: <span className="font-medium text-foreground">{selectedVariant.stock_quantity}</span>
+              </p>
+            )}
+
             {/* Quantity and Add to Cart Row */}
             <div className="flex items-center gap-3">
               {/* Quantity Selector */}
