@@ -59,7 +59,7 @@ export const StoreLocations = () => {
                 )}
               </div>
               <CardContent className="p-4 flex flex-col flex-1">
-                <h3 className="font-semibold text-lg text-foreground mb-2">
+                <h3 className="font-semibold text-lg text-[#0849FF] mb-2">
                   {store.name}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-2 flex-1">
