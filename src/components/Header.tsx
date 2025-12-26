@@ -284,15 +284,29 @@ export const Header = () => {
       </div>
 
       {/* Mobile Search */}
-      <div className={`md:hidden bg-primary-foreground border-t border-border/20 px-4 transition-all duration-300 overflow-hidden ${!isAtTop ? 'max-h-0 py-0' : 'max-h-20 py-3'}`}>
-        <SearchAutocomplete
-          inputClassName="w-full pr-12 h-10"
-          isMobile
-        />
+      <div 
+        className="md:hidden bg-primary-foreground border-t border-border/20 overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
+        style={{ 
+          maxHeight: isAtTop ? '60px' : '0px',
+          opacity: isAtTop ? 1 : 0
+        }}
+      >
+        <div className="px-4 py-3">
+          <SearchAutocomplete
+            inputClassName="w-full pr-12 h-10"
+            isMobile
+          />
+        </div>
       </div>
 
       {/* Announcement Bar */}
-      <div className={`transition-all duration-300 overflow-hidden ${!isAtTop ? 'max-h-0' : 'max-h-20'}`}>
+      <div 
+        className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
+        style={{ 
+          maxHeight: isAtTop ? '60px' : '0px',
+          opacity: isAtTop ? 1 : 0
+        }}
+      >
         {activeAnnouncement && !dismissedAnnouncement ? (
           <div 
             className="relative"
