@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { QuickActions } from "@/components/QuickActions";
 import { FlashSaleSection } from "@/components/FlashSaleSection";
+import { VouchersSection } from "@/components/VouchersSection";
 import { DealsGrid } from "@/components/DealsGrid";
 import { PetSelector } from "@/components/PetSelector";
 import { Categories } from "@/components/Categories";
@@ -19,6 +20,7 @@ const Index = () => {
         <HeroCarousel />
         <QuickActions />
         <FlashSaleSection />
+        <VouchersSection />
         <DealsGrid />
         <PetSelector />
         <Categories />

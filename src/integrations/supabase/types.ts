@@ -2934,6 +2934,45 @@ export type Database = {
           },
         ]
       }
+      user_saved_vouchers: {
+        Row: {
+          id: string
+          promotion_id: string
+          saved_at: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          promotion_id: string
+          saved_at?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          promotion_id?: string
+          saved_at?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_vouchers_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_saved_vouchers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wishlists: {
         Row: {
           created_at: string
