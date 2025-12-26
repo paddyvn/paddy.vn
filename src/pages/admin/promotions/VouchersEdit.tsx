@@ -275,6 +275,8 @@ export default function VouchersEdit() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promotions"] });
+      queryClient.invalidateQueries({ queryKey: ["promotion", id] });
+      queryClient.invalidateQueries({ queryKey: ["active-vouchers"] });
       toast.success(isNew ? "Voucher created" : "Voucher updated");
       navigate("/admin/promotions/vouchers");
     },
