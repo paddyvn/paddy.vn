@@ -133,7 +133,7 @@ export const Header = () => {
             />
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 md:gap-1 ml-auto">
               <Button 
                 variant="ghost" 
                 className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
