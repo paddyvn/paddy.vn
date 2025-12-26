@@ -210,9 +210,9 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Navigation Bar */}
+      {/* Navigation Bar - Desktop Only */}
       <div 
-        className="bg-primary-foreground text-foreground border-t border-border/20 relative"
+        className="hidden md:block bg-primary-foreground text-foreground border-t border-border/20 relative"
         onMouseLeave={() => setActiveMegaMenu(null)}
       >
         <div className="container mx-auto px-4">
