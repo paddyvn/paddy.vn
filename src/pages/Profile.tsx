@@ -42,7 +42,10 @@ import {
   Loader2,
   PawPrint,
   CalendarIcon,
-  Ticket
+  Ticket,
+  Gift,
+  Star,
+  Crown
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -126,11 +129,12 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; icon: a
 
 const ORDER_STEPS: OrderStatus[] = ["pending", "processing", "confirmed", "shipped", "delivered"];
 
-type MenuSection = "profile" | "addresses" | "orders" | "vouchers" | "wishlist";
+type MenuSection = "profile" | "addresses" | "rewards" | "orders" | "vouchers" | "wishlist";
 
 const menuItems: { key: MenuSection; label: string; icon: React.ElementType }[] = [
   { key: "profile", label: "Sen & Boss", icon: User },
   { key: "addresses", label: "Sổ địa chỉ", icon: MapPin },
+  { key: "rewards", label: "Điểm thưởng", icon: Gift },
   { key: "orders", label: "Đơn hàng của tôi", icon: Package },
   { key: "vouchers", label: "Mã giảm giá của tôi", icon: Ticket },
   { key: "wishlist", label: "Sản phẩm yêu thích", icon: Heart },
@@ -1334,6 +1338,97 @@ const Profile = () => {
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {/* Rewards Section */}
+            {activeSection === "rewards" && (
+              <div className="space-y-6">
+                {/* Points Summary Card */}
+                <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Crown className="h-8 w-8 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Điểm thưởng hiện có</p>
+                          <p className="text-3xl font-bold text-primary">0</p>
+                          <p className="text-xs text-muted-foreground">= 0đ giá trị quy đổi</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="secondary" className="mb-2">
+                          <Star className="h-3 w-3 mr-1" />
+                          Thành viên
+                        </Badge>
+                        <p className="text-xs text-muted-foreground">Hạng thành viên</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-primary">0</p>
+                      <p className="text-xs text-muted-foreground">Điểm đã tích lũy</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-green-600">0</p>
+                      <p className="text-xs text-muted-foreground">Điểm đã sử dụng</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-orange-500">0</p>
+                      <p className="text-xs text-muted-foreground">Điểm sắp hết hạn</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-secondary">0</p>
+                      <p className="text-xs text-muted-foreground">Quà đã nhận</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Rewards History */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Lịch sử điểm thưởng</CardTitle>
+                    <CardDescription>Theo dõi điểm tích lũy và sử dụng</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Chưa có lịch sử điểm thưởng</p>
+                      <p className="text-sm mb-4">Mua sắm để tích lũy điểm thưởng</p>
+                      <Button onClick={() => navigate("/")} size="sm">
+                        Mua sắm ngay
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Available Gifts */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Quà tặng có thể đổi</CardTitle>
+                    <CardDescription>Sử dụng điểm để đổi quà hấp dẫn</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Chưa có quà tặng</p>
+                      <p className="text-sm">Tích lũy thêm điểm để đổi quà</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {/* Orders Section */}
