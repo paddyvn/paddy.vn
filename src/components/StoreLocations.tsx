@@ -62,31 +62,34 @@ export const StoreLocations = () => {
                 <h3 className="font-semibold text-lg text-foreground mb-2">
                   {store.name}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-2">
+                <p className="text-sm text-muted-foreground mb-2 flex-1">
                   {store.address}
                 </p>
-                {store.opening_hours && (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span>{store.opening_hours}</span>
+                <div className="flex items-end justify-between gap-2 mt-auto">
+                  <div className="space-y-1">
+                    {store.opening_hours && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span>{store.opening_hours}</span>
+                      </div>
+                    )}
+                    {store.phone && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <a href={`tel:${store.phone}`} className="hover:text-primary transition-colors">
+                          {store.phone}
+                        </a>
+                      </div>
+                    )}
                   </div>
-                )}
-                {store.phone && (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
-                    <Phone className="h-3.5 w-3.5 text-primary" />
-                    <a href={`tel:${store.phone}`} className="hover:text-primary transition-colors">
-                      {store.phone}
-                    </a>
-                  </div>
-                )}
-                <div className="flex-1" />
-                {store.map_url && (
-                  <Button asChild className="self-start">
-                    <a href={store.map_url} target="_blank" rel="noopener noreferrer">
-                      Chỉ Đường
-                    </a>
-                  </Button>
-                )}
+                  {store.map_url && (
+                    <Button asChild size="sm" className="shrink-0">
+                      <a href={store.map_url} target="_blank" rel="noopener noreferrer">
+                        Chỉ Đường
+                      </a>
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
