@@ -65,7 +65,7 @@ export const StoreLocations = () => {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-4">
                 <h3 className="font-semibold text-lg text-foreground mb-2">
                   {store.name}
                 </h3>
@@ -74,7 +74,6 @@ export const StoreLocations = () => {
                 </p>
                 <Button 
                   asChild
-                  className="w-full max-w-[180px]"
                 >
                   <a href={store.mapUrl} target="_blank" rel="noopener noreferrer">
                     Chỉ Đường
