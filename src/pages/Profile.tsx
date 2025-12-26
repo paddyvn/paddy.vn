@@ -773,7 +773,7 @@ const Profile = () => {
               </Card>
 
               {/* Boss Section - within Sen & Boss page */}
-              <Card>
+              <Card className="mt-6">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>Boss</CardTitle>
