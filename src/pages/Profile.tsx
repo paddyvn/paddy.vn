@@ -126,11 +126,10 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; icon: a
 
 const ORDER_STEPS: OrderStatus[] = ["pending", "processing", "confirmed", "shipped", "delivered"];
 
-type MenuSection = "profile" | "boss" | "addresses" | "orders" | "vouchers" | "wishlist";
+type MenuSection = "profile" | "addresses" | "orders" | "vouchers" | "wishlist";
 
 const menuItems: { key: MenuSection; label: string; icon: React.ElementType }[] = [
-  { key: "profile", label: "Sen", icon: User },
-  { key: "boss", label: "Boss", icon: PawPrint },
+  { key: "profile", label: "Sen & Boss", icon: User },
   { key: "addresses", label: "Sổ địa chỉ", icon: MapPin },
   { key: "orders", label: "Đơn hàng của tôi", icon: Package },
   { key: "vouchers", label: "Mã giảm giá của tôi", icon: Ticket },
@@ -679,6 +678,7 @@ const Profile = () => {
           <div className="flex-1 min-w-0">
             {/* Profile Section */}
             {activeSection === "profile" && (
+              <>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -771,12 +771,9 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {/* Boss Section */}
-            {activeSection === "boss" && (
-              <>
-                <Card>
+              {/* Boss Section - within Sen & Boss page */}
+              <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>Boss</CardTitle>
