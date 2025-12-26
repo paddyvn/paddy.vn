@@ -369,39 +369,28 @@ export default function VouchersEdit() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Khuyến mãi</Label>
+                <Label>Loại giảm giá | Mức giảm</Label>
                 <div className="flex">
+                  <Select
+                    value={formData.discount_type}
+                    onValueChange={(value: DiscountType) => setFormData({ ...formData, discount_type: value })}
+                  >
+                    <SelectTrigger className="w-[140px] rounded-r-none border-r-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">Theo phần trăm</SelectItem>
+                      <SelectItem value="fixed_amount">Theo số tiền</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     type="number"
                     value={formData.discount_value}
                     onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
-                    className="rounded-r-none"
+                    className="rounded-none flex-1"
                   />
-                  <div className="flex border border-l-0 rounded-r-md overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, discount_type: "fixed_amount" })}
-                      className={cn(
-                        "px-3 py-2 text-sm font-medium transition-colors",
-                        formData.discount_type === "fixed_amount" 
-                          ? "bg-primary text-primary-foreground" 
-                          : "bg-muted hover:bg-muted/80"
-                      )}
-                    >
-                      đ
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, discount_type: "percentage" })}
-                      className={cn(
-                        "px-3 py-2 text-sm font-medium transition-colors",
-                        formData.discount_type === "percentage" 
-                          ? "bg-primary text-primary-foreground" 
-                          : "bg-muted hover:bg-muted/80"
-                      )}
-                    >
-                      %GIẢM
-                    </button>
+                  <div className="flex items-center justify-center px-3 border rounded-r-md bg-muted text-muted-foreground text-sm">
+                    {formData.discount_type === "percentage" ? "%" : "đ"}
                   </div>
                 </div>
               </div>
