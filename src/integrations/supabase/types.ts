@@ -2773,6 +2773,48 @@ export type Database = {
           },
         ]
       }
+      stores: {
+        Row: {
+          address: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          map_url: string | null
+          name: string
+          opening_hours: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          map_url?: string | null
+          name: string
+          opening_hours?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          map_url?: string | null
+          name?: string
+          opening_hours?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_custom_roles: {
         Row: {
           created_at: string

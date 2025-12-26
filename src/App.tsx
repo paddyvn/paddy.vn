@@ -56,6 +56,7 @@ import BrandDetails from "./pages/admin/BrandDetails";
 import SalesAnalytics from "./pages/admin/SalesAnalytics";
 import TrafficAnalytics from "./pages/admin/TrafficAnalytics";
 import DeliveryMethods from "./pages/admin/DeliveryMethods";
+import StoresManagement from "./pages/admin/StoresManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -128,6 +129,7 @@ const App = () => (
             <Route path="analytics/sales" element={<SalesAnalytics />} />
             <Route path="analytics/traffic" element={<TrafficAnalytics />} />
             <Route path="settings/delivery-methods" element={<DeliveryMethods />} />
+            <Route path="settings/stores" element={<StoresManagement />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
