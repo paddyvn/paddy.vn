@@ -75,15 +75,39 @@ export default function ProductDetail() {
     );
   }
 
-  const currentPrice = selectedVariant?.price || product.base_price;
+  const basePrice = selectedVariant?.price || product.base_price;
   const comparePrice = selectedVariant?.compare_at_price || product.compare_at_price;
   const averageRating = product.reviews?.length > 0
     ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length
     : 0;
   
-  const discountPercentage = comparePrice && comparePrice > currentPrice 
-    ? Math.round((1 - currentPrice / comparePrice) * 100) 
-    : 0;
+  // Calculate pricing based on promotion or compare_at_price
+  const hasPromotionDiscount = promotion?.discount_value && promotion.discount_value > 0;
+  const hasCompareAtDiscount = comparePrice && comparePrice > basePrice;
+
+  let currentPrice = basePrice;
+  let originalPrice = basePrice;
+  let discountPercentage = 0;
+
+  if (hasPromotionDiscount && promotion) {
+    originalPrice = basePrice;
+    if (promotion.discount_type === "percentage") {
+      currentPrice = basePrice * (1 - promotion.discount_value! / 100);
+      discountPercentage = Math.round(promotion.discount_value!);
+    } else if (promotion.discount_type === "fixed_amount") {
+      currentPrice = Math.max(0, basePrice - promotion.discount_value!);
+      discountPercentage = Math.round((promotion.discount_value! / basePrice) * 100);
+    } else if (promotion.discount_type === "special_price") {
+      currentPrice = promotion.discount_value!;
+      discountPercentage = Math.round(((basePrice - promotion.discount_value!) / basePrice) * 100);
+    }
+  } else if (hasCompareAtDiscount) {
+    originalPrice = comparePrice!;
+    currentPrice = basePrice;
+    discountPercentage = Math.round((1 - basePrice / comparePrice!) * 100);
+  }
+
+  const hasDiscount = discountPercentage > 0;
 
   const primaryCategory = product.product_collections?.[0]?.categories;
   
@@ -173,13 +197,13 @@ export default function ProductDetail() {
               <span className="text-3xl font-bold text-foreground">
                 {currentPrice.toLocaleString('vi-VN')} ₫
               </span>
-              {comparePrice && comparePrice > currentPrice && (
+              {hasDiscount && (
                 <>
                   <span className="text-lg text-muted-foreground line-through">
-                    {comparePrice.toLocaleString('vi-VN')} ₫
+                    {originalPrice.toLocaleString('vi-VN')} ₫
                   </span>
                   <span className="px-2 py-1 text-sm font-medium text-green-600 bg-green-100 rounded">
-                    Save {discountPercentage}%
+                    -{discountPercentage}%
                   </span>
                 </>
               )}
