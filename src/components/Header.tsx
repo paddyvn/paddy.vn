@@ -25,6 +25,7 @@ export const Header = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
@@ -32,6 +33,15 @@ export const Header = () => {
   
   const { data: announcements = [] } = useActiveBanners('announcement');
   const activeAnnouncement = announcements[0]; // Show first active announcement
+
+  // Hide announcement bar on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -265,50 +275,52 @@ export const Header = () => {
       </div>
 
       {/* Announcement Bar */}
-      {activeAnnouncement && !dismissedAnnouncement ? (
-        <div 
-          className="relative"
-          style={{ 
-            backgroundColor: activeAnnouncement.background_color,
-            color: activeAnnouncement.text_color
-          }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="py-2 text-center">
-              {activeAnnouncement.link_url ? (
-                <a 
-                  href={activeAnnouncement.link_url}
-                  className="text-xs md:text-sm font-medium hover:underline"
-                >
-                  {activeAnnouncement.title}
-                  {activeAnnouncement.link_text && (
-                    <span className="ml-2 underline">{activeAnnouncement.link_text}</span>
-                  )}
-                </a>
-              ) : (
-                <p className="text-xs md:text-sm font-medium">{activeAnnouncement.title}</p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={() => setDismissedAnnouncement(true)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:opacity-70 transition-opacity"
-            aria-label="Dismiss announcement"
+      <div className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'max-h-0' : 'max-h-20'}`}>
+        {activeAnnouncement && !dismissedAnnouncement ? (
+          <div 
+            className="relative"
+            style={{ 
+              backgroundColor: activeAnnouncement.background_color,
+              color: activeAnnouncement.text_color
+            }}
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      ) : !activeAnnouncement ? (
-        <div className="bg-background">
-          <div className="container mx-auto px-4">
-            <div className="bg-muted rounded-lg py-2 text-center">
-              <p className="text-sm font-medium">
-                Miễn phí giao hàng cho đơn hàng đầu tiên trên 500.000đ 🎉
-              </p>
+            <div className="container mx-auto px-4">
+              <div className="py-2 text-center">
+                {activeAnnouncement.link_url ? (
+                  <a 
+                    href={activeAnnouncement.link_url}
+                    className="text-xs md:text-sm font-medium hover:underline"
+                  >
+                    {activeAnnouncement.title}
+                    {activeAnnouncement.link_text && (
+                      <span className="ml-2 underline">{activeAnnouncement.link_text}</span>
+                    )}
+                  </a>
+                ) : (
+                  <p className="text-xs md:text-sm font-medium">{activeAnnouncement.title}</p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setDismissedAnnouncement(true)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:opacity-70 transition-opacity"
+              aria-label="Dismiss announcement"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : !activeAnnouncement ? (
+          <div className="bg-background">
+            <div className="container mx-auto px-4">
+              <div className="bg-muted rounded-lg py-2 text-center">
+                <p className="text-sm font-medium">
+                  Miễn phí giao hàng cho đơn hàng đầu tiên trên 500.000đ 🎉
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </header>
   );
 };
