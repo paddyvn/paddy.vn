@@ -10,6 +10,7 @@ import { CollectionFilters, FilterState } from "@/components/CollectionFilters";
 import { Search as SearchIcon, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -135,6 +136,10 @@ const Search = () => {
     });
   }, [allProducts, filters]);
 
+  // Fetch promotions for filtered products
+  const productIds = useMemo(() => filteredProducts.map(p => p.id), [filteredProducts]);
+  const { data: promotionsMap } = useProductsPromotions(productIds);
+
   const hasActiveFilters =
     filters.brands.length > 0 ||
     filters.ageRanges.length > 0 ||
@@ -238,7 +243,11 @@ const Search = () => {
               ) : filteredProducts && filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      promotion={promotionsMap?.[product.id]}
+                    />
                   ))}
                 </div>
               ) : query ? (

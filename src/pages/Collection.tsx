@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Grid3X3, LayoutGrid, SlidersHorizontal, X, Globe, MapPin } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
 
 const PRODUCTS_PER_PAGE = 20;
 const DEFAULT_MAX_PRICE = 10000000;
@@ -238,6 +239,10 @@ const Collection = () => {
       return true;
     });
   }, [allProducts, filters]);
+
+  // Fetch promotions for paginated products
+  const productIds = useMemo(() => filteredProducts.map((p: any) => p.id), [filteredProducts]);
+  const { data: promotionsMap } = useProductsPromotions(productIds);
 
   const totalProducts = filteredProducts.length;
   const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
@@ -614,7 +619,11 @@ const Collection = () => {
                 <>
                   <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
                     {paginatedProducts.map((product: any) => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        promotion={promotionsMap?.[product.id]}
+                      />
                     ))}
                   </div>
 
