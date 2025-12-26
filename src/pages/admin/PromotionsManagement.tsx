@@ -93,7 +93,10 @@ export default function PromotionsManagement() {
     queryFn: async () => {
       let query = supabase
         .from("promotions")
-        .select("*")
+        .select(`
+          *,
+          promotion_products(id, discount_value, discount_type)
+        `)
         .order("display_order", { ascending: true });
 
       // Filter by program_kind for specific program type pages
@@ -239,6 +242,8 @@ export default function PromotionsManagement() {
                   <TableHead>Preview</TableHead>
                   <TableHead>Title</TableHead>
                   {!typeConfig && <TableHead>Type</TableHead>}
+                  <TableHead>Discount</TableHead>
+                  <TableHead>Products</TableHead>
                   <TableHead>Schedule</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -277,6 +282,26 @@ export default function PromotionsManagement() {
                         <Badge variant="outline">{promo.promo_type || "deal"}</Badge>
                       </TableCell>
                     )}
+                    <TableCell>
+                      {(() => {
+                        const products = promo.promotion_products || [];
+                        if (products.length === 0) return <span className="text-muted-foreground">—</span>;
+                        const maxDiscount = Math.max(...products.map((pp: any) => pp.discount_value || 0));
+                        const discountType = products[0]?.discount_type || "percentage";
+                        if (discountType === "percentage") {
+                          return <span className="font-medium">{maxDiscount}%</span>;
+                        } else if (discountType === "fixed_amount") {
+                          return <span className="font-medium">-{new Intl.NumberFormat("vi-VN").format(maxDiscount)}₫</span>;
+                        } else {
+                          return <span className="font-medium">{new Intl.NumberFormat("vi-VN").format(maxDiscount)}₫</span>;
+                        }
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">
+                        {(promo.promotion_products || []).length}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {promo.start_date && (
