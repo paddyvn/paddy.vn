@@ -93,9 +93,8 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
       {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-8 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-8 lg:gap-12">
-          {/* Liên Hệ - Always visible, not collapsible */}
-          <div className="pb-6 md:pb-0">
-            <h3 className="font-bold text-lg mb-4">Liên Hệ</h3>
+          {/* Liên Hệ */}
+          <FooterSection title="Liên Hệ">
             <div className="space-y-3 text-sm">
               <p className="font-semibold">
                 CÔNG TY CỔ PHẦN THƯƠNG MẠI & DỊCH VỤ PADDY
@@ -142,7 +141,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 </a>
               </div>
             </div>
-          </div>
+          </FooterSection>
 
           {/* Về Paddy */}
           <FooterSection title="Về Paddy">
