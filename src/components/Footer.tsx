@@ -107,9 +107,9 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
             </div>
           </div>
 
-          {/* Paddy Pet Shop */}
+          {/* Về Paddy */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Paddy Pet Shop</h3>
+            <h3 className="font-bold text-lg mb-4">Về Paddy</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/pages/gioi-thieu" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
