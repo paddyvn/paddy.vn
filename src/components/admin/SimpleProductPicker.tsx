@@ -767,7 +767,7 @@ export function SimpleProductPicker({
           </div>
 
           {/* Products Table */}
-          <ScrollArea className="flex-1 border rounded-lg">
+          <ScrollArea className="flex-1 border rounded-lg h-[400px]">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
