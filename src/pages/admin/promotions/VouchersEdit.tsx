@@ -25,6 +25,7 @@ type VouchersFormData = BasePromotionFormData & {
   icon_type: string;
   custom_icons: CustomIcon[];
   productSettings: ProductDiscountSetting[];
+  applies_to_all_products: boolean;
 };
 
 const getDefaultFormData = (): VouchersFormData => ({
@@ -46,6 +47,7 @@ const getDefaultFormData = (): VouchersFormData => ({
   icon_type: "dog_cat",
   custom_icons: [],
   productSettings: [],
+  applies_to_all_products: true,
 });
 
 export default function VouchersEdit() {
@@ -267,9 +269,11 @@ export default function VouchersEdit() {
       isLoading={!isNew && isLoading}
       backUrl="/admin/promotions/vouchers"
       hideAppliesTo={true}
-      appliesSummary={formData.voucher_type === "product" 
-        ? `${formData.selectedProducts.length} sản phẩm` 
-        : "Tất cả sản phẩm"}
+      appliesSummary={formData.voucher_type === "shop_wide" 
+        ? "Tất cả sản phẩm" 
+        : formData.applies_to_all_products 
+          ? "Tất cả sản phẩm" 
+          : `${formData.selectedProducts.length} sản phẩm`}
       summaryExtra={
         <>
           <div>
@@ -378,30 +382,53 @@ export default function VouchersEdit() {
         </CardContent>
       </Card>
 
-      {/* Product Picker - only show for product-specific vouchers */}
-      {formData.voucher_type === "product" ? (
-        <SimpleProductPicker
-          selectedProductIds={formData.selectedProducts}
-          onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
-          productSettings={formData.productSettings}
-          onProductSettingsChange={(settings) => setFormData((prev) => ({ ...prev, productSettings: settings }))}
-          discountType="percentage"
-          discountValue={formData.discount_percentage}
-          title="Sản phẩm áp dụng"
-          showDiscountSettings={true}
-        />
-      ) : (
+      {/* Product Picker - conditional based on voucher type */}
+      {formData.voucher_type === "shop_wide" ? (
         <Card>
           <CardContent className="p-6">
-            <h3 className="font-semibold mb-2">Sản phẩm được áp dụng</h3>
+            <h3 className="font-semibold mb-2">Sản phẩm áp dụng</h3>
             <p className="text-muted-foreground">
-              {formData.voucher_type === "shop_wide" && "Tất cả sản phẩm - Voucher áp dụng cho toàn bộ sản phẩm trong Shop"}
-              {formData.voucher_type === "private" && "Voucher riêng tư - Chỉ chia sẻ qua mã voucher"}
-              {formData.voucher_type === "livestream" && "Voucher Livestream - Áp dụng trong các buổi livestream"}
-              {formData.voucher_type === "video" && "Voucher Video - Áp dụng qua video quảng cáo"}
-              {formData.voucher_type === "new_customer" && "Voucher Khách hàng mới - Chỉ áp dụng cho khách hàng mới"}
-              {formData.voucher_type === "returning_customer" && "Voucher Khách hàng mua lại - Chỉ áp dụng cho khách hàng đã mua hàng"}
+              Tất cả sản phẩm - Voucher áp dụng cho toàn bộ sản phẩm trong Shop
             </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">Sản phẩm áp dụng</h3>
+                <p className="text-sm text-muted-foreground">
+                  {formData.voucher_type === "private" && "Voucher riêng tư"}
+                  {formData.voucher_type === "livestream" && "Voucher Livestream"}
+                  {formData.voucher_type === "video" && "Voucher Video"}
+                  {formData.voucher_type === "new_customer" && "Voucher Khách hàng mới"}
+                  {formData.voucher_type === "returning_customer" && "Voucher Khách hàng mua lại"}
+                  {formData.voucher_type === "product" && "Voucher sản phẩm"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="applies-all" className="text-sm">Tất cả sản phẩm</Label>
+                <Switch
+                  id="applies-all"
+                  checked={formData.applies_to_all_products}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, applies_to_all_products: checked }))}
+                />
+              </div>
+            </div>
+            
+            {!formData.applies_to_all_products && (
+              <SimpleProductPicker
+                selectedProductIds={formData.selectedProducts}
+                onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
+                productSettings={formData.productSettings}
+                onProductSettingsChange={(settings) => setFormData((prev) => ({ ...prev, productSettings: settings }))}
+                discountType="percentage"
+                discountValue={formData.discount_percentage}
+                title=""
+                showDiscountSettings={true}
+              />
+            )}
           </CardContent>
         </Card>
       )}
