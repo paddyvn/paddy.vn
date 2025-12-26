@@ -20,13 +20,15 @@ import { SimpleProductPicker, ProductDiscountSetting } from "@/components/admin/
 import { cn } from "@/lib/utils";
 
 type VoucherType = "shop_wide" | "product" | "private" | "livestream" | "video" | "new_customer" | "returning_customer";
+type DiscountType = "percentage" | "fixed_amount";
 
 type VouchersFormData = BasePromotionFormData & {
   voucher_code: string;
   voucher_type: VoucherType;
   usage_limit: number | null;
   one_per_customer: boolean;
-  discount_percentage: number;
+  discount_type: DiscountType;
+  discount_value: number;
   gradient_from: string;
   gradient_to: string;
   icon_type: string;
@@ -50,7 +52,8 @@ const getDefaultFormData = (): VouchersFormData => ({
   voucher_type: "shop_wide",
   usage_limit: null,
   one_per_customer: true,
-  discount_percentage: 10,
+  discount_type: "percentage",
+  discount_value: 10,
   gradient_from: "#2c3e50",
   gradient_to: "#4ca1af",
   icon_type: "dog_cat",
@@ -231,8 +234,10 @@ export default function VouchersEdit() {
               promotion_id: promotionId,
               product_id: productId,
               variant_id: null,
-              discount_type: "percentage",
-              discount_value: data.discount_percentage,
+              discount_type: data.discount_type,
+              discount_value: data.discount_value,
+              stock_limit: null,
+              purchase_limit: null,
               is_enabled: true,
             }];
           }
@@ -293,7 +298,11 @@ export default function VouchersEdit() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Discount</p>
-            <p className="font-medium">{formData.discount_percentage}% off</p>
+            <p className="font-medium">
+              {formData.discount_type === "percentage" 
+                ? `${formData.discount_value}% off` 
+                : `${formData.discount_value.toLocaleString()}đ off`}
+            </p>
           </div>
         </>
       }
@@ -360,12 +369,41 @@ export default function VouchersEdit() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Discount Percentage (%)</Label>
-                <Input
-                  type="number"
-                  value={formData.discount_percentage}
-                  onChange={(e) => setFormData({ ...formData, discount_percentage: parseFloat(e.target.value) || 0 })}
-                />
+                <Label>Khuyến mãi</Label>
+                <div className="flex">
+                  <Input
+                    type="number"
+                    value={formData.discount_value}
+                    onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
+                    className="rounded-r-none"
+                  />
+                  <div className="flex border border-l-0 rounded-r-md overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, discount_type: "fixed_amount" })}
+                      className={cn(
+                        "px-3 py-2 text-sm font-medium transition-colors",
+                        formData.discount_type === "fixed_amount" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-muted hover:bg-muted/80"
+                      )}
+                    >
+                      đ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, discount_type: "percentage" })}
+                      className={cn(
+                        "px-3 py-2 text-sm font-medium transition-colors",
+                        formData.discount_type === "percentage" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-muted hover:bg-muted/80"
+                      )}
+                    >
+                      %GIẢM
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Usage Limit</Label>
@@ -508,8 +546,8 @@ export default function VouchersEdit() {
                 onProductsChange={(productIds) => setFormData((prev) => ({ ...prev, selectedProducts: productIds }))}
                 productSettings={formData.productSettings}
                 onProductSettingsChange={(settings) => setFormData((prev) => ({ ...prev, productSettings: settings }))}
-                discountType="percentage"
-                discountValue={formData.discount_percentage}
+                discountType={formData.discount_type}
+                discountValue={formData.discount_value}
                 title=""
                 showDiscountSettings={false}
               />
