@@ -17,10 +17,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
 import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
 import { SimpleProductPicker, ProductDiscountSetting } from "@/components/admin/SimpleProductPicker";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
 type VoucherType = "shop_wide" | "product" | "private" | "livestream" | "video" | "new_customer" | "returning_customer";
 type DiscountType = "percentage" | "fixed_amount";
+type DisplayVisibility = "public" | "private";
 
 type VouchersFormData = BasePromotionFormData & {
   voucher_code: string;
@@ -38,6 +40,7 @@ type VouchersFormData = BasePromotionFormData & {
   applies_to_all_products: boolean;
   allow_save_before_usage: boolean;
   save_start_date: Date | null;
+  display_visibility: DisplayVisibility;
 };
 
 const getDefaultFormData = (): VouchersFormData => ({
@@ -64,6 +67,7 @@ const getDefaultFormData = (): VouchersFormData => ({
   applies_to_all_products: true,
   allow_save_before_usage: false,
   save_start_date: null,
+  display_visibility: "public",
 });
 
 export default function VouchersEdit() {
@@ -512,6 +516,38 @@ export default function VouchersEdit() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Display visibility options */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-start gap-6">
+                <Label className="text-muted-foreground pt-1 min-w-[120px]">Thiết lập hiển thị</Label>
+                <RadioGroup
+                  value={formData.display_visibility}
+                  onValueChange={(value: DisplayVisibility) => setFormData({ ...formData, display_visibility: value })}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="public" id="visibility-public" />
+                    <Label htmlFor="visibility-public" className="cursor-pointer font-normal">
+                      Hiển thị nhiều nơi
+                    </Label>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="private" id="visibility-private" />
+                      <Label htmlFor="visibility-private" className="cursor-pointer font-normal">
+                        Không công khai
+                      </Label>
+                    </div>
+                    {formData.display_visibility === "private" && (
+                      <p className="text-xs text-muted-foreground ml-6">
+                        Mã giảm giá của bạn sẽ không được công khai, bạn có thể chia sẻ mã giảm giá với người dùng khác
+                      </p>
+                    )}
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
           </div>
         </CardContent>
