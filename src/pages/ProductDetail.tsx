@@ -149,6 +149,7 @@ export default function ProductDetail() {
             images={product.product_images || []} 
             productName={product.name}
             isFeatured={product.is_featured}
+            isOnSale={hasDiscount}
           />
 
           {/* Right Column - Product Info */}
