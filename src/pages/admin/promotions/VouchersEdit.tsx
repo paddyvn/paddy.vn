@@ -26,7 +26,8 @@ type VouchersFormData = BasePromotionFormData & {
   voucher_code: string;
   voucher_type: VoucherType;
   usage_limit: number | null;
-  one_per_customer: boolean;
+  usage_limit_per_customer: number | null;
+  min_order_value: number | null;
   discount_type: DiscountType;
   discount_value: number;
   gradient_from: string;
@@ -51,7 +52,8 @@ const getDefaultFormData = (): VouchersFormData => ({
   voucher_code: "",
   voucher_type: "shop_wide",
   usage_limit: null,
-  one_per_customer: true,
+  usage_limit_per_customer: 1,
+  min_order_value: null,
   discount_type: "percentage",
   discount_value: 10,
   gradient_from: "#2c3e50",
@@ -395,26 +397,47 @@ export default function VouchersEdit() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Usage Limit</Label>
+                <Label>Tổng lượt sử dụng tối đa</Label>
                 <Input
                   type="number"
                   value={formData.usage_limit || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, usage_limit: e.target.value ? parseInt(e.target.value) : null })
                   }
-                  placeholder="Unlimited"
+                  placeholder="Không giới hạn"
                 />
+                <p className="text-xs text-muted-foreground">Tổng số Mã giảm giá có thể sử dụng</p>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>One Use Per Customer</Label>
-                <p className="text-sm text-muted-foreground">Each customer can only use this voucher once</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Giá trị đơn hàng tối thiểu</Label>
+                <div className="flex">
+                  <Input
+                    type="number"
+                    value={formData.min_order_value || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, min_order_value: e.target.value ? parseFloat(e.target.value) : null })
+                    }
+                    placeholder="Không yêu cầu"
+                    className="rounded-r-none"
+                  />
+                  <div className="flex items-center justify-center px-3 border border-l-0 rounded-r-md bg-muted text-muted-foreground text-sm">
+                    đ
+                  </div>
+                </div>
               </div>
-              <Switch
-                checked={formData.one_per_customer}
-                onCheckedChange={(checked) => setFormData({ ...formData, one_per_customer: checked })}
-              />
+              <div className="space-y-2">
+                <Label>Lượt sử dụng tối đa/Người mua</Label>
+                <Input
+                  type="number"
+                  value={formData.usage_limit_per_customer || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, usage_limit_per_customer: e.target.value ? parseInt(e.target.value) : null })
+                  }
+                  placeholder="1"
+                />
+              </div>
             </div>
             {/* Allow save before usage toggle */}
             <div className="border-t pt-4 space-y-3">
