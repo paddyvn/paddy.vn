@@ -40,6 +40,7 @@ type PromotionFormBaseProps = {
   hideAppliesTo?: boolean; // Hide default applies to section
   scheduleSummary?: string; // Custom schedule summary text
   appliesSummary?: string; // Custom applies to summary text
+  afterDatePickers?: ReactNode; // Content to render after date pickers
 };
 
 export function PromotionFormBase({
@@ -58,6 +59,7 @@ export function PromotionFormBase({
   hideAppliesTo,
   scheduleSummary,
   appliesSummary,
+  afterDatePickers,
 }: PromotionFormBaseProps) {
   const navigate = useNavigate();
 
@@ -230,6 +232,7 @@ export function PromotionFormBase({
                       </div>
                     </div>
                   )}
+                  {afterDatePickers}
                 </div>
               </div>
             </CardContent>
