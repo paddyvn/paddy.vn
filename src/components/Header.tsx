@@ -132,17 +132,8 @@ export const Header = () => {
               inputClassName="w-full pr-12 h-11 bg-background text-foreground rounded-md"
             />
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-6 md:gap-1">
-              <Button 
-                variant="ghost" 
-                className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
-              >
-                <HelpCircle className="h-4 w-4" />
-                <span className="text-sm">24/7 Help</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-
+            {/* Profile - positioned independently on mobile */}
+            <div className="md:hidden absolute right-16">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -150,14 +141,6 @@ export const Header = () => {
                     className="flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
                   >
                     <User className="h-4 w-4" />
-                    <div className="hidden md:flex flex-col items-start text-left">
-                      {userId && userName && (
-                        <span className="text-xs opacity-80">Hi, {userName.split(' ')[0]}</span>
-                      )}
-                      <span className="text-sm">
-                        {userId ? 'Account' : 'Sign In'}
-                      </span>
-                    </div>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -186,6 +169,65 @@ export const Header = () => {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+
+            {/* Right Actions - Desktop profile + Cart */}
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="text-sm">24/7 Help</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+
+              {/* Desktop Profile */}
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
+                    >
+                      <User className="h-4 w-4" />
+                      <div className="flex flex-col items-start text-left">
+                        {userId && userName && (
+                          <span className="text-xs opacity-80">Hi, {userName.split(' ')[0]}</span>
+                        )}
+                        <span className="text-sm">
+                          {userId ? 'Account' : 'Sign In'}
+                        </span>
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-background">
+                    {userId ? (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
+                          <Package className="mr-2 h-4 w-4" />
+                          My Orders
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Profile Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Sign Out
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Sign In / Sign Up
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
               <CartDrawer 
                 userId={userId}
