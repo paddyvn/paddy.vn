@@ -1,14 +1,51 @@
-import { Facebook, Instagram, Phone, Mail } from "lucide-react";
+import { Facebook, Instagram, Phone, Mail, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import govSeal from "@/assets/gov-seal.png";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface FooterProps {
   hideNewsletter?: boolean;
 }
+
+interface FooterSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+const FooterSection = ({ title, children }: FooterSectionProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile: Collapsible */}
+      <div className="md:hidden">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full py-3 border-b border-border/50">
+            <h3 className="font-bold text-lg">{title}</h3>
+            <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="py-3">
+            {children}
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+
+      {/* Desktop: Always visible */}
+      <div className="hidden md:block">
+        <h3 className="font-bold text-lg mb-4">{title}</h3>
+        {children}
+      </div>
+    </>
+  );
+};
 
 export const Footer = ({ hideNewsletter = false }: FooterProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -54,10 +91,10 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
       )}
 
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Liên Hệ */}
-          <div>
+      <div className="container mx-auto px-4 py-8 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-8 lg:gap-12">
+          {/* Liên Hệ - Always visible, not collapsible */}
+          <div className="pb-6 md:pb-0">
             <h3 className="font-bold text-lg mb-4">Liên Hệ</h3>
             <div className="space-y-3 text-sm">
               <p className="font-semibold">
@@ -108,8 +145,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
           </div>
 
           {/* Về Paddy */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Về Paddy</h3>
+          <FooterSection title="Về Paddy">
             <ul className="space-y-2">
               <li>
                 <Link to="/pages/gioi-thieu" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
@@ -132,11 +168,10 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterSection>
 
           {/* Shop */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Shop</h3>
+          <FooterSection title="Shop">
             <ul className="space-y-2">
               <li>
                 <Link to="/collections/cho" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
@@ -164,11 +199,10 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterSection>
 
           {/* Hỗ Trợ Khách Hàng */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Hỗ Trợ Khách Hàng</h3>
+          <FooterSection title="Hỗ Trợ Khách Hàng">
             <ul className="space-y-2">
               <li>
                 <Link to="/pages/chinh-sach-doi-tra-hang" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
@@ -196,7 +230,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterSection>
         </div>
       </div>
 
