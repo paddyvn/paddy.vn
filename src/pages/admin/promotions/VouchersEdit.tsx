@@ -511,7 +511,7 @@ export default function VouchersEdit() {
                 discountType="percentage"
                 discountValue={formData.discount_percentage}
                 title=""
-                showDiscountSettings={true}
+                showDiscountSettings={false}
               />
             )}
           </CardContent>
