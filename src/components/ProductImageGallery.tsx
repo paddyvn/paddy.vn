@@ -54,7 +54,7 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
     <div className="space-y-4 w-full max-w-full overflow-hidden">
       {/* Main Image */}
       <div
-        className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 cursor-zoom-in"
+        className="relative aspect-square w-full max-w-full rounded-xl overflow-hidden bg-muted/50 cursor-zoom-in"
         onClick={() => setIsZoomOpen(true)}
       >
         {isOnSale && (
@@ -70,7 +70,7 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
         <img
           src={sortedImages[selectedImage].image_url}
           alt={sortedImages[selectedImage].alt_text || productName}
-          className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+          className="block w-full h-full max-w-full max-h-full object-contain transition-transform duration-300 md:hover:scale-105"
         />
         
         {/* Navigation Arrows */}
