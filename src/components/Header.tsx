@@ -38,25 +38,40 @@ export const Header = () => {
   // Progressive header hiding on scroll with direction detection
   useEffect(() => {
     let lastScrollY = window.scrollY;
+    let ticking = false;
     
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const isScrollingUp = scrollY < lastScrollY;
-      
-      // At top: show everything
-      setIsAtTop(scrollY <= 20);
-      
-      // Show header when scrolling up, hide when scrolling down past threshold
-      if (isScrollingUp) {
-        setHideHeader(false);
-      } else if (scrollY > 100) {
-        setHideHeader(true);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const isScrollingUp = scrollY < lastScrollY;
+          const scrollDelta = Math.abs(scrollY - lastScrollY);
+          
+          // Only update if scroll delta is significant enough (prevents micro-scroll jitter)
+          if (scrollDelta > 5) {
+            // At top: show everything (with hysteresis - hide at 50px, show at 10px)
+            if (scrollY <= 10) {
+              setIsAtTop(true);
+            } else if (scrollY > 50) {
+              setIsAtTop(false);
+            }
+            
+            // Show header when scrolling up, hide when scrolling down past threshold
+            if (isScrollingUp) {
+              setHideHeader(false);
+            } else if (scrollY > 100) {
+              setHideHeader(true);
+            }
+            
+            lastScrollY = scrollY;
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
-      
-      lastScrollY = scrollY;
     };
     
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
