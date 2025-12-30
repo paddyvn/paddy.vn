@@ -198,36 +198,38 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
             </span>
           </div>
 
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col gap-2">
             <div className="flex flex-col items-start">
               {showSaleBadge && discountPercentage > 0 && (
                 <span className="text-sm text-muted-foreground line-through">
                   {formatPrice(originalPrice)}₫
                 </span>
               )}
-              <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-primary">
-                  {formatPrice(displayPrice)}₫
-                </span>
-                {showSaleBadge && discountPercentage > 0 && (
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
-                    -{discountPercentage}%
-                  </Badge>
-                )}
-              </div>
+              <span className="text-base font-bold text-primary">
+                {formatPrice(displayPrice)}₫
+              </span>
             </div>
-            <Button
-              size="icon"
-              className="rounded-full shadow-lg h-9 w-9"
-              onClick={handleQuickAddClick}
-              disabled={isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="flex items-center justify-between gap-2">
+              {showSaleBadge && discountPercentage > 0 ? (
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
+                  -{discountPercentage}%
+                </Badge>
               ) : (
-                <ShoppingCart className="h-4 w-4" />
+                <div />
               )}
-            </Button>
+              <Button
+                size="icon"
+                className="rounded-full shadow-lg h-9 w-9 shrink-0"
+                onClick={handleQuickAddClick}
+                disabled={isAddingToCart}
+              >
+                {isAddingToCart ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShoppingCart className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Applicable vouchers */}
