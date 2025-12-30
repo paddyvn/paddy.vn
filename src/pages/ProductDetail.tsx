@@ -150,7 +150,7 @@ export default function ProductDetail() {
       
       <div className="container mx-auto px-4 py-2 max-w-full overflow-x-hidden">
         {/* Main Product Section */}
-        <div className="grid lg:grid-cols-2 gap-10 mb-4 max-w-full min-w-0">
+        <div className="grid lg:grid-cols-2 gap-10 mb-0 max-w-full min-w-0">
           {/* Left Column - Images */}
           <div className="min-w-0">
             <ProductImageGallery 
