@@ -233,7 +233,7 @@ const Search = () => {
             {/* Results */}
             <div className="flex-1">
               {isLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {Array.from({ length: 12 }).map((_, i) => (
                     <div key={i} className="space-y-3">
                       <Skeleton className="aspect-square rounded-lg" />
@@ -243,7 +243,7 @@ const Search = () => {
                   ))}
                 </div>
               ) : filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {filteredProducts.map((product) => {
                     const productVouchers = [
                       ...(vouchersData?.shopWideVouchers || []),
