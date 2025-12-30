@@ -188,37 +188,19 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
             </h3>
           </div>
 
-          <div className="flex items-center gap-1">
-            <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
-            <span className="text-sm font-medium">
-              {calculateAverageRating(product.reviews)}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              ({product.reviews?.length || 0})
-            </span>
-          </div>
-
-          <div className="flex items-end justify-between gap-2">
-            <div className="flex flex-col items-start">
-              {showSaleBadge && discountPercentage > 0 && (
-                <span className="text-xs text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}₫
-                </span>
-              )}
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-primary">
-                  {formatPrice(displayPrice)}₫
-                </span>
-                {showSaleBadge && discountPercentage > 0 && (
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4">
-                    -{discountPercentage}%
-                  </Badge>
-                )}
-              </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1">
+              <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
+              <span className="text-sm font-medium">
+                {calculateAverageRating(product.reviews)}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                ({product.reviews?.length || 0})
+              </span>
             </div>
             <Button
               size="icon"
-              className="rounded-full shadow-lg h-9 w-9 shrink-0"
+              className="rounded-full shadow-lg h-8 w-8 shrink-0"
               onClick={handleQuickAddClick}
               disabled={isAddingToCart}
             >
@@ -228,6 +210,24 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
                 <ShoppingCart className="h-4 w-4" />
               )}
             </Button>
+          </div>
+
+          <div className="flex flex-col items-start">
+            {showSaleBadge && discountPercentage > 0 && (
+              <span className="text-xs text-muted-foreground line-through">
+                {formatPrice(originalPrice)}₫
+              </span>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold text-primary">
+                {formatPrice(displayPrice)}₫
+              </span>
+              {showSaleBadge && discountPercentage > 0 && (
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4">
+                  -{discountPercentage}%
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Applicable vouchers */}
