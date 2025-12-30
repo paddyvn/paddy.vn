@@ -148,7 +148,7 @@ export default function ProductDetail() {
         categorySlug={primaryCategory?.slug}
       />
       
-      <div className="container mx-auto px-4 py-6 max-w-full overflow-x-hidden">
+      <div className="container mx-auto px-4 py-2 max-w-full overflow-x-hidden">
         {/* Main Product Section */}
         <div className="grid lg:grid-cols-2 gap-10 mb-8 max-w-full min-w-0">
           {/* Left Column - Images */}
