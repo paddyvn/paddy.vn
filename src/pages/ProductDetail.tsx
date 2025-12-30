@@ -313,21 +313,21 @@ export default function ProductDetail() {
             )}
 
             {/* Quantity and Add to Cart Row */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {/* Quantity Selector */}
               <div className="flex items-center border border-border rounded-lg">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-3 text-lg font-medium hover:bg-muted transition-colors"
+                  className="px-2.5 py-2 md:px-4 md:py-3 text-base md:text-lg font-medium hover:bg-muted transition-colors"
                 >
                   −
                 </button>
-                <span className="px-4 py-3 text-lg font-medium min-w-[3rem] text-center">
+                <span className="px-2 py-2 md:px-4 md:py-3 text-base md:text-lg font-medium min-w-[2rem] md:min-w-[3rem] text-center">
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-3 text-lg font-medium hover:bg-muted transition-colors"
+                  className="px-2.5 py-2 md:px-4 md:py-3 text-base md:text-lg font-medium hover:bg-muted transition-colors"
                 >
                   +
                 </button>
@@ -336,11 +336,11 @@ export default function ProductDetail() {
               {/* Add to Cart Button */}
               <Button
                 size="lg"
-                className="flex-1 h-14 text-base bg-green-500 hover:bg-green-600 text-white"
+                className="flex-1 h-10 md:h-14 text-sm md:text-base bg-green-500 hover:bg-green-600 text-white"
                 onClick={handleAddToCart}
                 disabled={!isInStock}
               >
-                <ShoppingCart className="mr-2 h-5 w-5" />
+                <ShoppingCart className="mr-1.5 md:mr-2 h-4 w-4 md:h-5 md:w-5" />
                 Add to Cart
               </Button>
 
@@ -348,9 +348,9 @@ export default function ProductDetail() {
               <Button
                 size="lg"
                 variant="outline"
-                className="h-14 w-14 p-0"
+                className="h-10 w-10 md:h-14 md:w-14 p-0"
               >
-                <Heart className="h-5 w-5" />
+                <Heart className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </div>
 
