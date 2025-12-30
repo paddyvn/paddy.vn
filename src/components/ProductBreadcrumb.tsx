@@ -9,8 +9,8 @@ interface ProductBreadcrumbProps {
 
 export function ProductBreadcrumb({ productName, categoryName, categorySlug }: ProductBreadcrumbProps) {
   return (
-    <nav className="container mx-auto px-4 py-2 overflow-x-hidden">
-      <ol className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap min-w-0">
+    <nav className="container mx-auto px-4 py-2 overflow-hidden">
+      <ol className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
         <li className="flex-shrink-0">
           <Link to="/" className="hover:text-primary transition-smooth">
             Home
@@ -39,7 +39,7 @@ export function ProductBreadcrumb({ productName, categoryName, categorySlug }: P
           </>
         )}
 
-        <li className="text-foreground font-medium line-clamp-1 min-w-0 break-words">
+        <li className="text-foreground font-medium truncate min-w-0">
           {productName}
         </li>
       </ol>
