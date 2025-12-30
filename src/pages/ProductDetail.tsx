@@ -29,6 +29,7 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [subscribeEnabled, setSubscribeEnabled] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -248,9 +249,17 @@ export default function ProductDetail() {
 
             {/* Short Description (from meta_description) */}
             {product.meta_description && (
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                {product.meta_description}
-              </p>
+              <div>
+                <p className={`text-sm text-muted-foreground leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+                  {product.meta_description}
+                </p>
+                <button
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="text-sm text-primary font-medium mt-1 hover:underline"
+                >
+                  {showFullDescription ? 'Thu gọn' : 'Xem thêm'}
+                </button>
+              </div>
             )}
 
             {/* Brand & Origin */}
