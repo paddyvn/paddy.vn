@@ -11,6 +11,7 @@ import { Search as SearchIcon, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useProductsPromotions } from "@/hooks/useProductPromotions";
+import { useAllProductVouchers } from "@/hooks/useProductVouchers";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -136,9 +137,10 @@ const Search = () => {
     });
   }, [allProducts, filters]);
 
-  // Fetch promotions for filtered products
+  // Fetch promotions and vouchers for filtered products
   const productIds = useMemo(() => filteredProducts.map(p => p.id), [filteredProducts]);
   const { data: promotionsMap } = useProductsPromotions(productIds);
+  const { data: vouchersData } = useAllProductVouchers();
 
   const hasActiveFilters =
     filters.brands.length > 0 ||
@@ -242,13 +244,20 @@ const Search = () => {
                 </div>
               ) : filteredProducts && filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
-                  {filteredProducts.map((product) => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      promotion={promotionsMap?.[product.id]}
-                    />
-                  ))}
+                  {filteredProducts.map((product) => {
+                    const productVouchers = [
+                      ...(vouchersData?.shopWideVouchers || []),
+                      ...(vouchersData?.productVouchersMap?.[product.id] || []),
+                    ].slice(0, 3);
+                    return (
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        promotion={promotionsMap?.[product.id]}
+                        vouchers={productVouchers}
+                      />
+                    );
+                  })}
                 </div>
               ) : query ? (
                 <div className="text-center py-16">
