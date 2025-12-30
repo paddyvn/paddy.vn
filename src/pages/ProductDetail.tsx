@@ -496,7 +496,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Nutrition Facts Card - Independent */}
-          <div className="bg-muted/50 rounded-xl p-4 h-fit">
+          <div className="bg-muted/50 rounded-xl p-4 h-fit w-full lg:max-w-xs">
             <h3 className="text-base font-bold mb-4">Nutrition Facts</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
