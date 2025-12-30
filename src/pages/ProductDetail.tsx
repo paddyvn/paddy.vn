@@ -30,6 +30,11 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [subscribeEnabled, setSubscribeEnabled] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [expandedTabs, setExpandedTabs] = useState<Record<string, boolean>>({
+    description: false,
+    ingredients: false,
+    feeding: false,
+  });
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -423,84 +428,123 @@ export default function ProductDetail() {
               </TabsList>
               
               <TabsContent value="description" className="pt-6">
-                <div className="space-y-4">
+                <div className="relative">
                   <div 
-                    className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
-                  />
-                  
-                  <div>
-                    <h3 className="text-base font-bold mb-3">Key Benefits:</h3>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <span className="text-foreground">•</span>
-                        High-quality protein from real chicken
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-foreground">•</span>
-                        Omega-3 and Omega-6 fatty acids for healthy skin and coat
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-foreground">•</span>
-                        Natural fiber for healthy digestion
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-foreground">•</span>
-                        Essential vitamins and minerals for overall wellness
-                      </li>
-                    </ul>
+                    className={`space-y-4 overflow-hidden transition-all ${!expandedTabs.description ? 'max-h-[420px]' : ''}`}
+                  >
+                    <div 
+                      className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
+                    />
+                    
+                    <div>
+                      <h3 className="text-base font-bold mb-3">Key Benefits:</h3>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground">•</span>
+                          High-quality protein from real chicken
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground">•</span>
+                          Omega-3 and Omega-6 fatty acids for healthy skin and coat
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground">•</span>
+                          Natural fiber for healthy digestion
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground">•</span>
+                          Essential vitamins and minerals for overall wellness
+                        </li>
+                      </ul>
+                    </div>
                   </div>
+                  {!expandedTabs.description && (
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                  )}
                 </div>
+                <button
+                  onClick={() => setExpandedTabs(prev => ({ ...prev, description: !prev.description }))}
+                  className="text-sm text-primary font-medium mt-3 hover:underline"
+                >
+                  {expandedTabs.description ? 'Thu gọn' : 'Xem thêm'}
+                </button>
               </TabsContent>
               
               <TabsContent value="ingredients" className="pt-6">
-                <div className="prose prose-sm max-w-none text-sm [&_p]:text-sm">
-                  <p className="text-sm text-muted-foreground">
-                    Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
-                    Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
-                    Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
-                    Blueberries, Raspberries, Yucca Schidigera Extract, Dried Enterococcus 
-                    faecium Fermentation Product, Dried Lactobacillus acidophilus Fermentation 
-                    Product, Dried Lactobacillus casei Fermentation Product.
-                  </p>
+                <div className="relative">
+                  <div className={`overflow-hidden transition-all ${!expandedTabs.ingredients ? 'max-h-[420px]' : ''}`}>
+                    <div className="prose prose-sm max-w-none text-sm [&_p]:text-sm">
+                      <p className="text-sm text-muted-foreground">
+                        Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
+                        Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
+                        Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
+                        Blueberries, Raspberries, Yucca Schidigera Extract, Dried Enterococcus 
+                        faecium Fermentation Product, Dried Lactobacillus acidophilus Fermentation 
+                        Product, Dried Lactobacillus casei Fermentation Product.
+                      </p>
+                    </div>
+                  </div>
+                  {!expandedTabs.ingredients && (
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                  )}
                 </div>
+                <button
+                  onClick={() => setExpandedTabs(prev => ({ ...prev, ingredients: !prev.ingredients }))}
+                  className="text-sm text-primary font-medium mt-3 hover:underline"
+                >
+                  {expandedTabs.ingredients ? 'Thu gọn' : 'Xem thêm'}
+                </button>
               </TabsContent>
               
               <TabsContent value="feeding" className="pt-6">
-                <div className="space-y-5">
-                  <p className="text-sm text-muted-foreground">
-                    Feed according to your pet's weight and activity level. Always ensure fresh 
-                    water is available. Consult your veterinarian for specific dietary needs.
-                  </p>
-                  <div className="overflow-x-auto">
-                    <table className="w-full max-w-lg text-sm">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left py-2 font-semibold">Weight</th>
-                          <th className="text-left py-2 font-semibold">Daily Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-muted-foreground">
-                        <tr className="border-b border-border">
-                          <td className="py-2">3-12 lbs</td>
-                          <td className="py-2">1/3 - 1 cup</td>
-                        </tr>
-                        <tr className="border-b border-border">
-                          <td className="py-2">13-20 lbs</td>
-                          <td className="py-2">1 - 1 1/3 cups</td>
-                        </tr>
-                        <tr className="border-b border-border">
-                          <td className="py-2">21-35 lbs</td>
-                          <td className="py-2">1 1/3 - 2 cups</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2">36-50 lbs</td>
-                          <td className="py-2">2 - 2 2/3 cups</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                <div className="relative">
+                  <div className={`overflow-hidden transition-all ${!expandedTabs.feeding ? 'max-h-[420px]' : ''}`}>
+                    <div className="space-y-5">
+                      <p className="text-sm text-muted-foreground">
+                        Feed according to your pet's weight and activity level. Always ensure fresh 
+                        water is available. Consult your veterinarian for specific dietary needs.
+                      </p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full max-w-lg text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 font-semibold">Weight</th>
+                              <th className="text-left py-2 font-semibold">Daily Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-muted-foreground">
+                            <tr className="border-b border-border">
+                              <td className="py-2">3-12 lbs</td>
+                              <td className="py-2">1/3 - 1 cup</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="py-2">13-20 lbs</td>
+                              <td className="py-2">1 - 1 1/3 cups</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="py-2">21-35 lbs</td>
+                              <td className="py-2">1 1/3 - 2 cups</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2">36-50 lbs</td>
+                              <td className="py-2">2 - 2 2/3 cups</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
+                  {!expandedTabs.feeding && (
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                  )}
                 </div>
+                <button
+                  onClick={() => setExpandedTabs(prev => ({ ...prev, feeding: !prev.feeding }))}
+                  className="text-sm text-primary font-medium mt-3 hover:underline"
+                >
+                  {expandedTabs.feeding ? 'Thu gọn' : 'Xem thêm'}
+                </button>
               </TabsContent>
             </Tabs>
           </div>
