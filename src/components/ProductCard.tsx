@@ -198,38 +198,36 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
             </span>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-col items-start">
+          <div className="flex items-end justify-between gap-2">
+            <div className="flex flex-col items-start gap-0.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-base font-bold text-primary">
+                  {formatPrice(displayPrice)}₫
+                </span>
+                {showSaleBadge && discountPercentage > 0 && (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs px-1.5 py-0">
+                    -{discountPercentage}%
+                  </Badge>
+                )}
+              </div>
               {showSaleBadge && discountPercentage > 0 && (
-                <span className="text-sm text-muted-foreground line-through">
+                <span className="text-xs text-muted-foreground line-through">
                   {formatPrice(originalPrice)}₫
                 </span>
               )}
-              <span className="text-base font-bold text-primary">
-                {formatPrice(displayPrice)}₫
-              </span>
             </div>
-            <div className="flex items-center justify-between gap-2">
-              {showSaleBadge && discountPercentage > 0 ? (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs">
-                  -{discountPercentage}%
-                </Badge>
+            <Button
+              size="icon"
+              className="rounded-full shadow-lg h-9 w-9 shrink-0"
+              onClick={handleQuickAddClick}
+              disabled={isAddingToCart}
+            >
+              {isAddingToCart ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <div />
+                <ShoppingCart className="h-4 w-4" />
               )}
-              <Button
-                size="icon"
-                className="rounded-full shadow-lg h-9 w-9 shrink-0"
-                onClick={handleQuickAddClick}
-                disabled={isAddingToCart}
-              >
-                {isAddingToCart ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShoppingCart className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            </Button>
           </div>
 
           {/* Applicable vouchers */}
