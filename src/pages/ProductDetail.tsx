@@ -149,7 +149,7 @@ export default function ProductDetail() {
       
       <div className="container mx-auto px-4 py-6 max-w-full overflow-x-hidden">
         {/* Main Product Section */}
-        <div className="grid lg:grid-cols-2 gap-10 mb-16 max-w-full min-w-0">
+        <div className="grid lg:grid-cols-2 gap-10 mb-8 max-w-full min-w-0">
           {/* Left Column - Images */}
           <div className="min-w-0">
             <ProductImageGallery 
@@ -400,7 +400,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Product Details Tabs and Nutrition Facts */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid lg:grid-cols-3 gap-8 mt-6 mb-16">
           {/* Tabs Section */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="description">
