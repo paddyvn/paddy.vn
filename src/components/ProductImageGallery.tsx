@@ -96,7 +96,7 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
 
       {/* Thumbnail Row */}
       {sortedImages.length > 1 && (
-        <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 md:gap-3 overflow-x-auto pb-0 scrollbar-hide">
           {visibleThumbnails.map((image, index) => (
             <button
               key={index}
