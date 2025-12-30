@@ -1955,12 +1955,15 @@ export type Database = {
           compare_at_price: number | null
           created_at: string
           description: string | null
+          feeding_guidelines: string | null
           id: string
+          ingredients: string | null
           is_active: boolean | null
           is_featured: boolean | null
           meta_description: string | null
           meta_title: string | null
           name: string
+          nutrition_facts: Json | null
           option1_name: string | null
           option2_name: string | null
           option3_name: string | null
@@ -1971,6 +1974,10 @@ export type Database = {
           rating: number | null
           rating_count: number | null
           short_description: string | null
+          show_description: boolean | null
+          show_feeding_guidelines: boolean | null
+          show_ingredients: boolean | null
+          show_nutrition_facts: boolean | null
           slug: string
           source_created_at: string | null
           source_id: string | null
@@ -1988,12 +1995,15 @@ export type Database = {
           compare_at_price?: number | null
           created_at?: string
           description?: string | null
+          feeding_guidelines?: string | null
           id?: string
+          ingredients?: string | null
           is_active?: boolean | null
           is_featured?: boolean | null
           meta_description?: string | null
           meta_title?: string | null
           name: string
+          nutrition_facts?: Json | null
           option1_name?: string | null
           option2_name?: string | null
           option3_name?: string | null
@@ -2004,6 +2014,10 @@ export type Database = {
           rating?: number | null
           rating_count?: number | null
           short_description?: string | null
+          show_description?: boolean | null
+          show_feeding_guidelines?: boolean | null
+          show_ingredients?: boolean | null
+          show_nutrition_facts?: boolean | null
           slug: string
           source_created_at?: string | null
           source_id?: string | null
@@ -2021,12 +2035,15 @@ export type Database = {
           compare_at_price?: number | null
           created_at?: string
           description?: string | null
+          feeding_guidelines?: string | null
           id?: string
+          ingredients?: string | null
           is_active?: boolean | null
           is_featured?: boolean | null
           meta_description?: string | null
           meta_title?: string | null
           name?: string
+          nutrition_facts?: Json | null
           option1_name?: string | null
           option2_name?: string | null
           option3_name?: string | null
@@ -2037,6 +2054,10 @@ export type Database = {
           rating?: number | null
           rating_count?: number | null
           short_description?: string | null
+          show_description?: boolean | null
+          show_feeding_guidelines?: boolean | null
+          show_ingredients?: boolean | null
+          show_nutrition_facts?: boolean | null
           slug?: string
           source_created_at?: string | null
           source_id?: string | null
