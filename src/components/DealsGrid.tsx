@@ -87,11 +87,11 @@ export const DealsGrid = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {promotions.slice(0, 6).map((promo) => (
+          {promotions.slice(0, 6).map((promo, index) => (
             <Link
               key={promo.id}
               to={getLink(promo)}
-              className="group relative aspect-square rounded-xl overflow-hidden hover:scale-105 transition-smooth max-w-[180px] shadow-card"
+              className={`group relative aspect-square rounded-xl overflow-hidden hover:scale-105 transition-smooth max-w-[180px] shadow-card ${index >= 4 ? 'hidden md:block' : ''}`}
               style={{
                 background: `linear-gradient(to bottom right, ${promo.gradient_from}, ${promo.gradient_to})`,
               }}
