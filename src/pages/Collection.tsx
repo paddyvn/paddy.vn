@@ -614,14 +614,14 @@ const Collection = () => {
 
               {/* Products Grid */}
               {productsLoading ? (
-                <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
+                <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-3 md:gap-4`}>
                   {Array.from({ length: 10 }).map((_, i) => (
                     <Skeleton key={i} className="h-80 rounded-lg" />
                   ))}
                 </div>
               ) : paginatedProducts.length > 0 ? (
                 <>
-                  <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
+                  <div className={`grid grid-cols-2 md:grid-cols-3 ${gridCols === 5 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-3 md:gap-4`}>
                     {paginatedProducts.map((product: any) => {
                       // Combine shop-wide vouchers with product-specific vouchers
                       const shopWide = vouchersData?.shopWideVouchers || [];

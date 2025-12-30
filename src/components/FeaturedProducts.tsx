@@ -19,7 +19,7 @@ export const FeaturedProducts = () => {
     return (
       <section className="py-16 md:py-24" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
               <div key={i} className="h-96 bg-muted animate-pulse rounded-lg" />
             ))}
@@ -61,7 +61,7 @@ export const FeaturedProducts = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {products.slice(0, 10).map((product, index) => (
             <div 
               key={product.id}
