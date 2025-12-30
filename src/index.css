@@ -129,11 +129,24 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "kern" 1, "liga" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
   }
   
   h1, h2, h3, h4, h5, h6 {

@@ -141,19 +141,21 @@ export default function ProductDetail() {
         categorySlug={primaryCategory?.slug}
       />
       
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 max-w-full overflow-x-hidden">
         {/* Main Product Section */}
-        <div className="grid lg:grid-cols-2 gap-10 mb-16">
+        <div className="grid lg:grid-cols-2 gap-10 mb-16 max-w-full min-w-0">
           {/* Left Column - Images */}
-          <ProductImageGallery 
-            images={product.product_images || []} 
-            productName={product.name}
-            isFeatured={product.is_featured}
-            isOnSale={hasDiscount}
-          />
+          <div className="min-w-0">
+            <ProductImageGallery 
+              images={product.product_images || []} 
+              productName={product.name}
+              isFeatured={product.is_featured}
+              isOnSale={hasDiscount}
+            />
+          </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0 max-w-full">
             {/* Product Name */}
             <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight max-w-full break-words">
               {product.name}
