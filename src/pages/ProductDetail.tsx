@@ -496,22 +496,22 @@ export default function ProductDetail() {
           </div>
 
           {/* Nutrition Facts Card - Independent */}
-          <div className="bg-muted/50 rounded-xl p-6 h-fit">
-            <h3 className="text-xl font-bold mb-6">Nutrition Facts</h3>
-              <div className="space-y-4">
-                <div className="flex items-start justify-between gap-4 py-2 border-b border-border">
+          <div className="bg-muted/50 rounded-xl p-4 h-fit">
+            <h3 className="text-base font-bold mb-4">Nutrition Facts</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
                   <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Protein (min)</span>
                   <span className="font-semibold text-primary whitespace-nowrap">24.0%</span>
                 </div>
-                <div className="flex items-start justify-between gap-4 py-2 border-b border-border">
+                <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
                   <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Fat (min)</span>
                   <span className="font-semibold text-primary whitespace-nowrap">14.0%</span>
                 </div>
-                <div className="flex items-start justify-between gap-4 py-2 border-b border-border">
+                <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
                   <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Fiber (max)</span>
                   <span className="font-semibold text-primary whitespace-nowrap">4.0%</span>
                 </div>
-                <div className="flex items-start justify-between gap-4 py-2">
+                <div className="flex items-start justify-between gap-3 py-1.5">
                   <span className="text-muted-foreground min-w-0 flex-1 break-words">Moisture (max)</span>
                   <span className="font-semibold text-primary whitespace-nowrap">10.0%</span>
                 </div>
