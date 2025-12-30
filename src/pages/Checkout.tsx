@@ -1031,9 +1031,8 @@ export default function Checkout() {
                   )}
                 </div>
 
+                {/* Subscribe & Save - Hidden for now, will be enabled later
                 <Separator />
-
-                {/* Subscribe & Save */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1071,6 +1070,7 @@ export default function Checkout() {
                     </div>
                   )}
                 </div>
+                */}
 
                 <Separator />
 
