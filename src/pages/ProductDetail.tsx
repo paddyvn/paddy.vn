@@ -407,7 +407,7 @@ export default function ProductDetail() {
               <TabsContent value="description" className="pt-6">
                 <div className="relative">
                   <div 
-                    className={`space-y-4 overflow-hidden transition-all ${!expandedTabs.description ? 'max-h-[360px]' : ''}`}
+                    className={`space-y-4 overflow-hidden transition-all ${!expandedTabs.description ? 'max-h-[200px]' : ''}`}
                   >
                     <div 
                       className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
@@ -450,7 +450,7 @@ export default function ProductDetail() {
               
               <TabsContent value="ingredients" className="pt-6">
                 <div className="relative">
-                  <div className={`overflow-hidden transition-all ${!expandedTabs.ingredients ? 'max-h-[360px]' : ''}`}>
+                  <div className={`overflow-hidden transition-all ${!expandedTabs.ingredients ? 'max-h-[200px]' : ''}`}>
                     <div className="prose prose-sm max-w-none text-sm [&_p]:text-sm">
                       <p className="text-sm text-muted-foreground">
                         Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
@@ -476,7 +476,7 @@ export default function ProductDetail() {
               
               <TabsContent value="feeding" className="pt-6">
                 <div className="relative">
-                  <div className={`overflow-hidden transition-all ${!expandedTabs.feeding ? 'max-h-[360px]' : ''}`}>
+                  <div className={`overflow-hidden transition-all ${!expandedTabs.feeding ? 'max-h-[200px]' : ''}`}>
                     <div className="space-y-5">
                       <p className="text-sm text-muted-foreground">
                         Feed according to your pet's weight and activity level. Always ensure fresh 
