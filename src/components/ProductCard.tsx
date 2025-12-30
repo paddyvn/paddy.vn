@@ -209,7 +209,7 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
                 {formatPrice(displayPrice)}₫
               </span>
               {showSaleBadge && discountPercentage > 0 && (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-xs px-1.5 py-0 shrink-0">
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4 shrink-0">
                   -{discountPercentage}%
                 </Badge>
               )}
