@@ -199,20 +199,22 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
           </div>
 
           <div className="flex items-end justify-between gap-2">
-            <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <div className="flex flex-col items-start">
               {showSaleBadge && discountPercentage > 0 && (
-                <span className="text-xs text-muted-foreground line-through shrink-0">
+                <span className="text-xs text-muted-foreground line-through">
                   {formatPrice(originalPrice)}₫
                 </span>
               )}
-              <span className="text-sm font-bold text-primary shrink-0">
-                {formatPrice(displayPrice)}₫
-              </span>
-              {showSaleBadge && discountPercentage > 0 && (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4 shrink-0">
-                  -{discountPercentage}%
-                </Badge>
-              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-primary">
+                  {formatPrice(displayPrice)}₫
+                </span>
+                {showSaleBadge && discountPercentage > 0 && (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4">
+                    -{discountPercentage}%
+                  </Badge>
+                )}
+              </div>
             </div>
             <Button
               size="icon"
