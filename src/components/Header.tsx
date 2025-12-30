@@ -1,7 +1,7 @@
 import { ShoppingCart, Search, Heart, Menu, User, Package, Settings, LogOut, ChevronDown, HelpCircle, X, Gift, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import paddyLogo from "@/assets/paddy-logo.avif";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -38,42 +38,63 @@ export const Header = () => {
   // Progressive header hiding on scroll with direction detection
   useEffect(() => {
     let lastScrollY = window.scrollY;
-    let ticking = false;
-    
+    let rafId = 0;
+
+    // local (non-state) cached values to avoid redundant setState calls
+    let cachedIsAtTop = true;
+    let cachedHideHeader = false;
+
     const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollY = window.scrollY;
-          const isScrollingUp = scrollY < lastScrollY;
-          const scrollDelta = Math.abs(scrollY - lastScrollY);
-          
-          // Only update if scroll delta is significant enough (prevents micro-scroll jitter)
-          if (scrollDelta > 5) {
-            // At top: show everything (with hysteresis - hide at 50px, show at 10px)
-            if (scrollY <= 10) {
-              setIsAtTop(true);
-            } else if (scrollY > 50) {
-              setIsAtTop(false);
-            }
-            
-            // Show header when scrolling up, hide when scrolling down past threshold
-            if (isScrollingUp) {
-              setHideHeader(false);
-            } else if (scrollY > 100) {
-              setHideHeader(true);
-            }
-            
-            lastScrollY = scrollY;
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        const scrollY = window.scrollY;
+        const isScrollingUp = scrollY < lastScrollY;
+
+        // --- Mobile announcement/search: stable hysteresis to prevent blink
+        // If currently "at top", only switch off after a clear scroll.
+        // If currently "not at top", only switch back on when very close to top.
+        let nextIsAtTop = cachedIsAtTop;
+        if (cachedIsAtTop) {
+          if (scrollY > 40) nextIsAtTop = false;
+        } else {
+          if (scrollY < 6) nextIsAtTop = true;
+        }
+
+        if (nextIsAtTop !== cachedIsAtTop) {
+          cachedIsAtTop = nextIsAtTop;
+          setIsAtTop(nextIsAtTop);
+        }
+
+        // --- Header hide/show: add hysteresis too to avoid jitter
+        let nextHideHeader = cachedHideHeader;
+        if (cachedHideHeader) {
+          // Once hidden, reveal early when user scrolls up or returns near top
+          if (isScrollingUp || scrollY < 80) nextHideHeader = false;
+        } else {
+          // Only hide after a meaningful scroll down
+          if (!isScrollingUp && scrollY > 140) nextHideHeader = true;
+        }
+
+        if (nextHideHeader !== cachedHideHeader) {
+          cachedHideHeader = nextHideHeader;
+          setHideHeader(nextHideHeader);
+        }
+
+        lastScrollY = scrollY;
+      });
     };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Initialize correct state on mount
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
   }, []);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -358,7 +379,9 @@ export const Header = () => {
         className="md:hidden bg-primary-foreground border-t border-border/20 overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
         style={{ 
           maxHeight: isAtTop ? '60px' : '0px',
-          opacity: isAtTop ? 1 : 0
+          opacity: isAtTop ? 1 : 0,
+          pointerEvents: isAtTop ? 'auto' : 'none',
+          willChange: 'max-height, opacity'
         }}
       >
         <div className="px-4 py-3">
@@ -374,7 +397,9 @@ export const Header = () => {
         className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
         style={{ 
           maxHeight: isAtTop ? '60px' : '0px',
-          opacity: isAtTop ? 1 : 0
+          opacity: isAtTop ? 1 : 0,
+          pointerEvents: isAtTop ? 'auto' : 'none',
+          willChange: 'max-height, opacity'
         }}
       >
         {activeAnnouncement && !dismissedAnnouncement ? (
