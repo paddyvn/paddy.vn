@@ -51,7 +51,7 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
   };
 
   return (
-    <div className="space-y-4 w-full max-w-full overflow-hidden">
+    <div className="space-y-2 w-full max-w-full overflow-hidden">
       {/* Main Image */}
       <div
         className="relative aspect-square w-full max-w-full rounded-xl overflow-hidden bg-muted/50 cursor-zoom-in"
