@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Heart, CheckCircle, Leaf, Truck, Award, Ticket, Copy } from "lucide-react";
+import { ShoppingCart, Heart, Ticket, Copy, CheckCircle } from "lucide-react";
+import { ProductTrustBadges } from "@/components/ProductTrustBadges";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { ProductReviews } from "@/components/ProductReviews";
@@ -370,32 +371,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Trust Badges */}
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium">Vet Approved</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                  <Leaf className="h-5 w-5 text-orange-600" />
-                </div>
-                <span className="text-sm font-medium">100% Organic</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Truck className="h-5 w-5 text-purple-600" />
-                </div>
-                <span className="text-sm font-medium">Free 2-Day Shipping</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Award className="h-5 w-5 text-yellow-600" />
-                </div>
-                <span className="text-sm font-medium">Satisfaction Guarantee</span>
-              </div>
-            </div>
+            <ProductTrustBadges productId={product.id} />
           </div>
         </div>
 

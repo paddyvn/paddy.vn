@@ -1598,6 +1598,81 @@ export type Database = {
         }
         Relationships: []
       }
+      product_badge_links: {
+        Row: {
+          badge_id: string
+          created_at: string | null
+          id: string
+          product_id: string
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string | null
+          id?: string
+          product_id: string
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string | null
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_badge_links_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "product_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_badge_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_badges: {
+        Row: {
+          bg_color: string
+          created_at: string | null
+          display_order: number | null
+          icon: string
+          icon_color: string
+          id: string
+          is_active: boolean | null
+          name: string
+          name_vi: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string | null
+          display_order?: number | null
+          icon: string
+          icon_color?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_vi?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string | null
+          display_order?: number | null
+          icon?: string
+          icon_color?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_vi?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_collections: {
         Row: {
           collection_id: string
