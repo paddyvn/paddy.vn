@@ -59,7 +59,7 @@ export const DealsGrid = () => {
             <Skeleton className="h-8 w-64" />
             <Skeleton className="h-6 w-24" />
           </div>
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="aspect-square rounded-xl max-w-[180px]" />
             ))}
@@ -86,7 +86,7 @@ export const DealsGrid = () => {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {promotions.slice(0, 6).map((promo) => (
             <Link
               key={promo.id}
