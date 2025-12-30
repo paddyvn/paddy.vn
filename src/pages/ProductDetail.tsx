@@ -155,7 +155,7 @@ export default function ProductDetail() {
           {/* Right Column - Product Info */}
           <div className="space-y-5">
             {/* Product Name */}
-            <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight max-w-full break-words">
               {product.name}
             </h1>
 
