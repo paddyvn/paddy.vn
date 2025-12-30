@@ -51,7 +51,7 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-full overflow-hidden">
       {/* Main Image */}
       <div
         className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 cursor-zoom-in"
@@ -96,13 +96,13 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
 
       {/* Thumbnail Row */}
       {sortedImages.length > 1 && (
-        <div className="flex gap-3">
+        <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {visibleThumbnails.map((image, index) => (
             <button
               key={index}
               onClick={() => setSelectedImage(index)}
               className={cn(
-                "relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 transition-all",
+                "relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 transition-all",
                 selectedImage === index
                   ? "border-primary"
                   : "border-transparent hover:border-muted-foreground/30"
