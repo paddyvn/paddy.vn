@@ -305,7 +305,7 @@ export default function ProductDetail() {
               />
             )}
 
-            {/* Subscribe & Save */}
+            {/* Subscribe & Save - Hidden for now, will be enabled later
             <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 border border-border rounded-lg bg-muted/30">
               <Checkbox 
                 id="subscribe" 
@@ -320,6 +320,7 @@ export default function ProductDetail() {
                 </p>
               </label>
             </div>
+            */}
 
             {/* Stock Quantity Display */}
             {selectedVariant?.stock_quantity != null && (
