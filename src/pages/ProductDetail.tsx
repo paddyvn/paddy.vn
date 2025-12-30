@@ -291,15 +291,16 @@ export default function ProductDetail() {
             )}
 
             {/* Subscribe & Save */}
-            <div className="flex items-start gap-3 p-4 border border-border rounded-lg bg-muted/30">
+            <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 border border-border rounded-lg bg-muted/30">
               <Checkbox 
                 id="subscribe" 
                 checked={subscribeEnabled}
                 onCheckedChange={(checked) => setSubscribeEnabled(!!checked)}
+                className="mt-0.5"
               />
               <label htmlFor="subscribe" className="cursor-pointer">
-                <span className="font-semibold text-foreground">Subscribe & Save 10%</span>
-                <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-sm md:text-base text-foreground">Subscribe & Save 10%</span>
+                <p className="text-xs md:text-sm text-muted-foreground">
                   Never run out! Get tailored deliveries and save on every order.
                 </p>
               </label>
