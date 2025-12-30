@@ -248,7 +248,7 @@ export default function ProductDetail() {
 
             {/* Short Description (from meta_description) */}
             {product.meta_description && (
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
                 {product.meta_description}
               </p>
             )}
