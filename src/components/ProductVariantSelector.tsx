@@ -78,13 +78,13 @@ export function ProductVariantSelector({
     const selectedValue = selectedVariant?.[optionKey];
 
     return (
-      <div key={optionKey} className="space-y-3">
+      <div key={optionKey} className="space-y-2 md:space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-base font-semibold">
+          <label className="text-sm md:text-base font-semibold">
             {optionName || optionKey}
           </label>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 md:gap-2">
           {values.map((value) => {
             const isSelected = selectedValue === value;
             const isOutOfStock = variants.find(
@@ -97,7 +97,7 @@ export function ProductVariantSelector({
                 onClick={() => handleOptionSelect(optionKey, value)}
                 disabled={!!isOutOfStock}
                 className={cn(
-                  "relative px-6 py-3 text-sm font-medium border rounded-lg transition-all",
+                  "relative px-3 py-2 md:px-6 md:py-3 text-xs md:text-sm font-medium border rounded-lg transition-all",
                   isSelected
                     ? "border-primary bg-primary/5 text-foreground"
                     : "border-border hover:border-primary/50 text-foreground",
@@ -106,7 +106,7 @@ export function ProductVariantSelector({
               >
                 {value}
                 {isSelected && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-primary rounded-full" />
                 )}
               </button>
             );
