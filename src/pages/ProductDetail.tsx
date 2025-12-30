@@ -162,7 +162,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-5 min-w-0 max-w-full">
+          <div className="space-y-3 min-w-0 max-w-full">
             {/* Product Name */}
             <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight max-w-full break-words">
               {product.name}
