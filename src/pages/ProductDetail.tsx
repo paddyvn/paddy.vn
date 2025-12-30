@@ -387,31 +387,33 @@ export default function ProductDetail() {
           {/* Tabs Section */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="description">
-              <TabsList className="w-auto bg-transparent border-b border-border rounded-none p-0 h-auto">
-                <TabsTrigger 
-                  value="description" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
-                >
-                  Description
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="ingredients"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
-                >
-                  Ingredients
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="feeding"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-6 py-3"
-                >
-                  Feeding Guidelines
-                </TabsTrigger>
+              <TabsList className="w-full bg-transparent border-b border-border rounded-none p-0 h-auto overflow-x-auto">
+                <div className="flex w-max min-w-full">
+                  <TabsTrigger 
+                    value="description" 
+                    className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
+                  >
+                    Description
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="ingredients"
+                    className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
+                  >
+                    Ingredients
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="feeding"
+                    className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
+                  >
+                    Feeding Guidelines
+                  </TabsTrigger>
+                </div>
               </TabsList>
               
               <TabsContent value="description" className="pt-6">
                 <div className="space-y-4">
                   <div 
-                    className="prose prose-sm max-w-none text-foreground text-sm [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm"
+                    className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
                   />
                   
@@ -494,24 +496,24 @@ export default function ProductDetail() {
           {/* Nutrition Facts Card - Independent */}
           <div className="bg-muted/50 rounded-xl p-6 h-fit">
             <h3 className="text-xl font-bold mb-6">Nutrition Facts</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Crude Protein (min)</span>
-                <span className="font-semibold text-primary">24.0%</span>
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-4 py-2 border-b border-border">
+                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Protein (min)</span>
+                  <span className="font-semibold text-primary whitespace-nowrap">24.0%</span>
+                </div>
+                <div className="flex items-start justify-between gap-4 py-2 border-b border-border">
+                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Fat (min)</span>
+                  <span className="font-semibold text-primary whitespace-nowrap">14.0%</span>
+                </div>
+                <div className="flex items-start justify-between gap-4 py-2 border-b border-border">
+                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Fiber (max)</span>
+                  <span className="font-semibold text-primary whitespace-nowrap">4.0%</span>
+                </div>
+                <div className="flex items-start justify-between gap-4 py-2">
+                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Moisture (max)</span>
+                  <span className="font-semibold text-primary whitespace-nowrap">10.0%</span>
+                </div>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Crude Fat (min)</span>
-                <span className="font-semibold text-primary">14.0%</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Crude Fiber (max)</span>
-                <span className="font-semibold text-primary">4.0%</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">Moisture (max)</span>
-                <span className="font-semibold text-primary">10.0%</span>
-              </div>
-            </div>
           </div>
         </div>
 
