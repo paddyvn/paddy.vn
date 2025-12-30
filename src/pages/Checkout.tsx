@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -28,10 +29,12 @@ import {
   Wallet,
   CheckCircle2,
   Tag,
-  X
+  X,
+  RefreshCw
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
+import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSubscriptions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -116,8 +119,14 @@ export default function Checkout() {
   } | null>(null);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   
+  // Subscribe & Save
+  const [enableSubscription, setEnableSubscription] = useState(false);
+  const [subscriptionFrequency, setSubscriptionFrequency] = useState<SubscriptionFrequency>("monthly");
+  const SUBSCRIPTION_DISCOUNT = 10; // 10% discount for subscriptions
+  
   const { cart, isLoading: cartLoading } = useCart(userId);
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
+  const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -186,22 +195,24 @@ export default function Checkout() {
   const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
   const shippingCost = deliveryMethod?.price || 0;
   
-  // Calculate discount
-  const calculateDiscount = () => {
+  // Calculate discount (voucher + subscription)
+  const calculateVoucherDiscount = () => {
     if (!appliedVoucher) return 0;
-    let discount = 0;
+    let voucherDiscount = 0;
     if (appliedVoucher.discount_type === "percentage") {
-      discount = (subtotal * appliedVoucher.discount_value) / 100;
-      if (appliedVoucher.max_discount && discount > appliedVoucher.max_discount) {
-        discount = appliedVoucher.max_discount;
+      voucherDiscount = (subtotal * appliedVoucher.discount_value) / 100;
+      if (appliedVoucher.max_discount && voucherDiscount > appliedVoucher.max_discount) {
+        voucherDiscount = appliedVoucher.max_discount;
       }
     } else {
-      discount = appliedVoucher.discount_value;
+      voucherDiscount = appliedVoucher.discount_value;
     }
-    return Math.min(discount, subtotal);
+    return Math.min(voucherDiscount, subtotal);
   };
   
-  const discount = calculateDiscount();
+  const voucherDiscount = calculateVoucherDiscount();
+  const subscriptionDiscount = enableSubscription ? (subtotal * SUBSCRIPTION_DISCOUNT) / 100 : 0;
+  const discount = voucherDiscount + subscriptionDiscount;
   const total = subtotal + shippingCost - discount;
 
   const handleApplyVoucher = async () => {
@@ -418,6 +429,43 @@ export default function Checkout() {
           district: addressForm.district,
           ward: addressForm.ward,
           is_default: savedAddresses.length === 0,
+        });
+      }
+
+      // Create subscription if enabled
+      if (enableSubscription) {
+        const shippingAddr = useNewAddress 
+          ? {
+              full_name: addressForm.fullName,
+              phone: addressForm.phone,
+              address_line1: addressForm.addressLine1,
+              address_line2: addressForm.addressLine2,
+              city: addressForm.city,
+              district: addressForm.district,
+              ward: addressForm.ward,
+            }
+          : {
+              full_name: address.full_name,
+              phone: address.phone,
+              address_line1: address.address_line1,
+              address_line2: address.address_line2,
+              city: address.city,
+              district: address.district,
+              ward: address.ward,
+            };
+
+        await createSubscription.mutateAsync({
+          user_id: userId,
+          frequency: subscriptionFrequency,
+          discount_percent: SUBSCRIPTION_DISCOUNT,
+          shipping_address: shippingAddr,
+          delivery_method: deliveryMethod?.name,
+          items: cart.map(item => ({
+            product_id: item.product_id,
+            variant_id: item.variant_id,
+            quantity: item.quantity,
+            price: item.product_variants?.price || item.products?.base_price || 0,
+          })),
         });
       }
 
@@ -985,6 +1033,47 @@ export default function Checkout() {
 
                 <Separator />
 
+                {/* Subscribe & Save */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 text-primary" />
+                      <Label htmlFor="subscription" className="text-sm font-medium cursor-pointer">
+                        Subscribe & Save {SUBSCRIPTION_DISCOUNT}%
+                      </Label>
+                    </div>
+                    <Switch
+                      id="subscription"
+                      checked={enableSubscription}
+                      onCheckedChange={setEnableSubscription}
+                    />
+                  </div>
+                  
+                  {enableSubscription && (
+                    <div className="space-y-2 pl-6">
+                      <Label className="text-xs text-muted-foreground">Tần suất giao hàng</Label>
+                      <Select
+                        value={subscriptionFrequency}
+                        onValueChange={(value) => setSubscriptionFrequency(value as SubscriptionFrequency)}
+                      >
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">Hàng tuần</SelectItem>
+                          <SelectItem value="bi-weekly">2 tuần/lần</SelectItem>
+                          <SelectItem value="monthly">Hàng tháng</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Tự động đặt hàng lại theo lịch, tiết kiệm {SUBSCRIPTION_DISCOUNT}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tạm tính</span>
@@ -994,10 +1083,16 @@ export default function Checkout() {
                     <span className="text-muted-foreground">Phí vận chuyển</span>
                     <span>{formatPrice(shippingCost)}₫</span>
                   </div>
-                  {discount > 0 && (
+                  {voucherDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Giảm giá</span>
-                      <span>-{formatPrice(discount)}₫</span>
+                      <span>Giảm giá voucher</span>
+                      <span>-{formatPrice(voucherDiscount)}₫</span>
+                    </div>
+                  )}
+                  {subscriptionDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Subscribe & Save ({SUBSCRIPTION_DISCOUNT}%)</span>
+                      <span>-{formatPrice(subscriptionDiscount)}₫</span>
                     </div>
                   )}
                 </div>
