@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { ProductCard } from "@/components/ProductCard";
 
 interface RelatedProductsProps {
   currentProductId: string;
@@ -10,8 +9,6 @@ interface RelatedProductsProps {
 }
 
 export function RelatedProducts({ currentProductId, productType, brand }: RelatedProductsProps) {
-  const navigate = useNavigate();
-
   const { data: relatedProducts } = useQuery({
     queryKey: ["related-products", currentProductId, productType, brand],
     queryFn: async () => {
@@ -24,6 +21,11 @@ export function RelatedProducts({ currentProductId, productType, brand }: Relate
           base_price,
           compare_at_price,
           brand,
+          pet_type,
+          is_featured,
+          option1_name,
+          option2_name,
+          option3_name,
           product_images (image_url, is_primary)
         `)
         .eq("is_active", true)
@@ -50,54 +52,10 @@ export function RelatedProducts({ currentProductId, productType, brand }: Relate
   return (
     <div>
       <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">You May Also Like</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {relatedProducts.map((product: any) => {
-          const primaryImage = product.product_images?.find((img: any) => img.is_primary) 
-            || product.product_images?.[0];
-
-          return (
-            <Card
-              key={product.id}
-              className="group cursor-pointer hover:shadow-hover transition-smooth"
-              onClick={() => navigate(`/products/${product.slug}`)}
-            >
-              <CardContent className="p-0">
-                <div className="aspect-square bg-muted overflow-hidden rounded-t-lg">
-                  {primaryImage ? (
-                    <img
-                      src={primaryImage.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-smooth"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-muted-foreground">No image</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="p-4 space-y-2">
-                  {product.brand && (
-                    <p className="text-xs text-muted-foreground font-bold">{product.brand}</p>
-                  )}
-                  <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-smooth">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-primary">
-                      {product.base_price.toLocaleString('vi-VN')} ₫
-                    </span>
-                    {product.compare_at_price && product.compare_at_price > product.base_price && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        {product.compare_at_price.toLocaleString('vi-VN')} ₫
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {relatedProducts.map((product: any) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
       </div>
     </div>
   );
