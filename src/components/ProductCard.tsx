@@ -128,139 +128,141 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
   const petTypes = getPetTypes(product.pet_type);
 
   return (
-    <Card
-      className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover rounded-sm border-0 cursor-pointer h-full flex flex-col"
-      onClick={() => navigate(`/products/${product.slug}`)}
-    >
-      <CardContent className="p-0 flex flex-col flex-1">
-        <div className="relative">
-          <div className="relative aspect-square overflow-hidden bg-muted">
-            <img
-              src={getPrimaryImage(product.product_images)}
-              alt={product.name}
-              className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-            />
-            
-            {/* Show Sale badge for products with promotion or discount */}
-            {showSaleBadge ? (
-              <Badge 
-                className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
-              >
-                Sale
-              </Badge>
-            ) : product.is_featured ? (
-              <Badge 
-                className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
-              >
-                Featured
-              </Badge>
-            ) : null}
-            
-            <Button
-              size="icon"
-              variant="secondary"
-              className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                // TODO: Add to wishlist
-              }}
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {petTypes.length > 0 && (
-            <div className="absolute -bottom-5 right-3 flex gap-1 z-20">
-              {petTypes.map((type) => (
-                <PetBadge key={type} type={type} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 space-y-3 flex flex-col flex-1">
-          <div>
-            {product.brand && (
-              <p className="text-xs text-muted-foreground mb-1 font-bold">{product.brand}</p>
-            )}
-            <h3 className="font-semibold text-sm text-foreground line-clamp-3 group-hover:text-primary transition-smooth">
-              {product.name}
-            </h3>
-          </div>
-
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1">
-              <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
-              <span className="text-sm font-medium">
-                {calculateAverageRating(product.reviews)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                ({product.reviews?.length || 0})
-              </span>
-            </div>
-            <Button
-              size="icon"
-              className="rounded-full shadow-lg h-8 w-8 shrink-0"
-              onClick={handleQuickAddClick}
-              disabled={isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ShoppingCart className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
-          <div className="flex flex-col items-start">
-            {showSaleBadge && discountPercentage > 0 && (
-              <span className="text-xs text-muted-foreground line-through">
-                {formatPrice(originalPrice)}₫
-              </span>
-            )}
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-primary">
-                {formatPrice(displayPrice)}₫
-              </span>
-              {showSaleBadge && discountPercentage > 0 && (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4">
-                  -{discountPercentage}%
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Applicable vouchers */}
-          {vouchers.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-dashed">
-              {vouchers.slice(0, 2).map((voucher) => (
-                <div
-                  key={voucher.id}
-                  className="flex items-center gap-1 px-2 py-1 bg-destructive/10 rounded text-xs"
-                  onClick={(e) => e.stopPropagation()}
+    <>
+      <Card
+        className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover rounded-sm border-0 cursor-pointer h-full flex flex-col"
+        onClick={() => navigate(`/products/${product.slug}`)}
+      >
+        <CardContent className="p-0 flex flex-col flex-1">
+          <div className="relative">
+            <div className="relative aspect-square overflow-hidden bg-muted">
+              <img
+                src={getPrimaryImage(product.product_images)}
+                alt={product.name}
+                className="w-full h-full object-cover transition-smooth group-hover:scale-110"
+              />
+              
+              {/* Show Sale badge for products with promotion or discount */}
+              {showSaleBadge ? (
+                <Badge 
+                  className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
                 >
-                  <Ticket className="h-3 w-3 text-destructive" />
-                  <span className="text-destructive font-medium">
-                    {voucher.discount_type === "percentage"
-                      ? `-${voucher.discount_value}%`
-                      : `-${formatPrice(voucher.discount_value || 0)}₫`}
-                  </span>
-                  {voucher.voucher_code && (
-                    <span className="text-muted-foreground font-mono text-[10px]">
-                      {voucher.voucher_code}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {vouchers.length > 2 && (
-                <span className="text-xs text-muted-foreground self-center">
-                  +{vouchers.length - 2}
+                  Sale
+                </Badge>
+              ) : product.is_featured ? (
+                <Badge 
+                  className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
+                >
+                  Featured
+                </Badge>
+              ) : null}
+              
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // TODO: Add to wishlist
+                }}
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {petTypes.length > 0 && (
+              <div className="absolute -bottom-5 right-3 flex gap-1 z-20">
+                {petTypes.map((type) => (
+                  <PetBadge key={type} type={type} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 space-y-3 flex flex-col flex-1">
+            <div>
+              {product.brand && (
+                <p className="text-xs text-muted-foreground mb-1 font-bold">{product.brand}</p>
+              )}
+              <h3 className="font-semibold text-sm text-foreground line-clamp-3 group-hover:text-primary transition-smooth">
+                {product.name}
+              </h3>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1">
+                <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
+                <span className="text-sm font-medium">
+                  {calculateAverageRating(product.reviews)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  ({product.reviews?.length || 0})
+                </span>
+              </div>
+              <Button
+                size="icon"
+                className="rounded-full shadow-lg h-8 w-8 shrink-0"
+                onClick={handleQuickAddClick}
+                disabled={isAddingToCart}
+              >
+                {isAddingToCart ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShoppingCart className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            <div className="flex flex-col items-start">
+              {showSaleBadge && discountPercentage > 0 && (
+                <span className="text-xs text-muted-foreground line-through">
+                  {formatPrice(originalPrice)}₫
                 </span>
               )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-primary">
+                  {formatPrice(displayPrice)}₫
+                </span>
+                {showSaleBadge && discountPercentage > 0 && (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4">
+                    -{discountPercentage}%
+                  </Badge>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </CardContent>
+
+            {/* Applicable vouchers */}
+            {vouchers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-dashed">
+                {vouchers.slice(0, 2).map((voucher) => (
+                  <div
+                    key={voucher.id}
+                    className="flex items-center gap-1 px-2 py-1 bg-destructive/10 rounded text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Ticket className="h-3 w-3 text-destructive" />
+                    <span className="text-destructive font-medium">
+                      {voucher.discount_type === "percentage"
+                        ? `-${voucher.discount_value}%`
+                        : `-${formatPrice(voucher.discount_value || 0)}₫`}
+                    </span>
+                    {voucher.voucher_code && (
+                      <span className="text-muted-foreground font-mono text-[10px]">
+                        {voucher.voucher_code}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {vouchers.length > 2 && (
+                  <span className="text-xs text-muted-foreground self-center">
+                    +{vouchers.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <QuickAddToCartDialog
         open={quickAddOpen}
@@ -269,6 +271,6 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
         onAddToCart={handleAddToCart}
         isAddingToCart={isAddingToCart}
       />
-    </Card>
+    </>
   );
 };

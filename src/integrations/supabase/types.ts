@@ -1031,10 +1031,16 @@ export type Database = {
           fixed_purchase_price: number | null
           fixed_selling_price: number | null
           id: string
+          issued_quantity: number | null
+          issued_value: number | null
           main_unit: string | null
           name: string
+          opening_quantity: number | null
+          opening_value: number | null
           product_group: string | null
           product_nature: string | null
+          received_quantity: number | null
+          received_value: number | null
           selling_price_1: number | null
           selling_price_2: number | null
           selling_price_3: number | null
@@ -1060,10 +1066,16 @@ export type Database = {
           fixed_purchase_price?: number | null
           fixed_selling_price?: number | null
           id?: string
+          issued_quantity?: number | null
+          issued_value?: number | null
           main_unit?: string | null
           name: string
+          opening_quantity?: number | null
+          opening_value?: number | null
           product_group?: string | null
           product_nature?: string | null
+          received_quantity?: number | null
+          received_value?: number | null
           selling_price_1?: number | null
           selling_price_2?: number | null
           selling_price_3?: number | null
@@ -1089,10 +1101,16 @@ export type Database = {
           fixed_purchase_price?: number | null
           fixed_selling_price?: number | null
           id?: string
+          issued_quantity?: number | null
+          issued_value?: number | null
           main_unit?: string | null
           name?: string
+          opening_quantity?: number | null
+          opening_value?: number | null
           product_group?: string | null
           product_nature?: string | null
+          received_quantity?: number | null
+          received_value?: number | null
           selling_price_1?: number | null
           selling_price_2?: number | null
           selling_price_3?: number | null
@@ -1475,6 +1493,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      organization_settings: {
+        Row: {
+          address: string | null
+          company_name: string
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          phone: string | null
+          tax_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          tax_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          tax_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       pages: {
         Row: {
@@ -3252,6 +3306,56 @@ export type Database = {
       decrement_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
+      }
+      get_invoice_marketplace_items: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_marketplace?: string
+          p_offset?: number
+          p_only_uninvoiced?: boolean
+          p_to: string
+        }
+        Returns: {
+          converted_name: string
+          converted_price: number
+          converted_unit: string
+          converted_vat: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          discount_amount: number
+          item_id: string
+          name: string
+          order_code: string
+          order_date: string
+          order_id: string
+          price: number
+          quantity: number
+          shipping_address: Json
+          sku: string
+          sku_converted: string
+          source_name: string
+          tax_amount: number
+          total_count: number
+          unit: string
+          vat: string
+        }[]
+      }
+      get_sapo_order_stats: {
+        Args: {
+          p_channel?: string
+          p_end_date?: string
+          p_search?: string
+          p_start_date?: string
+          p_status?: string
+        }
+        Returns: {
+          total_items: number
+          total_orders: number
+          total_revenue: number
+          total_tax: number
+        }[]
       }
       has_module_access: {
         Args: { _module_name: string; _user_id: string }
