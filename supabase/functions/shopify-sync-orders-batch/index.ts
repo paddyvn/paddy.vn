@@ -6,6 +6,51 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to fetch with retry and timeout
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 3,
+  timeoutMs = 15000
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.warn(`Fetch attempt ${attempt}/${retries} failed: ${lastError.message}`);
+      
+      if (attempt < retries) {
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Fetch failed after retries');
+}
+
+// Helper to safely read JSON response
+async function safeJsonParse(response: Response): Promise<any> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid JSON response: ${text.substring(0, 200)}`);
+  }
+}
+
 interface ShopifyOrder {
   id: number;
   name: string;
@@ -158,18 +203,18 @@ serve(async (req) => {
 
     console.log('Fetching batch of orders...');
 
-    const response: Response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         'X-Shopify-Access-Token': shopifyToken,
       },
-    });
+    }, 3, 30000); // 30 second timeout for main orders request
 
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json();
+    const data = await safeJsonParse(response);
     const orders: ShopifyOrder[] = data.orders;
 
     console.log(`Processing ${orders.length} orders...`);
@@ -338,12 +383,12 @@ serve(async (req) => {
         if (syncEvents) {
           try {
             const eventsUrl = `https://${shopifyDomain}/admin/api/2024-01/orders/${shopifyOrder.id}/events.json`;
-            const eventsResponse = await fetch(eventsUrl, {
+            const eventsResponse = await fetchWithRetry(eventsUrl, {
               headers: { 'X-Shopify-Access-Token': shopifyToken },
-            });
+            }, 2, 10000); // 2 retries, 10 second timeout for events
 
             if (eventsResponse.ok) {
-              const eventsData = await eventsResponse.json();
+              const eventsData = await safeJsonParse(eventsResponse);
               const events: ShopifyEvent[] = eventsData.events || [];
 
               if (events.length > 0) {
@@ -374,7 +419,8 @@ serve(async (req) => {
               }
             }
           } catch (eventError) {
-            console.error(`Error fetching events for order ${shopifyOrder.name}:`, eventError);
+            // Don't fail the whole sync if events fail - just log and continue
+            console.warn(`Skipping events for order ${shopifyOrder.name}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`);
           }
         }
       } catch (error) {
