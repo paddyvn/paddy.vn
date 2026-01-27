@@ -48,7 +48,7 @@ export const Brands = () => {
           {brands.map((brand) => (
             <Link
               key={brand.id}
-              to={`/collection/${brand.slug}`}
+              to={`/collections/${brand.slug}`}
               className="group"
             >
               <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50 overflow-hidden">
