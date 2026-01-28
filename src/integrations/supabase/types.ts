@@ -2873,6 +2873,178 @@ export type Database = {
           },
         ]
       }
+      pos_order_items: {
+        Row: {
+          created_at: string
+          discount_amount: number
+          id: string
+          line_total: number
+          order_id: string
+          product_name: string
+          quantity: number
+          sku: string | null
+          unit_price: number
+          variant_id: number
+          variant_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          line_total: number
+          order_id: string
+          product_name: string
+          quantity?: number
+          sku?: string | null
+          unit_price: number
+          variant_id: number
+          variant_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          line_total?: number
+          order_id?: string
+          product_name?: string
+          quantity?: number
+          sku?: string | null
+          unit_price?: number
+          variant_id?: number
+          variant_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "pos_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_orders: {
+        Row: {
+          amount_paid: number
+          change_amount: number
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          discount_amount: number
+          discount_reason: string | null
+          id: string
+          location_id: number
+          notes: string | null
+          order_number: string
+          payment_method: string
+          payment_status: string
+          sapo_customer_id: number | null
+          session_id: string | null
+          staff_id: string
+          status: string
+          subtotal: number
+          tax_amount: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          change_amount?: number
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_amount?: number
+          discount_reason?: string | null
+          id?: string
+          location_id: number
+          notes?: string | null
+          order_number: string
+          payment_method?: string
+          payment_status?: string
+          sapo_customer_id?: number | null
+          session_id?: string | null
+          staff_id: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          change_amount?: number
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_amount?: number
+          discount_reason?: string | null
+          id?: string
+          location_id?: number
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          payment_status?: string
+          sapo_customer_id?: number | null
+          session_id?: string | null
+          staff_id?: string
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_orders_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sessions: {
+        Row: {
+          closed_at: string | null
+          closing_cash: number | null
+          created_at: string
+          id: string
+          location_id: number
+          notes: string | null
+          opened_at: string
+          opening_cash: number | null
+          staff_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closing_cash?: number | null
+          created_at?: string
+          id?: string
+          location_id: number
+          notes?: string | null
+          opened_at?: string
+          opening_cash?: number | null
+          staff_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closing_cash?: number | null
+          created_at?: string
+          id?: string
+          location_id?: number
+          notes?: string | null
+          opened_at?: string
+          opening_cash?: number | null
+          staff_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_age_ranges: {
         Row: {
           created_at: string | null
@@ -3980,6 +4152,69 @@ export type Database = {
           synced_at?: string | null
           variant_id?: number
           variant_name?: string | null
+        }
+        Relationships: []
+      }
+      sapo_inventory_transactions: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: number | null
+          product_id: number | null
+          product_name: string | null
+          quantity_in: number | null
+          quantity_out: number | null
+          reference_code: string | null
+          reference_id: number | null
+          reference_type: string | null
+          sapo_id: number | null
+          sku: string | null
+          transaction_date: string | null
+          unit_cost: number | null
+          updated_at: string
+          value_in: number | null
+          value_out: number | null
+          variant_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: number | null
+          product_id?: number | null
+          product_name?: string | null
+          quantity_in?: number | null
+          quantity_out?: number | null
+          reference_code?: string | null
+          reference_id?: number | null
+          reference_type?: string | null
+          sapo_id?: number | null
+          sku?: string | null
+          transaction_date?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+          value_in?: number | null
+          value_out?: number | null
+          variant_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: number | null
+          product_id?: number | null
+          product_name?: string | null
+          quantity_in?: number | null
+          quantity_out?: number | null
+          reference_code?: string | null
+          reference_id?: number | null
+          reference_type?: string | null
+          sapo_id?: number | null
+          sku?: string | null
+          transaction_date?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+          value_in?: number | null
+          value_out?: number | null
+          variant_id?: number | null
         }
         Relationships: []
       }
@@ -5813,6 +6048,7 @@ export type Database = {
         Args: { comment_id_param: string }
         Returns: undefined
       }
+      generate_pos_order_number: { Args: never; Returns: string }
       get_brand_sales_from_cache: {
         Args: { p_end_month?: string; p_limit?: number; p_start_month?: string }
         Returns: {
