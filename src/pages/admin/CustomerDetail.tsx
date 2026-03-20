@@ -642,6 +642,33 @@ const CustomerDetail = () => {
         onOpenChange={setEditNotesOpen}
         customer={customer}
       />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {customer.first_name} {customer.last_name} and their data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await supabase.from("customers").delete().eq("id", customer.id);
+                queryClient.invalidateQueries({ queryKey: ["customers"] });
+                queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
+                toast({ title: "Customer deleted" });
+                navigate("/admin/customers");
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

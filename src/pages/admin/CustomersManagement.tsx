@@ -176,17 +176,23 @@ export default function CustomersManagement() {
           <div>
             <h1 className="text-3xl font-bold">Customers</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your customer database
+              {totalCount} customers
             </p>
           </div>
-          <Button
-            onClick={() => syncCustomers.mutate()}
-            disabled={syncCustomers.isPending}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
-            {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={exportCustomersCSV} className="gap-2">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button
+              onClick={() => syncCustomers.mutate()}
+              disabled={syncCustomers.isPending}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
+              {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-4 items-center">
