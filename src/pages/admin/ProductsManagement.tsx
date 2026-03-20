@@ -198,6 +198,31 @@ export default function ProductsManagement() {
     );
   }, [productTypes, categorySearchText]);
 
+  // Shared search helper for both count and data queries
+  const applyProductSearch = async (query: any, search: string) => {
+    if (!search) return query;
+    const term = search.trim();
+    const looksLikeSKU = !term.includes(" ") && term.length <= 30;
+
+    if (looksLikeSKU) {
+      const { data: skuMatches } = await supabase
+        .from("product_variants")
+        .select("product_id")
+        .ilike("sku", `%${term}%`)
+        .limit(100);
+
+      const skuProductIds = skuMatches?.map((v) => v.product_id) || [];
+
+      if (skuProductIds.length > 0) {
+        return query.or(
+          `name.ilike.%${term}%,slug.ilike.%${term}%,id.in.(${skuProductIds.join(",")})`
+        );
+      }
+    }
+
+    return query.or(`name.ilike.%${term}%,slug.ilike.%${term}%`);
+  };
+
   // Get total count
   const { data: totalCount } = useQuery({
     queryKey: ["admin-products-count", searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter],
@@ -206,9 +231,7 @@ export default function ProductsManagement() {
         .from("products")
         .select("*", { count: "exact", head: true });
 
-      if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
-      }
+      query = await applyProductSearch(query, searchQuery);
 
       if (statusFilter !== "all") {
         query = query.eq("is_active", statusFilter === "active");
@@ -219,7 +242,6 @@ export default function ProductsManagement() {
       }
 
       if (collectionFilter !== "all") {
-        // Get products in this collection
         const { data: collectionProducts } = await supabase
           .from("product_collections")
           .select("product_id")
@@ -258,9 +280,7 @@ export default function ProductsManagement() {
         .order(sortKey, { ascending: sortDirection === "asc" })
         .range(from, to);
 
-      if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
-      }
+      query = await applyProductSearch(query, searchQuery);
 
       if (statusFilter !== "all") {
         query = query.eq("is_active", statusFilter === "active");
@@ -271,7 +291,6 @@ export default function ProductsManagement() {
       }
 
       if (collectionFilter !== "all") {
-        // Get products in this collection
         const { data: collectionProducts } = await supabase
           .from("product_collections")
           .select("product_id")
