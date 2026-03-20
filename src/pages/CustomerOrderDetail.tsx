@@ -129,7 +129,7 @@ export default function CustomerOrderDetail() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id);
     });
-  });
+  }, []);
   const { addToCart } = useCart(userId);
 
   const handleReorder = async () => {
