@@ -2998,6 +2998,7 @@ export type Database = {
           created_at: string
           currency: string | null
           customer_email: string | null
+          customer_name: string | null
           customer_phone: string | null
           delivery_method: string | null
           discount: number | null
@@ -3025,6 +3026,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           customer_email?: string | null
+          customer_name?: string | null
           customer_phone?: string | null
           delivery_method?: string | null
           discount?: number | null
@@ -3052,6 +3054,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           customer_email?: string | null
+          customer_name?: string | null
           customer_phone?: string | null
           delivery_method?: string | null
           discount?: number | null
