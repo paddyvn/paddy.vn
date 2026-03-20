@@ -515,6 +515,7 @@ export default function CollectionDetails() {
           await syncSmartCollectionProducts(id!, rules, formData.rules_match_type);
         }
 
+        toast({
           title: "Collection updated",
           description: "Your changes have been saved successfully.",
         });
