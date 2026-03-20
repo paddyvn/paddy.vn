@@ -112,6 +112,7 @@ const App = () => (
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
           <Route path="/orders/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><CustomerOrderDetail /></Suspense>} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/track-order" element={<Suspense fallback={<LoadingFallback />}><TrackOrder /></Suspense>} />
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
