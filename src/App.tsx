@@ -66,7 +66,7 @@ const DeliveryMethods = lazy(() => import("./pages/admin/DeliveryMethods"));
 const StoresManagement = lazy(() => import("./pages/admin/StoresManagement"));
 const StoreEdit = lazy(() => import("./pages/admin/StoreEdit"));
 
-const AdminFallback = () => (
+const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="text-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -110,12 +110,12 @@ const App = () => (
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
-          <Route path="/order-confirmation/:orderNumber" element={<Suspense fallback={<AdminFallback />}><OrderConfirmation /></Suspense>} />
-          <Route path="/pages/:handle" element={<Suspense fallback={<AdminFallback />}><PageDetail /></Suspense>} />
+          <Route path="/order-confirmation/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><OrderConfirmation /></Suspense>} />
+          <Route path="/pages/:handle" element={<Suspense fallback={<LoadingFallback />}><PageDetail /></Suspense>} />
           <Route
             path="/admin"
             element={
-              <Suspense fallback={<AdminFallback />}>
+              <Suspense fallback={<LoadingFallback />}>
                 <AdminLayout />
               </Suspense>
             }
