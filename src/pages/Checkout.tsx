@@ -474,8 +474,7 @@ export default function Checkout() {
         });
       }
 
-      setOrderNumber(newOrderNumber);
-      setOrderComplete(true);
+      navigate(`/order-confirmation/${newOrderNumber}`);
       
     } catch (error: any) {
       console.error("Order error:", error);
