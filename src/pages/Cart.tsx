@@ -50,6 +50,10 @@ export default function Cart() {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedShipping, setSelectedShipping] = useState("standard");
   const { cart, isLoading, removeFromCart, updateQuantity } = useCart(userId);
+  const cartProductIds = (cart || [])
+    .map((item) => item.product_id)
+    .filter((id): id is string => !!id);
+  const { data: promotionsMap } = useProductsPromotions(cartProductIds);
   const navigate = useNavigate();
   const { toast } = useToast();
 
