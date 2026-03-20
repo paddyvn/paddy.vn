@@ -36,7 +36,7 @@ export const StoreLocations = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <MapPin className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="text-2xl md:text-3xl font-bold text-primary">
               Hệ thống cửa hàng Paddy
             </h2>
           </div>
