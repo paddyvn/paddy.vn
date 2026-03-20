@@ -128,6 +128,10 @@ export default function Checkout() {
   const SUBSCRIPTION_DISCOUNT = 10; // 10% discount for subscriptions
   
   const { cart, isLoading: cartLoading } = useCart(userId);
+  const cartProductIds = (cart || [])
+    .map((item) => item.product_id)
+    .filter((id): id is string => !!id);
+  const { data: promotionsMap } = useProductsPromotions(cartProductIds);
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
   const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
