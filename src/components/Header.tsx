@@ -276,10 +276,17 @@ export const Header = () => {
                         </DropdownMenuItem>
                       </>
                     ) : (
-                      <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        Sign In / Sign Up
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/track-order')} className="cursor-pointer">
+                          <Package className="mr-2 h-4 w-4" />
+                          Tra cứu đơn hàng
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          Sign In / Sign Up
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
