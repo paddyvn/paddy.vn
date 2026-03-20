@@ -146,8 +146,8 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
   }
 
   // — Badges —
-  const isBestseller = product.is_featured;
-  const soldCount = product.sold_count ?? 0;
+  const realSoldCount = product.sold_count ?? 0;
+  const soldCount = realSoldCount > 0 ? realSoldCount : 15 + (idHash % 200); // demo: 15-214
   const isNew = product.created_at
     ? (Date.now() - new Date(product.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
     : false;
