@@ -1,8 +1,11 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+// Storefront pages - eagerly loaded (customer-facing, fast first paint)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProductDetail from "./pages/ProductDetail";
@@ -16,49 +19,59 @@ import FlashSale from "./pages/FlashSale";
 import Promotions from "./pages/Promotions";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import { Navigate } from "react-router-dom";
 import Profile from "./pages/Profile";
-import AdminLayout from "./pages/admin/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import ProductsManagement from "./pages/admin/ProductsManagement";
-import ProductEdit from "./pages/admin/ProductEdit";
-import CollectionsManagement from "./pages/admin/CollectionsManagement";
-import CollectionDetails from "./pages/admin/CollectionDetails";
-import OrdersManagement from "./pages/admin/OrdersManagement";
-import OrderDetail from "./pages/admin/OrderDetail";
-import OrderEdit from "./pages/admin/OrderEdit";
-import CustomersManagement from "./pages/admin/CustomersManagement";
-import CustomerSegments from "./pages/admin/CustomerSegments";
-import CustomerDetail from "./pages/admin/CustomerDetail";
-import AbandonedCheckouts from "./pages/admin/AbandonedCheckouts";
-import ContentMetaobjects from "./pages/admin/ContentMetaobjects";
-import ContentFiles from "./pages/admin/ContentFiles";
-import ContentMenus from "./pages/admin/ContentMenus";
-import ContentBlog from "./pages/admin/ContentBlog";
-import BlogPostEdit from "./pages/admin/BlogPostEdit";
-import BlogCategories from "./pages/admin/BlogCategories";
-import ContentAIGenerator from "./pages/admin/ContentAIGenerator";
-import Pages from "./pages/admin/Pages";
-import MarketingBanners from "./pages/admin/MarketingBanners";
-import PromotionsManagement from "./pages/admin/PromotionsManagement";
-import PromotionEdit from "./pages/admin/PromotionEdit";
-import FlashSaleEdit from "./pages/admin/promotions/FlashSaleEdit";
-import DiscountsEdit from "./pages/admin/promotions/DiscountsEdit";
-import VouchersEdit from "./pages/admin/promotions/VouchersEdit";
-import ComboBuyEdit from "./pages/admin/promotions/ComboBuyEdit";
-import BuyMoreSaveMoreEdit from "./pages/admin/promotions/BuyMoreSaveMoreEdit";
-import FreeShippingEdit from "./pages/admin/promotions/FreeShippingEdit";
-import SubscriptionDealsEdit from "./pages/admin/promotions/SubscriptionDealsEdit";
-import ClearanceEdit from "./pages/admin/promotions/ClearanceEdit";
-import InventorySync from "./pages/admin/InventorySync";
-import BrandsManagement from "./pages/admin/BrandsManagement";
-import BrandDetails from "./pages/admin/BrandDetails";
-import SalesAnalytics from "./pages/admin/SalesAnalytics";
-import TrafficAnalytics from "./pages/admin/TrafficAnalytics";
-import DeliveryMethods from "./pages/admin/DeliveryMethods";
-import StoresManagement from "./pages/admin/StoresManagement";
-import StoreEdit from "./pages/admin/StoreEdit";
 import NotFound from "./pages/NotFound";
+
+// Admin pages - lazy loaded (only downloaded when admin navigates there)
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const ProductsManagement = lazy(() => import("./pages/admin/ProductsManagement"));
+const ProductEdit = lazy(() => import("./pages/admin/ProductEdit"));
+const CollectionsManagement = lazy(() => import("./pages/admin/CollectionsManagement"));
+const CollectionDetails = lazy(() => import("./pages/admin/CollectionDetails"));
+const OrdersManagement = lazy(() => import("./pages/admin/OrdersManagement"));
+const OrderDetail = lazy(() => import("./pages/admin/OrderDetail"));
+const OrderEdit = lazy(() => import("./pages/admin/OrderEdit"));
+const CustomersManagement = lazy(() => import("./pages/admin/CustomersManagement"));
+const CustomerSegments = lazy(() => import("./pages/admin/CustomerSegments"));
+const CustomerDetail = lazy(() => import("./pages/admin/CustomerDetail"));
+const AbandonedCheckouts = lazy(() => import("./pages/admin/AbandonedCheckouts"));
+const ContentMetaobjects = lazy(() => import("./pages/admin/ContentMetaobjects"));
+const ContentFiles = lazy(() => import("./pages/admin/ContentFiles"));
+const ContentMenus = lazy(() => import("./pages/admin/ContentMenus"));
+const ContentBlog = lazy(() => import("./pages/admin/ContentBlog"));
+const BlogPostEdit = lazy(() => import("./pages/admin/BlogPostEdit"));
+const BlogCategories = lazy(() => import("./pages/admin/BlogCategories"));
+const ContentAIGenerator = lazy(() => import("./pages/admin/ContentAIGenerator"));
+const Pages = lazy(() => import("./pages/admin/Pages"));
+const MarketingBanners = lazy(() => import("./pages/admin/MarketingBanners"));
+const PromotionsManagement = lazy(() => import("./pages/admin/PromotionsManagement"));
+const PromotionEdit = lazy(() => import("./pages/admin/PromotionEdit"));
+const FlashSaleEdit = lazy(() => import("./pages/admin/promotions/FlashSaleEdit"));
+const DiscountsEdit = lazy(() => import("./pages/admin/promotions/DiscountsEdit"));
+const VouchersEdit = lazy(() => import("./pages/admin/promotions/VouchersEdit"));
+const ComboBuyEdit = lazy(() => import("./pages/admin/promotions/ComboBuyEdit"));
+const BuyMoreSaveMoreEdit = lazy(() => import("./pages/admin/promotions/BuyMoreSaveMoreEdit"));
+const FreeShippingEdit = lazy(() => import("./pages/admin/promotions/FreeShippingEdit"));
+const SubscriptionDealsEdit = lazy(() => import("./pages/admin/promotions/SubscriptionDealsEdit"));
+const ClearanceEdit = lazy(() => import("./pages/admin/promotions/ClearanceEdit"));
+const InventorySync = lazy(() => import("./pages/admin/InventorySync"));
+const BrandsManagement = lazy(() => import("./pages/admin/BrandsManagement"));
+const BrandDetails = lazy(() => import("./pages/admin/BrandDetails"));
+const SalesAnalytics = lazy(() => import("./pages/admin/SalesAnalytics"));
+const TrafficAnalytics = lazy(() => import("./pages/admin/TrafficAnalytics"));
+const DeliveryMethods = lazy(() => import("./pages/admin/DeliveryMethods"));
+const StoresManagement = lazy(() => import("./pages/admin/StoresManagement"));
+const StoreEdit = lazy(() => import("./pages/admin/StoreEdit"));
+
+const AdminFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      <p className="mt-4 text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,7 +103,14 @@ const App = () => (
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={<AdminFallback />}>
+                <AdminLayout />
+              </Suspense>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
             <Route path="products/:id/edit" element={<ProductEdit />} />
@@ -118,7 +138,6 @@ const App = () => (
             <Route path="promotions" element={<PromotionsManagement />} />
             <Route path="promotions/:promoType" element={<PromotionsManagement />} />
             <Route path="promotions/:id/edit" element={<PromotionEdit />} />
-            {/* Type-specific promotion edit routes */}
             <Route path="promotions/flash-sale/:id/edit" element={<FlashSaleEdit />} />
             <Route path="promotions/discounts/:id/edit" element={<DiscountsEdit />} />
             <Route path="promotions/vouchers/:id/edit" element={<VouchersEdit />} />
