@@ -2,46 +2,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CategoryIllustration } from "@/components/CategoryIllustrations";
+import { useActiveHomepageCategories } from "@/hooks/useHomepageCategories";
 
 const PET_TABS = [
   { id: "dog" as const, label: "Chó", emoji: "🐕" },
   { id: "cat" as const, label: "Mèo", emoji: "🐈" },
 ];
 
-const CATEGORIES = {
-  dog: [
-    { name: "Thức Ăn Hạt", slug: "hat-cho-cho", icon: "dryfood" },
-    { name: "Pate", slug: "pate-cho", icon: "wetfood" },
-    { name: "Bánh Thưởng", slug: "banh-thuong-cho-cho", icon: "treat" },
-    { name: "Đồ Chơi", slug: "do-choi-cho-cho", icon: "toy" },
-    { name: "Dây Dắt", slug: "vong-co-day-dat", icon: "leash" },
-    { name: "Quần Áo", slug: "thoi-trang-cho-meo", icon: "clothing" },
-    { name: "Nệm & Chuồng", slug: "nem-chuong-cho", icon: "bed" },
-    { name: "Bát & Bình", slug: "bat-binh-nuoc", icon: "bowl" },
-    { name: "Vệ Sinh", slug: "ve-sinh-cho", icon: "hygiene" },
-    { name: "Sức Khỏe", slug: "suc-khoe-cho", icon: "health" },
-    { name: "Tã & Bỉm", slug: "ta-bim-cho", icon: "pad" },
-    { name: "Khuyến Mãi", slug: "promotions", icon: "deals" },
-  ],
-  cat: [
-    { name: "Thức Ăn Hạt", slug: "hat-cho-meo", icon: "dryfood" },
-    { name: "Pate", slug: "pate-cho-meo", icon: "wetfood" },
-    { name: "Bánh Thưởng", slug: "banh-thuong-cho-meo", icon: "treat" },
-    { name: "Đồ Chơi", slug: "do-choi-cho-meo", icon: "toy" },
-    { name: "Cát Vệ Sinh", slug: "cat-litter", icon: "litter" },
-    { name: "Nhà Mèo", slug: "cat-trees", icon: "cattree" },
-    { name: "Balo Vận Chuyển", slug: "balo-meo", icon: "carrier" },
-    { name: "Bát & Bình", slug: "bat-binh-nuoc-meo", icon: "bowl" },
-    { name: "Vệ Sinh", slug: "ve-sinh-meo", icon: "hygiene" },
-    { name: "Sức Khỏe", slug: "suc-khoe-meo", icon: "health" },
-    { name: "Quần Áo", slug: "quan-ao-meo", icon: "clothing" },
-    { name: "Khuyến Mãi", slug: "promotions", icon: "deals" },
-  ],
-};
-
 export const Categories = () => {
   const [activePet, setActivePet] = useState<"dog" | "cat">("dog");
-  const categories = CATEGORIES[activePet];
+  const { data: categories = [] } = useActiveHomepageCategories(activePet);
 
   return (
     <section className="py-6 md:py-8 bg-muted/30">
