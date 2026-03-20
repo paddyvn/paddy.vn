@@ -74,6 +74,11 @@ const AdminFallback = () => (
   </div>
 );
 
+const CategoryRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/collections/${slug}`} replace />;
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
