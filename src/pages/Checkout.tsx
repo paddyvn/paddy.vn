@@ -136,6 +136,7 @@ export default function Checkout() {
         return;
       }
       setUserId(session.user.id);
+      setUserEmail(session.user.email || null);
       
       // Fetch user profile for pre-filling
       const { data: profile } = await supabase
