@@ -309,7 +309,7 @@ export default function ProductEdit() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => window.open(`/product/${product.slug}`, '_blank')}
+              onClick={() => window.open(`/products/${product.slug}`, '_blank')}
             >
               <Eye className="h-4 w-4 mr-2" />
               Preview

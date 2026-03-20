@@ -79,6 +79,60 @@ type CollectionRule = {
   value: string;
 };
 
+// Build a Supabase query that applies smart collection rules
+function buildSmartCollectionQuery(
+  rules: CollectionRule[],
+  matchType: string,
+  selectClause: string = "id"
+) {
+  let query = supabase
+    .from("products")
+    .select(selectClause)
+    .eq("is_active", true);
+
+  for (const rule of rules) {
+    if (!rule.value.trim()) continue;
+    const value = rule.value.trim();
+
+    switch (rule.field) {
+      case "brand":
+        if (rule.operator === "equals") query = query.ilike("brand", value);
+        else if (rule.operator === "not_equals") query = query.not("brand", "ilike", value);
+        else if (rule.operator === "contains") query = query.ilike("brand", `%${value}%`);
+        else if (rule.operator === "starts_with") query = query.ilike("brand", `${value}%`);
+        else if (rule.operator === "ends_with") query = query.ilike("brand", `%${value}`);
+        break;
+      case "product_type":
+        if (rule.operator === "equals") query = query.ilike("product_type", value);
+        else if (rule.operator === "not_equals") query = query.not("product_type", "ilike", value);
+        else if (rule.operator === "contains") query = query.ilike("product_type", `%${value}%`);
+        break;
+      case "tags":
+        if (rule.operator === "equals" || rule.operator === "contains") query = query.ilike("tags", `%${value}%`);
+        else if (rule.operator === "not_equals" || rule.operator === "not_contains") query = query.not("tags", "ilike", `%${value}%`);
+        break;
+      case "title":
+        if (rule.operator === "equals") query = query.ilike("name", value);
+        else if (rule.operator === "not_equals") query = query.not("name", "ilike", value);
+        else if (rule.operator === "contains") query = query.ilike("name", `%${value}%`);
+        else if (rule.operator === "starts_with") query = query.ilike("name", `${value}%`);
+        else if (rule.operator === "ends_with") query = query.ilike("name", `%${value}`);
+        break;
+      case "price":
+        const priceValue = parseFloat(value);
+        if (!isNaN(priceValue)) {
+          if (rule.operator === "equals") query = query.eq("base_price", priceValue);
+          else if (rule.operator === "not_equals") query = query.neq("base_price", priceValue);
+          else if (rule.operator === "greater_than") query = query.gt("base_price", priceValue);
+          else if (rule.operator === "less_than") query = query.lt("base_price", priceValue);
+        }
+        break;
+    }
+  }
+
+  return query;
+}
+
 // Sortable Product Row Component
 interface SortableProductRowProps {
   product: any;
@@ -307,6 +361,51 @@ export default function CollectionDetails() {
     }
   };
 
+  const syncSmartCollectionProducts = async (
+    collectionId: string,
+    collectionRules: CollectionRule[],
+    matchType: string
+  ) => {
+    try {
+      const query = buildSmartCollectionQuery(collectionRules, matchType, "id");
+      const { data: matchingProducts, error: matchError } = await query.limit(2000) as { data: { id: string }[] | null; error: any };
+
+      if (matchError) throw matchError;
+
+      // Delete existing product_collections for this smart collection
+      await supabase
+        .from("product_collections")
+        .delete()
+        .eq("collection_id", collectionId);
+
+      // Insert matching products in batches
+      if (matchingProducts && matchingProducts.length > 0) {
+        const productCollections = matchingProducts.map((product, index) => ({
+          collection_id: collectionId,
+          product_id: product.id,
+          position: index,
+        }));
+
+        for (let i = 0; i < productCollections.length; i += 500) {
+          const batch = productCollections.slice(i, i + 500);
+          const { error: insertError } = await supabase
+            .from("product_collections")
+            .insert(batch);
+          if (insertError) throw insertError;
+        }
+      }
+
+      console.log(`Smart collection synced: ${matchingProducts?.length || 0} products matched`);
+    } catch (syncError) {
+      console.error("Failed to sync smart collection products:", syncError);
+      toast({
+        title: "Lưu ý",
+        description: "Collection đã lưu nhưng không thể đồng bộ sản phẩm tự động. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     if (!validateForm()) {
       toast({
@@ -354,6 +453,11 @@ export default function CollectionDetails() {
             .insert(productCollections);
           
           if (pcError) console.error("Error saving product collections:", pcError);
+        }
+
+        // Sync smart collection products
+        if (formData.collection_type === "smart" && rules.length > 0) {
+          await syncSmartCollectionProducts(data.id, rules, formData.rules_match_type);
         }
 
         toast({
@@ -406,6 +510,11 @@ export default function CollectionDetails() {
           }
         }
 
+        // Sync smart collection products
+        if (formData.collection_type === "smart" && rules.length > 0) {
+          await syncSmartCollectionProducts(id!, rules, formData.rules_match_type);
+        }
+
         toast({
           title: "Collection updated",
           description: "Your changes have been saved successfully.",
@@ -454,85 +563,11 @@ export default function CollectionDetails() {
 
     setIsPreviewingConditions(true);
     try {
-      let query = supabase
-        .from("products")
-        .select(`
-          id,
-          name,
-          base_price,
-          is_active,
-          brand,
-          product_type,
-          tags,
-          product_images(image_url, is_primary)
-        `)
-        .eq("is_active", true);
-
-      // Apply each rule as a filter
-      for (const rule of rules) {
-        if (!rule.value.trim()) continue;
-
-        const value = rule.value.trim();
-        
-        switch (rule.field) {
-          case "brand":
-            if (rule.operator === "equals") {
-              query = query.ilike("brand", value);
-            } else if (rule.operator === "not_equals") {
-              query = query.not("brand", "ilike", value);
-            } else if (rule.operator === "contains") {
-              query = query.ilike("brand", `%${value}%`);
-            } else if (rule.operator === "starts_with") {
-              query = query.ilike("brand", `${value}%`);
-            } else if (rule.operator === "ends_with") {
-              query = query.ilike("brand", `%${value}`);
-            }
-            break;
-          case "product_type":
-            if (rule.operator === "equals") {
-              query = query.ilike("product_type", value);
-            } else if (rule.operator === "not_equals") {
-              query = query.not("product_type", "ilike", value);
-            } else if (rule.operator === "contains") {
-              query = query.ilike("product_type", `%${value}%`);
-            }
-            break;
-          case "tags":
-            if (rule.operator === "equals" || rule.operator === "contains") {
-              query = query.ilike("tags", `%${value}%`);
-            } else if (rule.operator === "not_equals" || rule.operator === "not_contains") {
-              query = query.not("tags", "ilike", `%${value}%`);
-            }
-            break;
-          case "title":
-            if (rule.operator === "equals") {
-              query = query.ilike("name", value);
-            } else if (rule.operator === "not_equals") {
-              query = query.not("name", "ilike", value);
-            } else if (rule.operator === "contains") {
-              query = query.ilike("name", `%${value}%`);
-            } else if (rule.operator === "starts_with") {
-              query = query.ilike("name", `${value}%`);
-            } else if (rule.operator === "ends_with") {
-              query = query.ilike("name", `%${value}`);
-            }
-            break;
-          case "price":
-            const priceValue = parseFloat(value);
-            if (!isNaN(priceValue)) {
-              if (rule.operator === "equals") {
-                query = query.eq("base_price", priceValue);
-              } else if (rule.operator === "not_equals") {
-                query = query.neq("base_price", priceValue);
-              } else if (rule.operator === "greater_than") {
-                query = query.gt("base_price", priceValue);
-              } else if (rule.operator === "less_than") {
-                query = query.lt("base_price", priceValue);
-              }
-            }
-            break;
-        }
-      }
+      const query = buildSmartCollectionQuery(
+        rules,
+        formData.rules_match_type,
+        `id, name, base_price, is_active, brand, product_type, tags, product_images(image_url, is_primary)`
+      );
 
       const { data, error } = await query.limit(100);
 
