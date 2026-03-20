@@ -116,6 +116,7 @@ export default function Checkout() {
     discount_type: string;
     discount_value: number;
     max_discount: number | null;
+    promotionId: string;
   } | null>(null);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   
