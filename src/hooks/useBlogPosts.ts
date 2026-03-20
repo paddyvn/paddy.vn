@@ -119,6 +119,8 @@ export const useDeleteBlogPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
       toast({
         title: "Blog Post Deleted",
         description: "Blog post has been deleted successfully",
