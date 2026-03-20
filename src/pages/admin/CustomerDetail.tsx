@@ -598,18 +598,6 @@ const CustomerDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Store Credit */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base">Store credit</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Edit className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">No store credit</p>
-            </CardContent>
-          </Card>
 
           <CustomerTagsInput customerId={customer.id} initialTags={customer.tags} />
 
