@@ -95,6 +95,7 @@ export default function BuyMoreSaveMoreEdit() {
 
   useEffect(() => {
     if (promotion) {
+      const rules = (promotion as any).rules || {};
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
@@ -109,6 +110,11 @@ export default function BuyMoreSaveMoreEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        tiers: rules.tiers || [
+          { quantity: 2, discount: 10 },
+          { quantity: 3, discount: 15 },
+          { quantity: 5, discount: 20 },
+        ],
       }));
     }
   }, [promotion]);
