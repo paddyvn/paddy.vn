@@ -125,7 +125,7 @@ export default function CustomerOrderDetail() {
 
   // Auth for reorder
   const [userId, setUserId] = useState<string | undefined>();
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id);
     });
