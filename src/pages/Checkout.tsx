@@ -87,8 +87,7 @@ export default function Checkout() {
   const [userId, setUserId] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderNumber, setOrderNumber] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   // Address form
   const [addressForm, setAddressForm] = useState<AddressForm>({
@@ -137,6 +136,7 @@ export default function Checkout() {
         return;
       }
       setUserId(session.user.id);
+      setUserEmail(session.user.email || null);
       
       // Fetch user profile for pre-filling
       const { data: profile } = await supabase
@@ -365,8 +365,13 @@ export default function Checkout() {
           discount: discount,
           total: total,
           status: "pending",
+          financial_status: selectedPayment === "cod" ? "pending" : "pending",
           notes: orderNotes || null,
           delivery_method: deliveryMethod?.name || null,
+          payment_gateway: selectedPayment,
+          source_name: "web",
+          customer_email: userEmail || null,
+          customer_phone: useNewAddress ? addressForm.phone : (address?.phone || null),
           shipping_address: useNewAddress 
             ? {
                 full_name: addressForm.fullName,
@@ -469,8 +474,7 @@ export default function Checkout() {
         });
       }
 
-      setOrderNumber(newOrderNumber);
-      setOrderComplete(true);
+      navigate(`/order-confirmation/${newOrderNumber}`);
       
     } catch (error: any) {
       console.error("Order error:", error);
@@ -502,46 +506,9 @@ export default function Checkout() {
     );
   }
 
-  if (cart.length === 0 && !orderComplete) {
+  if (cart.length === 0) {
     navigate("/cart");
     return null;
-  }
-
-  // Order confirmation screen
-  if (orderComplete) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-16">
-          <div className="max-w-lg mx-auto text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="h-10 w-10 text-green-600" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2">Đặt hàng thành công!</h1>
-            <p className="text-muted-foreground mb-4">
-              Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đang được xử lý.
-            </p>
-            <div className="bg-muted/50 rounded-lg p-4 mb-6">
-              <p className="text-sm text-muted-foreground">Mã đơn hàng</p>
-              <p className="text-xl font-bold text-primary">{orderNumber}</p>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">
-              Chúng tôi sẽ gửi email xác nhận đơn hàng cho bạn. 
-              Bạn có thể theo dõi trạng thái đơn hàng trong trang "Đơn hàng của tôi".
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button variant="outline" onClick={() => navigate("/orders")}>
-                Xem đơn hàng
-              </Button>
-              <Button onClick={() => navigate("/")}>
-                Tiếp tục mua sắm
-              </Button>
-            </div>
-          </div>
-        </main>
-        <Footer hideNewsletter />
-      </div>
-    );
   }
 
   return (
