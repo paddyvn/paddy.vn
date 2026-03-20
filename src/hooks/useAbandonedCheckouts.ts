@@ -55,6 +55,8 @@ export const useDeleteAbandonedCheckout = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["abandoned-checkouts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-abandoned-checkouts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-abandoned-checkouts-count"] });
       toast({
         title: "Success",
         description: "Abandoned checkout deleted successfully",
