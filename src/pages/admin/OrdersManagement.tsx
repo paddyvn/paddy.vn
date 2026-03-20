@@ -68,7 +68,7 @@ const paymentStatusConfig: Record<string, { label: string; variant: "default" | 
 
 const ORDERS_PER_PAGE = 50;
 
-type SortField = "order_number" | "created_at" | "total" | "status";
+type SortField = "order_number" | "created_at" | "customer_name" | "total" | "status";
 type SortDirection = "asc" | "desc";
 
 // Helper to build the common filter chain
