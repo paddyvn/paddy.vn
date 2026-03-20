@@ -410,6 +410,11 @@ export default function CollectionDetails() {
           if (pcError) console.error("Error saving product collections:", pcError);
         }
 
+        // Sync smart collection products
+        if (formData.collection_type === "smart" && rules.length > 0) {
+          await syncSmartCollectionProducts(data.id, rules, formData.rules_match_type);
+        }
+
         toast({
           title: "Collection created",
           description: "Your collection has been created successfully.",
