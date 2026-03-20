@@ -1,100 +1,113 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { useCategories } from "@/hooks/useCategories";
-import { ArrowRight } from "lucide-react";
-import categoryDogs from "@/assets/category-dogs.jpg";
-import categoryCats from "@/assets/category-cats.jpg";
-import categoryToys from "@/assets/category-toys.jpg";
-import categoryFood from "@/assets/category-food.jpg";
+import { cn } from "@/lib/utils";
+import { CategoryIllustration } from "@/components/CategoryIllustrations";
 
-const fallbackImages = [categoryDogs, categoryCats, categoryToys, categoryFood];
+const PET_TABS = [
+  { id: "dog" as const, label: "Chó", emoji: "🐕" },
+  { id: "cat" as const, label: "Mèo", emoji: "🐈" },
+];
+
+const CATEGORIES = {
+  dog: [
+    { name: "Thức Ăn Hạt", slug: "hat-cho-cho", icon: "dryfood" },
+    { name: "Pate", slug: "pate-cho", icon: "wetfood" },
+    { name: "Bánh Thưởng", slug: "banh-thuong-cho-cho", icon: "treat" },
+    { name: "Đồ Chơi", slug: "do-choi-cho-cho", icon: "toy" },
+    { name: "Dây Dắt", slug: "vong-co-day-dat", icon: "leash" },
+    { name: "Quần Áo", slug: "thoi-trang-cho-meo", icon: "clothing" },
+    { name: "Nệm & Chuồng", slug: "nem-chuong-cho", icon: "bed" },
+    { name: "Bát & Bình", slug: "bat-binh-nuoc", icon: "bowl" },
+    { name: "Vệ Sinh", slug: "ve-sinh-cho", icon: "hygiene" },
+    { name: "Sức Khỏe", slug: "suc-khoe-cho", icon: "health" },
+    { name: "Tã & Bỉm", slug: "ta-bim-cho", icon: "pad" },
+    { name: "Khuyến Mãi", slug: "promotions", icon: "deals" },
+  ],
+  cat: [
+    { name: "Thức Ăn Hạt", slug: "hat-cho-meo", icon: "dryfood" },
+    { name: "Pate", slug: "pate-cho-meo", icon: "wetfood" },
+    { name: "Bánh Thưởng", slug: "banh-thuong-cho-meo", icon: "treat" },
+    { name: "Đồ Chơi", slug: "do-choi-cho-meo", icon: "toy" },
+    { name: "Cát Vệ Sinh", slug: "cat-litter", icon: "litter" },
+    { name: "Nhà Mèo", slug: "cat-trees", icon: "cattree" },
+    { name: "Balo Vận Chuyển", slug: "balo-meo", icon: "carrier" },
+    { name: "Bát & Bình", slug: "bat-binh-nuoc-meo", icon: "bowl" },
+    { name: "Vệ Sinh", slug: "ve-sinh-meo", icon: "hygiene" },
+    { name: "Sức Khỏe", slug: "suc-khoe-meo", icon: "health" },
+    { name: "Quần Áo", slug: "quan-ao-meo", icon: "clothing" },
+    { name: "Khuyến Mãi", slug: "promotions", icon: "deals" },
+  ],
+};
 
 export const Categories = () => {
-  const { data: categories, isLoading } = useCategories();
+  const [activePet, setActivePet] = useState<"dog" | "cat">("dog");
+  const categories = CATEGORIES[activePet];
 
-  if (isLoading) {
-    return (
-      <section className="pt-6 pb-3 md:pt-8 md:pb-4 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-80 bg-muted animate-pulse rounded-lg" />
+  return (
+    <section className="py-6 md:py-8 bg-muted/30">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <h2 className="text-2xl font-extrabold text-foreground">
+            Mua sắm theo danh mục
+          </h2>
+          <div className="flex gap-1 bg-background rounded-xl p-[3px] shadow-card">
+            {PET_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActivePet(tab.id)}
+                className={cn(
+                  "px-4 py-1.5 rounded-[9px] border-none text-[13.5px] font-bold cursor-pointer transition-all duration-200 flex items-center gap-1.5",
+                  activePet === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className="text-sm">{tab.emoji}</span>
+                {tab.label}
+              </button>
             ))}
           </div>
         </div>
-      </section>
-    );
-  }
 
-  const displayCategories = categories && categories.length > 0 ? categories : [];
-
-  return (
-    <section className="pt-6 pb-3 md:pt-8 md:pb-4 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-bold text-primary">
-            Shop by Category
-          </h2>
-          <Link 
-            to="/collections" 
-            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
-          >
-            Xem tất cả
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+        {/* Grid */}
+        <div className="grid grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+          {categories.map((cat) => {
+            const isDeals = cat.icon === "deals";
+            return (
+              <Link
+                key={cat.slug}
+                to={cat.icon === "deals" ? "/promotions" : `/collections/${cat.slug}`}
+                className={cn(
+                  "flex flex-col items-center px-1 py-2.5 sm:px-2 sm:py-4 bg-background rounded-2xl transition-all duration-250 cursor-pointer group",
+                  "hover:border-primary hover:shadow-hover hover:-translate-y-1 active:translate-y-0 active:scale-[0.97]",
+                  isDeals
+                    ? "border-2 border-secondary"
+                    : "border-[1.5px] border-transparent"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-16 h-16 sm:w-[88px] sm:h-[88px] rounded-full flex items-center justify-center p-1.5 sm:p-2.5 shrink-0 transition-transform duration-300 group-hover:scale-[1.08]",
+                    isDeals
+                      ? "bg-gradient-to-br from-[hsl(55,100%,95%)] to-[hsl(48,100%,93%)]"
+                      : "bg-gradient-to-br from-[hsl(235,67%,95%)] to-muted"
+                  )}
+                >
+                  <CategoryIllustration type={cat.icon} />
+                </div>
+                <div
+                  className={cn(
+                    "mt-2.5 text-xs sm:text-[13px] font-bold text-center leading-tight",
+                    isDeals ? "text-[hsl(45,100%,35%)]" : "text-foreground"
+                  )}
+                >
+                  {cat.name}
+                </div>
+              </Link>
+            );
+          })}
         </div>
-
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full"
-        >
-          <CarouselContent className="-ml-4">
-            {displayCategories.map((category, index) => (
-              <CarouselItem key={category.id} className="pl-4 basis-1/2 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                <Link to={`/collections/${category.slug}`}>
-                  <Card className="group relative overflow-hidden border-0 transition-smooth cursor-pointer shadow-card hover:shadow-hover">
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src={category.image_url || fallbackImages[index % fallbackImages.length]}
-                      alt={category.name}
-                      className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-                    />
-                  </div>
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/50 to-transparent flex flex-col justify-end p-4">
-                    <h3 className="text-xl font-bold text-foreground mb-3 transition-smooth group-hover:text-primary">
-                      {category.name}
-                    </h3>
-                    
-                    <div className="flex items-center gap-2 text-primary text-sm font-semibold transition-smooth group-hover:translate-x-2">
-                      Shop Now
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </Card>
-                </Link>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-0" />
-          <CarouselNext className="right-0" />
-        </Carousel>
       </div>
     </section>
   );
