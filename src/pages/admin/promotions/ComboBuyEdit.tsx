@@ -144,6 +144,15 @@ export default function ComboBuyEdit() {
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
         custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
+        rules: {
+          combo_type: data.combo_type,
+          buy_quantity: data.buy_quantity,
+          ...(data.combo_type === "buy_x_free_y"
+            ? { get_quantity: data.get_quantity }
+            : data.combo_type === "buy_x_discount_y"
+            ? { discount_percentage: data.discount_percentage }
+            : { bundle_price: data.bundle_price }),
+        },
       };
 
       let promotionId = id;
