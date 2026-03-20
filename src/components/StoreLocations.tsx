@@ -35,7 +35,7 @@ export const StoreLocations = () => {
         <div className="flex items-center gap-2 mb-8">
           <MapPin className="h-6 w-6 text-primary" />
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            Hệ thống cửa hàng Paddy Pet
+            Hệ thống cửa hàng Paddy
           </h2>
         </div>
         
