@@ -455,10 +455,23 @@ export default function Cart() {
                   
                   {discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>Giảm giá</span>
+                      <span>Giảm giá voucher</span>
                       <span>-{formatPrice(discount)}₫</span>
                     </div>
                   )}
+                  
+                  {comboDiscounts.map((cd) => (
+                    <div key={cd.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{cd.description}</span>
+                      <span>-{formatPrice(cd.discountAmount)}₫</span>
+                    </div>
+                  ))}
+                  {tieredDiscounts.map((td) => (
+                    <div key={td.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{td.description}</span>
+                      <span>-{formatPrice(td.discountAmount)}₫</span>
+                    </div>
+                  ))}
                   
                   <Separator />
                   
