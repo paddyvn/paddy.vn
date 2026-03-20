@@ -230,7 +230,7 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
             )}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-baseline gap-1.5 min-w-0">
-                <span className="text-[15px] font-bold text-primary tracking-tight whitespace-nowrap">
+                <span className="text-[17px] font-bold text-primary tracking-tight whitespace-nowrap">
                   {formatPrice(displayPrice)}đ
                 </span>
                 {showSale && discountPercentage > 0 && (
