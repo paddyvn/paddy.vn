@@ -37,8 +37,9 @@ import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
 import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSubscriptions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { validateVoucher, calculateVoucherDiscount as calcVoucherDiscount } from "@/lib/voucher-utils";
 
 const PROVINCES = [
   "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
