@@ -39,6 +39,7 @@ import { ProductTagsInput } from "@/components/admin/ProductTagsInput";
 import { ProductStatusCard } from "@/components/admin/ProductStatusCard";
 import { ProductOrganizationCard } from "@/components/admin/ProductOrganizationCard";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { NutritionFactsEditor } from "@/components/admin/NutritionFactsEditor";
 
 const productFormSchema = z.object({
   name: z.string().trim().min(1, "Product name is required").max(255, "Name must be less than 255 characters"),
