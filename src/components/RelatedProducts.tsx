@@ -51,7 +51,7 @@ export function RelatedProducts({ currentProductId, productType, brand }: Relate
 
   return (
     <div>
-      <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">You May Also Like</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-primary mb-6">You May Also Like</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {relatedProducts.map((product: any) => (
           <ProductCard key={product.id} product={product} />
