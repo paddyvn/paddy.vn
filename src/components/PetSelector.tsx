@@ -8,17 +8,17 @@ export const PetSelector = () => {
 
   // Fallback data if database is empty
   const fallbackDogCategories = [
-    { label: "Dog Food", link: "/category/dog-food" },
-    { label: "Treats", link: "/category/dog-treats" },
-    { label: "Flea & Worm", link: "/category/flea-worm" },
-    { label: "Dog Toys", link: "/category/dog-toys" },
+    { label: "Dog Food", link: "/collections/thuc-an-hat-cho-cho" },
+    { label: "Treats", link: "/collections/snack-treat-banh-thuong-cho" },
+    { label: "Grooming", link: "/collections/cham-soc-ve-sinh-cho-cho" },
+    { label: "Health", link: "/collections/cham-soc-suc-khoe-cho-cho" },
   ];
 
   const fallbackCatCategories = [
-    { label: "Cat Food", link: "/category/cat-food" },
-    { label: "Treats", link: "/category/cat-treats" },
-    { label: "Cat Toys", link: "/category/cat-toys" },
-    { label: "Litter", link: "/category/cat-litter" },
+    { label: "Cat Food", link: "/collections/thuc-an-cho-meo" },
+    { label: "Treats", link: "/collections/banh-thuong-cho-meo" },
+    { label: "Grooming", link: "/collections/cham-soc-ve-sinh-cho-meo" },
+    { label: "Litter", link: "/collections/cat-meo" },
   ];
 
   if (isLoading) {
@@ -71,7 +71,7 @@ export const PetSelector = () => {
                 dogBlocks.map((block, index) => (
                   <Link
                     key={block.id}
-                    to={block.link || '/category/dog'}
+                    to={block.link || '/collections/thuc-an-cho-cho'}
                     className="flex-1 transition-colors p-6 flex items-center justify-center gap-4 group hover:opacity-90"
                     style={{ backgroundColor: block.background_color || '#F97316' }}
                   >
@@ -82,14 +82,14 @@ export const PetSelector = () => {
               ) : (
                 <>
                   <Link 
-                    to="/category/dog" 
+                    to="/collections/thuc-an-cho-cho" 
                     className="flex-1 bg-amber-400 hover:bg-amber-500 transition-colors p-6 flex items-center justify-center gap-4 group"
                   >
                     {getIcon('dog', 'large')}
                     <span className="text-2xl font-bold text-foreground">Dog</span>
                   </Link>
                   <Link 
-                    to="/category/puppy" 
+                    to="/collections/cho-con-puppy" 
                     className="flex-1 bg-amber-300 hover:bg-amber-400 transition-colors p-6 flex items-center justify-center gap-4 group"
                   >
                     {getIcon('dog', 'small')}
@@ -118,7 +118,7 @@ export const PetSelector = () => {
                 catBlocks.map((block, index) => (
                   <Link
                     key={block.id}
-                    to={block.link || '/category/cat'}
+                    to={block.link || '/collections/thuc-an-cho-meo'}
                     className="flex-1 transition-colors p-6 flex items-center justify-center gap-4 group hover:opacity-90"
                     style={{ backgroundColor: block.background_color || '#3B82F6' }}
                   >
@@ -129,14 +129,14 @@ export const PetSelector = () => {
               ) : (
                 <>
                   <Link 
-                    to="/category/cat" 
+                    to="/collections/thuc-an-cho-meo" 
                     className="flex-1 bg-amber-100 hover:bg-amber-200 transition-colors p-6 flex items-center justify-center gap-4 group"
                   >
                     {getIcon('cat', 'large')}
                     <span className="text-2xl font-bold text-foreground">Cat</span>
                   </Link>
                   <Link 
-                    to="/category/kitten" 
+                    to="/collections/meo-con" 
                     className="flex-1 bg-amber-50 hover:bg-amber-100 transition-colors p-6 flex items-center justify-center gap-4 group"
                   >
                     {getIcon('cat', 'small')}

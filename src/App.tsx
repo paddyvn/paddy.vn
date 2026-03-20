@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 
 // Storefront pages - eagerly loaded (customer-facing, fast first paint)
 import Index from "./pages/Index";
@@ -73,6 +73,11 @@ const AdminFallback = () => (
     </div>
   </div>
 );
+
+const CategoryRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/collections/${slug}`} replace />;
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +159,8 @@ const App = () => (
             <Route path="settings/stores" element={<StoresManagement />} />
             <Route path="settings/stores/:id" element={<StoreEdit />} />
           </Route>
+          {/* Redirect legacy /category/ links to /collections/ */}
+          <Route path="/category/:slug" element={<CategoryRedirect />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
