@@ -17,7 +17,7 @@ export const FeaturedProducts = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 md:py-24" style={{ backgroundColor: '#fefefe' }}>
+      <section className="py-8 md:py-12" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
