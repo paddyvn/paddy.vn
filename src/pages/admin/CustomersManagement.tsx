@@ -241,7 +241,7 @@ export default function CustomersManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedCustomers.map((customer) => (
+              {(customers || []).map((customer) => (
                 <TableRow
                   key={customer.id}
                   className="cursor-pointer hover:bg-muted/50"
