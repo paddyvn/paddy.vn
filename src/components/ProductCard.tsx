@@ -217,43 +217,43 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
           </div>
 
           {/* Price + Cart button */}
-          <div className="flex items-end justify-between mt-auto pt-2">
-            <div className="flex flex-col gap-px">
-              {showSale && (
-                <span className="text-xs text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}đ
-                </span>
-              )}
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[15px] font-bold text-primary tracking-tight">
+          <div className="mt-auto pt-2 space-y-1">
+            {showSale && (
+              <span className="text-xs text-muted-foreground line-through">
+                {formatPrice(originalPrice)}đ
+              </span>
+            )}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-baseline gap-1.5 min-w-0">
+                <span className="text-[15px] font-bold text-primary tracking-tight whitespace-nowrap">
                   {formatPrice(displayPrice)}đ
                 </span>
                 {showSale && discountPercentage > 0 && (
-                  <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-px rounded-md">
+                  <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md whitespace-nowrap">
                     -{discountPercentage}%
                   </span>
                 )}
               </div>
-            </div>
 
-            <button
-              className={`w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 hover:scale-[1.06] active:scale-95 ${
-                addedToCart
-                  ? "bg-green-500 text-white"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
-              }`}
-              onClick={handleQuickAddClick}
-              disabled={isAddingToCart}
-              aria-label="Thêm vào giỏ"
-            >
-              {isAddingToCart ? (
-                <Loader2 className="h-[15px] w-[15px] animate-spin" />
-              ) : addedToCart ? (
-                <Check className="h-[15px] w-[15px]" strokeWidth={3} />
-              ) : (
-                <ShoppingBag className="h-[15px] w-[15px]" strokeWidth={2.5} />
-              )}
-            </button>
+              <button
+                className={`w-[36px] h-[36px] rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 hover:scale-[1.06] active:scale-95 ${
+                  addedToCart
+                    ? "bg-green-500 text-white"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                }`}
+                onClick={handleQuickAddClick}
+                disabled={isAddingToCart}
+                aria-label="Thêm vào giỏ"
+              >
+                {isAddingToCart ? (
+                  <Loader2 className="h-[15px] w-[15px] animate-spin" />
+                ) : addedToCart ? (
+                  <Check className="h-[15px] w-[15px]" strokeWidth={3} />
+                ) : (
+                  <ShoppingBag className="h-[15px] w-[15px]" strokeWidth={2.5} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
