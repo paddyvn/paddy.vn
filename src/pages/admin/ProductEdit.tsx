@@ -66,6 +66,7 @@ type ProductFormValues = z.infer<typeof productFormSchema>;
 
 export default function ProductEdit() {
   const { id } = useParams<{ id: string }>();
+  const isNew = id === undefined;
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,7 +84,7 @@ export default function ProductEdit() {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !isNew && !!id,
   });
 
   const { data: variantsCount = 0 } = useQuery({
@@ -136,7 +137,7 @@ export default function ProductEdit() {
       product_type: "",
       pet_type: "",
       tags: "",
-      is_active: true,
+      is_active: false,
       is_featured: false,
       meta_title: "",
       meta_description: "",
@@ -177,76 +178,137 @@ export default function ProductEdit() {
     }
   }, [product, form]);
 
+  // Auto-generate slug from name for new products
+  const watchedName = form.watch("name");
+  useEffect(() => {
+    if (isNew && watchedName) {
+      const slug = watchedName
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d").replace(/Đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      form.setValue("slug", slug);
+    }
+  }, [isNew, watchedName]);
+
   const onSubmit = async (values: ProductFormValues) => {
-    if (!id) return;
-
     try {
-      // Update product
-      const { error } = await supabase
-        .from("products")
-        .update({
-          name: values.name,
-          slug: values.slug,
-          description: values.description || null,
-          short_description: values.short_description || null,
-          base_price: values.base_price,
-          compare_at_price: values.compare_at_price || null,
-          category_id: values.category_id || null,
-          brand: values.brand || null,
-          product_type: values.product_type || null,
-          pet_type: values.pet_type || null,
-          tags: values.tags || null,
-          is_active: values.is_active,
-          is_featured: values.is_featured,
-          meta_title: values.meta_title || null,
-          meta_description: values.meta_description || null,
-          option1_name: values.option1_name || null,
-          option2_name: values.option2_name || null,
-          option3_name: values.option3_name || null,
-          target_age_id: values.target_age_id || null,
-          target_size_id: values.target_size_id || null,
-          origin_id: values.origin_id || null,
-        })
-        .eq("id", id);
+      if (isNew) {
+        // INSERT new product
+        const { data: newProduct, error } = await supabase
+          .from("products")
+          .insert({
+            name: values.name,
+            slug: values.slug,
+            description: values.description || null,
+            short_description: values.short_description || null,
+            base_price: values.base_price,
+            compare_at_price: values.compare_at_price || null,
+            category_id: values.category_id || null,
+            is_active: values.is_active,
+            is_featured: values.is_featured,
+            brand: values.brand || null,
+            product_type: values.product_type || null,
+            pet_type: values.pet_type || null,
+            tags: values.tags || null,
+            meta_title: values.meta_title || null,
+            meta_description: values.meta_description || null,
+            option1_name: values.option1_name || null,
+            option2_name: values.option2_name || null,
+            option3_name: values.option3_name || null,
+            target_age_id: values.target_age_id || null,
+            target_size_id: values.target_size_id || null,
+            origin_id: values.origin_id || null,
+          })
+          .select("id")
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Update health conditions - delete existing and insert new
-      await supabase
-        .from("product_health_condition_links")
-        .delete()
-        .eq("product_id", id);
-
-      if (selectedHealthConditions.length > 0) {
-        const { error: healthError } = await supabase
-          .from("product_health_condition_links")
-          .insert(
-            selectedHealthConditions.map(conditionId => ({
-              product_id: id,
-              health_condition_id: conditionId,
+        // Save health conditions
+        if (selectedHealthConditions.length > 0) {
+          await supabase.from("product_health_condition_links").insert(
+            selectedHealthConditions.map((hcId) => ({
+              product_id: newProduct.id,
+              health_condition_id: hcId,
             }))
           );
-        if (healthError) throw healthError;
+        }
+
+        toast({ title: "Product created", description: "Redirecting to edit page..." });
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+        navigate(`/admin/products/${newProduct.id}/edit`, { replace: true });
+      } else {
+        if (!id) return;
+        // UPDATE existing product
+        const { error } = await supabase
+          .from("products")
+          .update({
+            name: values.name,
+            slug: values.slug,
+            description: values.description || null,
+            short_description: values.short_description || null,
+            base_price: values.base_price,
+            compare_at_price: values.compare_at_price || null,
+            category_id: values.category_id || null,
+            brand: values.brand || null,
+            product_type: values.product_type || null,
+            pet_type: values.pet_type || null,
+            tags: values.tags || null,
+            is_active: values.is_active,
+            is_featured: values.is_featured,
+            meta_title: values.meta_title || null,
+            meta_description: values.meta_description || null,
+            option1_name: values.option1_name || null,
+            option2_name: values.option2_name || null,
+            option3_name: values.option3_name || null,
+            target_age_id: values.target_age_id || null,
+            target_size_id: values.target_size_id || null,
+            origin_id: values.origin_id || null,
+          })
+          .eq("id", id);
+
+        if (error) throw error;
+
+        // Update health conditions
+        await supabase
+          .from("product_health_condition_links")
+          .delete()
+          .eq("product_id", id);
+
+        if (selectedHealthConditions.length > 0) {
+          const { error: healthError } = await supabase
+            .from("product_health_condition_links")
+            .insert(
+              selectedHealthConditions.map(conditionId => ({
+                product_id: id,
+                health_condition_id: conditionId,
+              }))
+            );
+          if (healthError) throw healthError;
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["product-health-conditions", id] });
+
+        toast({
+          title: "Product updated",
+          description: "Your changes have been saved successfully.",
+        });
+
+        navigate("/admin/products");
       }
-
-      queryClient.invalidateQueries({ queryKey: ["product-health-conditions", id] });
-
-      toast({
-        title: "Product updated",
-        description: "Your changes have been saved successfully.",
-      });
-
-      navigate("/admin/products");
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update product",
+        description: error instanceof Error ? error.message : "Failed to save product",
         variant: "destructive",
       });
     }
   };
 
-  if (isLoading) {
+  if (!isNew && isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -270,7 +332,7 @@ export default function ProductEdit() {
     );
   }
 
-  if (!product) {
+  if (!isNew && !product) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Product not found</p>
@@ -298,22 +360,26 @@ export default function ProductEdit() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-semibold">{product.name}</h2>
+              <h2 className="text-2xl font-semibold">
+                {isNew ? "New Product" : product?.name}
+              </h2>
               <Badge variant={isActive ? "default" : "secondary"}>
                 {isActive ? "Active" : "Draft"}
               </Badge>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(`/products/${product.slug}`, '_blank')}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
+            {!isNew && product && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/products/${product.slug}`, '_blank')}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -340,20 +406,24 @@ export default function ProductEdit() {
                 "Save"
               )}
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem>View on store</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!isNew && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.open(`/products/${product?.slug}`, '_blank')}>
+                    View on store
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
@@ -398,10 +468,19 @@ export default function ProductEdit() {
               </Card>
 
               {/* Media */}
-              {id && <ProductMediaGallery productId={id} />}
+              {!isNew && id && <ProductMediaGallery productId={id} />}
 
-              {/* Pricing Card - Only show when no variants */}
-              {variantsCount === 0 && (
+              {/* Helper message for new products */}
+              {isNew && (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    <p>Save the product first to add images, variants, and collections.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Pricing Card - Only show when no variants or new product */}
+              {(isNew || variantsCount === 0) && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-medium">Pricing</CardTitle>
@@ -466,20 +545,20 @@ export default function ProductEdit() {
               )}
 
               {/* Variants */}
-              {id && (
+              {!isNew && id && (
                 <ProductVariantsTable
                   productId={id}
-                  option1Name={product.option1_name}
-                  option2Name={product.option2_name}
-                  option3Name={product.option3_name}
+                  option1Name={product?.option1_name}
+                  option2Name={product?.option2_name}
+                  option3Name={product?.option3_name}
                 />
               )}
 
               {/* SEO */}
               <ProductSEOPreview
                 form={form}
-                productName={product.name}
-                basePrice={product.base_price}
+                productName={isNew ? form.watch("name") || "New Product" : product?.name || ""}
+                basePrice={isNew ? form.watch("base_price") || 0 : product?.base_price || 0}
               />
             </div>
 
@@ -496,7 +575,7 @@ export default function ProductEdit() {
               />
 
               {/* Collections */}
-              {id && <ProductCollectionTags productId={id} />}
+              {!isNew && id && <ProductCollectionTags productId={id} />}
 
               {/* Tags */}
               <ProductTagsInput form={form} />

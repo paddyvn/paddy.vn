@@ -35,7 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -198,6 +198,31 @@ export default function ProductsManagement() {
     );
   }, [productTypes, categorySearchText]);
 
+  // Shared search helper for both count and data queries
+  const applyProductSearch = async (query: any, search: string) => {
+    if (!search) return query;
+    const term = search.trim();
+    const looksLikeSKU = !term.includes(" ") && term.length <= 30;
+
+    if (looksLikeSKU) {
+      const { data: skuMatches } = await supabase
+        .from("product_variants")
+        .select("product_id")
+        .ilike("sku", `%${term}%`)
+        .limit(100);
+
+      const skuProductIds = skuMatches?.map((v) => v.product_id) || [];
+
+      if (skuProductIds.length > 0) {
+        return query.or(
+          `name.ilike.%${term}%,slug.ilike.%${term}%,id.in.(${skuProductIds.join(",")})`
+        );
+      }
+    }
+
+    return query.or(`name.ilike.%${term}%,slug.ilike.%${term}%`);
+  };
+
   // Get total count
   const { data: totalCount } = useQuery({
     queryKey: ["admin-products-count", searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter],
@@ -206,9 +231,7 @@ export default function ProductsManagement() {
         .from("products")
         .select("*", { count: "exact", head: true });
 
-      if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
-      }
+      query = await applyProductSearch(query, searchQuery);
 
       if (statusFilter !== "all") {
         query = query.eq("is_active", statusFilter === "active");
@@ -219,7 +242,6 @@ export default function ProductsManagement() {
       }
 
       if (collectionFilter !== "all") {
-        // Get products in this collection
         const { data: collectionProducts } = await supabase
           .from("product_collections")
           .select("product_id")
@@ -258,9 +280,7 @@ export default function ProductsManagement() {
         .order(sortKey, { ascending: sortDirection === "asc" })
         .range(from, to);
 
-      if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
-      }
+      query = await applyProductSearch(query, searchQuery);
 
       if (statusFilter !== "all") {
         query = query.eq("is_active", statusFilter === "active");
@@ -271,7 +291,6 @@ export default function ProductsManagement() {
       }
 
       if (collectionFilter !== "all") {
-        // Get products in this collection
         const { data: collectionProducts } = await supabase
           .from("product_collections")
           .select("product_id")
@@ -497,6 +516,93 @@ export default function ProductsManagement() {
     }
   };
 
+  const exportProductsCSV = async () => {
+    try {
+      let query = supabase
+        .from("products")
+        .select(`
+          id, name, slug, base_price, compare_at_price, brand, product_type,
+          pet_type, tags, is_active, is_featured, created_at,
+          product_variants(sku, name, price, stock_quantity)
+        `)
+        .order("name");
+
+      query = await applyProductSearch(query, searchQuery);
+
+      if (statusFilter !== "all") {
+        query = query.eq("is_active", statusFilter === "active");
+      }
+      if (brandFilter !== "all") {
+        query = query.eq("brand", brandFilter);
+      }
+      if (categoryFilter !== "all") {
+        query = query.eq("product_type", categoryFilter);
+      }
+
+      const { data, error } = await query.limit(5000);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast({ title: "No products to export", variant: "destructive" });
+        return;
+      }
+
+      const headers = [
+        "Product Name", "Slug", "Brand", "Type", "Pet Type", "Tags",
+        "Status", "Featured", "Base Price", "Compare At Price",
+        "Variant Name", "SKU", "Variant Price", "Stock", "Created At"
+      ];
+
+      const rows = data.flatMap((product: any) => {
+        const variants = product.product_variants || [];
+        if (variants.length === 0) {
+          return [[
+            product.name, product.slug, product.brand || "", product.product_type || "",
+            product.pet_type || "", product.tags || "",
+            product.is_active ? "Active" : "Inactive", product.is_featured ? "Yes" : "No",
+            product.base_price, product.compare_at_price || "",
+            "", "", "", "", product.created_at,
+          ]];
+        }
+        return variants.map((v: any, i: number) => [
+          i === 0 ? product.name : "", i === 0 ? product.slug : "",
+          i === 0 ? (product.brand || "") : "", i === 0 ? (product.product_type || "") : "",
+          i === 0 ? (product.pet_type || "") : "", i === 0 ? (product.tags || "") : "",
+          i === 0 ? (product.is_active ? "Active" : "Inactive") : "",
+          i === 0 ? (product.is_featured ? "Yes" : "No") : "",
+          i === 0 ? product.base_price : "", i === 0 ? (product.compare_at_price || "") : "",
+          v.name || "", v.sku || "", v.price, v.stock_quantity ?? "",
+          i === 0 ? product.created_at : "",
+        ]);
+      });
+
+      const escapeCSV = (val: any) => {
+        const str = String(val ?? "");
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const csv = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map((row: any[]) => row.map(escapeCSV).join(","))
+      ].join("\n");
+
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `paddy-products-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export complete", description: `${data.length} products exported` });
+    } catch (error) {
+      toast({ title: "Export failed", description: String(error), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -505,14 +611,26 @@ export default function ProductsManagement() {
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={exportProductsCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
           <SyncOptionNamesButton />
           <Button
             onClick={() => syncProducts.mutate()}
             disabled={syncProducts.isPending}
+            variant="outline"
             className="gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
             {syncProducts.isPending ? "Syncing..." : "Sync Products"}
+          </Button>
+          <Button
+            onClick={() => navigate("/admin/products/new")}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
           </Button>
         </div>
       </div>
@@ -521,7 +639,7 @@ export default function ProductsManagement() {
         <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
+            placeholder="Search by name, slug, or SKU..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"

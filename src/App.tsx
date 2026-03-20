@@ -130,6 +130,7 @@ const App = () => (
           >
             <Route index element={<Dashboard />} />
             <Route path="products" element={<ProductsManagement />} />
+            <Route path="products/new" element={<ProductEdit />} />
             <Route path="products/:id/edit" element={<ProductEdit />} />
             <Route path="products/inventory-sync" element={<InventorySync />} />
             <Route path="products/brands" element={<BrandsManagement />} />
