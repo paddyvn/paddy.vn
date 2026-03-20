@@ -341,9 +341,18 @@ export default function PromotionsManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={promo.is_active ? "default" : "secondary"}>
-                        {promo.is_active ? "Active" : "Inactive"}
-                      </Badge>
+                      {(() => {
+                        const isExpired = promo.end_date && new Date(promo.end_date) < new Date();
+                        const statusLabel = isExpired ? "Expired" : promo.is_active ? "Active" : "Inactive";
+                        return (
+                          <Badge
+                            variant={isExpired ? "outline" : promo.is_active ? "default" : "secondary"}
+                            className={isExpired ? "bg-muted text-muted-foreground" : ""}
+                          >
+                            {statusLabel}
+                          </Badge>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <Button

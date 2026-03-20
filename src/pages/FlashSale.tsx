@@ -93,19 +93,28 @@ const FlashSale = () => {
     },
   });
 
-  const { data: products, isLoading: isLoadingProducts } = useQuery({
+  // Fix 3: Read discount data + is_enabled from promotion_products
+  const { data: flashSaleData, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["flash-sale-page-products", flashSale?.id],
     enabled: !!flashSale?.id,
     queryFn: async () => {
       const { data: promotionProducts, error: ppError } = await supabase
         .from("promotion_products")
-        .select("product_id")
-        .eq("promotion_id", flashSale!.id);
+        .select("product_id, variant_id, discount_type, discount_value, stock_limit, purchase_limit, is_enabled")
+        .eq("promotion_id", flashSale!.id)
+        .eq("is_enabled", true);
 
       if (ppError) throw ppError;
-      if (!promotionProducts || promotionProducts.length === 0) return [];
+      if (!promotionProducts || promotionProducts.length === 0) return { products: [], discountMap: new Map<string, number>() };
 
-      const productIds = promotionProducts.map((pp) => pp.product_id);
+      // Build product-level discount map (max discount across variants per product)
+      const discountMap = new Map<string, number>();
+      for (const pp of promotionProducts) {
+        const existing = discountMap.get(pp.product_id) || 0;
+        discountMap.set(pp.product_id, Math.max(existing, pp.discount_value || 0));
+      }
+
+      const productIds = [...new Set(promotionProducts.map((pp) => pp.product_id))];
 
       const { data, error } = await supabase
         .from("products")
@@ -118,11 +127,14 @@ const FlashSale = () => {
         .eq("is_active", true);
 
       if (error) throw error;
-      return data;
+      return { products: data || [], discountMap };
     },
   });
 
-  const productIds = products?.map((p) => p.id) || [];
+  const products = flashSaleData?.products || [];
+  const discountMap = flashSaleData?.discountMap || new Map<string, number>();
+
+  const productIds = products.map((p: any) => p.id);
   const { data: soldCounts } = useFlashSaleSoldCounts(
     productIds,
     flashSale?.start_date || null,
@@ -191,10 +203,15 @@ const FlashSale = () => {
                   <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
                 ))}
               </div>
-            ) : products && products.length > 0 ? (
+            ) : products.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                {products.map((product) => (
-                  <FlashSaleProductCard key={product.id} product={product} soldCount={soldCounts?.[product.id] || 0} />
+                {products.map((product: any) => (
+                  <FlashSaleProductCard
+                    key={product.id}
+                    product={product}
+                    discountPercent={discountMap.get(product.id) || 0}
+                    soldCount={soldCounts?.[product.id] || 0}
+                  />
                 ))}
               </div>
             ) : (

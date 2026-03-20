@@ -15,8 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TimePicker } from "@/components/ui/time-picker";
 import { PromotionFormBase, BasePromotionFormData } from "@/components/admin/PromotionFormBase";
-import { FlashSaleProducts, FlashSaleProduct } from "@/components/admin/FlashSaleProducts";
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { FlashSaleProducts, FlashSaleProduct, FlashSaleVariant } from "@/components/admin/FlashSaleProducts";
 import { DealCardAppearanceCard, CustomIcon } from "@/components/admin/DealCardAppearanceCard";
 
 type FlashSaleFormData = Omit<BasePromotionFormData, 'start_date' | 'end_date' | 'selectedProducts'> & {
@@ -88,50 +87,87 @@ export default function FlashSaleEdit() {
     enabled: !isNew && !!id,
   });
 
+  // Fix 2: Load variant-level discount data from promotion_products
   const { data: existingProductsData = [] } = useQuery({
     queryKey: ["promotion-products-full", id],
     queryFn: async () => {
-      // First get product IDs linked to this promotion
+      // Fetch promotion_products WITH discount data
       const { data: ppData, error: ppError } = await supabase
         .from("promotion_products")
-        .select("product_id")
+        .select("product_id, variant_id, discount_type, discount_value, stock_limit, purchase_limit, is_enabled")
         .eq("promotion_id", id);
       if (ppError) throw ppError;
       if (!ppData || ppData.length === 0) return [];
 
-      const productIds = ppData.map((d) => d.product_id);
+      // Get unique product IDs
+      const productIds = [...new Set(ppData.map((d) => d.product_id))];
 
-      // Fetch full product data with variants
+      // Fetch product data
       const { data: products, error: prodError } = await supabase
         .from("products")
         .select(`
-          id,
-          name,
+          id, name, base_price,
           product_images(image_url, is_primary, display_order),
           product_variants(id, name, price, compare_at_price, stock_quantity)
         `)
         .in("id", productIds);
       if (prodError) throw prodError;
 
-      // Transform to FlashSaleProduct format
+      // Build a lookup map: variant_id (or product_id for product-level) -> promotion_products row
+      const ppMap = new Map<string, typeof ppData[0]>();
+      for (const pp of ppData) {
+        const key = pp.variant_id || pp.product_id;
+        ppMap.set(key, pp);
+      }
+
+      // Transform to FlashSaleProduct format, merging saved discount data
       return (products || []).map((p) => {
-        const primaryImage = p.product_images?.find((img: { is_primary: boolean }) => img.is_primary) 
+        const primaryImage = p.product_images?.find((img: any) => img.is_primary)
           || p.product_images?.[0];
+
+        const variants: FlashSaleVariant[] = (p.product_variants || []).map((v: any) => {
+          const saved = ppMap.get(v.id);
+          const discountPct = saved?.discount_value || 0;
+          return {
+            variantId: v.id,
+            variantName: v.name,
+            originalPrice: v.price,
+            salePrice: discountPct > 0
+              ? Math.round(v.price * (1 - discountPct / 100))
+              : v.price,
+            discountPercent: discountPct,
+            promoQuantity: saved?.stock_limit || 0,
+            stockQuantity: v.stock_quantity || 0,
+            orderLimit: saved?.purchase_limit || 0,
+            isEnabled: saved?.is_enabled ?? false,
+          };
+        });
+
+        // If no variants, create default (check if product-level pp exists)
+        if (variants.length === 0) {
+          const saved = ppMap.get(p.id);
+          const discountPct = saved?.discount_value || 0;
+          const basePrice = (p as any).base_price || 0;
+          variants.push({
+            variantId: p.id,
+            variantName: "Default",
+            originalPrice: basePrice,
+            salePrice: discountPct > 0
+              ? Math.round(basePrice * (1 - discountPct / 100))
+              : basePrice,
+            discountPercent: discountPct,
+            promoQuantity: saved?.stock_limit || 0,
+            stockQuantity: 0,
+            orderLimit: saved?.purchase_limit || 0,
+            isEnabled: saved?.is_enabled ?? false,
+          });
+        }
+
         return {
           productId: p.id,
           productName: p.name,
           imageUrl: primaryImage?.image_url || null,
-          variants: (p.product_variants || []).map((v: { id: string; name: string; price: number; compare_at_price: number | null; stock_quantity: number | null }) => ({
-            variantId: v.id,
-            variantName: v.name,
-            originalPrice: v.compare_at_price || v.price,
-            salePrice: v.price,
-            discountPercent: v.compare_at_price ? Math.round((1 - v.price / v.compare_at_price) * 100) : 0,
-            promoQuantity: v.stock_quantity || 0,
-            stockQuantity: v.stock_quantity || 0,
-            orderLimit: 0,
-            isEnabled: true,
-          })),
+          variants,
         } as FlashSaleProduct;
       });
     },
@@ -154,6 +190,9 @@ export default function FlashSaleEdit() {
         const endDate = new Date(promotion.end_date);
         endTime = format(endDate, "HH:mm");
       }
+
+      // Load rules settings
+      const rules = (promotion as any).rules || {};
       
       setFormData((prev) => ({
         ...prev,
@@ -170,6 +209,9 @@ export default function FlashSaleEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        show_countdown: rules.show_countdown ?? true,
+        urgency_message: rules.urgency_message || "Hurry! Sale ends soon",
+        limit_per_customer: rules.limit_per_customer || null,
       }));
     }
   }, [promotion]);
@@ -225,6 +267,11 @@ export default function FlashSaleEdit() {
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
         custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
+        rules: {
+          show_countdown: data.show_countdown,
+          urgency_message: data.urgency_message,
+          limit_per_customer: data.limit_per_customer,
+        },
       };
 
       let promotionId = id;
@@ -256,18 +303,30 @@ export default function FlashSaleEdit() {
         );
       }
 
-      // Save product IDs from flash sale products
-      const productIds = data.flashSaleProducts.map((p) => p.productId);
-      if (productIds.length > 0) {
-        await supabase.from("promotion_products").insert(
-          productIds.map((pid) => ({ promotion_id: promotionId, product_id: pid }))
-        );
-      }
+      // Fix 1: Save per-variant discount data to promotion_products
+      const variantRows = data.flashSaleProducts.flatMap((product) =>
+        product.variants.map((variant) => ({
+          promotion_id: promotionId,
+          product_id: product.productId,
+          variant_id: variant.variantId !== product.productId ? variant.variantId : null,
+          discount_type: "percentage" as const,
+          discount_value: variant.discountPercent,
+          stock_limit: variant.promoQuantity > 0 ? variant.promoQuantity : null,
+          purchase_limit: variant.orderLimit > 0 ? variant.orderLimit : null,
+          is_enabled: variant.isEnabled,
+        }))
+      );
 
-      // TODO: In a real implementation, also save variant-level pricing to a dedicated table
+      if (variantRows.length > 0) {
+        const { error: ppError } = await supabase
+          .from("promotion_products")
+          .insert(variantRows);
+        if (ppError) throw ppError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promotions"] });
+      queryClient.invalidateQueries({ queryKey: ["promotion-products-full"] });
       toast.success(isNew ? "Flash Sale created" : "Flash Sale updated");
       navigate("/admin/promotions/flash-sale");
     },
