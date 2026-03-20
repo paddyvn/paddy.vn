@@ -33,6 +33,8 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
+import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
 import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
 import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSubscriptions";
 import { supabase } from "@/integrations/supabase/client";
