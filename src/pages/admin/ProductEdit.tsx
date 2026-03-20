@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -37,6 +39,7 @@ import { ProductTagsInput } from "@/components/admin/ProductTagsInput";
 import { ProductStatusCard } from "@/components/admin/ProductStatusCard";
 import { ProductOrganizationCard } from "@/components/admin/ProductOrganizationCard";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { NutritionFactsEditor } from "@/components/admin/NutritionFactsEditor";
 
 const productFormSchema = z.object({
   name: z.string().trim().min(1, "Product name is required").max(255, "Name must be less than 255 characters"),
@@ -60,6 +63,16 @@ const productFormSchema = z.object({
   target_age_id: z.string().nullable(),
   target_size_id: z.string().nullable(),
   origin_id: z.string().nullable(),
+  ingredients: z.string().nullable(),
+  feeding_guidelines: z.string().nullable(),
+  nutrition_facts: z.array(z.object({
+    label: z.string(),
+    value: z.string(),
+  })).nullable(),
+  show_description: z.boolean(),
+  show_ingredients: z.boolean(),
+  show_feeding_guidelines: z.boolean(),
+  show_nutrition_facts: z.boolean(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -147,6 +160,13 @@ export default function ProductEdit() {
       target_age_id: null,
       target_size_id: null,
       origin_id: null,
+      ingredients: "",
+      feeding_guidelines: "",
+      nutrition_facts: [],
+      show_description: true,
+      show_ingredients: true,
+      show_feeding_guidelines: true,
+      show_nutrition_facts: true,
     },
   });
 
@@ -174,6 +194,13 @@ export default function ProductEdit() {
         target_age_id: product.target_age_id || null,
         target_size_id: product.target_size_id || null,
         origin_id: product.origin_id || null,
+        ingredients: product.ingredients || "",
+        feeding_guidelines: product.feeding_guidelines || "",
+        nutrition_facts: (product.nutrition_facts as any) || [],
+        show_description: product.show_description ?? true,
+        show_ingredients: product.show_ingredients ?? true,
+        show_feeding_guidelines: product.show_feeding_guidelines ?? true,
+        show_nutrition_facts: product.show_nutrition_facts ?? true,
       });
     }
   }, [product, form]);
@@ -221,6 +248,15 @@ export default function ProductEdit() {
             target_age_id: values.target_age_id || null,
             target_size_id: values.target_size_id || null,
             origin_id: values.origin_id || null,
+            ingredients: values.ingredients || null,
+            feeding_guidelines: values.feeding_guidelines || null,
+            nutrition_facts: values.nutrition_facts && values.nutrition_facts.length > 0
+              ? values.nutrition_facts as any
+              : null,
+            show_description: values.show_description,
+            show_ingredients: values.show_ingredients,
+            show_feeding_guidelines: values.show_feeding_guidelines,
+            show_nutrition_facts: values.show_nutrition_facts,
           })
           .select("id")
           .single();
@@ -267,6 +303,15 @@ export default function ProductEdit() {
             target_age_id: values.target_age_id || null,
             target_size_id: values.target_size_id || null,
             origin_id: values.origin_id || null,
+            ingredients: values.ingredients || null,
+            feeding_guidelines: values.feeding_guidelines || null,
+            nutrition_facts: values.nutrition_facts && values.nutrition_facts.length > 0
+              ? values.nutrition_facts as any
+              : null,
+            show_description: values.show_description,
+            show_ingredients: values.show_ingredients,
+            show_feeding_guidelines: values.show_feeding_guidelines,
+            show_nutrition_facts: values.show_nutrition_facts,
           })
           .eq("id", id);
 
@@ -464,6 +509,98 @@ export default function ProductEdit() {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+
+              {/* Pet-Specific Content */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium">Thông tin sản phẩm</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Thành phần, hướng dẫn cho ăn và thông tin dinh dưỡng
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Ingredients */}
+                  <FormField
+                    control={form.control}
+                    name="ingredients"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Thành phần</FormLabel>
+                          <FormField
+                            control={form.control}
+                            name="show_ingredients"
+                            render={({ field: toggleField }) => (
+                              <Switch
+                                checked={toggleField.value}
+                                onCheckedChange={toggleField.onChange}
+                              />
+                            )}
+                          />
+                        </div>
+                        <FormControl>
+                          <RichTextEditor
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Nhập danh sách thành phần..."
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Feeding Guidelines */}
+                  <FormField
+                    control={form.control}
+                    name="feeding_guidelines"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Hướng dẫn cho ăn</FormLabel>
+                          <FormField
+                            control={form.control}
+                            name="show_feeding_guidelines"
+                            render={({ field: toggleField }) => (
+                              <Switch
+                                checked={toggleField.value}
+                                onCheckedChange={toggleField.onChange}
+                              />
+                            )}
+                          />
+                        </div>
+                        <FormControl>
+                          <RichTextEditor
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Nhập hướng dẫn cho ăn, bảng liều lượng..."
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Nutrition Facts */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Thông tin dinh dưỡng</Label>
+                      <FormField
+                        control={form.control}
+                        name="show_nutrition_facts"
+                        render={({ field }) => (
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </div>
+                    <NutritionFactsEditor
+                      value={(form.watch("nutrition_facts") || []) as Array<{ label: string; value: string }>}
+                      onChange={(facts) => form.setValue("nutrition_facts", facts)}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
