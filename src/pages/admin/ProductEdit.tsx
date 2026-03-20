@@ -63,6 +63,16 @@ const productFormSchema = z.object({
   target_age_id: z.string().nullable(),
   target_size_id: z.string().nullable(),
   origin_id: z.string().nullable(),
+  ingredients: z.string().nullable(),
+  feeding_guidelines: z.string().nullable(),
+  nutrition_facts: z.array(z.object({
+    label: z.string(),
+    value: z.string(),
+  })).nullable(),
+  show_description: z.boolean(),
+  show_ingredients: z.boolean(),
+  show_feeding_guidelines: z.boolean(),
+  show_nutrition_facts: z.boolean(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
