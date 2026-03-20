@@ -36,7 +36,14 @@ const PROVINCES = [
 export default function Cart() {
   const [userId, setUserId] = useState<string | undefined>();
   const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    promotionId: string;
+    discount_type: string;
+    discount_value: number;
+    max_discount: number | null;
+  } | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedShipping, setSelectedShipping] = useState("standard");
