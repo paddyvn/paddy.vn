@@ -151,11 +151,216 @@ export type Database = {
         }
         Relationships: []
       }
+      acc_transaction_lazada: {
+        Row: {
+          ads: number | null
+          ads_sponsored: number | null
+          affiliate_commission: number | null
+          balance_adjustments: number | null
+          compensation: number | null
+          created_at: string
+          fee_campaign: number | null
+          fee_fixed: number | null
+          fee_flexi_combo: number | null
+          fee_payment: number | null
+          fee_seller_program: number | null
+          fee_service: number | null
+          fee_shipping: number | null
+          gross_revenue: number | null
+          id: string
+          month: number
+          notes: string | null
+          other_income: number | null
+          other_income_reward: number | null
+          refund_to_buyer: number | null
+          seller_voucher: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          ads?: number | null
+          ads_sponsored?: number | null
+          affiliate_commission?: number | null
+          balance_adjustments?: number | null
+          compensation?: number | null
+          created_at?: string
+          fee_campaign?: number | null
+          fee_fixed?: number | null
+          fee_flexi_combo?: number | null
+          fee_payment?: number | null
+          fee_seller_program?: number | null
+          fee_service?: number | null
+          fee_shipping?: number | null
+          gross_revenue?: number | null
+          id?: string
+          month: number
+          notes?: string | null
+          other_income?: number | null
+          other_income_reward?: number | null
+          refund_to_buyer?: number | null
+          seller_voucher?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          ads?: number | null
+          ads_sponsored?: number | null
+          affiliate_commission?: number | null
+          balance_adjustments?: number | null
+          compensation?: number | null
+          created_at?: string
+          fee_campaign?: number | null
+          fee_fixed?: number | null
+          fee_flexi_combo?: number | null
+          fee_payment?: number | null
+          fee_seller_program?: number | null
+          fee_service?: number | null
+          fee_shipping?: number | null
+          gross_revenue?: number | null
+          id?: string
+          month?: number
+          notes?: string | null
+          other_income?: number | null
+          other_income_reward?: number | null
+          refund_to_buyer?: number | null
+          seller_voucher?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      acc_transaction_shopee: {
+        Row: {
+          ads: number | null
+          affiliate_commission: number | null
+          created_at: string
+          fee_fixed: number | null
+          fee_payment: number | null
+          fee_service: number | null
+          fee_shipping: number | null
+          gross_revenue: number | null
+          id: string
+          month: number
+          notes: string | null
+          other_income: number | null
+          refund_to_buyer: number | null
+          seller_voucher: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          ads?: number | null
+          affiliate_commission?: number | null
+          created_at?: string
+          fee_fixed?: number | null
+          fee_payment?: number | null
+          fee_service?: number | null
+          fee_shipping?: number | null
+          gross_revenue?: number | null
+          id?: string
+          month: number
+          notes?: string | null
+          other_income?: number | null
+          refund_to_buyer?: number | null
+          seller_voucher?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          ads?: number | null
+          affiliate_commission?: number | null
+          created_at?: string
+          fee_fixed?: number | null
+          fee_payment?: number | null
+          fee_service?: number | null
+          fee_shipping?: number | null
+          gross_revenue?: number | null
+          id?: string
+          month?: number
+          notes?: string | null
+          other_income?: number | null
+          refund_to_buyer?: number | null
+          seller_voucher?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      acc_transaction_tiktok: {
+        Row: {
+          ads: number | null
+          affiliate_commission: number | null
+          balance_adjustments: number | null
+          created_at: string
+          fee_fixed: number | null
+          fee_order_processing: number | null
+          fee_payment: number | null
+          fee_service: number | null
+          fee_shipping: number | null
+          gross_revenue: number | null
+          id: string
+          month: number
+          notes: string | null
+          other_income: number | null
+          refund_to_buyer: number | null
+          seller_voucher: number | null
+          tax_cit: number | null
+          tax_vat: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          ads?: number | null
+          affiliate_commission?: number | null
+          balance_adjustments?: number | null
+          created_at?: string
+          fee_fixed?: number | null
+          fee_order_processing?: number | null
+          fee_payment?: number | null
+          fee_service?: number | null
+          fee_shipping?: number | null
+          gross_revenue?: number | null
+          id?: string
+          month: number
+          notes?: string | null
+          other_income?: number | null
+          refund_to_buyer?: number | null
+          seller_voucher?: number | null
+          tax_cit?: number | null
+          tax_vat?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          ads?: number | null
+          affiliate_commission?: number | null
+          balance_adjustments?: number | null
+          created_at?: string
+          fee_fixed?: number | null
+          fee_order_processing?: number | null
+          fee_payment?: number | null
+          fee_service?: number | null
+          fee_shipping?: number | null
+          gross_revenue?: number | null
+          id?: string
+          month?: number
+          notes?: string | null
+          other_income?: number | null
+          refund_to_buyer?: number | null
+          seller_voucher?: number | null
+          tax_cit?: number | null
+          tax_vat?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       acc_transactions: {
         Row: {
           amount: number
           approved_at: string | null
           approved_by: string | null
+          branch: string | null
           category_id: string | null
           created_at: string | null
           created_by: string | null
@@ -186,6 +391,7 @@ export type Database = {
           amount: number
           approved_at?: string | null
           approved_by?: string | null
+          branch?: string | null
           category_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -216,6 +422,7 @@ export type Database = {
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          branch?: string | null
           category_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -2179,6 +2386,143 @@ export type Database = {
           },
         ]
       }
+      legal_conversation_documents: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          document_id: string
+          id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          document_id: string
+          id?: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_conversation_documents_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "legal_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_conversation_documents_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      legal_documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          extracted_text: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          extracted_text?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          extracted_text?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      legal_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "legal_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       misa_invoice_marketplaces: {
         Row: {
           address: string | null
@@ -2284,6 +2628,10 @@ export type Database = {
           stock_value: number | null
           synced_at: string
           tax_reduction: string | null
+          unit_2: string | null
+          unit_3: string | null
+          unit_4: string | null
+          unit_5: string | null
           updated_at: string
           vat: string | null
         }
@@ -2319,6 +2667,10 @@ export type Database = {
           stock_value?: number | null
           synced_at?: string
           tax_reduction?: string | null
+          unit_2?: string | null
+          unit_3?: string | null
+          unit_4?: string | null
+          unit_5?: string | null
           updated_at?: string
           vat?: string | null
         }
@@ -2354,6 +2706,10 @@ export type Database = {
           stock_value?: number | null
           synced_at?: string
           tax_reduction?: string | null
+          unit_2?: string | null
+          unit_3?: string | null
+          unit_4?: string | null
+          unit_5?: string | null
           updated_at?: string
           vat?: string | null
         }
@@ -3963,6 +4319,48 @@ export type Database = {
           },
         ]
       }
+      sapo_branch_monthly_report: {
+        Row: {
+          branch: string
+          created_at: string
+          customer_count: number
+          gross_profit: number
+          id: string
+          month: number
+          notes: string | null
+          order_count: number
+          revenue: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          branch: string
+          created_at?: string
+          customer_count?: number
+          gross_profit?: number
+          id?: string
+          month: number
+          notes?: string | null
+          order_count?: number
+          revenue?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          customer_count?: number
+          gross_profit?: number
+          id?: string
+          month?: number
+          notes?: string | null
+          order_count?: number
+          revenue?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       sapo_categories: {
         Row: {
           code: string | null
@@ -5163,6 +5561,7 @@ export type Database = {
       }
       sapo_purchase_orders: {
         Row: {
+          backfill_synced_at: string | null
           cancelled_on: string | null
           code: string | null
           completed_on: string | null
@@ -5186,6 +5585,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          backfill_synced_at?: string | null
           cancelled_on?: string | null
           code?: string | null
           completed_on?: string | null
@@ -5209,6 +5609,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          backfill_synced_at?: string | null
           cancelled_on?: string | null
           code?: string | null
           completed_on?: string | null
@@ -6044,6 +6445,12 @@ export type Database = {
       }
     }
     Functions: {
+      backfill_sapo_customer_order_stats: {
+        Args: never
+        Returns: {
+          updated_count: number
+        }[]
+      }
       decrement_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
@@ -6056,6 +6463,15 @@ export type Database = {
           quantity_sold: number
           revenue: number
           sku_count: number
+        }[]
+      }
+      get_channel_gross_margin: {
+        Args: { p_year: number }
+        Returns: {
+          cogs: number
+          marketplace: string
+          month: number
+          revenue: number
         }[]
       }
       get_inventory_health_metrics: {
@@ -6092,6 +6508,10 @@ export type Database = {
           converted_name: string
           converted_price: number
           converted_unit: string
+          converted_unit_2: string
+          converted_unit_3: string
+          converted_unit_4: string
+          converted_unit_5: string
           converted_vat: string
           customer_email: string
           customer_name: string
@@ -6209,6 +6629,18 @@ export type Database = {
           total_revenue: number
         }[]
       }
+      get_recent_sapo_customers: {
+        Args: { p_limit?: number }
+        Returns: {
+          email: string
+          id: string
+          modified_on: string
+          name: string
+          phone: string
+          total_orders: number
+          total_spent: number
+        }[]
+      }
       get_sapo_customers_by_month: {
         Args: never
         Returns: {
@@ -6294,6 +6726,7 @@ export type Database = {
         Args: { comment_id_param: string }
         Returns: undefined
       }
+      mark_orders_invoiced: { Args: { p_order_ids: string[] }; Returns: number }
       refresh_paddy_customers_monthly_counts_cache: {
         Args: never
         Returns: undefined
@@ -6314,6 +6747,17 @@ export type Database = {
       refresh_sapo_product_sales_monthly_cache: {
         Args: never
         Returns: undefined
+      }
+      search_sapo_customers: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+          phone: string
+          total_orders: number
+          total_spent: number
+        }[]
       }
     }
     Enums: {

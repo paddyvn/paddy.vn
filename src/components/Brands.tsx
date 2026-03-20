@@ -45,11 +45,11 @@ export const Brands = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-          {brands.map((brand) => (
+          {brands.map((brand, index) => (
             <Link
               key={brand.id}
               to={`/collections/${brand.slug}`}
-              className="group"
+              className={`group ${index >= 6 ? 'hidden sm:block' : ''}`}
             >
               <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50 overflow-hidden">
                 {brand.image_url ? (
