@@ -20,6 +20,8 @@ interface ProductCardProps {
     pet_type?: string | null;
     rating?: number | null;
     rating_count?: number | null;
+    sold_count?: number | null;
+    created_at?: string | null;
     option1_name?: string | null;
     option2_name?: string | null;
     option3_name?: string | null;
