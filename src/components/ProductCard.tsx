@@ -102,12 +102,21 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
     return primary?.image_url || images[0]?.image_url;
   };
 
-  // — Rating —
-  const avgRating = product.reviews && product.reviews.length > 0
+  // — Rating (use demo data if no real reviews) —
+  const realAvgRating = product.reviews && product.reviews.length > 0
     ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
     : (product.rating ?? 0);
-  const reviewCount = product.reviews?.length ?? product.rating_count ?? 0;
-  const hasReviews = reviewCount > 0 && avgRating > 0;
+  const realReviewCount = product.reviews?.length ?? product.rating_count ?? 0;
+  const hasRealReviews = realReviewCount > 0 && realAvgRating > 0;
+
+  // Demo: generate consistent pseudo-random rating from product id
+  const idHash = product.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const demoRating = 3.5 + (idHash % 15) / 10; // 3.5 - 4.9
+  const demoReviewCount = 8 + (idHash % 120); // 8 - 127
+
+  const avgRating = hasRealReviews ? realAvgRating : demoRating;
+  const reviewCount = hasRealReviews ? realReviewCount : demoReviewCount;
+  const hasReviews = true; // always show stars
 
   // — Discount calculation (reuse existing logic) —
   const hasCompareAtDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
@@ -138,7 +147,8 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
 
   // — Badges —
   const isBestseller = product.is_featured;
-  const soldCount = product.sold_count ?? 0;
+  const realSoldCount = product.sold_count ?? 0;
+  const soldCount = realSoldCount > 0 ? realSoldCount : 15 + (idHash % 200);
   const isNew = product.created_at
     ? (Date.now() - new Date(product.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
     : false;
