@@ -147,18 +147,18 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
           <FooterSection title="Về Paddy">
             <ul className="space-y-2">
               <li>
-                <Link to="/pages/gioi-thieu" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/paddy-pet-shop" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Giới Thiệu
                 </Link>
               </li>
               <li>
-                <Link to="/auth" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/uu-dai-tich-luy-thanh-vien-paddier" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Thành Viên Paddier
                 </Link>
               </li>
               <li>
-                <Link to="/pages/dieu-khoan-su-dung" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Điều Khoản Sử Dụng
+                <Link to="/pages/lien-he" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                  Liên Hệ
                 </Link>
               </li>
               <li>
@@ -204,28 +204,13 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
           <FooterSection title="Hỗ Trợ Khách Hàng">
             <ul className="space-y-2">
               <li>
-                <Link to="/pages/chinh-sach-doi-tra-hang" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/chinh-sach-dổi-trả-hang" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Chính Sách Đổi Trả Hàng
                 </Link>
               </li>
               <li>
-                <Link to="/pages/phuong-thuc-van-chuyen" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Phương Thức Vận Chuyển
-                </Link>
-              </li>
-              <li>
-                <Link to="/pages/chinh-sach-bao-mat" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Chính Sách Bảo Mật
-                </Link>
-              </li>
-              <li>
-                <Link to="/pages/phuong-thuc-thanh-toan" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/pages/huong-dan-thanh-toan" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
                   Phương Thức Thanh Toán
-                </Link>
-              </li>
-              <li>
-                <Link to="/pages/chinh-sach-hoan-tien" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Chính Sách Hoàn Tiền
                 </Link>
               </li>
             </ul>
