@@ -346,6 +346,8 @@ export default function Checkout() {
           source_name: "web",
           customer_email: userEmail || null,
           customer_phone: useNewAddress ? addressForm.phone : (address?.phone || null),
+          coupon_code: appliedVoucher?.code || null,
+          promotion_id: appliedVoucher?.promotionId || null,
           shipping_address: useNewAddress 
             ? {
                 full_name: addressForm.fullName,
