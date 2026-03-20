@@ -1108,10 +1108,22 @@ export default function Checkout() {
                   )}
                   {subscriptionDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Subscribe & Save ({SUBSCRIPTION_DISCOUNT}%)</span>
+                      <span>Subscribe & Save ({subscriptionDiscountPct}%)</span>
                       <span>-{formatPrice(subscriptionDiscount)}₫</span>
                     </div>
                   )}
+                  {comboDiscounts.map((cd) => (
+                    <div key={cd.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{cd.description}</span>
+                      <span>-{formatPrice(cd.discountAmount)}₫</span>
+                    </div>
+                  ))}
+                  {tieredDiscounts.map((td) => (
+                    <div key={td.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{td.description}</span>
+                      <span>-{formatPrice(td.discountAmount)}₫</span>
+                    </div>
+                  ))}
                 </div>
 
                 <Separator />
