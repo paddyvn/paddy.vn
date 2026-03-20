@@ -41,9 +41,9 @@ export const FeaturedProducts = () => {
   }
 
   return (
-    <section className="py-8 md:py-12" style={{ backgroundColor: '#fefefe' }}>
+    <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6 animate-in fade-in slide-in-from-bottom duration-700">
+        <div className="flex items-center justify-between mb-4 animate-in fade-in slide-in-from-bottom duration-700">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-primary mb-1">
               Featured Products

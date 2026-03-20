@@ -30,9 +30,9 @@ export const Categories = () => {
   const displayCategories = categories && categories.length > 0 ? categories : [];
 
   return (
-    <section className="py-12 bg-background">
+    <section className="pt-6 pb-3 md:pt-8 md:pb-4 bg-background">
       <div className="container mx-auto px-4">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl font-bold text-primary">
             Shop by Category
           </h2>
