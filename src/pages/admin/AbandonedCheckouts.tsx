@@ -202,7 +202,7 @@ export default function AbandonedCheckouts() {
             <Skeleton key={i} className="h-16 w-full" />
           ))}
         </div>
-      ) : paginatedCheckouts.length === 0 ? (
+      ) : (checkouts || []).length === 0 ? (
         <div className="text-center py-12 border border-dashed border-border rounded-lg">
           <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No abandoned checkouts</h3>
