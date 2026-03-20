@@ -1,4 +1,5 @@
 import { MapPin, Clock, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,11 +33,16 @@ export const StoreLocations = () => {
   return (
     <section className="py-6 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="flex items-center gap-2 mb-4">
-          <MapPin className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            Hệ thống cửa hàng Paddy
-          </h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              Hệ thống cửa hàng Paddy
+            </h2>
+          </div>
+          <Link to="/cua-hang" className="text-sm text-primary hover:underline font-medium">
+            Xem tất cả cửa hàng →
+          </Link>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
