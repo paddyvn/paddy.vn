@@ -214,7 +214,7 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
           </h3>
 
           {/* Rating + sold count — always reserve space */}
-          <div className="flex flex-col gap-0.5 mt-1 min-h-[34px]">
+          <div className="flex flex-col gap-0.5 mt-1 min-h-[38px]">
             {hasReviews && (
               <div className="flex items-center gap-[5px]">
                 <StarRating rating={avgRating} />
