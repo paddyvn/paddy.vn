@@ -97,6 +97,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/reset-password" element={<Suspense fallback={<LoadingFallback />}><ResetPassword /></Suspense>} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/collections" element={<Collections />} />
           <Route path="/collections/:slug" element={<Collection />} />
