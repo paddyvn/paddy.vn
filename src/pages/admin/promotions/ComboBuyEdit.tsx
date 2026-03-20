@@ -15,6 +15,7 @@ type ComboBuyFormData = BasePromotionFormData & {
   buy_quantity: number;
   get_quantity: number;
   discount_percentage: number;
+  bundle_price: number;
   gradient_from: string;
   gradient_to: string;
   icon_type: string;
