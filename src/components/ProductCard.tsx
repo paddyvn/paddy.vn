@@ -209,7 +209,7 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
           </span>
 
           {/* Title */}
-          <h3 className="text-sm font-semibold text-foreground leading-[1.35] line-clamp-2 m-0">
+          <h3 className="text-sm font-semibold text-foreground leading-[1.35] line-clamp-2 min-h-[2.7em] m-0">
             {product.name}
           </h3>
 
