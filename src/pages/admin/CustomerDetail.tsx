@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import {
@@ -22,23 +21,26 @@ import {
   DollarSign,
   Users,
   Edit,
-  Smile,
-  AtSign,
-  Hash,
-  Paperclip,
   ExternalLink,
-  CreditCard,
-  GitMerge,
-  FileText,
-  Eraser,
   Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   EditCustomerDialog,
@@ -54,7 +56,7 @@ const CustomerDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [commentText, setCommentText] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Dialog states
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
@@ -243,27 +245,23 @@ const CustomerDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditCustomerOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit customer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setManageAddressesOpen(true)}>
+                <MapPin className="h-4 w-4 mr-2" />
+                Manage addresses
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditMarketingOpen(true)}>
                 <Mail className="h-4 w-4 mr-2" />
-                Send account invite
+                Marketing preferences
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="h-4 w-4 mr-2" />
-                Issue store credit
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <GitMerge className="h-4 w-4 mr-2" />
-                Merge customer
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="h-4 w-4 mr-2" />
-                Request customer data
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Eraser className="h-4 w-4 mr-2" />
-                Erase personal data
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete customer
               </DropdownMenuItem>
@@ -430,45 +428,6 @@ const CustomerDetail = () => {
               <CardTitle className="text-base">Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border rounded-lg bg-muted/30">
-                <div className="flex items-start gap-3 p-3">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                    P
-                  </div>
-                  <div className="flex-1">
-                    <Input
-                      type="text"
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Leave a comment..."
-                      className="bg-transparent border-none shadow-none text-sm focus-visible:ring-0"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between px-3 pb-3">
-                  <div className="flex items-center gap-1">
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                      <Smile className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                      <AtSign className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                      <Hash className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button size="sm" disabled={!commentText.trim()} className="text-xs">
-                    Post
-                  </Button>
-                </div>
-              </div>
-
-              <p className="text-xs text-muted-foreground text-center mt-3">
-                Only you and other staff can see comments
-              </p>
 
               {/* Timeline Events */}
               <div className="mt-6 space-y-4">
@@ -600,18 +559,6 @@ const CustomerDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Store Credit */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base">Store credit</CardTitle>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Edit className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">No store credit</p>
-            </CardContent>
-          </Card>
 
           <CustomerTagsInput customerId={customer.id} initialTags={customer.tags} />
 
@@ -656,6 +603,33 @@ const CustomerDetail = () => {
         onOpenChange={setEditNotesOpen}
         customer={customer}
       />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {customer.first_name} {customer.last_name} and their data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await supabase.from("customers").delete().eq("id", customer.id);
+                queryClient.invalidateQueries({ queryKey: ["customers"] });
+                queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
+                toast({ title: "Customer deleted" });
+                navigate("/admin/customers");
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

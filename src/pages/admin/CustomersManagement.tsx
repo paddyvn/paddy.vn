@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { useUpdateCustomer, Customer } from "@/hooks/useCustomers";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,8 @@ import {
   Tag,
   FileText,
   User,
-  RefreshCw
+  RefreshCw,
+  Download,
 } from "lucide-react";
 import { useSyncCustomers } from "@/hooks/useSyncCustomers";
 import {
@@ -81,6 +83,7 @@ function applyCustomerFilters(
 
 export default function CustomersManagement() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const updateCustomer = useUpdateCustomer();
   const syncCustomers = useSyncCustomers();
   
@@ -91,6 +94,80 @@ export default function CustomersManagement() {
   const [editingNote, setEditingNote] = useState(false);
   const [note, setNote] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const exportCustomersCSV = async () => {
+    try {
+      let query = supabase
+        .from("customers")
+        .select("first_name, last_name, email, phone, orders_count, total_spent, accepts_marketing, verified_email, tags, note, state, created_at")
+        .order("created_at", { ascending: false });
+
+      if (debouncedSearch) {
+        query = query.or(
+          `email.ilike.%${debouncedSearch}%,first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,phone.ilike.%${debouncedSearch}%`
+        );
+      }
+      if (marketingFilter === "subscribed") {
+        query = query.eq("accepts_marketing", true);
+      } else if (marketingFilter === "not-subscribed") {
+        query = query.or("accepts_marketing.eq.false,accepts_marketing.is.null");
+      }
+
+      const { data, error } = await query.limit(15000);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast({ title: "No customers to export", variant: "destructive" });
+        return;
+      }
+
+      const headers = [
+        "First Name", "Last Name", "Email", "Phone",
+        "Orders", "Total Spent (VND)", "Accepts Marketing",
+        "Email Verified", "Tags", "Notes", "State", "Created At"
+      ];
+
+      const rows = data.map((c: any) => [
+        c.first_name || "",
+        c.last_name || "",
+        c.email || "",
+        c.phone || "",
+        c.orders_count || 0,
+        c.total_spent || 0,
+        c.accepts_marketing ? "Yes" : "No",
+        c.verified_email ? "Yes" : "No",
+        c.tags || "",
+        c.note || "",
+        c.state || "",
+        c.created_at ? new Date(c.created_at).toISOString().slice(0, 10) : "",
+      ]);
+
+      const escapeCSV = (val: any) => {
+        const str = String(val ?? "");
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const csv = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map((row: any[]) => row.map(escapeCSV).join(","))
+      ].join("\n");
+
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `paddy-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export complete", description: `${data.length} customers exported` });
+    } catch (error) {
+      toast({ title: "Export failed", description: String(error), variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
@@ -175,17 +252,23 @@ export default function CustomersManagement() {
           <div>
             <h1 className="text-3xl font-bold">Customers</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your customer database
+              {totalCount} customers
             </p>
           </div>
-          <Button
-            onClick={() => syncCustomers.mutate()}
-            disabled={syncCustomers.isPending}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
-            {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={exportCustomersCSV} className="gap-2">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button
+              onClick={() => syncCustomers.mutate()}
+              disabled={syncCustomers.isPending}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
+              {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-4 items-center">
