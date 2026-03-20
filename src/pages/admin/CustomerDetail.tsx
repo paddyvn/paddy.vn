@@ -245,27 +245,23 @@ const CustomerDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditCustomerOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit customer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setManageAddressesOpen(true)}>
+                <MapPin className="h-4 w-4 mr-2" />
+                Manage addresses
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditMarketingOpen(true)}>
                 <Mail className="h-4 w-4 mr-2" />
-                Send account invite
+                Marketing preferences
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="h-4 w-4 mr-2" />
-                Issue store credit
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <GitMerge className="h-4 w-4 mr-2" />
-                Merge customer
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="h-4 w-4 mr-2" />
-                Request customer data
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Eraser className="h-4 w-4 mr-2" />
-                Erase personal data
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete customer
               </DropdownMenuItem>
