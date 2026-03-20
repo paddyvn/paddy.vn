@@ -223,8 +223,30 @@ export default function Checkout() {
   const subtotal = calculateSubtotal();
   const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
   const shippingCost = deliveryMethod?.price || 0;
+
+  // Combo & Tiered deal hooks
+  const dealCartItems = (cart || []).map((item) => {
+    const basePrice = getItemBasePrice(item);
+    const promotion = promotionsMap?.[item.product_id];
+    const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+    return {
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unitPrice: effectivePrice,
+    };
+  });
+
+  const { data: comboDiscounts = [] } = useComboDeals(dealCartItems);
+  const { data: tieredDiscounts = [] } = useTieredDeals(dealCartItems);
+
+  const totalDealDiscount = [
+    ...comboDiscounts.map((d) => d.discountAmount),
+    ...tieredDiscounts.map((d) => d.discountAmount),
+  ].reduce((sum, d) => sum + d, 0);
   
   // Calculate discount (voucher + subscription)
+  const subscriptionDiscountPct = subscriptionDeal?.discountPercentage || 0;
+
   const calculateVoucherDiscount = () => {
     if (!appliedVoucher) return 0;
     let voucherDiscount = 0;
@@ -240,9 +262,9 @@ export default function Checkout() {
   };
   
   const voucherDiscount = calculateVoucherDiscount();
-  const subscriptionDiscount = enableSubscription ? (subtotal * SUBSCRIPTION_DISCOUNT) / 100 : 0;
+  const subscriptionDiscount = enableSubscription ? Math.round(subtotal * subscriptionDiscountPct / 100) : 0;
   const discount = voucherDiscount + subscriptionDiscount;
-  const total = subtotal + shippingCost - discount;
+  const total = subtotal + shippingCost - discount - totalDealDiscount;
 
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) return;
