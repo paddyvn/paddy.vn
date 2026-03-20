@@ -48,7 +48,7 @@ export const Categories = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-          <h2 className="text-2xl md:text-3xl font-bold text-primary">
+          <h2 className="text-xl md:text-2xl font-bold text-primary">
             Mua sắm theo danh mục
           </h2>
           <div className="flex gap-1 bg-background rounded-xl p-[3px] shadow-card">
