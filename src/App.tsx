@@ -103,6 +103,7 @@ const App = () => (
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
+          <Route path="/pages/:handle" element={<PageDetail />} />
           <Route
             path="/admin"
             element={
