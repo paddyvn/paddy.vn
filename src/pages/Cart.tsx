@@ -73,8 +73,10 @@ export default function Cart() {
 
   const calculateSubtotal = () => {
     return cart.reduce((total, item) => {
-      const price = item.product_variants?.price || item.products?.base_price || 0;
-      return total + price * item.quantity;
+      const basePrice = getItemBasePrice(item);
+      const promotion = promotionsMap?.[item.product_id];
+      const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+      return total + effectivePrice * item.quantity;
     }, 0);
   };
 
