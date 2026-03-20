@@ -1453,7 +1453,7 @@ const Profile = () => {
                           <div
                             key={order.id}
                             className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => setSelectedOrder(order)}
+                            onClick={() => navigate(`/orders/${order.order_number}`)}
                           >
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
