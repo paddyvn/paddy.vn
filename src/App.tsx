@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 const PageDetail = lazy(() => import("./pages/PageDetail"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -108,6 +109,7 @@ const App = () => (
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
+          <Route path="/orders/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><CustomerOrderDetail /></Suspense>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
