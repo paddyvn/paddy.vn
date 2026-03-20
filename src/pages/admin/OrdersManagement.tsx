@@ -438,7 +438,7 @@ export default function OrdersManagement() {
                   return <SortableHeader key={col.id} field="created_at">Date</SortableHeader>;
                 }
                 if (col.id === "customer") {
-                  return <TableHead key={col.id}>Customer</TableHead>;
+                  return <SortableHeader key={col.id} field="customer_name">Customer</SortableHeader>;
                 }
                 if (col.id === "customer_email") {
                   return <TableHead key={col.id}>Email</TableHead>;
