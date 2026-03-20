@@ -461,12 +461,17 @@ export default function Checkout() {
           discount_percent: SUBSCRIPTION_DISCOUNT,
           shipping_address: shippingAddr,
           delivery_method: deliveryMethod?.name,
-          items: cart.map(item => ({
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            price: item.product_variants?.price || item.products?.base_price || 0,
-          })),
+          items: cart.map(item => {
+            const basePrice = getItemBasePrice(item);
+            const promotion = promotionsMap?.[item.product_id];
+            const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+            return {
+              product_id: item.product_id,
+              variant_id: item.variant_id,
+              quantity: item.quantity,
+              price: effectivePrice,
+            };
+          }),
         });
       }
 
