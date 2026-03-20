@@ -37,8 +37,9 @@ import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
 import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSubscriptions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { validateVoucher, calculateVoucherDiscount as calcVoucherDiscount } from "@/lib/voucher-utils";
 
 const PROVINCES = [
   "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
@@ -115,6 +116,7 @@ export default function Checkout() {
     discount_type: string;
     discount_value: number;
     max_discount: number | null;
+    promotionId: string;
   } | null>(null);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   
@@ -127,7 +129,22 @@ export default function Checkout() {
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
   const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Accept voucher from Cart navigation state
+  const incomingVoucher = (location.state as any)?.voucher;
+  useEffect(() => {
+    if (incomingVoucher) {
+      setAppliedVoucher({
+        code: incomingVoucher.code,
+        discount_type: incomingVoucher.discount_type,
+        discount_value: incomingVoucher.discount_value,
+        max_discount: incomingVoucher.max_discount,
+        promotionId: incomingVoucher.promotionId,
+      });
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -220,72 +237,29 @@ export default function Checkout() {
     
     setIsApplyingVoucher(true);
     try {
-      const { data: coupon, error } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("code", voucherCode.trim().toUpperCase())
-        .eq("is_active", true)
-        .single();
-      
-      if (error || !coupon) {
+      const result = await validateVoucher(voucherCode, subtotal);
+
+      if (!result.valid || !result.voucher) {
         toast({
           title: "Mã không hợp lệ",
-          description: "Mã giảm giá không tồn tại hoặc đã hết hạn",
+          description: result.error,
           variant: "destructive",
         });
         return;
       }
-      
-      // Check expiration
-      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-        toast({
-          title: "Mã đã hết hạn",
-          description: "Mã giảm giá này đã hết hạn sử dụng",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check start date
-      if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
-        toast({
-          title: "Mã chưa có hiệu lực",
-          description: "Mã giảm giá này chưa đến thời gian sử dụng",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check min purchase
-      if (coupon.min_purchase && subtotal < coupon.min_purchase) {
-        toast({
-          title: "Chưa đủ điều kiện",
-          description: `Đơn hàng tối thiểu ${formatPrice(coupon.min_purchase)}₫ để sử dụng mã này`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check usage limit
-      if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
-        toast({
-          title: "Mã đã hết lượt sử dụng",
-          description: "Mã giảm giá này đã được sử dụng hết",
-          variant: "destructive",
-        });
-        return;
-      }
-      
+
+      const v = result.voucher;
       setAppliedVoucher({
-        code: coupon.code,
-        discount_type: coupon.discount_type,
-        discount_value: coupon.discount_value,
-        max_discount: coupon.max_discount,
+        code: v.voucher_code,
+        discount_type: v.discount_type,
+        discount_value: v.discount_value,
+        max_discount: v.max_discount,
+        promotionId: v.id,
       });
       setVoucherCode("");
       toast({
         title: "Áp dụng thành công",
-        description: `Mã ${coupon.code} đã được áp dụng`,
+        description: `Mã ${v.voucher_code} đã được áp dụng`,
       });
     } catch (error) {
       toast({
@@ -372,6 +346,8 @@ export default function Checkout() {
           source_name: "web",
           customer_email: userEmail || null,
           customer_phone: useNewAddress ? addressForm.phone : (address?.phone || null),
+          coupon_code: appliedVoucher?.code || null,
+          promotion_id: appliedVoucher?.promotionId || null,
           shipping_address: useNewAddress 
             ? {
                 full_name: addressForm.fullName,
@@ -414,6 +390,13 @@ export default function Checkout() {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
+
+      // Increment voucher usage
+      if (appliedVoucher?.promotionId) {
+        await supabase.rpc("increment_voucher_usage", {
+          p_promotion_id: appliedVoucher.promotionId,
+        });
+      }
 
       // Clear cart
       const cartItemIds = cart.map(item => item.id);
