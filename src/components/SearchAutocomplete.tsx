@@ -35,7 +35,7 @@ export const SearchAutocomplete = ({
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Debounced search
   useEffect(() => {
