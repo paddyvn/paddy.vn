@@ -433,10 +433,10 @@ export default function ContentBlog() {
         </Table>
       </div>
 
-      {filteredAndSortedPosts.length > 0 && totalPages > 1 && (
+      {totalCount > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * POSTS_PER_PAGE) + 1} to {Math.min(currentPage * POSTS_PER_PAGE, filteredAndSortedPosts.length)} of {filteredAndSortedPosts.length} posts
+            Showing {startIndex + 1} to {endIndex} of {totalCount} posts
           </p>
           <Pagination>
             <PaginationContent>
