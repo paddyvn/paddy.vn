@@ -90,6 +90,8 @@ export const useUpdateBlogPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
       toast({
         title: "Blog Post Updated",
         description: "Blog post has been updated successfully",
