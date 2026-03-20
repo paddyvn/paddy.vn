@@ -597,7 +597,7 @@ export default function ProductEdit() {
                       />
                     </div>
                     <NutritionFactsEditor
-                      value={form.watch("nutrition_facts") || []}
+                      value={(form.watch("nutrition_facts") || []) as Array<{ label: string; value: string }>}
                       onChange={(facts) => form.setValue("nutrition_facts", facts)}
                     />
                   </div>
