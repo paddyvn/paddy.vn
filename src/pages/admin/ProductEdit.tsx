@@ -248,6 +248,15 @@ export default function ProductEdit() {
             target_age_id: values.target_age_id || null,
             target_size_id: values.target_size_id || null,
             origin_id: values.origin_id || null,
+            ingredients: values.ingredients || null,
+            feeding_guidelines: values.feeding_guidelines || null,
+            nutrition_facts: values.nutrition_facts && values.nutrition_facts.length > 0
+              ? values.nutrition_facts as any
+              : null,
+            show_description: values.show_description,
+            show_ingredients: values.show_ingredients,
+            show_feeding_guidelines: values.show_feeding_guidelines,
+            show_nutrition_facts: values.show_nutrition_facts,
           })
           .select("id")
           .single();
