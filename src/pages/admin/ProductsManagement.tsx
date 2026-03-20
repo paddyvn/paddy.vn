@@ -516,6 +516,93 @@ export default function ProductsManagement() {
     }
   };
 
+  const exportProductsCSV = async () => {
+    try {
+      let query = supabase
+        .from("products")
+        .select(`
+          id, name, slug, base_price, compare_at_price, brand, product_type,
+          pet_type, tags, is_active, is_featured, created_at,
+          product_variants(sku, name, price, stock_quantity)
+        `)
+        .order("name");
+
+      query = await applyProductSearch(query, searchQuery);
+
+      if (statusFilter !== "all") {
+        query = query.eq("is_active", statusFilter === "active");
+      }
+      if (brandFilter !== "all") {
+        query = query.eq("brand", brandFilter);
+      }
+      if (categoryFilter !== "all") {
+        query = query.eq("product_type", categoryFilter);
+      }
+
+      const { data, error } = await query.limit(5000);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast({ title: "No products to export", variant: "destructive" });
+        return;
+      }
+
+      const headers = [
+        "Product Name", "Slug", "Brand", "Type", "Pet Type", "Tags",
+        "Status", "Featured", "Base Price", "Compare At Price",
+        "Variant Name", "SKU", "Variant Price", "Stock", "Created At"
+      ];
+
+      const rows = data.flatMap((product: any) => {
+        const variants = product.product_variants || [];
+        if (variants.length === 0) {
+          return [[
+            product.name, product.slug, product.brand || "", product.product_type || "",
+            product.pet_type || "", product.tags || "",
+            product.is_active ? "Active" : "Inactive", product.is_featured ? "Yes" : "No",
+            product.base_price, product.compare_at_price || "",
+            "", "", "", "", product.created_at,
+          ]];
+        }
+        return variants.map((v: any, i: number) => [
+          i === 0 ? product.name : "", i === 0 ? product.slug : "",
+          i === 0 ? (product.brand || "") : "", i === 0 ? (product.product_type || "") : "",
+          i === 0 ? (product.pet_type || "") : "", i === 0 ? (product.tags || "") : "",
+          i === 0 ? (product.is_active ? "Active" : "Inactive") : "",
+          i === 0 ? (product.is_featured ? "Yes" : "No") : "",
+          i === 0 ? product.base_price : "", i === 0 ? (product.compare_at_price || "") : "",
+          v.name || "", v.sku || "", v.price, v.stock_quantity ?? "",
+          i === 0 ? product.created_at : "",
+        ]);
+      });
+
+      const escapeCSV = (val: any) => {
+        const str = String(val ?? "");
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const csv = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map((row: any[]) => row.map(escapeCSV).join(","))
+      ].join("\n");
+
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `paddy-products-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export complete", description: `${data.length} products exported` });
+    } catch (error) {
+      toast({ title: "Export failed", description: String(error), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -524,14 +611,26 @@ export default function ProductsManagement() {
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={exportProductsCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
           <SyncOptionNamesButton />
           <Button
             onClick={() => syncProducts.mutate()}
             disabled={syncProducts.isPending}
+            variant="outline"
             className="gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
             {syncProducts.isPending ? "Syncing..." : "Sync Products"}
+          </Button>
+          <Button
+            onClick={() => navigate("/admin/products/new")}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
           </Button>
         </div>
       </div>
