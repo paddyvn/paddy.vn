@@ -361,6 +361,51 @@ export default function CollectionDetails() {
     }
   };
 
+  const syncSmartCollectionProducts = async (
+    collectionId: string,
+    collectionRules: CollectionRule[],
+    matchType: string
+  ) => {
+    try {
+      const query = buildSmartCollectionQuery(collectionRules, matchType, "id");
+      const { data: matchingProducts, error: matchError } = await query.limit(2000);
+
+      if (matchError) throw matchError;
+
+      // Delete existing product_collections for this smart collection
+      await supabase
+        .from("product_collections")
+        .delete()
+        .eq("collection_id", collectionId);
+
+      // Insert matching products in batches
+      if (matchingProducts && matchingProducts.length > 0) {
+        const productCollections = matchingProducts.map((product, index) => ({
+          collection_id: collectionId,
+          product_id: product.id,
+          position: index,
+        }));
+
+        for (let i = 0; i < productCollections.length; i += 500) {
+          const batch = productCollections.slice(i, i + 500);
+          const { error: insertError } = await supabase
+            .from("product_collections")
+            .insert(batch);
+          if (insertError) throw insertError;
+        }
+      }
+
+      console.log(`Smart collection synced: ${matchingProducts?.length || 0} products matched`);
+    } catch (syncError) {
+      console.error("Failed to sync smart collection products:", syncError);
+      toast({
+        title: "Lưu ý",
+        description: "Collection đã lưu nhưng không thể đồng bộ sản phẩm tự động. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     if (!validateForm()) {
       toast({
