@@ -136,6 +136,7 @@ export default function Checkout() {
     .filter((id): id is string => !!id);
   const { data: promotionsMap } = useProductsPromotions(cartProductIds);
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
+  const { data: subscriptionDeal } = useSubscriptionDeal();
   const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
   const location = useLocation();
