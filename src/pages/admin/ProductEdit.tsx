@@ -160,6 +160,13 @@ export default function ProductEdit() {
       target_age_id: null,
       target_size_id: null,
       origin_id: null,
+      ingredients: "",
+      feeding_guidelines: "",
+      nutrition_facts: [],
+      show_description: true,
+      show_ingredients: true,
+      show_feeding_guidelines: true,
+      show_nutrition_facts: true,
     },
   });
 
