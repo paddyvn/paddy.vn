@@ -309,7 +309,7 @@ export default function OrderConfirmation() {
         </Card>
 
         {/* 7. Action buttons */}
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-3 justify-center mb-4">
           <Button variant="outline" asChild>
             <Link to={`/orders/${order.order_number}`}>Xem chi tiết đơn hàng</Link>
           </Button>
@@ -317,6 +317,12 @@ export default function OrderConfirmation() {
             <Link to="/">Tiếp tục mua sắm</Link>
           </Button>
         </div>
+        <p className="text-center text-sm text-muted-foreground">
+          Bạn có thể tra cứu trạng thái đơn hàng bất cứ lúc nào tại{" "}
+          <Link to="/track-order" className="text-primary hover:underline font-medium">
+            paddy.vn/track-order
+          </Link>
+        </p>
       </main>
       <Footer hideNewsletter />
     </div>
