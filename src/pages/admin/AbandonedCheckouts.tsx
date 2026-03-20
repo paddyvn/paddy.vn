@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  useAbandonedCheckouts,
   useDeleteAbandonedCheckout,
   useSendRecoveryEmail,
   AbandonedCheckout,
@@ -59,13 +60,22 @@ import {
 
 const CHECKOUTS_PER_PAGE = 50;
 
+function applyCheckoutFilters(query: any, searchQuery: string) {
+  if (searchQuery) {
+    query = query.or(
+      `email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,shopify_checkout_id.ilike.%${searchQuery}%`
+    );
+  }
+  return query;
+}
+
 export default function AbandonedCheckouts() {
-  const { data: checkouts, isLoading } = useAbandonedCheckouts();
   const deleteCheckout = useDeleteAbandonedCheckout();
   const sendRecoveryEmail = useSendRecoveryEmail();
   const syncAbandonedCheckouts = useSyncAbandonedCheckouts();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCheckout, setSelectedCheckout] = useState<AbandonedCheckout | null>(
     null
@@ -73,29 +83,59 @@ export default function AbandonedCheckouts() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [checkoutToDelete, setCheckoutToDelete] = useState<string | null>(null);
 
-  const filteredCheckouts = useMemo(() => {
-    if (!checkouts) return [];
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    return checkouts.filter((checkout) => {
-      const matchesSearch =
-        checkout.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        checkout.phone?.includes(searchQuery) ||
-        checkout.shopify_checkout_id?.includes(searchQuery);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
 
-      return matchesSearch;
-    });
-  }, [checkouts, searchQuery]);
+  // Count query
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ["admin-abandoned-checkouts-count", debouncedSearch],
+    queryFn: async () => {
+      let query = supabase
+        .from("abandoned_checkouts")
+        .select("*", { count: "exact", head: true })
+        .is("completed_at", null);
+
+      query = applyCheckoutFilters(query, debouncedSearch);
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Data query
+  const { data: checkouts, isLoading } = useQuery({
+    queryKey: ["admin-abandoned-checkouts", debouncedSearch, currentPage],
+    queryFn: async () => {
+      const from = (currentPage - 1) * CHECKOUTS_PER_PAGE;
+      const to = from + CHECKOUTS_PER_PAGE - 1;
+
+      let query = supabase
+        .from("abandoned_checkouts")
+        .select("*")
+        .is("completed_at", null)
+        .order("shopify_created_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+      query = applyCheckoutFilters(query, debouncedSearch);
+      query = query.range(from, to);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as AbandonedCheckout[];
+    },
+  });
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredCheckouts.length / CHECKOUTS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / CHECKOUTS_PER_PAGE);
   const startIndex = (currentPage - 1) * CHECKOUTS_PER_PAGE;
-  const endIndex = startIndex + CHECKOUTS_PER_PAGE;
-  const paginatedCheckouts = filteredCheckouts.slice(startIndex, endIndex);
-
-  // Reset to page 1 when search changes
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  const endIndex = Math.min(startIndex + CHECKOUTS_PER_PAGE, totalCount);
 
   const handleDelete = async () => {
     if (!checkoutToDelete) return;
