@@ -128,7 +128,7 @@ export default function Checkout() {
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<SubscriptionFrequency>("monthly");
-  const SUBSCRIPTION_DISCOUNT = 10; // 10% discount for subscriptions
+  
   
   const { cart, isLoading: cartLoading } = useCart(userId);
   const cartProductIds = (cart || [])
