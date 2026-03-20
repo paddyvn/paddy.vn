@@ -93,6 +93,80 @@ export default function CustomersManagement() {
   const [note, setNote] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const exportCustomersCSV = async () => {
+    try {
+      let query = supabase
+        .from("customers")
+        .select("first_name, last_name, email, phone, orders_count, total_spent, accepts_marketing, verified_email, tags, note, state, created_at")
+        .order("created_at", { ascending: false });
+
+      if (debouncedSearch) {
+        query = query.or(
+          `email.ilike.%${debouncedSearch}%,first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,phone.ilike.%${debouncedSearch}%`
+        );
+      }
+      if (marketingFilter === "subscribed") {
+        query = query.eq("accepts_marketing", true);
+      } else if (marketingFilter === "not-subscribed") {
+        query = query.or("accepts_marketing.eq.false,accepts_marketing.is.null");
+      }
+
+      const { data, error } = await query.limit(15000);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast({ title: "No customers to export", variant: "destructive" });
+        return;
+      }
+
+      const headers = [
+        "First Name", "Last Name", "Email", "Phone",
+        "Orders", "Total Spent (VND)", "Accepts Marketing",
+        "Email Verified", "Tags", "Notes", "State", "Created At"
+      ];
+
+      const rows = data.map((c: any) => [
+        c.first_name || "",
+        c.last_name || "",
+        c.email || "",
+        c.phone || "",
+        c.orders_count || 0,
+        c.total_spent || 0,
+        c.accepts_marketing ? "Yes" : "No",
+        c.verified_email ? "Yes" : "No",
+        c.tags || "",
+        c.note || "",
+        c.state || "",
+        c.created_at ? new Date(c.created_at).toISOString().slice(0, 10) : "",
+      ]);
+
+      const escapeCSV = (val: any) => {
+        const str = String(val ?? "");
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const csv = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map((row: any[]) => row.map(escapeCSV).join(","))
+      ].join("\n");
+
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `paddy-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export complete", description: `${data.length} customers exported` });
+    } catch (error) {
+      toast({ title: "Export failed", description: String(error), variant: "destructive" });
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
     return () => clearTimeout(timer);
