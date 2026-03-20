@@ -214,9 +214,9 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
                 <span className="text-xs text-muted-foreground">({reviewCount})</span>
               </div>
             )}
-            {reviewCount >= 50 && (
+            {soldCount >= 10 && (
               <span className="text-[11.5px] text-muted-foreground font-medium">
-                Đã bán {formatSoldCount(reviewCount)}
+                Đã bán {formatSoldCount(soldCount)}
               </span>
             )}
           </div>
