@@ -3887,6 +3887,7 @@ export type Database = {
           show_ingredients: boolean | null
           show_nutrition_facts: boolean | null
           slug: string
+          sold_count: number | null
           source_created_at: string | null
           source_id: string | null
           source_updated_at: string | null
@@ -3927,6 +3928,7 @@ export type Database = {
           show_ingredients?: boolean | null
           show_nutrition_facts?: boolean | null
           slug: string
+          sold_count?: number | null
           source_created_at?: string | null
           source_id?: string | null
           source_updated_at?: string | null
@@ -3967,6 +3969,7 @@ export type Database = {
           show_ingredients?: boolean | null
           show_nutrition_facts?: boolean | null
           slug?: string
+          sold_count?: number | null
           source_created_at?: string | null
           source_id?: string | null
           source_updated_at?: string | null

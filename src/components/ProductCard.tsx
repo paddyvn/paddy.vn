@@ -20,6 +20,8 @@ interface ProductCardProps {
     pet_type?: string | null;
     rating?: number | null;
     rating_count?: number | null;
+    sold_count?: number | null;
+    created_at?: string | null;
     option1_name?: string | null;
     option2_name?: string | null;
     option3_name?: string | null;
@@ -136,7 +138,10 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
 
   // — Badges —
   const isBestseller = product.is_featured;
-  const isNew = !hasReviews && !showSale;
+  const soldCount = product.sold_count ?? 0;
+  const isNew = product.created_at
+    ? (Date.now() - new Date(product.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
+    : false;
 
   return (
     <>
@@ -209,9 +214,9 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
                 <span className="text-xs text-muted-foreground">({reviewCount})</span>
               </div>
             )}
-            {reviewCount >= 50 && (
+            {soldCount >= 10 && (
               <span className="text-[11.5px] text-muted-foreground font-medium">
-                Đã bán {formatSoldCount(reviewCount)}
+                Đã bán {formatSoldCount(soldCount)}
               </span>
             )}
           </div>
