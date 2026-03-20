@@ -27,6 +27,23 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ChevronLeft,
   ChevronUp,
   ChevronDown,
@@ -42,6 +59,8 @@ import {
   AtSign,
   Hash,
   Paperclip,
+  Copy,
+  XCircle,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -76,6 +95,8 @@ interface Order {
   cancelled_at: string | null;
   closed_at: string | null;
   delivery_method: string | null;
+  coupon_code: string | null;
+  promotion_id: string | null;
 }
 
 interface OrderItem {
@@ -140,6 +161,17 @@ export default function OrderDetail() {
   const [editAddressOpen, setEditAddressOpen] = useState(false);
   const [editTagsOpen, setEditTagsOpen] = useState(false);
   const [editDeliveryOpen, setEditDeliveryOpen] = useState(false);
+
+  // Fix 2A: Add tracking dialog state
+  const [addTrackingOpen, setAddTrackingOpen] = useState(false);
+  const [trackingForm, setTrackingForm] = useState({
+    tracking_number: "",
+    tracking_company: "",
+    tracking_url: "",
+  });
+
+  // Fix 2B: Refund dialog state
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
 
   // Form states
   const [editNotes, setEditNotes] = useState("");
@@ -296,17 +328,29 @@ export default function OrderDetail() {
   const prevOrderId = currentOrderIndex > 0 ? allOrders?.[currentOrderIndex - 1]?.id : null;
   const nextOrderId = currentOrderIndex < (allOrders?.length ?? 0) - 1 ? allOrders?.[currentOrderIndex + 1]?.id : null;
 
-  const updateOrderStatus = async (newStatus: "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled") => {
+  // Fix 1: Update status with financial_status
+  const updateOrderStatus = async (newStatus: string) => {
     try {
+      const updates: Record<string, any> = { status: newStatus };
+
+      if (newStatus === "confirmed" || newStatus === "shipped" || newStatus === "delivered") {
+        updates.financial_status = "paid";
+      } else if (newStatus === "cancelled") {
+        updates.financial_status = "voided";
+        updates.cancelled_at = new Date().toISOString();
+      } else if (newStatus === "pending") {
+        updates.financial_status = "pending";
+      }
+
       const { error } = await supabase
         .from("orders")
-        .update({ status: newStatus })
+        .update(updates)
         .eq("id", id);
 
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["order", id] });
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
 
       toast({
         title: "Order Updated",
@@ -345,6 +389,62 @@ export default function OrderDetail() {
         description: "Failed to update order.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Fix 2A: Add tracking handler
+  const handleAddTracking = async () => {
+    if (!trackingForm.tracking_number.trim()) {
+      toast({ title: "Vui lòng nhập mã vận đơn", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("order_fulfillments").insert({
+        order_id: id,
+        status: "fulfilled",
+        tracking_number: trackingForm.tracking_number.trim(),
+        tracking_company: trackingForm.tracking_company.trim() || null,
+        tracking_url: trackingForm.tracking_url.trim() || null,
+      });
+
+      if (error) throw error;
+
+      await supabase.from("orders").update({ fulfillment_status: "fulfilled" }).eq("id", id);
+
+      queryClient.invalidateQueries({ queryKey: ["order-fulfillments", id] });
+      queryClient.invalidateQueries({ queryKey: ["order", id] });
+
+      setAddTrackingOpen(false);
+      setTrackingForm({ tracking_number: "", tracking_company: "", tracking_url: "" });
+      toast({ title: "Tracking added", description: `Tracking number: ${trackingForm.tracking_number}` });
+    } catch (error) {
+      toast({ title: "Failed to add tracking", variant: "destructive" });
+    }
+  };
+
+  // Fix 2B: Refund handler
+  const handleRefund = async () => {
+    if (!order) return;
+    try {
+      await supabase.from("orders").update({
+        financial_status: "refunded",
+        status: "cancelled",
+        cancelled_at: new Date().toISOString(),
+      }).eq("id", id);
+
+      await supabase.from("order_events").insert({
+        order_id: id,
+        event_type: "refund",
+        message: `Order refunded. Amount: ${formatCurrency(order.total)}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["order", id] });
+      queryClient.invalidateQueries({ queryKey: ["order-events", id] });
+      setRefundDialogOpen(false);
+      toast({ title: "Order refunded", description: `${order.order_number} has been marked as refunded.` });
+    } catch (error) {
+      toast({ title: "Refund failed", variant: "destructive" });
     }
   };
 
@@ -396,16 +496,13 @@ export default function OrderDetail() {
       customer_phone: editPhone 
     });
 
-    // If checkbox is checked, also update the customer profile
     if (updateCustomerProfile) {
       try {
-        // Find customer by phone or email
         const originalPhone = order?.customer_phone || order?.shipping_address?.phone;
         const originalEmail = order?.customer_email;
         
         let customerId: string | null = null;
         
-        // Try to find by phone first
         if (originalPhone) {
           const { data: customerByPhone } = await supabase
             .from("customers")
@@ -415,7 +512,6 @@ export default function OrderDetail() {
           if (customerByPhone) customerId = customerByPhone.id;
         }
         
-        // If not found, try by email
         if (!customerId && originalEmail) {
           const { data: customerByEmail } = await supabase
             .from("customers")
@@ -436,7 +532,6 @@ export default function OrderDetail() {
             .eq("id", customerId);
 
           if (customerError) {
-            console.error("Error updating customer:", customerError);
             toast({
               title: "Customer Update Failed",
               description: "Order updated, but failed to update customer profile.",
@@ -546,16 +641,13 @@ export default function OrderDetail() {
   const shippingAddress = order.shipping_address || {};
   const totalItems = orderItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
-  // Use actual financial/fulfillment status from Shopify if available
   const financialStatus = order.financial_status || statusInfo.paymentLabel || "pending";
   const fulfillmentStatus = order.fulfillment_status || statusInfo.fulfillmentLabel || "unfulfilled";
   
-  // Helper to format status for display
   const formatStatus = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
   };
 
-  // Get badge color based on status
   const getFinancialBadgeClass = (status: string) => {
     if (status === 'paid') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (status === 'refunded' || status === 'voided') return 'bg-red-50 text-red-700 border-red-200';
@@ -568,7 +660,6 @@ export default function OrderDetail() {
     return 'bg-amber-50 text-amber-700 border-amber-200';
   };
 
-  // Group events by date
   const groupEventsByDate = (events: OrderEvent[]) => {
     const groups: Record<string, OrderEvent[]> = {};
     events.forEach(event => {
@@ -609,12 +700,49 @@ export default function OrderDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">Refund</Button>
-          <Button variant="outline" size="sm">Return</Button>
+          {/* Fix 2B: Refund button */}
+          <Button variant="outline" size="sm" onClick={() => setRefundDialogOpen(true)}>Refund</Button>
+          {/* Fix 2C: Return placeholder */}
+          <Button variant="outline" size="sm" onClick={() => toast({ title: "Chức năng đang phát triển", description: "Quản lý đổi trả sẽ sớm ra mắt." })}>Return</Button>
           <Button variant="outline" size="sm" onClick={() => navigate(`/admin/orders/${id}/edit`)}>Edit</Button>
-          <Button variant="outline" size="sm">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          {/* Fix 2D: More menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate(`/admin/orders/${id}/edit`)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit order
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/admin/orders/${id}`);
+                toast({ title: "Link copied" });
+              }}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy link
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={async () => {
+                  await supabase.from("orders").update({
+                    status: "cancelled",
+                    financial_status: "voided",
+                    cancelled_at: new Date().toISOString(),
+                  }).eq("id", id);
+                  queryClient.invalidateQueries({ queryKey: ["order", id] });
+                  queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+                  toast({ title: "Order cancelled" });
+                }}
+                className="text-destructive focus:text-destructive"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Cancel order
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex border rounded-md">
             <Button
               variant="ghost"
@@ -745,7 +873,8 @@ export default function OrderDetail() {
                 </div>
               ) : (
                 <div className="pt-4">
-                  <Button variant="outline" size="sm" className="gap-2">
+                  {/* Fix 2A: Wire up Add tracking button */}
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => setAddTrackingOpen(true)}>
                     <Truck className="h-4 w-4" />
                     Add tracking
                   </Button>
@@ -800,6 +929,13 @@ export default function OrderDetail() {
                     </div>
                   </div>
                 )}
+                {/* Fix 3: Voucher display */}
+                {order.coupon_code && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Voucher</span>
+                    <Badge variant="outline" className="text-xs font-mono">{order.coupon_code}</Badge>
+                  </div>
+                )}
                 <div className="flex justify-between font-semibold pt-2 border-t">
                   <span>Total</span>
                   <span>{formatCurrency(order.total)}</span>
@@ -842,40 +978,16 @@ export default function OrderDetail() {
                 </div>
                 <div className="flex items-center justify-between px-3 pb-3">
                   <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      title="Add emoji"
-                    >
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Add emoji">
                       <Smile className="h-4 w-4" />
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      title="Mention staff"
-                    >
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Mention staff">
                       <AtSign className="h-4 w-4" />
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      title="Reference page"
-                    >
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Reference page">
                       <Hash className="h-4 w-4" />
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      title="Attach file"
-                    >
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Attach file">
                       <Paperclip className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1330,6 +1442,76 @@ export default function OrderDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Fix 2A: Add Tracking Dialog */}
+      <Dialog open={addTrackingOpen} onOpenChange={setAddTrackingOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Thêm mã vận đơn</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Đơn vị vận chuyển</Label>
+              <Select
+                value={trackingForm.tracking_company}
+                onValueChange={(value) => setTrackingForm({ ...trackingForm, tracking_company: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn đơn vị vận chuyển" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GHN">Giao Hàng Nhanh (GHN)</SelectItem>
+                  <SelectItem value="GHTK">Giao Hàng Tiết Kiệm (GHTK)</SelectItem>
+                  <SelectItem value="Viettel Post">Viettel Post</SelectItem>
+                  <SelectItem value="J&T Express">J&T Express</SelectItem>
+                  <SelectItem value="Ninja Van">Ninja Van</SelectItem>
+                  <SelectItem value="Best Express">Best Express</SelectItem>
+                  <SelectItem value="Other">Khác</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Mã vận đơn *</Label>
+              <Input
+                value={trackingForm.tracking_number}
+                onChange={(e) => setTrackingForm({ ...trackingForm, tracking_number: e.target.value })}
+                placeholder="VD: GHN123456789"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>URL theo dõi</Label>
+              <Input
+                value={trackingForm.tracking_url}
+                onChange={(e) => setTrackingForm({ ...trackingForm, tracking_url: e.target.value })}
+                placeholder="https://tracking.ghn.vn/..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddTrackingOpen(false)}>Hủy</Button>
+            <Button onClick={handleAddTracking}>Lưu</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fix 2B: Refund Confirmation Dialog */}
+      <AlertDialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hoàn tiền</AlertDialogTitle>
+            <AlertDialogDescription>
+              Đánh dấu đơn hàng {order.order_number} là đã hoàn tiền ({formatCurrency(order.total)}).
+              Hành động này sẽ hủy đơn hàng. Vui lòng đảm bảo đã xử lý hoàn tiền qua phương thức thanh toán trước khi xác nhận.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRefund} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Xác nhận hoàn tiền
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
