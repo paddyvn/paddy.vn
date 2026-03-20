@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useOrders } from "@/hooks/useOrders";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { OrderColumnsSelector, useOrderColumns } from "@/components/admin/OrderColumnsSelector";
+import type { Order } from "@/hooks/useOrders";
 
 const statusConfig = {
   pending: { label: "Pending", variant: "secondary" as const, icon: Package },
@@ -68,71 +68,115 @@ const paymentStatusConfig: Record<string, { label: string; variant: "default" | 
 
 const ORDERS_PER_PAGE = 50;
 
-type SortField = "order_number" | "created_at" | "customer" | "total" | "status";
+type SortField = "order_number" | "created_at" | "total" | "status";
 type SortDirection = "asc" | "desc";
+
+// Helper to build the common filter chain
+function applyFilters(
+  query: any,
+  searchQuery: string,
+  statusFilter: string
+) {
+  if (statusFilter !== "all") {
+    query = query.eq("status", statusFilter);
+  }
+  if (searchQuery) {
+    query = query.or(
+      `order_number.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%`
+    );
+  }
+  return query;
+}
 
 export default function OrdersManagement() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
-  const { data: orders, isLoading } = useOrders();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const syncOrders = useSyncOrders();
   const { columns, setColumns, isColumnVisible, visibleColumns } = useOrderColumns();
 
-  const filteredOrders = useMemo(() => {
-    if (!orders) return [];
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    let result = orders.filter((order) => {
-      const matchesSearch =
-        order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.shipping_address?.first_name || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        (order.shipping_address?.last_name || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, statusFilter]);
 
-      const matchesStatus =
-        statusFilter === "all" || order.status === statusFilter;
+  // ── Count query (for pagination total) ──
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ["admin-orders-count", debouncedSearch, statusFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true });
 
-      return matchesSearch && matchesStatus;
-    });
+      query = applyFilters(query, debouncedSearch, statusFilter);
 
-    // Apply sorting
-    result.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortField) {
-        case "order_number":
-          comparison = a.order_number.localeCompare(b.order_number, undefined, { numeric: true });
-          break;
-        case "created_at":
-          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          break;
-        case "customer":
-          const nameA = `${a.shipping_address?.first_name || ""} ${a.shipping_address?.last_name || ""}`.trim();
-          const nameB = `${b.shipping_address?.first_name || ""} ${b.shipping_address?.last_name || ""}`.trim();
-          comparison = nameA.localeCompare(nameB);
-          break;
-        case "total":
-          comparison = a.total - b.total;
-          break;
-        case "status":
-          comparison = (a.status || "").localeCompare(b.status || "");
-          break;
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // ── Data query (paginated, sorted, filtered) ──
+  const { data: orders, isLoading } = useQuery({
+    queryKey: ["admin-orders", debouncedSearch, statusFilter, sortField, sortDirection, currentPage],
+    queryFn: async () => {
+      const from = (currentPage - 1) * ORDERS_PER_PAGE;
+      const to = from + ORDERS_PER_PAGE - 1;
+
+      let query = supabase
+        .from("orders")
+        .select("*");
+
+      query = applyFilters(query, debouncedSearch, statusFilter);
+
+      // Apply sort
+      query = query.order(sortField, { ascending: sortDirection === "asc" });
+
+      query = query.range(from, to);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Order[];
+    },
+  });
+
+  // ── Items count for visible orders ──
+  const paginatedOrderIds = useMemo(
+    () => (orders || []).map((o) => o.id),
+    [orders]
+  );
+
+  const { data: itemsCountByOrderId } = useQuery({
+    queryKey: ["order-items-counts", paginatedOrderIds],
+    enabled: paginatedOrderIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("order_id, quantity")
+        .in("order_id", paginatedOrderIds);
+
+      if (error) throw error;
+
+      const map: Record<string, number> = {};
+      for (const row of data ?? []) {
+        map[row.order_id] = (map[row.order_id] ?? 0) + (row.quantity ?? 0);
       }
-      
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-
-    return result;
-  }, [orders, searchQuery, statusFilter, sortField, sortDirection]);
+      return map;
+    },
+  });
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -164,49 +208,19 @@ export default function OrdersManagement() {
   );
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / ORDERS_PER_PAGE);
   const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
-  const endIndex = startIndex + ORDERS_PER_PAGE;
-  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
-
-  const paginatedOrderIds = useMemo(
-    () => paginatedOrders.map((o) => o.id),
-    [paginatedOrders]
-  );
-
-  const { data: itemsCountByOrderId } = useQuery({
-    queryKey: ["order-items-counts", paginatedOrderIds],
-    enabled: paginatedOrderIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("order_items")
-        .select("order_id, quantity")
-        .in("order_id", paginatedOrderIds);
-
-      if (error) throw error;
-
-      const map: Record<string, number> = {};
-      for (const row of data ?? []) {
-        map[row.order_id] = (map[row.order_id] ?? 0) + (row.quantity ?? 0);
-      }
-      return map;
-    },
-  });
-
-  // Reset to page 1 when filters change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  const endIndex = Math.min(startIndex + ORDERS_PER_PAGE, totalCount);
 
   // Bulk selection handlers
-  const isAllSelected = paginatedOrders.length > 0 && paginatedOrders.every((o) => selectedOrders.has(o.id));
-  const isSomeSelected = paginatedOrders.some((o) => selectedOrders.has(o.id));
+  const isAllSelected = (orders?.length ?? 0) > 0 && (orders ?? []).every((o) => selectedOrders.has(o.id));
+  const isSomeSelected = (orders ?? []).some((o) => selectedOrders.has(o.id));
 
   const handleSelectAll = () => {
     if (isAllSelected) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(paginatedOrders.map((o) => o.id)));
+      setSelectedOrders(new Set((orders ?? []).map((o) => o.id)));
     }
   };
 
@@ -236,8 +250,8 @@ export default function OrdersManagement() {
 
       if (error) throw error;
 
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders-count"] });
 
       toast({
         title: "Order Updated",
@@ -266,7 +280,8 @@ export default function OrdersManagement() {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders-count"] });
       clearSelection();
 
       toast({
@@ -327,7 +342,7 @@ export default function OrdersManagement() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by order number or customer name..."
+            placeholder="Search by order number, email, or phone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -423,7 +438,7 @@ export default function OrdersManagement() {
                   return <SortableHeader key={col.id} field="created_at">Date</SortableHeader>;
                 }
                 if (col.id === "customer") {
-                  return <SortableHeader key={col.id} field="customer">Customer</SortableHeader>;
+                  return <TableHead key={col.id}>Customer</TableHead>;
                 }
                 if (col.id === "customer_email") {
                   return <TableHead key={col.id}>Email</TableHead>;
@@ -479,14 +494,14 @@ export default function OrdersManagement() {
                   ))}
                 </TableRow>
               ))
-            ) : filteredOrders.length === 0 ? (
+            ) : !orders?.length ? (
               <TableRow>
                 <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8">
                   <p className="text-muted-foreground">No orders found</p>
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedOrders.map((order) => {
+              orders.map((order) => {
                 const StatusIcon = statusConfig[order.status as keyof typeof statusConfig]?.icon;
                 const isSelected = selectedOrders.has(order.id);
                 return (
@@ -544,7 +559,7 @@ export default function OrdersManagement() {
                         );
                       }
                       if (col.id === "items") {
-                        const count = itemsCountByOrderId?.[order.id] ?? (order as any).items_count ?? 0;
+                        const count = itemsCountByOrderId?.[order.id] ?? 0;
                         return (
                           <TableCell key={col.id} className="text-muted-foreground">
                             {count} {count === 1 ? "item" : "items"}
@@ -650,11 +665,11 @@ export default function OrdersManagement() {
       </div>
 
       {/* Pagination */}
-      {!isLoading && filteredOrders.length > 0 && (
+      {!isLoading && totalCount > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredOrders.length)} of{" "}
-            {filteredOrders.length} orders
+            Showing {startIndex + 1} to {endIndex} of{" "}
+            {totalCount} orders
           </p>
           
           {totalPages > 1 && (
