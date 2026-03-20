@@ -188,29 +188,29 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
 
         {/* Body */}
         <div className="flex flex-col flex-1 p-3.5 pb-4">
-          {/* Brand */}
-          {product.brand && (
-            <span className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-primary mb-1">
-              {product.brand}
-            </span>
-          )}
+          {/* Brand — reserve space even when empty */}
+          <div className="h-[16px] mb-1">
+            {product.brand && (
+              <span className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-primary">
+                {product.brand}
+              </span>
+            )}
+          </div>
 
           {/* Title */}
           <h3 className="text-sm font-semibold text-foreground leading-[1.35] line-clamp-2 min-h-[38px] m-0">
             {product.name}
           </h3>
 
-          {/* Rating + sold count */}
-          <div className="flex flex-col gap-0.5">
+          {/* Rating + sold count — fixed height so cards align */}
+          <div className="flex flex-col gap-0.5 h-[36px] mt-2">
             {hasReviews ? (
-              <div className="flex items-center gap-[5px] mt-2">
+              <div className="flex items-center gap-[5px]">
                 <StarRating rating={avgRating} />
                 <span className="text-[12.5px] font-bold text-foreground">{avgRating.toFixed(1)}</span>
                 <span className="text-xs text-muted-foreground">({reviewCount})</span>
               </div>
-            ) : (
-              <div className="h-[18px] mt-2" />
-            )}
+            ) : null}
             {reviewCount >= 50 && (
               <span className="text-[11.5px] text-muted-foreground font-medium">
                 Đã bán {formatSoldCount(reviewCount)}
