@@ -49,7 +49,7 @@ export const Brands = () => {
             <Link
               key={brand.id}
               to={`/collections/${brand.slug}`}
-              className="group"
+              className={`group ${index >= 6 ? 'hidden sm:block' : ''}`}
             >
               <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50 overflow-hidden">
                 {brand.image_url ? (
