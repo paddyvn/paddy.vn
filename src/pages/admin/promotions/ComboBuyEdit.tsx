@@ -35,6 +35,7 @@ const getDefaultFormData = (): ComboBuyFormData => ({
   buy_quantity: 2,
   get_quantity: 1,
   discount_percentage: 50,
+  bundle_price: 0,
   gradient_from: "#f7971e",
   gradient_to: "#ffd200",
   icon_type: "dog_cat",
