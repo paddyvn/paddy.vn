@@ -365,8 +365,13 @@ export default function Checkout() {
           discount: discount,
           total: total,
           status: "pending",
+          financial_status: selectedPayment === "cod" ? "pending" : "pending",
           notes: orderNotes || null,
           delivery_method: deliveryMethod?.name || null,
+          payment_gateway: selectedPayment,
+          source_name: "web",
+          customer_email: userEmail || null,
+          customer_phone: useNewAddress ? addressForm.phone : (address?.phone || null),
           shipping_address: useNewAddress 
             ? {
                 full_name: addressForm.fullName,
