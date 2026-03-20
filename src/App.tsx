@@ -25,6 +25,7 @@ const PageDetail = lazy(() => import("./pages/PageDetail"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
