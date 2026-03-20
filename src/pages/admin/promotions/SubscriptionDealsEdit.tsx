@@ -89,6 +89,7 @@ export default function SubscriptionDealsEdit() {
 
   useEffect(() => {
     if (promotion) {
+      const rules = (promotion as any).rules || {};
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
@@ -103,6 +104,9 @@ export default function SubscriptionDealsEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        frequency: rules.frequency || "monthly",
+        discount_percentage: rules.discount_percentage || 10,
+        first_order_discount: rules.first_order_discount || 20,
       }));
     }
   }, [promotion]);
@@ -125,6 +129,7 @@ export default function SubscriptionDealsEdit() {
         link_type: "collection",
         link_destination: "",
         promo_type: "subscription_deals",
+        program_kind: "subscription_deal",
         is_active: data.is_active,
         display_order: data.display_order,
         start_date: data.start_date?.toISOString() || null,
@@ -133,6 +138,11 @@ export default function SubscriptionDealsEdit() {
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
         custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
+        rules: {
+          frequency: data.frequency,
+          discount_percentage: data.discount_percentage,
+          first_order_discount: data.first_order_discount,
+        },
       };
 
       let promotionId = id;

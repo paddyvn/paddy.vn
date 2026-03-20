@@ -37,6 +37,9 @@ import { useProductsPromotions } from "@/hooks/useProductPromotions";
 import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
 import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
 import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSubscriptions";
+import { useComboDeals } from "@/hooks/useComboDeals";
+import { useTieredDeals } from "@/hooks/useTieredDeals";
+import { useSubscriptionDeal } from "@/hooks/useSubscriptionDeal";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -125,7 +128,7 @@ export default function Checkout() {
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<SubscriptionFrequency>("monthly");
-  const SUBSCRIPTION_DISCOUNT = 10; // 10% discount for subscriptions
+  
   
   const { cart, isLoading: cartLoading } = useCart(userId);
   const cartProductIds = (cart || [])
@@ -133,6 +136,7 @@ export default function Checkout() {
     .filter((id): id is string => !!id);
   const { data: promotionsMap } = useProductsPromotions(cartProductIds);
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
+  const { data: subscriptionDeal } = useSubscriptionDeal();
   const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
   const location = useLocation();
@@ -219,8 +223,30 @@ export default function Checkout() {
   const subtotal = calculateSubtotal();
   const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
   const shippingCost = deliveryMethod?.price || 0;
+
+  // Combo & Tiered deal hooks
+  const dealCartItems = (cart || []).map((item) => {
+    const basePrice = getItemBasePrice(item);
+    const promotion = promotionsMap?.[item.product_id];
+    const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+    return {
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unitPrice: effectivePrice,
+    };
+  });
+
+  const { data: comboDiscounts = [] } = useComboDeals(dealCartItems);
+  const { data: tieredDiscounts = [] } = useTieredDeals(dealCartItems);
+
+  const totalDealDiscount = [
+    ...comboDiscounts.map((d) => d.discountAmount),
+    ...tieredDiscounts.map((d) => d.discountAmount),
+  ].reduce((sum, d) => sum + d, 0);
   
   // Calculate discount (voucher + subscription)
+  const subscriptionDiscountPct = subscriptionDeal?.discountPercentage || 0;
+
   const calculateVoucherDiscount = () => {
     if (!appliedVoucher) return 0;
     let voucherDiscount = 0;
@@ -236,9 +262,9 @@ export default function Checkout() {
   };
   
   const voucherDiscount = calculateVoucherDiscount();
-  const subscriptionDiscount = enableSubscription ? (subtotal * SUBSCRIPTION_DISCOUNT) / 100 : 0;
+  const subscriptionDiscount = enableSubscription ? Math.round(subtotal * subscriptionDiscountPct / 100) : 0;
   const discount = voucherDiscount + subscriptionDiscount;
-  const total = subtotal + shippingCost - discount;
+  const total = subtotal + shippingCost - discount - totalDealDiscount;
 
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) return;
@@ -344,7 +370,7 @@ export default function Checkout() {
           order_number: newOrderNumber,
           subtotal: subtotal,
           shipping_fee: shippingCost,
-          discount: discount,
+          discount: discount + totalDealDiscount,
           total: total,
           status: "pending",
           financial_status: selectedPayment === "cod" ? "pending" : "pending",
@@ -458,7 +484,7 @@ export default function Checkout() {
         await createSubscription.mutateAsync({
           user_id: userId,
           frequency: subscriptionFrequency,
-          discount_percent: SUBSCRIPTION_DISCOUNT,
+          discount_percent: subscriptionDiscountPct,
           shipping_address: shippingAddr,
           delivery_method: deliveryMethod?.name,
           items: cart.map(item => {
@@ -1022,46 +1048,48 @@ export default function Checkout() {
                   )}
                 </div>
 
-                {/* Subscribe & Save - Hidden for now, will be enabled later
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 text-primary" />
-                      <Label htmlFor="subscription" className="text-sm font-medium cursor-pointer">
-                        Subscribe & Save {SUBSCRIPTION_DISCOUNT}%
-                      </Label>
+                {subscriptionDeal && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="h-4 w-4 text-primary" />
+                          <Label htmlFor="subscription" className="text-sm font-medium cursor-pointer">
+                            Subscribe & Save {subscriptionDiscountPct}%
+                          </Label>
+                        </div>
+                        <Switch
+                          id="subscription"
+                          checked={enableSubscription}
+                          onCheckedChange={setEnableSubscription}
+                        />
+                      </div>
+                      
+                      {enableSubscription && (
+                        <div className="space-y-2 pl-6">
+                          <Label className="text-xs text-muted-foreground">Tần suất giao hàng</Label>
+                          <Select
+                            value={subscriptionFrequency}
+                            onValueChange={(value) => setSubscriptionFrequency(value as SubscriptionFrequency)}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="weekly">Hàng tuần</SelectItem>
+                              <SelectItem value="bi-weekly">2 tuần/lần</SelectItem>
+                              <SelectItem value="monthly">Hàng tháng</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Tự động đặt hàng lại theo lịch, tiết kiệm {subscriptionDiscountPct}%
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <Switch
-                      id="subscription"
-                      checked={enableSubscription}
-                      onCheckedChange={setEnableSubscription}
-                    />
-                  </div>
-                  
-                  {enableSubscription && (
-                    <div className="space-y-2 pl-6">
-                      <Label className="text-xs text-muted-foreground">Tần suất giao hàng</Label>
-                      <Select
-                        value={subscriptionFrequency}
-                        onValueChange={(value) => setSubscriptionFrequency(value as SubscriptionFrequency)}
-                      >
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekly">Hàng tuần</SelectItem>
-                          <SelectItem value="bi-weekly">2 tuần/lần</SelectItem>
-                          <SelectItem value="monthly">Hàng tháng</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Tự động đặt hàng lại theo lịch, tiết kiệm {SUBSCRIPTION_DISCOUNT}%
-                      </p>
-                    </div>
-                  )}
-                </div>
-                */}
+                  </>
+                )}
 
                 <Separator />
 
@@ -1082,10 +1110,22 @@ export default function Checkout() {
                   )}
                   {subscriptionDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Subscribe & Save ({SUBSCRIPTION_DISCOUNT}%)</span>
+                      <span>Subscribe & Save ({subscriptionDiscountPct}%)</span>
                       <span>-{formatPrice(subscriptionDiscount)}₫</span>
                     </div>
                   )}
+                  {comboDiscounts.map((cd) => (
+                    <div key={cd.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{cd.description}</span>
+                      <span>-{formatPrice(cd.discountAmount)}₫</span>
+                    </div>
+                  ))}
+                  {tieredDiscounts.map((td) => (
+                    <div key={td.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{td.description}</span>
+                      <span>-{formatPrice(td.discountAmount)}₫</span>
+                    </div>
+                  ))}
                 </div>
 
                 <Separator />

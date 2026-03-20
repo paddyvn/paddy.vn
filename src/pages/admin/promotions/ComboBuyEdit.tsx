@@ -15,6 +15,7 @@ type ComboBuyFormData = BasePromotionFormData & {
   buy_quantity: number;
   get_quantity: number;
   discount_percentage: number;
+  bundle_price: number;
   gradient_from: string;
   gradient_to: string;
   icon_type: string;
@@ -34,6 +35,7 @@ const getDefaultFormData = (): ComboBuyFormData => ({
   buy_quantity: 2,
   get_quantity: 1,
   discount_percentage: 50,
+  bundle_price: 0,
   gradient_from: "#f7971e",
   gradient_to: "#ffd200",
   icon_type: "dog_cat",
@@ -91,6 +93,7 @@ export default function ComboBuyEdit() {
 
   useEffect(() => {
     if (promotion) {
+      const rules = (promotion as any).rules || {};
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
@@ -105,6 +108,11 @@ export default function ComboBuyEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        combo_type: rules.combo_type || "buy_x_discount_y",
+        buy_quantity: rules.buy_quantity || 2,
+        get_quantity: rules.get_quantity || 1,
+        discount_percentage: rules.discount_percentage || 50,
+        bundle_price: rules.bundle_price || 0,
       }));
     }
   }, [promotion]);
@@ -136,6 +144,15 @@ export default function ComboBuyEdit() {
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
         custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
+        rules: {
+          combo_type: data.combo_type,
+          buy_quantity: data.buy_quantity,
+          ...(data.combo_type === "buy_x_free_y"
+            ? { get_quantity: data.get_quantity }
+            : data.combo_type === "buy_x_discount_y"
+            ? { discount_percentage: data.discount_percentage }
+            : { bundle_price: data.bundle_price }),
+        },
       };
 
       let promotionId = id;
@@ -284,6 +301,19 @@ export default function ComboBuyEdit() {
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {formData.combo_type === "bundles" && (
+              <div className="space-y-2">
+                <Label>Giá combo (₫)</Label>
+                <Input
+                  type="number"
+                  value={formData.bundle_price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bundle_price: parseInt(e.target.value) || 0 })
+                  }
+                />
               </div>
             )}
           </div>

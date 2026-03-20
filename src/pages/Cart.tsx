@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateVoucher, calculateVoucherDiscount } from "@/lib/voucher-utils";
+import { useComboDeals } from "@/hooks/useComboDeals";
+import { useTieredDeals } from "@/hooks/useTieredDeals";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -81,12 +83,33 @@ export default function Cart() {
   };
 
   const subtotal = calculateSubtotal();
+
+  // Combo & Tiered deal hooks
+  const dealCartItems = (cart || []).map((item) => {
+    const basePrice = getItemBasePrice(item);
+    const promotion = promotionsMap?.[item.product_id];
+    const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+    return {
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unitPrice: effectivePrice,
+    };
+  });
+
+  const { data: comboDiscounts = [] } = useComboDeals(dealCartItems);
+  const { data: tieredDiscounts = [] } = useTieredDeals(dealCartItems);
+
+  const totalDealDiscount = [
+    ...comboDiscounts.map((d) => d.discountAmount),
+    ...tieredDiscounts.map((d) => d.discountAmount),
+  ].reduce((sum, d) => sum + d, 0);
+
   const shippingRate = SHIPPING_RATES.find(r => r.id === selectedShipping);
   const shippingCost = shippingRate?.minOrder && subtotal >= shippingRate.minOrder 
     ? 0 
     : (shippingRate?.price || 0);
   const discount = appliedCoupon?.discount || 0;
-  const total = subtotal + shippingCost - discount;
+  const total = subtotal + shippingCost - discount - totalDealDiscount;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -432,10 +455,23 @@ export default function Cart() {
                   
                   {discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>Giảm giá</span>
+                      <span>Giảm giá voucher</span>
                       <span>-{formatPrice(discount)}₫</span>
                     </div>
                   )}
+                  
+                  {comboDiscounts.map((cd) => (
+                    <div key={cd.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{cd.description}</span>
+                      <span>-{formatPrice(cd.discountAmount)}₫</span>
+                    </div>
+                  ))}
+                  {tieredDiscounts.map((td) => (
+                    <div key={td.promotionId} className="flex justify-between text-sm text-green-600">
+                      <span>{td.description}</span>
+                      <span>-{formatPrice(td.discountAmount)}₫</span>
+                    </div>
+                  ))}
                   
                   <Separator />
                   

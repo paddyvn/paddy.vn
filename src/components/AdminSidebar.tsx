@@ -74,7 +74,7 @@ const mainItems = [
       { title: "Vouchers", url: "/admin/promotions/vouchers" },
       { title: "Combo Buy", url: "/admin/promotions/combo-buy" },
       { title: "Buy More Save More", url: "/admin/promotions/buy-more-save-more" },
-      { title: "Free Shipping", url: "/admin/promotions/free-shipping" },
+      
       { title: "Subscription Deals", url: "/admin/promotions/subscription-deals" },
     ],
   },
