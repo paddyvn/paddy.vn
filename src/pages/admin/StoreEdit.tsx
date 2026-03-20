@@ -89,6 +89,8 @@ export default function StoreEdit() {
           map_url: formData.map_url || null,
           phone: formData.phone || null,
           opening_hours: formData.opening_hours || null,
+          latitude: null,
+          longitude: null,
         });
       }
       navigate("/admin/settings/stores");
