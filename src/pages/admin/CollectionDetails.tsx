@@ -368,7 +368,7 @@ export default function CollectionDetails() {
   ) => {
     try {
       const query = buildSmartCollectionQuery(collectionRules, matchType, "id");
-      const { data: matchingProducts, error: matchError } = await query.limit(2000);
+      const { data: matchingProducts, error: matchError } = await query.limit(2000) as { data: { id: string }[] | null; error: any };
 
       if (matchError) throw matchError;
 
