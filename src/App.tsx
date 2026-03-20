@@ -109,6 +109,7 @@ const App = () => (
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
+          <Route path="/orders/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><CustomerOrderDetail /></Suspense>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
