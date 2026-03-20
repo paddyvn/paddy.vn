@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Trash2, Plus, Minus, ShoppingBag, Truck, Tag, ArrowRight, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
+import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
