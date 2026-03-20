@@ -35,10 +35,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, X } from "lucide-react";
+import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, X, CalendarIcon, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useToast } from "@/hooks/use-toast";
@@ -75,7 +81,9 @@ type SortDirection = "asc" | "desc";
 function applyFilters(
   query: any,
   searchQuery: string,
-  statusFilter: string
+  statusFilter: string,
+  dateFrom: Date | null,
+  dateTo: Date | null
 ) {
   if (statusFilter !== "all") {
     query = query.eq("status", statusFilter);
@@ -84,6 +92,14 @@ function applyFilters(
     query = query.or(
       `order_number.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%`
     );
+  }
+  if (dateFrom) {
+    query = query.gte("created_at", dateFrom.toISOString());
+  }
+  if (dateTo) {
+    const endOfDay = new Date(dateTo);
+    endOfDay.setHours(23, 59, 59, 999);
+    query = query.lte("created_at", endOfDay.toISOString());
   }
   return query;
 }
@@ -97,6 +113,8 @@ export default function OrdersManagement() {
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const syncOrders = useSyncOrders();
@@ -111,17 +129,17 @@ export default function OrdersManagement() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, dateFrom, dateTo]);
 
   // ── Count query (for pagination total) ──
   const { data: totalCount = 0 } = useQuery({
-    queryKey: ["admin-orders-count", debouncedSearch, statusFilter],
+    queryKey: ["admin-orders-count", debouncedSearch, statusFilter, dateFrom?.toISOString(), dateTo?.toISOString()],
     queryFn: async () => {
       let query = supabase
         .from("orders")
         .select("*", { count: "exact", head: true });
 
-      query = applyFilters(query, debouncedSearch, statusFilter);
+      query = applyFilters(query, debouncedSearch, statusFilter, dateFrom, dateTo);
 
       const { count, error } = await query;
       if (error) throw error;
@@ -131,7 +149,7 @@ export default function OrdersManagement() {
 
   // ── Data query (paginated, sorted, filtered) ──
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["admin-orders", debouncedSearch, statusFilter, sortField, sortDirection, currentPage],
+    queryKey: ["admin-orders", debouncedSearch, statusFilter, sortField, sortDirection, currentPage, dateFrom?.toISOString(), dateTo?.toISOString()],
     queryFn: async () => {
       const from = (currentPage - 1) * ORDERS_PER_PAGE;
       const to = from + ORDERS_PER_PAGE - 1;
@@ -140,7 +158,7 @@ export default function OrdersManagement() {
         .from("orders")
         .select("*");
 
-      query = applyFilters(query, debouncedSearch, statusFilter);
+      query = applyFilters(query, debouncedSearch, statusFilter, dateFrom, dateTo);
 
       // Apply sort
       query = query.order(sortField, { ascending: sortDirection === "asc" });
@@ -238,14 +256,26 @@ export default function OrdersManagement() {
     setSelectedOrders(new Set());
   };
 
+  // Fix 1: Single order status update with financial_status
   const updateOrderStatus = async (
     orderId: string,
     newStatus: "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled"
   ) => {
     try {
+      const updates: Record<string, any> = { status: newStatus };
+
+      if (newStatus === "confirmed" || newStatus === "shipped" || newStatus === "delivered") {
+        updates.financial_status = "paid";
+      } else if (newStatus === "cancelled") {
+        updates.financial_status = "voided";
+        updates.cancelled_at = new Date().toISOString();
+      } else if (newStatus === "pending") {
+        updates.financial_status = "pending";
+      }
+
       const { error } = await supabase
         .from("orders")
-        .update({ status: newStatus })
+        .update(updates)
         .eq("id", orderId);
 
       if (error) throw error;
@@ -267,15 +297,27 @@ export default function OrdersManagement() {
     }
   };
 
+  // Fix 1: Bulk status update with financial_status
   const bulkUpdateStatus = async (
     newStatus: "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled"
   ) => {
     if (selectedOrders.size === 0) return;
 
     try {
+      const updates: Record<string, any> = { status: newStatus };
+
+      if (newStatus === "confirmed" || newStatus === "shipped" || newStatus === "delivered") {
+        updates.financial_status = "paid";
+      } else if (newStatus === "cancelled") {
+        updates.financial_status = "voided";
+        updates.cancelled_at = new Date().toISOString();
+      } else if (newStatus === "pending") {
+        updates.financial_status = "pending";
+      }
+
       const { error } = await supabase
         .from("orders")
-        .update({ status: newStatus })
+        .update(updates)
         .in("id", Array.from(selectedOrders));
 
       if (error) throw error;
@@ -298,16 +340,112 @@ export default function OrdersManagement() {
     }
   };
 
+  // Fix 6: CSV Export
+  const exportOrdersCSV = async () => {
+    try {
+      let query = supabase
+        .from("orders")
+        .select(`
+          order_number, created_at, status, financial_status,
+          subtotal, shipping_fee, discount, total,
+          customer_email, customer_phone, customer_name,
+          payment_gateway, delivery_method, source_name,
+          coupon_code, notes, shipping_address,
+          order_items(product_name, variant_name, quantity, price, subtotal)
+        `)
+        .order("created_at", { ascending: false });
+
+      query = applyFilters(query, debouncedSearch, statusFilter, dateFrom, dateTo);
+
+      const { data, error } = await query.limit(10000);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast({ title: "No orders to export", variant: "destructive" });
+        return;
+      }
+
+      const headers = [
+        "Order Number", "Date", "Status", "Payment Status",
+        "Customer Name", "Email", "Phone",
+        "Subtotal", "Shipping", "Discount", "Total",
+        "Payment Method", "Delivery Method", "Source",
+        "Voucher Code", "Items", "Shipping Address", "Notes"
+      ];
+
+      const rows = data.map((order: any) => {
+        const address = order.shipping_address || {};
+        const itemsSummary = (order.order_items || [])
+          .map((item: any) => `${item.product_name}${item.variant_name ? ` (${item.variant_name})` : ""} x${item.quantity}`)
+          .join("; ");
+        const fullAddress = [address.address1 || address.address_line1, address.ward, address.district, address.city]
+          .filter(Boolean).join(", ");
+
+        return [
+          order.order_number,
+          format(new Date(order.created_at), "yyyy-MM-dd HH:mm"),
+          order.status,
+          order.financial_status || "pending",
+          order.customer_name || `${address.first_name || ""} ${address.last_name || ""}`.trim() || "",
+          order.customer_email || "",
+          order.customer_phone || "",
+          order.subtotal,
+          order.shipping_fee || 0,
+          order.discount || 0,
+          order.total,
+          order.payment_gateway || "",
+          order.delivery_method || "",
+          order.source_name || "",
+          order.coupon_code || "",
+          itemsSummary,
+          fullAddress,
+          order.notes || "",
+        ];
+      });
+
+      const escapeCSV = (val: any) => {
+        const str = String(val ?? "");
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const csv = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map((row: any[]) => row.map(escapeCSV).join(","))
+      ].join("\n");
+
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `paddy-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export complete", description: `${data.length} orders exported` });
+    } catch (error) {
+      toast({ title: "Export failed", description: String(error), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Orders</h2>
+          {/* Fix 4: Subtitle */}
           <p className="text-muted-foreground">
-            Manage and track all your orders from Shopify
+            Manage and track all your orders
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Fix 6: Export button */}
+          <Button variant="outline" onClick={exportOrdersCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
           <Button
             onClick={() => syncOrders.syncOrders(false)}
             disabled={syncOrders.isPending}
@@ -348,7 +486,7 @@ export default function OrdersManagement() {
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Filter by status" />
@@ -363,6 +501,49 @@ export default function OrdersManagement() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Fix 5: Date range filter */}
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2 text-sm">
+                  <CalendarIcon className="h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Từ ngày"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom || undefined}
+                  onSelect={(date) => { setDateFrom(date || null); setCurrentPage(1); }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <span className="text-muted-foreground">–</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2 text-sm">
+                  <CalendarIcon className="h-4 w-4" />
+                  {dateTo ? format(dateTo, "dd/MM/yyyy") : "Đến ngày"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo || undefined}
+                  onSelect={(date) => { setDateTo(date || null); setCurrentPage(1); }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(null); setDateTo(null); setCurrentPage(1); }}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
           <OrderColumnsSelector columns={columns} onColumnsChange={setColumns} />
         </div>
       </div>
