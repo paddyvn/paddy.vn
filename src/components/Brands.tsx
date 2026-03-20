@@ -20,7 +20,7 @@ export const Brands = () => {
         .eq('collection_type', 'brand')
         .eq('is_active', true)
         .order('display_order', { ascending: true })
-        .limit(16);
+        .limit(12);
       
       return data as BrandCollection[] || [];
     }
