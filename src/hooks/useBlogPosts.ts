@@ -51,6 +51,9 @@ export const useSyncBlogPosts = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-categories"] });
       toast({
         title: "Sync Complete",
         description: data.message || "Blog posts synced successfully",
