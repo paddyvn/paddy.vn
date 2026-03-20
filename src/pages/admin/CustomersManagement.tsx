@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useCustomers, useUpdateCustomer, Customer } from "@/hooks/useCustomers";
+import { supabase } from "@/integrations/supabase/client";
+import { useUpdateCustomer, Customer } from "@/hooks/useCustomers";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,48 +59,90 @@ import { formatCurrency } from "@/lib/utils";
 
 const CUSTOMERS_PER_PAGE = 50;
 
+function applyCustomerFilters(
+  query: any,
+  searchQuery: string,
+  marketingFilter: string
+) {
+  if (marketingFilter === "subscribed") {
+    query = query.eq("accepts_marketing", true);
+  } else if (marketingFilter === "not-subscribed") {
+    query = query.eq("accepts_marketing", false);
+  }
+
+  if (searchQuery) {
+    query = query.or(
+      `email.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`
+    );
+  }
+
+  return query;
+}
+
 export default function CustomersManagement() {
   const navigate = useNavigate();
-  const { data: customers, isLoading } = useCustomers();
   const updateCustomer = useUpdateCustomer();
   const syncCustomers = useSyncCustomers();
   
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [marketingFilter, setMarketingFilter] = useState<string>("all");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingNote, setEditingNote] = useState(false);
   const [note, setNote] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredCustomers = useMemo(() => {
-    if (!customers) return [];
-    
-    return customers.filter((customer) => {
-      const matchesSearch = 
-        customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.phone?.includes(searchQuery);
-      
-      const matchesMarketing = 
-        marketingFilter === "all" ||
-        (marketingFilter === "subscribed" && customer.accepts_marketing) ||
-        (marketingFilter === "not-subscribed" && !customer.accepts_marketing);
-      
-      return matchesSearch && matchesMarketing;
-    });
-  }, [customers, searchQuery, marketingFilter]);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, marketingFilter]);
+
+  // Count query
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ["admin-customers-count", debouncedSearch, marketingFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("customers")
+        .select("*", { count: "exact", head: true });
+
+      query = applyCustomerFilters(query, debouncedSearch, marketingFilter);
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Data query
+  const { data: customers, isLoading } = useQuery({
+    queryKey: ["admin-customers", debouncedSearch, marketingFilter, currentPage],
+    queryFn: async () => {
+      const from = (currentPage - 1) * CUSTOMERS_PER_PAGE;
+      const to = from + CUSTOMERS_PER_PAGE - 1;
+
+      let query = supabase
+        .from("customers")
+        .select("*")
+        .order("shopify_created_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+      query = applyCustomerFilters(query, debouncedSearch, marketingFilter);
+      query = query.range(from, to);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Customer[];
+    },
+  });
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / CUSTOMERS_PER_PAGE);
   const startIndex = (currentPage - 1) * CUSTOMERS_PER_PAGE;
-  const endIndex = startIndex + CUSTOMERS_PER_PAGE;
-  const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery, marketingFilter]);
+  const endIndex = Math.min(startIndex + CUSTOMERS_PER_PAGE, totalCount);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -173,7 +217,7 @@ export default function CustomersManagement() {
             <Skeleton key={i} className="h-16 w-full" />
           ))}
         </div>
-      ) : paginatedCustomers.length === 0 ? (
+      ) : (customers || []).length === 0 ? (
         <div className="text-center py-12 border border-dashed border-border rounded-lg">
           <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No customers found</h3>
@@ -197,7 +241,7 @@ export default function CustomersManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedCustomers.map((customer) => (
+              {(customers || []).map((customer) => (
                 <TableRow
                   key={customer.id}
                   className="cursor-pointer hover:bg-muted/50"
@@ -259,11 +303,11 @@ export default function CustomersManagement() {
       )}
 
       {/* Pagination */}
-      {!isLoading && filteredCustomers.length > 0 && (
+      {!isLoading && totalCount > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredCustomers.length)} of{" "}
-            {filteredCustomers.length} customers
+            Showing {startIndex + 1} to {endIndex} of{" "}
+            {totalCount} customers
           </p>
           
           {totalPages > 1 && (

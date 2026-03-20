@@ -56,6 +56,8 @@ export const useUpdateCustomer = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-customers-count"] });
       toast({
         title: "Success",
         description: "Customer updated successfully",
