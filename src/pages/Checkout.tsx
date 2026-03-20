@@ -1048,46 +1048,48 @@ export default function Checkout() {
                   )}
                 </div>
 
-                {/* Subscribe & Save - Hidden for now, will be enabled later
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 text-primary" />
-                      <Label htmlFor="subscription" className="text-sm font-medium cursor-pointer">
-                        Subscribe & Save {SUBSCRIPTION_DISCOUNT}%
-                      </Label>
+                {subscriptionDeal && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="h-4 w-4 text-primary" />
+                          <Label htmlFor="subscription" className="text-sm font-medium cursor-pointer">
+                            Subscribe & Save {subscriptionDiscountPct}%
+                          </Label>
+                        </div>
+                        <Switch
+                          id="subscription"
+                          checked={enableSubscription}
+                          onCheckedChange={setEnableSubscription}
+                        />
+                      </div>
+                      
+                      {enableSubscription && (
+                        <div className="space-y-2 pl-6">
+                          <Label className="text-xs text-muted-foreground">Tần suất giao hàng</Label>
+                          <Select
+                            value={subscriptionFrequency}
+                            onValueChange={(value) => setSubscriptionFrequency(value as SubscriptionFrequency)}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="weekly">Hàng tuần</SelectItem>
+                              <SelectItem value="bi-weekly">2 tuần/lần</SelectItem>
+                              <SelectItem value="monthly">Hàng tháng</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Tự động đặt hàng lại theo lịch, tiết kiệm {subscriptionDiscountPct}%
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <Switch
-                      id="subscription"
-                      checked={enableSubscription}
-                      onCheckedChange={setEnableSubscription}
-                    />
-                  </div>
-                  
-                  {enableSubscription && (
-                    <div className="space-y-2 pl-6">
-                      <Label className="text-xs text-muted-foreground">Tần suất giao hàng</Label>
-                      <Select
-                        value={subscriptionFrequency}
-                        onValueChange={(value) => setSubscriptionFrequency(value as SubscriptionFrequency)}
-                      >
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekly">Hàng tuần</SelectItem>
-                          <SelectItem value="bi-weekly">2 tuần/lần</SelectItem>
-                          <SelectItem value="monthly">Hàng tháng</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Tự động đặt hàng lại theo lịch, tiết kiệm {SUBSCRIPTION_DISCOUNT}%
-                      </p>
-                    </div>
-                  )}
-                </div>
-                */}
+                  </>
+                )}
 
                 <Separator />
 
