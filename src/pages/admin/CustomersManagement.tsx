@@ -42,7 +42,8 @@ import {
   Tag,
   FileText,
   User,
-  RefreshCw
+  RefreshCw,
+  Download,
 } from "lucide-react";
 import { useSyncCustomers } from "@/hooks/useSyncCustomers";
 import {
