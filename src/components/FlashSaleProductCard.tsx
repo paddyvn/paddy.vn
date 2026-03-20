@@ -22,11 +22,12 @@ interface FlashSaleProductCardProps {
     option3_name?: string | null;
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
   };
-  discountPercent?: number; // Flash sale discount percentage
-  soldCount?: number; // Number of items sold
+  discountPercent?: number;
+  soldCount?: number;
 }
 
-export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount = 0 }: FlashSaleProductCardProps) => {
+// Fix 4: default discountPercent to 0 (not 30)
+export const FlashSaleProductCard = ({ product, discountPercent = 0, soldCount = 0 }: FlashSaleProductCardProps) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | undefined>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -62,11 +63,12 @@ export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount 
     return primary?.image_url || images[0]?.image_url;
   };
 
-  // Use the flash sale discount, not the product's compare_at_price
+  // Fix 4: base_price is the ORIGINAL price, sale price is calculated from discount
   const hasDiscount = discountPercent > 0;
-  const originalPrice = hasDiscount 
-    ? Math.round(product.base_price / (1 - discountPercent / 100))
-    : product.compare_at_price || product.base_price;
+  const originalPrice = product.base_price;
+  const salePrice = hasDiscount
+    ? Math.round(product.base_price * (1 - discountPercent / 100))
+    : product.base_price;
 
   const getSellingLabel = () => {
     if (soldCount >= 30) return "SẮP HẾT";
@@ -123,7 +125,7 @@ export const FlashSaleProductCard = ({ product, discountPercent = 30, soldCount 
                 </span>
               )}
               <span className="text-sm font-bold text-primary">
-                {formatPrice(product.base_price)}₫
+                {formatPrice(salePrice)}₫
               </span>
             </div>
             <Button
