@@ -370,7 +370,7 @@ export default function Checkout() {
           order_number: newOrderNumber,
           subtotal: subtotal,
           shipping_fee: shippingCost,
-          discount: discount,
+          discount: discount + totalDealDiscount,
           total: total,
           status: "pending",
           financial_status: selectedPayment === "cod" ? "pending" : "pending",
