@@ -194,6 +194,13 @@ export default function ProductEdit() {
         target_age_id: product.target_age_id || null,
         target_size_id: product.target_size_id || null,
         origin_id: product.origin_id || null,
+        ingredients: product.ingredients || "",
+        feeding_guidelines: product.feeding_guidelines || "",
+        nutrition_facts: (product.nutrition_facts as any) || [],
+        show_description: product.show_description ?? true,
+        show_ingredients: product.show_ingredients ?? true,
+        show_feeding_guidelines: product.show_feeding_guidelines ?? true,
+        show_nutrition_facts: product.show_nutrition_facts ?? true,
       });
     }
   }, [product, form]);
