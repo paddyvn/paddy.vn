@@ -93,6 +93,7 @@ export default function ComboBuyEdit() {
 
   useEffect(() => {
     if (promotion) {
+      const rules = (promotion as any).rules || {};
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
@@ -107,6 +108,11 @@ export default function ComboBuyEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        combo_type: rules.combo_type || "buy_x_discount_y",
+        buy_quantity: rules.buy_quantity || 2,
+        get_quantity: rules.get_quantity || 1,
+        discount_percentage: rules.discount_percentage || 50,
+        bundle_price: rules.bundle_price || 0,
       }));
     }
   }, [promotion]);
