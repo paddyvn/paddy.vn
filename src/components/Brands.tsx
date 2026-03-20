@@ -20,7 +20,7 @@ export const Brands = () => {
         .eq('collection_type', 'brand')
         .eq('is_active', true)
         .order('display_order', { ascending: true })
-        .limit(16);
+        .limit(12);
       
       return data as BrandCollection[] || [];
     }
@@ -44,12 +44,12 @@ export const Brands = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-          {brands.map((brand, index) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+          {brands.map((brand) => (
             <Link
               key={brand.id}
               to={`/collections/${brand.slug}`}
-              className={`group ${index >= 6 ? 'hidden sm:block' : ''}`}
+              className="group"
             >
               <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50 overflow-hidden">
                 {brand.image_url ? (
