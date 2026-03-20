@@ -22,7 +22,7 @@ const Index = () => {
         <FlashSaleSection />
         <VouchersSection />
         <DealsGrid />
-        <PetSelector />
+        
         <Categories />
         <FeaturedProducts />
         <Brands />
