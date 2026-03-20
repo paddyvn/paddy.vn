@@ -79,6 +79,60 @@ type CollectionRule = {
   value: string;
 };
 
+// Build a Supabase query that applies smart collection rules
+function buildSmartCollectionQuery(
+  rules: CollectionRule[],
+  matchType: string,
+  selectClause: string = "id"
+) {
+  let query = supabase
+    .from("products")
+    .select(selectClause)
+    .eq("is_active", true);
+
+  for (const rule of rules) {
+    if (!rule.value.trim()) continue;
+    const value = rule.value.trim();
+
+    switch (rule.field) {
+      case "brand":
+        if (rule.operator === "equals") query = query.ilike("brand", value);
+        else if (rule.operator === "not_equals") query = query.not("brand", "ilike", value);
+        else if (rule.operator === "contains") query = query.ilike("brand", `%${value}%`);
+        else if (rule.operator === "starts_with") query = query.ilike("brand", `${value}%`);
+        else if (rule.operator === "ends_with") query = query.ilike("brand", `%${value}`);
+        break;
+      case "product_type":
+        if (rule.operator === "equals") query = query.ilike("product_type", value);
+        else if (rule.operator === "not_equals") query = query.not("product_type", "ilike", value);
+        else if (rule.operator === "contains") query = query.ilike("product_type", `%${value}%`);
+        break;
+      case "tags":
+        if (rule.operator === "equals" || rule.operator === "contains") query = query.ilike("tags", `%${value}%`);
+        else if (rule.operator === "not_equals" || rule.operator === "not_contains") query = query.not("tags", "ilike", `%${value}%`);
+        break;
+      case "title":
+        if (rule.operator === "equals") query = query.ilike("name", value);
+        else if (rule.operator === "not_equals") query = query.not("name", "ilike", value);
+        else if (rule.operator === "contains") query = query.ilike("name", `%${value}%`);
+        else if (rule.operator === "starts_with") query = query.ilike("name", `${value}%`);
+        else if (rule.operator === "ends_with") query = query.ilike("name", `%${value}`);
+        break;
+      case "price":
+        const priceValue = parseFloat(value);
+        if (!isNaN(priceValue)) {
+          if (rule.operator === "equals") query = query.eq("base_price", priceValue);
+          else if (rule.operator === "not_equals") query = query.neq("base_price", priceValue);
+          else if (rule.operator === "greater_than") query = query.gt("base_price", priceValue);
+          else if (rule.operator === "less_than") query = query.lt("base_price", priceValue);
+        }
+        break;
+    }
+  }
+
+  return query;
+}
+
 // Sortable Product Row Component
 interface SortableProductRowProps {
   product: any;
