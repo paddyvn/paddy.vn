@@ -225,7 +225,7 @@ export default function AbandonedCheckouts() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedCheckouts.map((checkout) => (
+              {(checkouts || []).map((checkout) => (
                 <TableRow
                   key={checkout.id}
                   className="cursor-pointer hover:bg-muted/50"
