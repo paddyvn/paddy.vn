@@ -231,7 +231,7 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
                   {formatPrice(displayPrice)}đ
                 </span>
                 {showSale && discountPercentage > 0 && (
-                  <span className="text-xs font-bold text-destructive bg-destructive/10 px-1.5 py-px rounded-md">
+                  <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-px rounded-md">
                     -{discountPercentage}%
                   </span>
                 )}
