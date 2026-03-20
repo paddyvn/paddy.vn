@@ -222,22 +222,24 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
           </div>
 
           {/* Price + Cart button */}
-          <div className="mt-auto pt-2 space-y-1">
-            {showSale && (
-              <span className="text-xs text-muted-foreground line-through">
-                {formatPrice(originalPrice)}đ
-              </span>
-            )}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-baseline gap-1.5 min-w-0">
-                <span className="text-[17px] font-bold text-primary tracking-tight whitespace-nowrap">
-                  {formatPrice(displayPrice)}đ
-                </span>
-                {showSale && discountPercentage > 0 && (
-                  <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md whitespace-nowrap">
-                    -{discountPercentage}%
+          <div className="mt-auto pt-2">
+            <div className="flex items-end justify-between gap-2">
+              <div className="flex flex-col min-w-0">
+                {showSale && (
+                  <span className="text-xs text-muted-foreground line-through leading-tight">
+                    {formatPrice(originalPrice)}đ
                   </span>
                 )}
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[17px] font-bold text-primary tracking-tight whitespace-nowrap leading-tight">
+                    {formatPrice(displayPrice)}đ
+                  </span>
+                  {showSale && discountPercentage > 0 && (
+                    <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                      -{discountPercentage}%
+                    </span>
+                  )}
+                </div>
               </div>
 
               <button
