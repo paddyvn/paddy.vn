@@ -2995,6 +2995,7 @@ export type Database = {
         Row: {
           cancelled_at: string | null
           closed_at: string | null
+          coupon_code: string | null
           created_at: string
           currency: string | null
           customer_email: string | null
@@ -3009,6 +3010,7 @@ export type Database = {
           order_number: string
           payment_gateway: string | null
           processed_at: string | null
+          promotion_id: string | null
           shipping_address: Json
           shipping_fee: number | null
           shopify_order_id: string | null
@@ -3023,6 +3025,7 @@ export type Database = {
         Insert: {
           cancelled_at?: string | null
           closed_at?: string | null
+          coupon_code?: string | null
           created_at?: string
           currency?: string | null
           customer_email?: string | null
@@ -3037,6 +3040,7 @@ export type Database = {
           order_number: string
           payment_gateway?: string | null
           processed_at?: string | null
+          promotion_id?: string | null
           shipping_address: Json
           shipping_fee?: number | null
           shopify_order_id?: string | null
@@ -3051,6 +3055,7 @@ export type Database = {
         Update: {
           cancelled_at?: string | null
           closed_at?: string | null
+          coupon_code?: string | null
           created_at?: string
           currency?: string | null
           customer_email?: string | null
@@ -3065,6 +3070,7 @@ export type Database = {
           order_number?: string
           payment_gateway?: string | null
           processed_at?: string | null
+          promotion_id?: string | null
           shipping_address?: Json
           shipping_fee?: number | null
           shopify_order_id?: string | null
@@ -3077,6 +3083,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_user_id_fkey"
             columns: ["user_id"]
@@ -6736,6 +6749,10 @@ export type Database = {
       }
       increment_comment_likes: {
         Args: { comment_id_param: string }
+        Returns: undefined
+      }
+      increment_voucher_usage: {
+        Args: { p_promotion_id: string }
         Returns: undefined
       }
       mark_orders_invoiced: { Args: { p_order_ids: string[] }; Returns: number }
