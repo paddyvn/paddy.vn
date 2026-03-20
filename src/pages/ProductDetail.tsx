@@ -377,178 +377,127 @@ export default function ProductDetail() {
         </div>
 
         {/* Product Details Tabs and Nutrition Facts */}
-        <div className="grid lg:grid-cols-3 gap-8 mt-6 mb-16">
-          {/* Tabs Section */}
-          <div className="lg:col-span-2">
-            <Tabs defaultValue="description">
-              <TabsList className="w-full bg-transparent border-b border-border rounded-none p-0 h-auto overflow-x-auto">
-                <div className="flex w-max min-w-full">
-                  <TabsTrigger 
-                    value="description" 
-                    className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
-                  >
-                    Description
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="ingredients"
-                    className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
-                  >
-                    Ingredients
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="feeding"
-                    className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
-                  >
-                    Feeding Guidelines
-                  </TabsTrigger>
-                </div>
-              </TabsList>
-              
-              <TabsContent value="description" className="pt-6">
-                <div className="relative">
-                  <div 
-                    className={`space-y-4 overflow-hidden transition-all ${!expandedTabs.description ? 'max-h-[200px]' : ''}`}
-                  >
-                    <div 
-                      className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
-                    />
-                    
-                    <div>
-                      <h3 className="text-base font-bold mb-3">Key Benefits:</h3>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex items-start gap-2">
-                          <span className="text-foreground">•</span>
-                          High-quality protein from real chicken
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-foreground">•</span>
-                          Omega-3 and Omega-6 fatty acids for healthy skin and coat
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-foreground">•</span>
-                          Natural fiber for healthy digestion
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-foreground">•</span>
-                          Essential vitamins and minerals for overall wellness
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                  {!expandedTabs.description && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                  )}
-                </div>
-                <button
-                  onClick={() => setExpandedTabs(prev => ({ ...prev, description: !prev.description }))}
-                  className="text-sm text-primary font-medium mt-3 hover:underline"
-                >
-                  {expandedTabs.description ? 'Thu gọn' : 'Xem thêm'}
-                </button>
-              </TabsContent>
-              
-              <TabsContent value="ingredients" className="pt-6">
-                <div className="relative">
-                  <div className={`overflow-hidden transition-all ${!expandedTabs.ingredients ? 'max-h-[200px]' : ''}`}>
-                    <div className="prose prose-sm max-w-none text-sm [&_p]:text-sm">
-                      <p className="text-sm text-muted-foreground">
-                        Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Potatoes, Pea Protein, 
-                        Chicken Fat (preserved with Mixed Tocopherols), Natural Flavor, Flaxseed, 
-                        Ocean Fish Meal, Salt, Choline Chloride, Dried Chicory Root, Tomatoes, 
-                        Blueberries, Raspberries, Yucca Schidigera Extract, Dried Enterococcus 
-                        faecium Fermentation Product, Dried Lactobacillus acidophilus Fermentation 
-                        Product, Dried Lactobacillus casei Fermentation Product.
-                      </p>
-                    </div>
-                  </div>
-                  {!expandedTabs.ingredients && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                  )}
-                </div>
-                <button
-                  onClick={() => setExpandedTabs(prev => ({ ...prev, ingredients: !prev.ingredients }))}
-                  className="text-sm text-primary font-medium mt-3 hover:underline"
-                >
-                  {expandedTabs.ingredients ? 'Thu gọn' : 'Xem thêm'}
-                </button>
-              </TabsContent>
-              
-              <TabsContent value="feeding" className="pt-6">
-                <div className="relative">
-                  <div className={`overflow-hidden transition-all ${!expandedTabs.feeding ? 'max-h-[200px]' : ''}`}>
-                    <div className="space-y-5">
-                      <p className="text-sm text-muted-foreground">
-                        Feed according to your pet's weight and activity level. Always ensure fresh 
-                        water is available. Consult your veterinarian for specific dietary needs.
-                      </p>
-                      <div className="overflow-x-auto">
-                        <table className="w-full max-w-lg text-sm">
-                          <thead>
-                            <tr className="border-b border-border">
-                              <th className="text-left py-2 font-semibold">Weight</th>
-                              <th className="text-left py-2 font-semibold">Daily Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody className="text-muted-foreground">
-                            <tr className="border-b border-border">
-                              <td className="py-2">3-12 lbs</td>
-                              <td className="py-2">1/3 - 1 cup</td>
-                            </tr>
-                            <tr className="border-b border-border">
-                              <td className="py-2">13-20 lbs</td>
-                              <td className="py-2">1 - 1 1/3 cups</td>
-                            </tr>
-                            <tr className="border-b border-border">
-                              <td className="py-2">21-35 lbs</td>
-                              <td className="py-2">1 1/3 - 2 cups</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2">36-50 lbs</td>
-                              <td className="py-2">2 - 2 2/3 cups</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                  {!expandedTabs.feeding && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                  )}
-                </div>
-                <button
-                  onClick={() => setExpandedTabs(prev => ({ ...prev, feeding: !prev.feeding }))}
-                  className="text-sm text-primary font-medium mt-3 hover:underline"
-                >
-                  {expandedTabs.feeding ? 'Thu gọn' : 'Xem thêm'}
-                </button>
-              </TabsContent>
-            </Tabs>
-          </div>
+        {(() => {
+          const hasIngredients = product.show_ingredients !== false && !!product.ingredients;
+          const hasFeeding = product.show_feeding_guidelines !== false && !!product.feeding_guidelines;
+          const hasNutrition = product.show_nutrition_facts !== false && product.nutrition_facts
+            && Array.isArray(product.nutrition_facts) && (product.nutrition_facts as any[]).length > 0;
 
-          {/* Nutrition Facts Card - Independent */}
-          <div className="bg-muted/50 rounded-xl p-4 h-fit w-full lg:max-w-xs">
-            <h3 className="text-base font-bold mb-4">Nutrition Facts</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
-                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Protein (min)</span>
-                  <span className="font-semibold text-primary whitespace-nowrap">24.0%</span>
-                </div>
-                <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
-                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Fat (min)</span>
-                  <span className="font-semibold text-primary whitespace-nowrap">14.0%</span>
-                </div>
-                <div className="flex items-start justify-between gap-3 py-1.5 border-b border-border">
-                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Crude Fiber (max)</span>
-                  <span className="font-semibold text-primary whitespace-nowrap">4.0%</span>
-                </div>
-                <div className="flex items-start justify-between gap-3 py-1.5">
-                  <span className="text-muted-foreground min-w-0 flex-1 break-words">Moisture (max)</span>
-                  <span className="font-semibold text-primary whitespace-nowrap">10.0%</span>
-                </div>
+          return (
+            <div className={`grid ${hasNutrition ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-8 mt-6 mb-16`}>
+              <div className={hasNutrition ? 'lg:col-span-2' : ''}>
+                <Tabs defaultValue="description">
+                  <TabsList className="w-full bg-transparent border-b border-border rounded-none p-0 h-auto overflow-x-auto">
+                    <div className="flex w-max min-w-full">
+                      <TabsTrigger 
+                        value="description" 
+                        className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
+                      >
+                        Mô tả
+                      </TabsTrigger>
+                      {hasIngredients && (
+                        <TabsTrigger 
+                          value="ingredients"
+                          className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
+                        >
+                          Thành phần
+                        </TabsTrigger>
+                      )}
+                      {hasFeeding && (
+                        <TabsTrigger 
+                          value="feeding"
+                          className="whitespace-nowrap rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-3 md:px-6 py-3"
+                        >
+                          Hướng dẫn cho ăn
+                        </TabsTrigger>
+                      )}
+                    </div>
+                  </TabsList>
+                  
+                  <TabsContent value="description" className="pt-6">
+                    <div className="relative">
+                      <div 
+                        className={`space-y-4 overflow-hidden transition-all ${!expandedTabs.description ? 'max-h-[200px]' : ''}`}
+                      >
+                        <div 
+                          className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
+                        />
+                      </div>
+                      {!expandedTabs.description && (
+                        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setExpandedTabs(prev => ({ ...prev, description: !prev.description }))}
+                      className="text-sm text-primary font-medium mt-3 hover:underline"
+                    >
+                      {expandedTabs.description ? 'Thu gọn' : 'Xem thêm'}
+                    </button>
+                  </TabsContent>
+                  
+                  {hasIngredients && (
+                    <TabsContent value="ingredients" className="pt-6">
+                      <div className="relative">
+                        <div className={`overflow-hidden transition-all ${!expandedTabs.ingredients ? 'max-h-[200px]' : ''}`}>
+                          <div 
+                            className="prose prose-sm max-w-none text-sm [&_p]:text-sm"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.ingredients) || "" }}
+                          />
+                        </div>
+                        {!expandedTabs.ingredients && (
+                          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setExpandedTabs(prev => ({ ...prev, ingredients: !prev.ingredients }))}
+                        className="text-sm text-primary font-medium mt-3 hover:underline"
+                      >
+                        {expandedTabs.ingredients ? 'Thu gọn' : 'Xem thêm'}
+                      </button>
+                    </TabsContent>
+                  )}
+                  
+                  {hasFeeding && (
+                    <TabsContent value="feeding" className="pt-6">
+                      <div className="relative">
+                        <div className={`overflow-hidden transition-all ${!expandedTabs.feeding ? 'max-h-[200px]' : ''}`}>
+                          <div 
+                            className="prose prose-sm max-w-none text-sm [&_p]:text-sm [&_table]:block [&_table]:overflow-x-auto"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.feeding_guidelines) || "" }}
+                          />
+                        </div>
+                        {!expandedTabs.feeding && (
+                          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setExpandedTabs(prev => ({ ...prev, feeding: !prev.feeding }))}
+                        className="text-sm text-primary font-medium mt-3 hover:underline"
+                      >
+                        {expandedTabs.feeding ? 'Thu gọn' : 'Xem thêm'}
+                      </button>
+                    </TabsContent>
+                  )}
+                </Tabs>
               </div>
-          </div>
-        </div>
+
+              {hasNutrition && (
+                <div className="bg-muted/50 rounded-xl p-4 h-fit w-full lg:max-w-xs">
+                  <h3 className="text-base font-bold mb-4">Thông tin dinh dưỡng</h3>
+                  <div className="space-y-2 text-sm">
+                    {(product.nutrition_facts as Array<{ label: string; value: string }>).map((fact, i) => (
+                      <div key={i} className="flex items-start justify-between gap-3 py-1.5 border-b border-border last:border-0">
+                        <span className="text-muted-foreground min-w-0 flex-1 break-words">{fact.label}</span>
+                        <span className="font-semibold text-primary whitespace-nowrap">{fact.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Reviews Section */}
         <div className="mb-16">
