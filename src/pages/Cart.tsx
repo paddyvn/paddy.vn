@@ -83,12 +83,33 @@ export default function Cart() {
   };
 
   const subtotal = calculateSubtotal();
+
+  // Combo & Tiered deal hooks
+  const dealCartItems = (cart || []).map((item) => {
+    const basePrice = getItemBasePrice(item);
+    const promotion = promotionsMap?.[item.product_id];
+    const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+    return {
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unitPrice: effectivePrice,
+    };
+  });
+
+  const { data: comboDiscounts = [] } = useComboDeals(dealCartItems);
+  const { data: tieredDiscounts = [] } = useTieredDeals(dealCartItems);
+
+  const totalDealDiscount = [
+    ...comboDiscounts.map((d) => d.discountAmount),
+    ...tieredDiscounts.map((d) => d.discountAmount),
+  ].reduce((sum, d) => sum + d, 0);
+
   const shippingRate = SHIPPING_RATES.find(r => r.id === selectedShipping);
   const shippingCost = shippingRate?.minOrder && subtotal >= shippingRate.minOrder 
     ? 0 
     : (shippingRate?.price || 0);
   const discount = appliedCoupon?.discount || 0;
-  const total = subtotal + shippingCost - discount;
+  const total = subtotal + shippingCost - discount - totalDealDiscount;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
