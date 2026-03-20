@@ -366,7 +366,7 @@ export default function ContentBlog() {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedPosts.map((post) => (
+              (posts || []).map((post) => (
                 <TableRow key={post.id}>
                   <TableCell className="font-medium">{post.title}</TableCell>
                   <TableCell className="text-muted-foreground">
