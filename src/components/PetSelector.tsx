@@ -118,7 +118,7 @@ export const PetSelector = () => {
                 catBlocks.map((block, index) => (
                   <Link
                     key={block.id}
-                    to={block.link || '/category/cat'}
+                    to={block.link || '/collections/thuc-an-cho-meo'}
                     className="flex-1 transition-colors p-6 flex items-center justify-center gap-4 group hover:opacity-90"
                     style={{ backgroundColor: block.background_color || '#3B82F6' }}
                   >
