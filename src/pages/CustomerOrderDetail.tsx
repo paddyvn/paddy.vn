@@ -360,7 +360,7 @@ export default function CustomerOrderDetail() {
                             <p className="text-xs text-muted-foreground">{item.variant_name}</p>
                           )}
                           <p className="text-xs text-muted-foreground">
-                            {formatPrice(item.price)}đ × {item.quantity}
+                            {formatCurrency(item.price)} × {item.quantity}
                           </p>
                         </div>
                         <p className="text-sm font-medium shrink-0">{formatCurrency(item.subtotal)}</p>
