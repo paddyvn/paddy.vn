@@ -4,7 +4,7 @@ import { QuickActions } from "@/components/QuickActions";
 import { FlashSaleSection } from "@/components/FlashSaleSection";
 import { VouchersSection } from "@/components/VouchersSection";
 import { DealsGrid } from "@/components/DealsGrid";
-import { PetSelector } from "@/components/PetSelector";
+
 import { Categories } from "@/components/Categories";
 import { FeaturedProducts } from "@/components/FeaturedProducts";
 import { Brands } from "@/components/Brands";
