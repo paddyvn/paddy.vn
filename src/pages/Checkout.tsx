@@ -945,7 +945,9 @@ export default function Checkout() {
               <CardContent className="space-y-4">
                 <div className="max-h-64 overflow-y-auto space-y-3">
                   {cart.map((item) => {
-                    const price = item.product_variants?.price || item.products?.base_price || 0;
+                    const basePrice = getItemBasePrice(item);
+                    const promotion = promotionsMap?.[item.product_id];
+                    const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
                     return (
                       <div key={item.id} className="flex gap-2">
                         <img
@@ -957,7 +959,14 @@ export default function Checkout() {
                           <p className="text-sm font-medium line-clamp-1">{item.products?.name}</p>
                           <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                         </div>
-                        <p className="text-sm font-medium">{formatPrice(price * item.quantity)}₫</p>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">{formatPrice(effectivePrice * item.quantity)}₫</p>
+                          {hasDiscount && (
+                            <p className="text-xs text-muted-foreground line-through">
+                              {formatPrice(originalPrice * item.quantity)}₫
+                            </p>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
