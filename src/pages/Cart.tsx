@@ -85,44 +85,34 @@ export default function Cart() {
     
     setIsApplyingCoupon(true);
     try {
-      const { data, error } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("code", couponCode.toUpperCase())
-        .eq("is_active", true)
-        .single();
+      const result = await validateVoucher(couponCode, subtotal);
 
-      if (error || !data) {
+      if (!result.valid || !result.voucher) {
         toast({
           title: "Mã giảm giá không hợp lệ",
-          description: "Vui lòng kiểm tra lại mã giảm giá",
+          description: result.error,
           variant: "destructive",
         });
         return;
       }
 
-      // Check minimum purchase
-      if (data.min_purchase && subtotal < data.min_purchase) {
-        toast({
-          title: "Chưa đủ điều kiện",
-          description: `Đơn hàng tối thiểu ${formatPrice(data.min_purchase)}₫ để sử dụng mã này`,
-          variant: "destructive",
-        });
-        return;
-      }
+      const v = result.voucher;
+      const discountAmount = calculateVoucherDiscount(
+        v.discount_type,
+        v.discount_value,
+        v.max_discount,
+        subtotal
+      );
 
-      // Calculate discount
-      let discountAmount = 0;
-      if (data.discount_type === "percentage") {
-        discountAmount = (subtotal * data.discount_value) / 100;
-        if (data.max_discount && discountAmount > data.max_discount) {
-          discountAmount = data.max_discount;
-        }
-      } else {
-        discountAmount = data.discount_value;
-      }
-
-      setAppliedCoupon({ code: data.code, discount: discountAmount });
+      setAppliedCoupon({
+        code: v.voucher_code,
+        discount: discountAmount,
+        promotionId: v.id,
+        discount_type: v.discount_type,
+        discount_value: v.discount_value,
+        max_discount: v.max_discount,
+      });
+      setCouponCode("");
       toast({
         title: "Áp dụng mã giảm giá thành công",
         description: `Giảm ${formatPrice(discountAmount)}₫`,
