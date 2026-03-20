@@ -117,39 +117,18 @@ export default function ProductsManagement() {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, brandFilter, collectionFilter, categoryFilter, sortKey, sortDirection]);
 
-  // Fetch unique brands directly with proper query
+  // Fetch unique brands from the brands table directly
   const { data: brands, isLoading: brandsLoading, error: brandsError } = useQuery({
-    queryKey: ["brands"],
+    queryKey: ["admin-brand-names"],
     queryFn: async () => {
-      // Fetch ALL products without limit to get complete brand list
-      let allProducts: Array<{ brand: string }> = [];
-      let from = 0;
-      const batchSize = 1000;
-      let hasMore = true;
-      
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("products")
-          .select("brand")
-          .not("brand", "is", null)
-          .range(from, from + batchSize - 1);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          allProducts = allProducts.concat(data);
-          from += batchSize;
-          hasMore = data.length === batchSize;
-        } else {
-          hasMore = false;
-        }
-      }
-      
-      // Extract unique brands and sort
-      const uniqueBrands = [...new Set(allProducts.map(p => p.brand))].filter(Boolean) as string[];
-      uniqueBrands.sort();
-      
-      return uniqueBrands;
+      const { data, error } = await supabase
+        .from("brands")
+        .select("name")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      return data.map((b) => b.name);
     },
   });
 
