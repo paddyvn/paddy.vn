@@ -303,11 +303,11 @@ export default function CustomersManagement() {
       )}
 
       {/* Pagination */}
-      {!isLoading && filteredCustomers.length > 0 && (
+      {!isLoading && totalCount > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredCustomers.length)} of{" "}
-            {filteredCustomers.length} customers
+            Showing {startIndex + 1} to {endIndex} of{" "}
+            {totalCount} customers
           </p>
           
           {totalPages > 1 && (
