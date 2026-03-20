@@ -159,6 +159,8 @@ const App = () => (
             <Route path="settings/stores" element={<StoresManagement />} />
             <Route path="settings/stores/:id" element={<StoreEdit />} />
           </Route>
+          {/* Redirect legacy /category/ links to /collections/ */}
+          <Route path="/category/:slug" element={<CategoryRedirect />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

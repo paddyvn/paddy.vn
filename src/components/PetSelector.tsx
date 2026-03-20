@@ -129,14 +129,14 @@ export const PetSelector = () => {
               ) : (
                 <>
                   <Link 
-                    to="/category/cat" 
+                    to="/collections/thuc-an-cho-meo" 
                     className="flex-1 bg-amber-100 hover:bg-amber-200 transition-colors p-6 flex items-center justify-center gap-4 group"
                   >
                     {getIcon('cat', 'large')}
                     <span className="text-2xl font-bold text-foreground">Cat</span>
                   </Link>
                   <Link 
-                    to="/category/kitten" 
+                    to="/collections/meo-con" 
                     className="flex-1 bg-amber-50 hover:bg-amber-100 transition-colors p-6 flex items-center justify-center gap-4 group"
                   >
                     {getIcon('cat', 'small')}
