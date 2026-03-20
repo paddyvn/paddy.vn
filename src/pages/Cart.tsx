@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Trash2, Plus, Minus, ShoppingBag, Truck, Tag, ArrowRight, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
+import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +50,10 @@ export default function Cart() {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedShipping, setSelectedShipping] = useState("standard");
   const { cart, isLoading, removeFromCart, updateQuantity } = useCart(userId);
+  const cartProductIds = (cart || [])
+    .map((item) => item.product_id)
+    .filter((id): id is string => !!id);
+  const { data: promotionsMap } = useProductsPromotions(cartProductIds);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -67,8 +73,10 @@ export default function Cart() {
 
   const calculateSubtotal = () => {
     return cart.reduce((total, item) => {
-      const price = item.product_variants?.price || item.products?.base_price || 0;
-      return total + price * item.quantity;
+      const basePrice = getItemBasePrice(item);
+      const promotion = promotionsMap?.[item.product_id];
+      const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+      return total + effectivePrice * item.quantity;
     }, 0);
   };
 
@@ -173,7 +181,9 @@ export default function Cart() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {cart.map((item) => {
-                    const price = item.product_variants?.price || item.products?.base_price || 0;
+                    const basePrice = getItemBasePrice(item);
+                    const promotion = promotionsMap?.[item.product_id];
+                    const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
                     const productImages = item.products?.product_images;
                     
                     return (
@@ -197,9 +207,16 @@ export default function Cart() {
                                 {item.product_variants.name}
                               </p>
                             )}
-                            <p className="text-primary font-semibold mt-2">
-                              {formatPrice(price)}₫
-                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="text-primary font-semibold">
+                                {formatPrice(effectivePrice)}₫
+                              </span>
+                              {hasDiscount && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {formatPrice(originalPrice)}₫
+                                </span>
+                              )}
+                            </div>
                             
                             <div className="flex items-center justify-between mt-3">
                               <div className="flex items-center gap-2">
@@ -230,9 +247,16 @@ export default function Cart() {
                               </div>
                               
                               <div className="flex items-center gap-4">
-                                <span className="font-semibold">
-                                  {formatPrice(price * item.quantity)}₫
-                                </span>
+                                <div className="text-right">
+                                  <span className="font-semibold">
+                                    {formatPrice(effectivePrice * item.quantity)}₫
+                                  </span>
+                                  {hasDiscount && (
+                                    <span className="text-xs text-muted-foreground line-through ml-1">
+                                      {formatPrice(originalPrice * item.quantity)}₫
+                                    </span>
+                                  )}
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="icon"

@@ -33,6 +33,8 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useProductsPromotions } from "@/hooks/useProductPromotions";
+import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
 import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
 import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSubscriptions";
 import { supabase } from "@/integrations/supabase/client";
@@ -126,6 +128,10 @@ export default function Checkout() {
   const SUBSCRIPTION_DISCOUNT = 10; // 10% discount for subscriptions
   
   const { cart, isLoading: cartLoading } = useCart(userId);
+  const cartProductIds = (cart || [])
+    .map((item) => item.product_id)
+    .filter((id): id is string => !!id);
+  const { data: promotionsMap } = useProductsPromotions(cartProductIds);
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
   const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
@@ -203,8 +209,10 @@ export default function Checkout() {
 
   const calculateSubtotal = () => {
     return cart.reduce((total, item) => {
-      const price = item.product_variants?.price || item.products?.base_price || 0;
-      return total + price * item.quantity;
+      const basePrice = getItemBasePrice(item);
+      const promotion = promotionsMap?.[item.product_id];
+      const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+      return total + effectivePrice * item.quantity;
     }, 0);
   };
 
@@ -373,17 +381,22 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        product_name: item.products?.name || "Unknown Product",
-        variant_name: item.product_variants?.name || null,
-        quantity: item.quantity,
-        price: item.product_variants?.price || item.products?.base_price || 0,
-        subtotal: (item.product_variants?.price || item.products?.base_price || 0) * item.quantity,
-      }));
+      // Create order items with promotion-adjusted prices
+      const orderItems = cart.map(item => {
+        const basePrice = getItemBasePrice(item);
+        const promotion = promotionsMap?.[item.product_id];
+        const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+        return {
+          order_id: order.id,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          product_name: item.products?.name || "Unknown Product",
+          variant_name: item.product_variants?.name || null,
+          quantity: item.quantity,
+          price: effectivePrice,
+          subtotal: effectivePrice * item.quantity,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("order_items")
@@ -448,12 +461,17 @@ export default function Checkout() {
           discount_percent: SUBSCRIPTION_DISCOUNT,
           shipping_address: shippingAddr,
           delivery_method: deliveryMethod?.name,
-          items: cart.map(item => ({
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            price: item.product_variants?.price || item.products?.base_price || 0,
-          })),
+          items: cart.map(item => {
+            const basePrice = getItemBasePrice(item);
+            const promotion = promotionsMap?.[item.product_id];
+            const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+            return {
+              product_id: item.product_id,
+              variant_id: item.variant_id,
+              quantity: item.quantity,
+              price: effectivePrice,
+            };
+          }),
         });
       }
 
@@ -841,7 +859,9 @@ export default function Checkout() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {cart.map((item) => {
-                      const price = item.product_variants?.price || item.products?.base_price || 0;
+                      const basePrice = getItemBasePrice(item);
+                      const promotion = promotionsMap?.[item.product_id];
+                      const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
                       return (
                         <div key={item.id} className="flex gap-3">
                           <img
@@ -854,11 +874,23 @@ export default function Checkout() {
                             {item.product_variants?.name && (
                               <p className="text-sm text-muted-foreground">{item.product_variants.name}</p>
                             )}
-                            <p className="text-sm">
-                              {formatPrice(price)}₫ x {item.quantity}
-                            </p>
+                            <div className="text-sm">
+                              <span>{formatPrice(effectivePrice)}₫ x {item.quantity}</span>
+                              {hasDiscount && (
+                                <span className="text-xs text-muted-foreground line-through ml-2">
+                                  {formatPrice(originalPrice)}₫
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className="font-medium">{formatPrice(price * item.quantity)}₫</p>
+                          <div className="text-right">
+                            <p className="font-medium">{formatPrice(effectivePrice * item.quantity)}₫</p>
+                            {hasDiscount && (
+                              <p className="text-xs text-muted-foreground line-through">
+                                {formatPrice(originalPrice * item.quantity)}₫
+                              </p>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -913,7 +945,9 @@ export default function Checkout() {
               <CardContent className="space-y-4">
                 <div className="max-h-64 overflow-y-auto space-y-3">
                   {cart.map((item) => {
-                    const price = item.product_variants?.price || item.products?.base_price || 0;
+                    const basePrice = getItemBasePrice(item);
+                    const promotion = promotionsMap?.[item.product_id];
+                    const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
                     return (
                       <div key={item.id} className="flex gap-2">
                         <img
@@ -925,7 +959,14 @@ export default function Checkout() {
                           <p className="text-sm font-medium line-clamp-1">{item.products?.name}</p>
                           <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                         </div>
-                        <p className="text-sm font-medium">{formatPrice(price * item.quantity)}₫</p>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">{formatPrice(effectivePrice * item.quantity)}₫</p>
+                          {hasDiscount && (
+                            <p className="text-xs text-muted-foreground line-through">
+                              {formatPrice(originalPrice * item.quantity)}₫
+                            </p>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
