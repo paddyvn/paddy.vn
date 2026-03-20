@@ -311,7 +311,7 @@ export default function OrderConfirmation() {
         {/* 7. Action buttons */}
         <div className="flex gap-3 justify-center">
           <Button variant="outline" asChild>
-            <Link to="/profile?tab=orders">Xem đơn hàng của tôi</Link>
+            <Link to={`/orders/${order.order_number}`}>Xem chi tiết đơn hàng</Link>
           </Button>
           <Button asChild>
             <Link to="/">Tiếp tục mua sắm</Link>
