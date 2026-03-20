@@ -137,6 +137,7 @@ export default function BuyMoreSaveMoreEdit() {
         link_type: "collection",
         link_destination: "",
         promo_type: "buy_more_save_more",
+        program_kind: "buy_more_save_more",
         is_active: data.is_active,
         display_order: data.display_order,
         start_date: data.start_date?.toISOString() || null,
@@ -145,6 +146,9 @@ export default function BuyMoreSaveMoreEdit() {
         gradient_to: data.gradient_to,
         icon_type: data.icon_type,
         custom_icons: data.custom_icons.length > 0 ? JSON.parse(JSON.stringify(data.custom_icons)) : null,
+        rules: {
+          tiers: data.tiers,
+        },
       };
 
       let promotionId = id;

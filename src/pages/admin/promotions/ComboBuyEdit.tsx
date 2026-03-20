@@ -303,6 +303,19 @@ export default function ComboBuyEdit() {
                 )}
               </div>
             )}
+
+            {formData.combo_type === "bundles" && (
+              <div className="space-y-2">
+                <Label>Giá combo (₫)</Label>
+                <Input
+                  type="number"
+                  value={formData.bundle_price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bundle_price: parseInt(e.target.value) || 0 })
+                  }
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
