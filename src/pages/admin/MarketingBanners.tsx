@@ -368,6 +368,10 @@ const MarketingBanners = () => {
             <LayoutTemplate className="h-4 w-4" />
             Promotional Sections
           </TabsTrigger>
+          <TabsTrigger value="categories" className="gap-2">
+            <Grid3X3 className="h-4 w-4" />
+            Homepage Categories
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
@@ -398,6 +402,10 @@ const MarketingBanners = () => {
             icon={<LayoutTemplate className="h-12 w-12 text-muted-foreground" />}
             emptyMessage="Create custom promotional sections to highlight special offers, featured categories, or seasonal campaigns."
           />
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <HomepageCategoriesManager />
         </TabsContent>
       </Tabs>
     </div>
