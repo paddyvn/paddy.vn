@@ -51,6 +51,9 @@ export const useSyncBlogPosts = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-categories"] });
       toast({
         title: "Sync Complete",
         description: data.message || "Blog posts synced successfully",
@@ -87,6 +90,8 @@ export const useUpdateBlogPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
       toast({
         title: "Blog Post Updated",
         description: "Blog post has been updated successfully",
@@ -114,6 +119,8 @@ export const useDeleteBlogPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
       toast({
         title: "Blog Post Deleted",
         description: "Blog post has been deleted successfully",
@@ -166,6 +173,8 @@ export const useCreateBlogPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
       toast({
         title: "Blog Post Created",
         description: "New blog post has been created successfully",

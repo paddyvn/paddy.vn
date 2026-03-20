@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useBlogPosts, useSyncBlogPosts } from "@/hooks/useBlogPosts";
+import { supabase } from "@/integrations/supabase/client";
+import { useSyncBlogPosts, BlogPost } from "@/hooks/useBlogPosts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,20 +44,40 @@ import { format } from "date-fns";
 type SortField = "title" | "blog_title" | "author" | "published" | "shopify_published_at" | "updated_at";
 type SortDirection = "asc" | "desc";
 
+const POSTS_PER_PAGE = 20;
+
+function applyBlogFilters(query: any, searchQuery: string, blogFilter: string) {
+  if (blogFilter !== "all") {
+    query = query.eq("shopify_blog_id", blogFilter);
+  }
+  if (searchQuery) {
+    query = query.or(
+      `title.ilike.%${searchQuery}%,handle.ilike.%${searchQuery}%,tags.ilike.%${searchQuery}%`
+    );
+  }
+  return query;
+}
+
 export default function ContentBlog() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [blogFilter, setBlogFilter] = useState<string>("all");
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("shopify_published_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
-  const POSTS_PER_PAGE = 20;
-
-  const { data: posts, isLoading } = useBlogPosts();
   const syncPosts = useSyncBlogPosts();
-  
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, blogFilter, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -77,91 +99,94 @@ export default function ContentBlog() {
     );
   };
 
-  // Get unique blogs for filter
-  const blogs = useMemo(() => {
-    if (!posts) return [];
-    const uniqueBlogs = new Map<string, string>();
-    posts.forEach((post) => {
-      if (post.shopify_blog_id && post.blog_title) {
-        uniqueBlogs.set(post.shopify_blog_id, post.blog_title);
-      }
-    });
-    return Array.from(uniqueBlogs.entries()).map(([id, title]) => ({ id, title }));
-  }, [posts]);
+  // Fetch unique blogs for filter dropdown
+  const { data: blogs = [] } = useQuery({
+    queryKey: ["admin-blog-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("shopify_blog_id, blog_title")
+        .not("shopify_blog_id", "is", null)
+        .not("blog_title", "is", null);
 
-  const filteredAndSortedPosts = useMemo(() => {
-    if (!posts) return [];
+      if (error) throw error;
 
-    let filtered = posts.filter((post) => {
-      const matchesSearch =
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (post.tags && post.tags.toLowerCase().includes(searchQuery.toLowerCase()));
+      const uniqueBlogs = new Map<string, string>();
+      data.forEach((post: any) => {
+        if (post.shopify_blog_id && post.blog_title) {
+          uniqueBlogs.set(post.shopify_blog_id, post.blog_title);
+        }
+      });
+      return Array.from(uniqueBlogs.entries()).map(([id, title]) => ({ id, title }));
+    },
+  });
 
-      const matchesBlog =
-        blogFilter === "all" || post.shopify_blog_id === blogFilter;
+  // Count query
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ["admin-blog-posts-count", debouncedSearch, blogFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("blog_posts")
+        .select("*", { count: "exact", head: true });
 
-      return matchesSearch && matchesBlog;
-    });
+      query = applyBlogFilters(query, debouncedSearch, blogFilter);
 
-    // Sort
-    filtered.sort((a, b) => {
-      let aVal: string | boolean | null = null;
-      let bVal: string | boolean | null = null;
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
-      switch (sortField) {
-        case "title":
-          aVal = a.title.toLowerCase();
-          bVal = b.title.toLowerCase();
-          break;
-        case "blog_title":
-          aVal = (a.blog_title || "").toLowerCase();
-          bVal = (b.blog_title || "").toLowerCase();
-          break;
-        case "author":
-          aVal = (a.author || "").toLowerCase();
-          bVal = (b.author || "").toLowerCase();
-          break;
-        case "published":
-          aVal = a.published ?? false;
-          bVal = b.published ?? false;
-          break;
-        case "shopify_published_at":
-          aVal = a.shopify_published_at || "";
-          bVal = b.shopify_published_at || "";
-          break;
-        case "updated_at":
-          aVal = a.shopify_updated_at || "";
-          bVal = b.shopify_updated_at || "";
-          break;
-      }
+  // Map sort fields to DB columns
+  const getDbSortColumn = (field: SortField): string => {
+    switch (field) {
+      case "updated_at": return "shopify_updated_at";
+      default: return field;
+    }
+  };
 
-      if (aVal === null && bVal === null) return 0;
-      if (aVal === null) return 1;
-      if (bVal === null) return -1;
+  // Data query
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["admin-blog-posts", debouncedSearch, blogFilter, sortField, sortDirection, currentPage],
+    queryFn: async () => {
+      const from = (currentPage - 1) * POSTS_PER_PAGE;
+      const to = from + POSTS_PER_PAGE - 1;
 
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
+      const dbColumn = getDbSortColumn(sortField);
+      let query = supabase
+        .from("blog_posts")
+        .select("*")
+        .order(dbColumn, { ascending: sortDirection === "asc", nullsFirst: false });
 
-    return filtered;
-  }, [posts, searchQuery, blogFilter, sortField, sortDirection]);
+      query = applyBlogFilters(query, debouncedSearch, blogFilter);
+      query = query.range(from, to);
 
-  const totalPages = Math.ceil(filteredAndSortedPosts.length / POSTS_PER_PAGE);
-  
-  const paginatedPosts = useMemo(() => {
-    const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-    const endIndex = startIndex + POSTS_PER_PAGE;
-    return filteredAndSortedPosts.slice(startIndex, endIndex);
-  }, [filteredAndSortedPosts, currentPage, POSTS_PER_PAGE]);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as BlogPost[];
+    },
+  });
 
-  // Reset to page 1 when filters change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery, blogFilter]);
+  // Pagination calculations
+  const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+  const endIndex = Math.min(startIndex + POSTS_PER_PAGE, totalCount);
 
-  const selectedPostData = posts?.find((p) => p.id === selectedPost);
+  // For the view dialog, fetch the selected post individually
+  const { data: selectedPostData } = useQuery({
+    queryKey: ["admin-blog-post-detail", selectedPost],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("id", selectedPost!)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as BlogPost | null;
+    },
+    enabled: !!selectedPost,
+  });
 
   const handleSync = () => {
     syncPosts.mutate();
@@ -330,7 +355,7 @@ export default function ContentBlog() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredAndSortedPosts.length === 0 ? (
+            ) : (posts || []).length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <p className="text-muted-foreground">
@@ -341,7 +366,7 @@ export default function ContentBlog() {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedPosts.map((post) => (
+              (posts || []).map((post) => (
                 <TableRow key={post.id}>
                   <TableCell className="font-medium">{post.title}</TableCell>
                   <TableCell className="text-muted-foreground">
@@ -408,10 +433,10 @@ export default function ContentBlog() {
         </Table>
       </div>
 
-      {filteredAndSortedPosts.length > 0 && totalPages > 1 && (
+      {totalCount > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * POSTS_PER_PAGE) + 1} to {Math.min(currentPage * POSTS_PER_PAGE, filteredAndSortedPosts.length)} of {filteredAndSortedPosts.length} posts
+            Showing {startIndex + 1} to {endIndex} of {totalCount} posts
           </p>
           <Pagination>
             <PaginationContent>
