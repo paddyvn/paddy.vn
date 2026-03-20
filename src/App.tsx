@@ -22,6 +22,7 @@ import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 const PageDetail = lazy(() => import("./pages/PageDetail"));
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));

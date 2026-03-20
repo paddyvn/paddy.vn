@@ -87,8 +87,7 @@ export default function Checkout() {
   const [userId, setUserId] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderNumber, setOrderNumber] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   // Address form
   const [addressForm, setAddressForm] = useState<AddressForm>({
