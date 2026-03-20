@@ -12,6 +12,8 @@ export interface Store {
   opening_hours: string | null;
   is_active: boolean;
   display_order: number;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
   updated_at: string;
 }
