@@ -484,7 +484,7 @@ export default function Checkout() {
         await createSubscription.mutateAsync({
           user_id: userId,
           frequency: subscriptionFrequency,
-          discount_percent: SUBSCRIPTION_DISCOUNT,
+          discount_percent: subscriptionDiscountPct,
           shipping_address: shippingAddr,
           delivery_method: deliveryMethod?.name,
           items: cart.map(item => {
