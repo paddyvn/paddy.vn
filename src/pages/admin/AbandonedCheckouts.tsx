@@ -297,11 +297,11 @@ export default function AbandonedCheckouts() {
       )}
 
       {/* Pagination */}
-      {!isLoading && filteredCheckouts.length > 0 && (
+      {!isLoading && totalCount > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredCheckouts.length)}{" "}
-            of {filteredCheckouts.length} checkouts
+            Showing {startIndex + 1} to {endIndex}{" "}
+            of {totalCount} checkouts
           </p>
 
           {totalPages > 1 && (
