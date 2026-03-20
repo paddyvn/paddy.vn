@@ -29,9 +29,9 @@ export const Brands = () => {
   if (!brands || brands.length === 0) return null;
 
   return (
-    <section className="py-12 bg-background">
+    <section className="py-6 bg-background">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl md:text-3xl font-bold text-primary">
             1000+ Thương Hiệu Boss Thích
           </h2>

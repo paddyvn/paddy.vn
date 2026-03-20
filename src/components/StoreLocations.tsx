@@ -9,9 +9,9 @@ export const StoreLocations = () => {
 
   if (isLoading) {
     return (
-      <section className="py-12 bg-muted/30">
+      <section className="py-6 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-2 mb-8">
+          <div className="flex items-center gap-2 mb-4">
             <Skeleton className="h-6 w-6" />
             <Skeleton className="h-8 w-64" />
           </div>
@@ -30,9 +30,9 @@ export const StoreLocations = () => {
   }
 
   return (
-    <section className="py-12 bg-muted/30">
+    <section className="py-6 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="flex items-center gap-2 mb-8">
+        <div className="flex items-center gap-2 mb-4">
           <MapPin className="h-6 w-6 text-primary" />
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
             Hệ thống cửa hàng Paddy

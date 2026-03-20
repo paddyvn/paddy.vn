@@ -23,7 +23,7 @@ export const PetSelector = () => {
 
   if (isLoading) {
     return (
-      <section className="py-8 bg-muted/30">
+      <section className="py-4 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Skeleton className="h-40 rounded-2xl" />
@@ -61,7 +61,7 @@ export const PetSelector = () => {
   };
 
   return (
-    <section className="py-8 bg-muted/30">
+    <section className="py-4 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Dog Section */}

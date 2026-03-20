@@ -29,7 +29,7 @@ export const BlogSection = () => {
   const [featuredPost, ...sidePosts] = posts;
 
   return (
-    <section className="py-12 bg-muted/20">
+    <section className="py-6 bg-muted/20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
