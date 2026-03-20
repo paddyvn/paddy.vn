@@ -355,7 +355,7 @@ export default function ContentBlog() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredAndSortedPosts.length === 0 ? (
+            ) : (posts || []).length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <p className="text-muted-foreground">
