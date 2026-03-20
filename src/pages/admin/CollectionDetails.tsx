@@ -510,7 +510,11 @@ export default function CollectionDetails() {
           }
         }
 
-        toast({
+        // Sync smart collection products
+        if (formData.collection_type === "smart" && rules.length > 0) {
+          await syncSmartCollectionProducts(id!, rules, formData.rules_match_type);
+        }
+
           title: "Collection updated",
           description: "Your changes have been saved successfully.",
         });
