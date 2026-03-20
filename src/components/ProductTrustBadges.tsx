@@ -1,5 +1,16 @@
-import { useProductBadgeLinks, ProductBadge } from "@/hooks/useProductBadges";
-import { icons, LucideIcon } from "lucide-react";
+import { useProductBadgeLinks } from "@/hooks/useProductBadges";
+import {
+  CheckCircle, Leaf, Truck, Award, Shield, ShieldCheck, Heart,
+  Star, ThumbsUp, Zap, Clock, Recycle, BadgeCheck, Gift,
+  Package, Sparkles, Lock, Eye, Flame, Crown,
+  type LucideIcon,
+} from "lucide-react";
+
+const iconMap: Record<string, LucideIcon> = {
+  CheckCircle, Leaf, Truck, Award, Shield, ShieldCheck, Heart,
+  Star, ThumbsUp, Zap, Clock, Recycle, BadgeCheck, Gift,
+  Package, Sparkles, Lock, Eye, Flame, Crown,
+};
 
 interface ProductTrustBadgesProps {
   productId: string | undefined;
@@ -15,7 +26,7 @@ export function ProductTrustBadges({ productId }: ProductTrustBadgesProps) {
   return (
     <div className="grid grid-cols-2 gap-4 pt-4">
       {badges.map((badge) => {
-        const IconComponent = icons[badge.icon as keyof typeof icons] as LucideIcon;
+        const IconComponent = iconMap[badge.icon as string];
         
         return (
           <div key={badge.id} className="flex items-center gap-3">
