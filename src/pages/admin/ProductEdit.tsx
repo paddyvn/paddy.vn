@@ -512,6 +512,98 @@ export default function ProductEdit() {
                 </CardContent>
               </Card>
 
+              {/* Pet-Specific Content */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium">Thông tin sản phẩm</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Thành phần, hướng dẫn cho ăn và thông tin dinh dưỡng
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Ingredients */}
+                  <FormField
+                    control={form.control}
+                    name="ingredients"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Thành phần</FormLabel>
+                          <FormField
+                            control={form.control}
+                            name="show_ingredients"
+                            render={({ field: toggleField }) => (
+                              <Switch
+                                checked={toggleField.value}
+                                onCheckedChange={toggleField.onChange}
+                              />
+                            )}
+                          />
+                        </div>
+                        <FormControl>
+                          <RichTextEditor
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Nhập danh sách thành phần..."
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Feeding Guidelines */}
+                  <FormField
+                    control={form.control}
+                    name="feeding_guidelines"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Hướng dẫn cho ăn</FormLabel>
+                          <FormField
+                            control={form.control}
+                            name="show_feeding_guidelines"
+                            render={({ field: toggleField }) => (
+                              <Switch
+                                checked={toggleField.value}
+                                onCheckedChange={toggleField.onChange}
+                              />
+                            )}
+                          />
+                        </div>
+                        <FormControl>
+                          <RichTextEditor
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Nhập hướng dẫn cho ăn, bảng liều lượng..."
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Nutrition Facts */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Thông tin dinh dưỡng</Label>
+                      <FormField
+                        control={form.control}
+                        name="show_nutrition_facts"
+                        render={({ field }) => (
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </div>
+                    <NutritionFactsEditor
+                      value={form.watch("nutrition_facts") || []}
+                      onChange={(facts) => form.setValue("nutrition_facts", facts)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Media */}
               {!isNew && id && <ProductMediaGallery productId={id} />}
 
