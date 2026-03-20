@@ -859,7 +859,9 @@ export default function Checkout() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {cart.map((item) => {
-                      const price = item.product_variants?.price || item.products?.base_price || 0;
+                      const basePrice = getItemBasePrice(item);
+                      const promotion = promotionsMap?.[item.product_id];
+                      const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
                       return (
                         <div key={item.id} className="flex gap-3">
                           <img
@@ -872,11 +874,23 @@ export default function Checkout() {
                             {item.product_variants?.name && (
                               <p className="text-sm text-muted-foreground">{item.product_variants.name}</p>
                             )}
-                            <p className="text-sm">
-                              {formatPrice(price)}₫ x {item.quantity}
-                            </p>
+                            <div className="text-sm">
+                              <span>{formatPrice(effectivePrice)}₫ x {item.quantity}</span>
+                              {hasDiscount && (
+                                <span className="text-xs text-muted-foreground line-through ml-2">
+                                  {formatPrice(originalPrice)}₫
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className="font-medium">{formatPrice(price * item.quantity)}₫</p>
+                          <div className="text-right">
+                            <p className="font-medium">{formatPrice(effectivePrice * item.quantity)}₫</p>
+                            {hasDiscount && (
+                              <p className="text-xs text-muted-foreground line-through">
+                                {formatPrice(originalPrice * item.quantity)}₫
+                              </p>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
