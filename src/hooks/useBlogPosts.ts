@@ -173,6 +173,8 @@ export const useCreateBlogPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts-count"] });
       toast({
         title: "Blog Post Created",
         description: "New blog post has been created successfully",
