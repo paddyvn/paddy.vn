@@ -89,6 +89,7 @@ export default function SubscriptionDealsEdit() {
 
   useEffect(() => {
     if (promotion) {
+      const rules = (promotion as any).rules || {};
       setFormData((prev) => ({
         ...prev,
         title: promotion.title || "",
@@ -103,6 +104,9 @@ export default function SubscriptionDealsEdit() {
         custom_icons: (Array.isArray((promotion as unknown as { custom_icons?: unknown }).custom_icons) 
           ? (promotion as unknown as { custom_icons: CustomIcon[] }).custom_icons 
           : []),
+        frequency: rules.frequency || "monthly",
+        discount_percentage: rules.discount_percentage || 10,
+        first_order_discount: rules.first_order_discount || 20,
       }));
     }
   }, [promotion]);
