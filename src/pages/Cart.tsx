@@ -181,7 +181,9 @@ export default function Cart() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {cart.map((item) => {
-                    const price = item.product_variants?.price || item.products?.base_price || 0;
+                    const basePrice = getItemBasePrice(item);
+                    const promotion = promotionsMap?.[item.product_id];
+                    const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
                     const productImages = item.products?.product_images;
                     
                     return (
@@ -205,9 +207,16 @@ export default function Cart() {
                                 {item.product_variants.name}
                               </p>
                             )}
-                            <p className="text-primary font-semibold mt-2">
-                              {formatPrice(price)}₫
-                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="text-primary font-semibold">
+                                {formatPrice(effectivePrice)}₫
+                              </span>
+                              {hasDiscount && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {formatPrice(originalPrice)}₫
+                                </span>
+                              )}
+                            </div>
                             
                             <div className="flex items-center justify-between mt-3">
                               <div className="flex items-center gap-2">
@@ -238,9 +247,16 @@ export default function Cart() {
                               </div>
                               
                               <div className="flex items-center gap-4">
-                                <span className="font-semibold">
-                                  {formatPrice(price * item.quantity)}₫
-                                </span>
+                                <div className="text-right">
+                                  <span className="font-semibold">
+                                    {formatPrice(effectivePrice * item.quantity)}₫
+                                  </span>
+                                  {hasDiscount && (
+                                    <span className="text-xs text-muted-foreground line-through ml-1">
+                                      {formatPrice(originalPrice * item.quantity)}₫
+                                    </span>
+                                  )}
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="icon"
