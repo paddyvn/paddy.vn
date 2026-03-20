@@ -391,6 +391,13 @@ export default function Checkout() {
 
       if (itemsError) throw itemsError;
 
+      // Increment voucher usage
+      if (appliedVoucher?.promotionId) {
+        await supabase.rpc("increment_voucher_usage", {
+          p_promotion_id: appliedVoucher.promotionId,
+        });
+      }
+
       // Clear cart
       const cartItemIds = cart.map(item => item.id);
       await supabase
