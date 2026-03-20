@@ -8,17 +8,17 @@ export const PetSelector = () => {
 
   // Fallback data if database is empty
   const fallbackDogCategories = [
-    { label: "Dog Food", link: "/category/dog-food" },
-    { label: "Treats", link: "/category/dog-treats" },
-    { label: "Flea & Worm", link: "/category/flea-worm" },
-    { label: "Dog Toys", link: "/category/dog-toys" },
+    { label: "Dog Food", link: "/collections/thuc-an-hat-cho-cho" },
+    { label: "Treats", link: "/collections/snack-treat-banh-thuong-cho" },
+    { label: "Grooming", link: "/collections/cham-soc-ve-sinh-cho-cho" },
+    { label: "Health", link: "/collections/cham-soc-suc-khoe-cho-cho" },
   ];
 
   const fallbackCatCategories = [
-    { label: "Cat Food", link: "/category/cat-food" },
-    { label: "Treats", link: "/category/cat-treats" },
-    { label: "Cat Toys", link: "/category/cat-toys" },
-    { label: "Litter", link: "/category/cat-litter" },
+    { label: "Cat Food", link: "/collections/thuc-an-cho-meo" },
+    { label: "Treats", link: "/collections/banh-thuong-cho-meo" },
+    { label: "Grooming", link: "/collections/cham-soc-ve-sinh-cho-meo" },
+    { label: "Litter", link: "/collections/cat-meo" },
   ];
 
   if (isLoading) {
