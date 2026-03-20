@@ -4183,6 +4183,7 @@ export type Database = {
           min_order_value: number | null
           program_kind: string | null
           promo_type: string | null
+          rules: Json | null
           start_date: string | null
           subtitle: string | null
           title: string
@@ -4214,6 +4215,7 @@ export type Database = {
           min_order_value?: number | null
           program_kind?: string | null
           promo_type?: string | null
+          rules?: Json | null
           start_date?: string | null
           subtitle?: string | null
           title: string
@@ -4245,6 +4247,7 @@ export type Database = {
           min_order_value?: number | null
           program_kind?: string | null
           promo_type?: string | null
+          rules?: Json | null
           start_date?: string | null
           subtitle?: string | null
           title?: string
