@@ -203,20 +203,18 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
 
         {/* Body */}
         <div className="flex flex-col flex-1 p-3.5 pb-4 gap-1">
-          {/* Brand */}
-          {product.brand && (
-            <span className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-primary leading-none">
-              {product.brand}
-            </span>
-          )}
+          {/* Brand — always reserve space */}
+          <span className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-primary leading-none min-h-[14px]">
+            {product.brand || '\u00A0'}
+          </span>
 
           {/* Title */}
           <h3 className="text-sm font-semibold text-foreground leading-[1.35] line-clamp-2 m-0">
             {product.name}
           </h3>
 
-          {/* Rating + sold count */}
-          <div className="flex flex-col gap-0.5 mt-1">
+          {/* Rating + sold count — always reserve space */}
+          <div className="flex flex-col gap-0.5 mt-1 min-h-[34px]">
             {hasReviews && (
               <div className="flex items-center gap-[5px]">
                 <StarRating rating={avgRating} />
@@ -234,7 +232,7 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
           {/* Price + Cart button */}
           <div className="mt-auto pt-2">
             <div className="flex items-end justify-between gap-2">
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 min-h-[40px] justify-end">
                 {showSale && (
                   <span className="text-xs text-muted-foreground line-through leading-tight">
                     {formatPrice(originalPrice)}đ
