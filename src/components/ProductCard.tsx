@@ -1,15 +1,10 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Heart, PawPrint, ShoppingCart, Loader2, Ticket } from "lucide-react";
+import { Heart, ShoppingBag, Check, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { QuickAddToCartDialog } from "./QuickAddToCartDialog";
-
 import { ProductPromotion } from "@/hooks/useProductPromotions";
 import { ProductVoucher } from "@/hooks/useProductVouchers";
 
@@ -23,6 +18,8 @@ interface ProductCardProps {
     is_featured?: boolean;
     brand?: string | null;
     pet_type?: string | null;
+    rating?: number | null;
+    rating_count?: number | null;
     option1_name?: string | null;
     option2_name?: string | null;
     option3_name?: string | null;
@@ -33,33 +30,41 @@ interface ProductCardProps {
   vouchers?: ProductVoucher[];
 }
 
-const PetBadge = ({ type }: { type: 'dog' | 'cat' }) => (
-  <span 
-    className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-xl font-bold ${
-      type === 'dog' 
-        ? 'bg-amber-100 text-amber-700' 
-        : 'bg-purple-100 text-purple-700'
-    }`}
-    title={type === 'dog' ? 'Cho chó' : 'Cho mèo'}
-  >
-    {type === 'dog' ? '🐕' : '🐱'}
-  </span>
+// — Star rating SVG —
+const StarRating = ({ rating }: { rating: number }) => (
+  <div className="flex items-center gap-px">
+    {[1, 2, 3, 4, 5].map((star) => {
+      const fill = rating >= star ? 1 : rating >= star - 0.5 ? 0.5 : 0;
+      return (
+        <svg key={star} width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <defs>
+            <linearGradient id={`star-${rating}-${star}`}>
+              <stop offset={`${fill * 100}%`} stopColor="hsl(var(--secondary))" />
+              <stop offset={`${fill * 100}%`} stopColor="#E0E0E0" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M8 1.12l1.95 3.95 4.36.63-3.15 3.07.74 4.35L8 10.93l-3.9 2.19.74-4.35L1.69 5.7l4.36-.63L8 1.12z"
+            fill={`url(#star-${rating}-${star})`}
+          />
+        </svg>
+      );
+    })}
+  </div>
 );
 
-const getPetTypes = (petType: string | null | undefined): ('dog' | 'cat')[] => {
-  if (!petType) return [];
-  const lower = petType.toLowerCase();
-  const types: ('dog' | 'cat')[] = [];
-  if (lower.includes('dog') || lower.includes('chó')) types.push('dog');
-  if (lower.includes('cat') || lower.includes('mèo')) types.push('cat');
-  return types;
-};
+function formatSoldCount(count: number) {
+  if (count >= 1000) return Math.floor(count / 1000) + "k+";
+  if (count >= 100) return Math.floor(count / 100) * 100 + "+";
+  return count + "+";
+}
 
 export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [userId, setUserId] = useState<string | undefined>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [liked, setLiked] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { addToCart } = useCart(userId);
 
@@ -78,18 +83,15 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
     setIsAddingToCart(true);
     try {
       await addToCart({ productId: product.id, variantId: variantId ?? undefined, quantity });
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 1200);
     } finally {
       setIsAddingToCart(false);
       setQuickAddOpen(false);
     }
   };
 
-  const calculateAverageRating = (reviews: Array<{ rating: number }> | undefined) => {
-    if (!reviews || reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return (sum / reviews.length).toFixed(1);
-  };
-
+  // — Image —
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
     if (!images || images.length === 0) {
       return "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=500&h=500&fit=crop";
@@ -98,12 +100,18 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
     return primary?.image_url || images[0]?.image_url;
   };
 
-  // Calculate discount from promotion or compare_at_price
+  // — Rating —
+  const avgRating = product.reviews && product.reviews.length > 0
+    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
+    : (product.rating ?? 0);
+  const reviewCount = product.reviews?.length ?? product.rating_count ?? 0;
+  const hasReviews = reviewCount > 0 && avgRating > 0;
+
+  // — Discount calculation (reuse existing logic) —
   const hasCompareAtDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
   const hasPromotionDiscount = promotion?.discount_value && promotion.discount_value > 0;
-  const showSaleBadge = hasPromotionDiscount || hasCompareAtDiscount;
+  const showSale = hasPromotionDiscount || hasCompareAtDiscount;
 
-  // Calculate discounted price and percentage
   let displayPrice = product.base_price;
   let originalPrice = product.base_price;
   let discountPercentage = 0;
@@ -125,144 +133,132 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
     displayPrice = product.base_price;
     discountPercentage = Math.round(((product.compare_at_price! - product.base_price) / product.compare_at_price!) * 100);
   }
-  const petTypes = getPetTypes(product.pet_type);
+
+  // — Badges —
+  const isBestseller = product.is_featured;
+  const isNew = !hasReviews && !showSale;
 
   return (
     <>
-      <Card
-        className="group overflow-hidden transition-smooth shadow-card hover:shadow-hover rounded-sm border-0 cursor-pointer h-full flex flex-col"
+      <div
+        className="group relative flex flex-col bg-card rounded-2xl overflow-hidden cursor-pointer shadow-[0_1px_3px_rgba(8,73,255,0.06),0_4px_12px_rgba(8,73,255,0.04)] hover:shadow-[0_4px_16px_rgba(8,73,255,0.10),0_8px_28px_rgba(8,73,255,0.06)] hover:-translate-y-[3px] transition-all duration-300 ease-out"
         onClick={() => navigate(`/products/${product.slug}`)}
       >
-        <CardContent className="p-0 flex flex-col flex-1">
-          <div className="relative">
-            <div className="relative aspect-square overflow-hidden bg-muted">
-              <img
-                src={getPrimaryImage(product.product_images)}
-                alt={product.name}
-                className="w-full h-full object-cover transition-smooth group-hover:scale-110"
-              />
-              
-              {/* Show Sale badge for products with promotion or discount */}
-              {showSaleBadge ? (
-                <Badge 
-                  className="absolute top-3 left-3 bg-secondary text-secondary-foreground hover:bg-secondary"
-                >
-                  Sale
-                </Badge>
-              ) : product.is_featured ? (
-                <Badge 
-                  className="absolute top-3 left-3 bg-primary text-primary-foreground hover:bg-primary"
-                >
-                  Featured
-                </Badge>
-              ) : null}
-              
-              <Button
-                size="icon"
-                variant="secondary"
-                className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-smooth shadow-lg"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // TODO: Add to wishlist
-                }}
-              >
-                <Heart className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {petTypes.length > 0 && (
-              <div className="absolute -bottom-5 right-3 flex gap-1 z-20">
-                {petTypes.map((type) => (
-                  <PetBadge key={type} type={type} />
-                ))}
-              </div>
+        {/* Image */}
+        <div className="relative aspect-square bg-muted overflow-hidden">
+          <img
+            src={getPrimaryImage(product.product_images)}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-105"
+          />
+
+          {/* Badges top-left */}
+          <div className="absolute top-2.5 left-2.5 flex gap-1.5 flex-wrap">
+            {isBestseller && (
+              <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-orange-500 text-white">
+                Bán chạy
+              </span>
+            )}
+            {showSale && discountPercentage > 0 && (
+              <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
+                -{discountPercentage}%
+              </span>
+            )}
+            {isNew && (
+              <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-primary text-primary-foreground">
+                Mới
+              </span>
             )}
           </div>
 
-          <div className="p-4 space-y-3 flex flex-col flex-1">
-            <div>
-              {product.brand && (
-                <p className="text-xs text-muted-foreground mb-1 font-bold">{product.brand}</p>
-              )}
-              <h3 className="font-semibold text-sm text-foreground line-clamp-3 group-hover:text-primary transition-smooth">
-                {product.name}
-              </h3>
-            </div>
+          {/* Wishlist top-right */}
+          <button
+            className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:scale-110 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] active:scale-95 transition-all duration-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLiked(!liked);
+            }}
+            aria-label="Yêu thích"
+          >
+            <Heart
+              className={`h-[18px] w-[18px] ${liked ? "fill-rose-500 text-rose-500" : "fill-none text-muted-foreground"}`}
+            />
+          </button>
+        </div>
 
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1">
-                <PawPrint className="h-4 w-4 fill-secondary text-secondary" />
-                <span className="text-sm font-medium">
-                  {calculateAverageRating(product.reviews)}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  ({product.reviews?.length || 0})
-                </span>
+        {/* Body */}
+        <div className="flex flex-col flex-1 p-3.5 pb-4">
+          {/* Brand */}
+          {product.brand && (
+            <span className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-primary mb-1">
+              {product.brand}
+            </span>
+          )}
+
+          {/* Title */}
+          <h3 className="text-sm font-semibold text-foreground leading-[1.35] line-clamp-2 min-h-[38px] m-0">
+            {product.name}
+          </h3>
+
+          {/* Rating + sold count */}
+          <div className="flex flex-col gap-0.5">
+            {hasReviews ? (
+              <div className="flex items-center gap-[5px] mt-2">
+                <StarRating rating={avgRating} />
+                <span className="text-[12.5px] font-bold text-foreground">{avgRating.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">({reviewCount})</span>
               </div>
-              <Button
-                size="icon"
-                className="rounded-full shadow-lg h-8 w-8 shrink-0"
-                onClick={handleQuickAddClick}
-                disabled={isAddingToCart}
-              >
-                {isAddingToCart ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShoppingCart className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            ) : (
+              <div className="h-[18px] mt-2" />
+            )}
+            {reviewCount >= 50 && (
+              <span className="text-[11.5px] text-muted-foreground font-medium">
+                Đã bán {formatSoldCount(reviewCount)}
+              </span>
+            )}
+          </div>
 
-            <div className="flex flex-col items-start">
-              {showSaleBadge && discountPercentage > 0 && (
+          {/* Price + Cart button */}
+          <div className="flex items-end justify-between mt-auto pt-3">
+            <div className="flex flex-col gap-px">
+              {showSale && (
                 <span className="text-xs text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}₫
+                  {formatPrice(originalPrice)}đ
                 </span>
               )}
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-primary">
-                  {formatPrice(displayPrice)}₫
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[17px] font-bold text-primary tracking-tight">
+                  {formatPrice(displayPrice)}đ
                 </span>
-                {showSaleBadge && discountPercentage > 0 && (
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 font-medium text-[10px] px-1 py-0 h-4">
+                {showSale && discountPercentage > 0 && (
+                  <span className="text-xs font-bold text-destructive bg-destructive/10 px-1.5 py-px rounded-md">
                     -{discountPercentage}%
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Applicable vouchers */}
-            {vouchers.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-dashed">
-                {vouchers.slice(0, 2).map((voucher) => (
-                  <div
-                    key={voucher.id}
-                    className="flex items-center gap-1 px-2 py-1 bg-destructive/10 rounded text-xs"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Ticket className="h-3 w-3 text-destructive" />
-                    <span className="text-destructive font-medium">
-                      {voucher.discount_type === "percentage"
-                        ? `-${voucher.discount_value}%`
-                        : `-${formatPrice(voucher.discount_value || 0)}₫`}
-                    </span>
-                    {voucher.voucher_code && (
-                      <span className="text-muted-foreground font-mono text-[10px]">
-                        {voucher.voucher_code}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {vouchers.length > 2 && (
-                  <span className="text-xs text-muted-foreground self-center">
-                    +{vouchers.length - 2}
                   </span>
                 )}
               </div>
-            )}
+            </div>
+
+            <button
+              className={`w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 transition-all duration-200 hover:scale-[1.06] active:scale-95 ${
+                addedToCart
+                  ? "bg-green-500 text-white"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
+              onClick={handleQuickAddClick}
+              disabled={isAddingToCart}
+              aria-label="Thêm vào giỏ"
+            >
+              {isAddingToCart ? (
+                <Loader2 className="h-[15px] w-[15px] animate-spin" />
+              ) : addedToCart ? (
+                <Check className="h-[15px] w-[15px]" strokeWidth={3} />
+              ) : (
+                <ShoppingBag className="h-[15px] w-[15px]" strokeWidth={2.5} />
+              )}
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <QuickAddToCartDialog
         open={quickAddOpen}
