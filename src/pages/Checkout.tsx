@@ -129,7 +129,22 @@ export default function Checkout() {
   const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
   const createSubscription = useCreateSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Accept voucher from Cart navigation state
+  const incomingVoucher = (location.state as any)?.voucher;
+  useEffect(() => {
+    if (incomingVoucher) {
+      setAppliedVoucher({
+        code: incomingVoucher.code,
+        discount_type: incomingVoucher.discount_type,
+        discount_value: incomingVoucher.discount_value,
+        max_discount: incomingVoucher.max_discount,
+        promotionId: incomingVoucher.promotionId,
+      });
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {

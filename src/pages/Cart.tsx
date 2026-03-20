@@ -423,7 +423,9 @@ export default function Cart() {
                   <Button 
                     className="w-full mt-4" 
                     size="lg"
-                    onClick={() => navigate("/checkout")}
+                    onClick={() => navigate("/checkout", {
+                      state: appliedCoupon ? { voucher: appliedCoupon } : undefined,
+                    })}
                     disabled={!selectedProvince}
                   >
                     Tiến hành thanh toán
