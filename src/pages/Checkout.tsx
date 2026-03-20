@@ -381,17 +381,22 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        product_name: item.products?.name || "Unknown Product",
-        variant_name: item.product_variants?.name || null,
-        quantity: item.quantity,
-        price: item.product_variants?.price || item.products?.base_price || 0,
-        subtotal: (item.product_variants?.price || item.products?.base_price || 0) * item.quantity,
-      }));
+      // Create order items with promotion-adjusted prices
+      const orderItems = cart.map(item => {
+        const basePrice = getItemBasePrice(item);
+        const promotion = promotionsMap?.[item.product_id];
+        const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+        return {
+          order_id: order.id,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          product_name: item.products?.name || "Unknown Product",
+          variant_name: item.product_variants?.name || null,
+          quantity: item.quantity,
+          price: effectivePrice,
+          subtotal: effectivePrice * item.quantity,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("order_items")
