@@ -237,72 +237,29 @@ export default function Checkout() {
     
     setIsApplyingVoucher(true);
     try {
-      const { data: coupon, error } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("code", voucherCode.trim().toUpperCase())
-        .eq("is_active", true)
-        .single();
-      
-      if (error || !coupon) {
+      const result = await validateVoucher(voucherCode, subtotal);
+
+      if (!result.valid || !result.voucher) {
         toast({
           title: "Mã không hợp lệ",
-          description: "Mã giảm giá không tồn tại hoặc đã hết hạn",
+          description: result.error,
           variant: "destructive",
         });
         return;
       }
-      
-      // Check expiration
-      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-        toast({
-          title: "Mã đã hết hạn",
-          description: "Mã giảm giá này đã hết hạn sử dụng",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check start date
-      if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
-        toast({
-          title: "Mã chưa có hiệu lực",
-          description: "Mã giảm giá này chưa đến thời gian sử dụng",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check min purchase
-      if (coupon.min_purchase && subtotal < coupon.min_purchase) {
-        toast({
-          title: "Chưa đủ điều kiện",
-          description: `Đơn hàng tối thiểu ${formatPrice(coupon.min_purchase)}₫ để sử dụng mã này`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Check usage limit
-      if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
-        toast({
-          title: "Mã đã hết lượt sử dụng",
-          description: "Mã giảm giá này đã được sử dụng hết",
-          variant: "destructive",
-        });
-        return;
-      }
-      
+
+      const v = result.voucher;
       setAppliedVoucher({
-        code: coupon.code,
-        discount_type: coupon.discount_type,
-        discount_value: coupon.discount_value,
-        max_discount: coupon.max_discount,
+        code: v.voucher_code,
+        discount_type: v.discount_type,
+        discount_value: v.discount_value,
+        max_discount: v.max_discount,
+        promotionId: v.id,
       });
       setVoucherCode("");
       toast({
         title: "Áp dụng thành công",
-        description: `Mã ${coupon.code} đã được áp dụng`,
+        description: `Mã ${v.voucher_code} đã được áp dụng`,
       });
     } catch (error) {
       toast({
