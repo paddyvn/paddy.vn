@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,13 @@ export default function AdminLayout() {
         <div className="flex-1 flex flex-col">
           <main className="flex-1 overflow-auto">
             <div className="px-6 py-8 w-full">
-              <Outlet />
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-20">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+                </div>
+              }>
+                <Outlet />
+              </Suspense>
             </div>
           </main>
         </div>
