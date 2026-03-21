@@ -43,6 +43,7 @@ const CustomersManagement = lazy(() => import("./pages/admin/CustomersManagement
 const CustomerSegments = lazy(() => import("./pages/admin/CustomerSegments"));
 const CustomerDetail = lazy(() => import("./pages/admin/CustomerDetail"));
 const AbandonedCheckouts = lazy(() => import("./pages/admin/AbandonedCheckouts"));
+const LoyaltyManagement = lazy(() => import("./pages/admin/LoyaltyManagement"));
 const ContentMetaobjects = lazy(() => import("./pages/admin/ContentMetaobjects"));
 const ContentFiles = lazy(() => import("./pages/admin/ContentFiles"));
 const ContentMenus = lazy(() => import("./pages/admin/ContentMenus"));
@@ -148,6 +149,7 @@ const App = () => (
             <Route path="customers" element={<CustomersManagement />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="customers/segments" element={<CustomerSegments />} />
+            <Route path="loyalty" element={<LoyaltyManagement />} />
             <Route path="content/metaobjects" element={<ContentMetaobjects />} />
             <Route path="content/files" element={<ContentFiles />} />
             <Route path="content/menus" element={<ContentMenus />} />
