@@ -9,13 +9,18 @@ import {
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { X, Search } from "lucide-react";
 
 export interface FilterState {
+  productTypes: string[];
   brands: string[];
   priceRange: [number, number];
+  stockStatus: "all" | "in_stock" | "out_of_stock";
+  onSale: boolean;
   ageRanges: string[];
   sizes: string[];
   healthConditions: string[];
@@ -25,10 +30,13 @@ interface CollectionFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   maxPrice: number;
+  availableProductTypes: { name: string; count: number }[];
   availableBrands: string[];
   availableAgeRangeIds: string[];
   availableSizeIds: string[];
   availableHealthConditionIds: string[];
+  stockCounts?: { inStock: number; outOfStock: number };
+  onSaleCount?: number;
 }
 
 const SEARCHABLE_THRESHOLD = 6;
@@ -37,15 +45,18 @@ export const CollectionFilters = ({
   filters,
   onFiltersChange,
   maxPrice,
+  availableProductTypes,
   availableBrands,
   availableAgeRangeIds,
   availableSizeIds,
   availableHealthConditionIds,
+  stockCounts,
+  onSaleCount,
 }: CollectionFiltersProps) => {
   const [brandSearch, setBrandSearch] = useState("");
   const [healthSearch, setHealthSearch] = useState("");
 
-  // Fetch age ranges (only those available in collection)
+  // Fetch age ranges
   const { data: ageRanges } = useQuery({
     queryKey: ["filter-age-ranges", availableAgeRangeIds],
     queryFn: async () => {
@@ -61,7 +72,7 @@ export const CollectionFilters = ({
     enabled: availableAgeRangeIds.length > 0,
   });
 
-  // Fetch sizes (only those available in collection)
+  // Fetch sizes
   const { data: sizes } = useQuery({
     queryKey: ["filter-sizes", availableSizeIds],
     queryFn: async () => {
@@ -77,7 +88,7 @@ export const CollectionFilters = ({
     enabled: availableSizeIds.length > 0,
   });
 
-  // Fetch health conditions (only those available in collection)
+  // Fetch health conditions
   const { data: healthConditions } = useQuery({
     queryKey: ["filter-health-conditions", availableHealthConditionIds],
     queryFn: async () => {
@@ -93,16 +104,21 @@ export const CollectionFilters = ({
     enabled: availableHealthConditionIds.length > 0,
   });
 
-  // Filter brands by search
   const filteredBrands = availableBrands.filter((brand) =>
     brand.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  // Filter health conditions by search
   const filteredHealthConditions = healthConditions?.filter((condition) =>
     condition.name_vi.toLowerCase().includes(healthSearch.toLowerCase()) ||
     condition.name.toLowerCase().includes(healthSearch.toLowerCase())
   ) || [];
+
+  const handleProductTypeChange = (type: string, checked: boolean) => {
+    const newTypes = checked
+      ? [...filters.productTypes, type]
+      : filters.productTypes.filter((t) => t !== type);
+    onFiltersChange({ ...filters, productTypes: newTypes });
+  };
 
   const handleBrandChange = (brand: string, checked: boolean) => {
     const newBrands = checked
@@ -140,17 +156,23 @@ export const CollectionFilters = ({
   };
 
   const hasActiveFilters =
+    filters.productTypes.length > 0 ||
     filters.brands.length > 0 ||
     filters.ageRanges.length > 0 ||
     filters.sizes.length > 0 ||
     filters.healthConditions.length > 0 ||
     filters.priceRange[0] > 0 ||
-    filters.priceRange[1] < maxPrice;
+    filters.priceRange[1] < maxPrice ||
+    filters.stockStatus !== "all" ||
+    filters.onSale;
 
   const clearAllFilters = () => {
     onFiltersChange({
+      productTypes: [],
       brands: [],
       priceRange: [0, maxPrice],
+      stockStatus: "all",
+      onSale: false,
       ageRanges: [],
       sizes: [],
       healthConditions: [],
@@ -161,14 +183,13 @@ export const CollectionFilters = ({
     return new Intl.NumberFormat("vi-VN").format(price) + "₫";
   };
 
-  // Determine which sections to show based on available data
+  const showProductTypeFilter = availableProductTypes.length > 1;
   const showBrandFilter = availableBrands.length > 0;
   const showLifeStageFilter = ageRanges && ageRanges.length > 0;
   const showSizeFilter = sizes && sizes.length > 0;
   const showHealthFilter = healthConditions && healthConditions.length > 0;
 
-  const defaultOpenSections = ["price"];
-  if (showBrandFilter) defaultOpenSections.unshift("brand");
+  const defaultOpenSections = ["product-type", "brand", "price"];
 
   return (
     <div className="w-full">
@@ -185,6 +206,34 @@ export const CollectionFilters = ({
       )}
 
       <Accordion type="multiple" defaultValue={defaultOpenSections} className="w-full">
+        {/* Product Type Filter */}
+        {showProductTypeFilter && (
+          <AccordionItem value="product-type">
+            <AccordionTrigger className="text-base font-semibold">
+              Loại sản phẩm
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {availableProductTypes.map(({ name, count }) => (
+                  <label
+                    key={name}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
+                  >
+                    <Checkbox
+                      checked={filters.productTypes.includes(name)}
+                      onCheckedChange={(checked) =>
+                        handleProductTypeChange(name, checked as boolean)
+                      }
+                    />
+                    <span className="text-sm flex-1">{name}</span>
+                    <span className="text-xs text-muted-foreground">({count})</span>
+                  </label>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
         {/* Brand Filter */}
         {showBrandFilter && (
           <AccordionItem value="brand">
@@ -228,7 +277,7 @@ export const CollectionFilters = ({
 
         {/* Price Filter */}
         <AccordionItem value="price">
-            <AccordionTrigger className="text-base font-semibold">
+          <AccordionTrigger className="text-base font-semibold">
             Giá
           </AccordionTrigger>
           <AccordionContent>
@@ -248,6 +297,64 @@ export const CollectionFilters = ({
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        {/* Stock Status Filter */}
+        {stockCounts && (stockCounts.inStock > 0 || stockCounts.outOfStock > 0) && (
+          <AccordionItem value="stock-status">
+            <AccordionTrigger className="text-base font-semibold">
+              Tình trạng
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded">
+                  <Checkbox
+                    checked={filters.stockStatus === "all"}
+                    onCheckedChange={() => onFiltersChange({ ...filters, stockStatus: "all" })}
+                  />
+                  <span className="text-sm flex-1">Tất cả</span>
+                  <span className="text-xs text-muted-foreground">({stockCounts.inStock + stockCounts.outOfStock})</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded">
+                  <Checkbox
+                    checked={filters.stockStatus === "in_stock"}
+                    onCheckedChange={() => onFiltersChange({ ...filters, stockStatus: filters.stockStatus === "in_stock" ? "all" : "in_stock" })}
+                  />
+                  <span className="text-sm flex-1">Còn hàng</span>
+                  <span className="text-xs text-muted-foreground">({stockCounts.inStock})</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded">
+                  <Checkbox
+                    checked={filters.stockStatus === "out_of_stock"}
+                    onCheckedChange={() => onFiltersChange({ ...filters, stockStatus: filters.stockStatus === "out_of_stock" ? "all" : "out_of_stock" })}
+                  />
+                  <span className="text-sm flex-1">Hết hàng</span>
+                  <span className="text-xs text-muted-foreground">({stockCounts.outOfStock})</span>
+                </label>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* On Sale Toggle */}
+        {onSaleCount !== undefined && onSaleCount > 0 && (
+          <AccordionItem value="on-sale">
+            <AccordionTrigger className="text-base font-semibold">
+              Đang giảm giá
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="flex items-center justify-between p-1">
+                <Label htmlFor="on-sale-toggle" className="text-sm cursor-pointer">
+                  Chỉ hiện sản phẩm giảm giá ({onSaleCount})
+                </Label>
+                <Switch
+                  id="on-sale-toggle"
+                  checked={filters.onSale}
+                  onCheckedChange={(checked) => onFiltersChange({ ...filters, onSale: checked })}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
         {/* Life Stage Filter */}
         {showLifeStageFilter && (

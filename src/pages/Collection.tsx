@@ -26,8 +26,11 @@ const Collection = () => {
   const [sortBy, setSortBy] = useState("default");
   const [gridCols, setGridCols] = useState<4 | 5>(5);
   const [filters, setFilters] = useState<FilterState>({
+    productTypes: [],
     brands: [],
     priceRange: [0, DEFAULT_MAX_PRICE],
+    stockStatus: "all",
+    onSale: false,
     ageRanges: [],
     sizes: [],
     healthConditions: [],
@@ -88,6 +91,7 @@ const Collection = () => {
             brand,
             created_at,
             source_created_at,
+            product_type,
             sold_count,
             target_age_id,
             target_size_id,
@@ -132,11 +136,18 @@ const Collection = () => {
     const ageRangeIds = new Set<string>();
     const sizeIds = new Set<string>();
     const healthConditionIds = new Set<string>();
+    const productTypeCounts = new Map<string, number>();
     let productsWithAge = 0;
     let productsWithSize = 0;
+    let inStock = 0;
+    let outOfStock = 0;
+    let onSaleCount = 0;
 
     allProducts.forEach((product: any) => {
       if (product.brand) brands.add(product.brand);
+      if (product.product_type) {
+        productTypeCounts.set(product.product_type, (productTypeCounts.get(product.product_type) || 0) + 1);
+      }
       if (product.target_age_id) {
         ageRangeIds.add(product.target_age_id);
         productsWithAge++;
@@ -148,15 +159,33 @@ const Collection = () => {
       product.product_health_condition_links?.forEach((link: any) => {
         if (link.health_condition_id) healthConditionIds.add(link.health_condition_id);
       });
+
+      const totalStock = product.total_stock;
+      if (totalStock !== null && totalStock <= 0) {
+        outOfStock++;
+      } else {
+        inStock++;
+      }
+
+      if (product.compare_at_price && product.compare_at_price > product.base_price) {
+        onSaleCount++;
+      }
     });
 
     const total = allProducts.length || 1;
 
+    const productTypes = Array.from(productTypeCounts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
     return {
+      productTypes,
       brands: Array.from(brands).sort(),
       ageRangeIds: productsWithAge / total >= FILTER_THRESHOLD ? Array.from(ageRangeIds) : [],
       sizeIds: productsWithSize / total >= FILTER_THRESHOLD ? Array.from(sizeIds) : [],
       healthConditionIds: Array.from(healthConditionIds),
+      stockCounts: { inStock, outOfStock },
+      onSaleCount,
     };
   }, [allProducts]);
 
@@ -207,8 +236,12 @@ const Collection = () => {
   // Apply filters
   const filteredProducts = useMemo(() => {
     return allProducts.filter((product: any) => {
+      if (filters.productTypes.length > 0 && !filters.productTypes.includes(product.product_type)) return false;
       if (filters.brands.length > 0 && !filters.brands.includes(product.brand)) return false;
       if (product.base_price < filters.priceRange[0] || product.base_price > filters.priceRange[1]) return false;
+      if (filters.stockStatus === "in_stock" && product.total_stock !== null && product.total_stock <= 0) return false;
+      if (filters.stockStatus === "out_of_stock" && (product.total_stock === null || product.total_stock > 0)) return false;
+      if (filters.onSale && !(product.compare_at_price && product.compare_at_price > product.base_price)) return false;
       if (filters.ageRanges.length > 0 && !filters.ageRanges.includes(product.target_age_id)) return false;
       if (filters.sizes.length > 0 && !filters.sizes.includes(product.target_size_id)) return false;
       if (filters.healthConditions.length > 0) {
@@ -276,11 +309,14 @@ const Collection = () => {
   };
 
   const activeFilterCount =
+    filters.productTypes.length +
     filters.brands.length +
     filters.ageRanges.length +
     filters.sizes.length +
     filters.healthConditions.length +
-    (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0);
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0) +
+    (filters.stockStatus !== "all" ? 1 : 0) +
+    (filters.onSale ? 1 : 0);
 
   // SEO fallback
   const metaTitle = collection?.meta_title || (collection ? `${collection.name} | Paddy.vn - Pet Shop` : "Paddy.vn");
@@ -410,10 +446,13 @@ const Collection = () => {
                   filters={filters}
                   onFiltersChange={handleFiltersChange}
                   maxPrice={maxPrice}
+                  availableProductTypes={availableFilterOptions.productTypes}
                   availableBrands={availableFilterOptions.brands}
                   availableAgeRangeIds={availableFilterOptions.ageRangeIds}
                   availableSizeIds={availableFilterOptions.sizeIds}
                   availableHealthConditionIds={availableFilterOptions.healthConditionIds}
+                  stockCounts={availableFilterOptions.stockCounts}
+                  onSaleCount={availableFilterOptions.onSaleCount}
                 />
               </div>
             </aside>
@@ -445,10 +484,13 @@ const Collection = () => {
                           filters={filters}
                           onFiltersChange={handleFiltersChange}
                           maxPrice={maxPrice}
+                          availableProductTypes={availableFilterOptions.productTypes}
                           availableBrands={availableFilterOptions.brands}
                           availableAgeRangeIds={availableFilterOptions.ageRangeIds}
                           availableSizeIds={availableFilterOptions.sizeIds}
                           availableHealthConditionIds={availableFilterOptions.healthConditionIds}
+                          stockCounts={availableFilterOptions.stockCounts}
+                          onSaleCount={availableFilterOptions.onSaleCount}
                         />
                       </div>
                     </SheetContent>
@@ -489,6 +531,14 @@ const Collection = () => {
               {/* Active Filter Chips */}
               {activeFilterCount > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {filters.productTypes.map((type) => (
+                    <span key={`type-${type}`} className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      {type}
+                      <button onClick={() => handleFiltersChange({ ...filters, productTypes: filters.productTypes.filter((t) => t !== type) })} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
                   {filters.brands.map((brand) => (
                     <span key={`brand-${brand}`} className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
                       {brand}
@@ -497,6 +547,22 @@ const Collection = () => {
                       </button>
                     </span>
                   ))}
+                  {filters.stockStatus !== "all" && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      {filters.stockStatus === "in_stock" ? "Còn hàng" : "Hết hàng"}
+                      <button onClick={() => handleFiltersChange({ ...filters, stockStatus: "all" })} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.onSale && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      Đang giảm giá
+                      <button onClick={() => handleFiltersChange({ ...filters, onSale: false })} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
                   {filters.ageRanges.map((id) => {
                     const age = ageRangesData?.find((a) => a.id === id);
                     return age ? (
@@ -539,7 +605,7 @@ const Collection = () => {
                     </span>
                   )}
                   <button
-                    onClick={() => handleFiltersChange({ brands: [], priceRange: [0, maxPrice], ageRanges: [], sizes: [], healthConditions: [] })}
+                    onClick={() => handleFiltersChange({ productTypes: [], brands: [], priceRange: [0, maxPrice], stockStatus: "all", onSale: false, ageRanges: [], sizes: [], healthConditions: [] })}
                     className="text-sm text-destructive hover:underline"
                   >
                     Xóa tất cả

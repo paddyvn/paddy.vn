@@ -83,8 +83,11 @@ const Search = () => {
 
   // Initialize filters
   const [filters, setFilters] = useState<FilterState>({
+    productTypes: [],
     brands: [],
     priceRange: [0, 10000000],
+    stockStatus: "all",
+    onSale: false,
     ageRanges: [],
     sizes: [],
     healthConditions: [],
@@ -162,6 +165,7 @@ const Search = () => {
       filters={filters}
       onFiltersChange={setFilters}
       maxPrice={filterOptions.maxPrice}
+      availableProductTypes={[]}
       availableBrands={filterOptions.brands}
       availableAgeRangeIds={filterOptions.ageRangeIds}
       availableSizeIds={filterOptions.sizeIds}
@@ -275,8 +279,11 @@ const Search = () => {
                     <Button
                       variant="outline"
                       onClick={() => setFilters({
+                        productTypes: [],
                         brands: [],
                         priceRange: [0, filterOptions.maxPrice],
+                        stockStatus: "all",
+                        onSale: false,
                         ageRanges: [],
                         sizes: [],
                         healthConditions: [],
