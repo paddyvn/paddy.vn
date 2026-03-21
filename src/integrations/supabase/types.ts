@@ -2537,6 +2537,51 @@ export type Database = {
           },
         ]
       }
+      landing_pages: {
+        Row: {
+          created_at: string
+          external_url: string
+          handle: string
+          id: string
+          is_active: boolean
+          meta_description: string | null
+          meta_title: string | null
+          og_image_url: string | null
+          show_footer: boolean
+          show_header: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_url: string
+          handle: string
+          id?: string
+          is_active?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          show_footer?: boolean
+          show_header?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_url?: string
+          handle?: string
+          id?: string
+          is_active?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          show_footer?: boolean
+          show_header?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       legal_conversation_documents: {
         Row: {
           conversation_id: string
