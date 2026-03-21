@@ -23,6 +23,19 @@ export const useSyncCustomers = () => {
         const body: any = {};
         if (nextBatch) {
           body.continueFrom = nextBatch;
+        } else if (batchCount === 1) {
+          // Fix 6: Incremental sync — fetch only customers created after the most recent one
+          const { data: latest } = await supabase
+            .from('customers')
+            .select('shopify_created_at')
+            .order('shopify_created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latest?.shopify_created_at) {
+            body.createdAtMin = latest.shopify_created_at;
+            console.log(`Incremental sync from: ${latest.shopify_created_at}`);
+          }
         }
 
         const { data, error } = await supabase.functions.invoke('shopify-sync-customers-batch', {
@@ -53,7 +66,7 @@ export const useSyncCustomers = () => {
         title: "Customers Sync Complete!",
         description: totalSynced > 0 
           ? `Successfully synced ${totalSynced} customers from Shopify.`
-          : "No customers to sync.",
+          : "No new customers to sync.",
       });
       setProgress({ current: 0, total: 0 });
     },

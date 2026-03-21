@@ -179,11 +179,11 @@ serve(async (req) => {
         const metaTitle = shopifyProduct.seo?.title || null;
         const metaDescription = shopifyProduct.seo?.description || null;
 
-        // Upsert product
+        // Fix 1: Use correct DB column names (source_id, source_created_at, source_updated_at)
         const { data: product, error: productError } = await supabase
           .from('products')
           .upsert({
-            shopify_product_id: shopifyProduct.id.toString(),
+            source_id: shopifyProduct.id.toString(),
             name: shopifyProduct.title,
             slug: shopifyProduct.handle,
             description: shopifyProduct.body_html,
@@ -195,8 +195,8 @@ serve(async (req) => {
             brand: shopifyProduct.vendor,
             product_type: shopifyProduct.product_type,
             tags: shopifyProduct.tags,
-            shopify_created_at: shopifyProduct.created_at,
-            shopify_updated_at: shopifyProduct.updated_at,
+            source_created_at: shopifyProduct.created_at,
+            source_updated_at: shopifyProduct.updated_at,
             published_at: shopifyProduct.published_at,
             option1_name: option1Name,
             option2_name: option2Name,
@@ -204,7 +204,7 @@ serve(async (req) => {
             meta_title: metaTitle,
             meta_description: metaDescription,
           }, {
-            onConflict: 'shopify_product_id',
+            onConflict: 'source_id',
             ignoreDuplicates: false,
           })
           .select()
@@ -217,34 +217,54 @@ serve(async (req) => {
 
         syncedProducts++;
 
-        // Delete existing images and variants for clean sync
-        await supabase.from('product_images').delete().eq('product_id', product.id);
-        await supabase.from('product_variants').delete().eq('product_id', product.id);
-
-        // Sync images
+        // Fix 2: Upsert images then cleanup orphans (instead of delete-then-insert)
+        const syncedImageIds: string[] = [];
         for (const image of shopifyProduct.images) {
-          const { error: imageError } = await supabase
+          const { data: img, error: imageError } = await supabase
             .from('product_images')
-            .insert({
+            .upsert({
               product_id: product.id,
+              source_image_id: image.id.toString(),
               image_url: image.src,
               alt_text: image.alt || shopifyProduct.title,
               is_primary: image.position === 1,
               display_order: image.position,
-              shopify_image_id: image.id.toString(),
               variant_ids: image.variant_ids || [],
-            });
+            }, {
+              onConflict: 'product_id,source_image_id',
+            })
+            .select('id')
+            .single();
 
-          if (!imageError) syncedImages++;
+          if (!imageError && img) {
+            syncedImageIds.push(img.id);
+            syncedImages++;
+          }
         }
 
-        // Sync variants
+        // Clean up images that no longer exist in Shopify
+        if (syncedImageIds.length > 0) {
+          await supabase
+            .from('product_images')
+            .delete()
+            .eq('product_id', product.id)
+            .not('id', 'in', `(${syncedImageIds.join(',')})`);
+        } else if (shopifyProduct.images.length === 0) {
+          // Product has no images in Shopify, remove all
+          await supabase
+            .from('product_images')
+            .delete()
+            .eq('product_id', product.id);
+        }
+
+        // Fix 2: Upsert variants then cleanup orphans
+        const syncedVariantIds: string[] = [];
         for (const variant of shopifyProduct.variants) {
-          const { error: variantError } = await supabase
+          const { data: v, error: variantError } = await supabase
             .from('product_variants')
-            .insert({
+            .upsert({
               product_id: product.id,
-              shopify_variant_id: variant.id.toString(),
+              source_variant_id: variant.id.toString(),
               name: variant.title,
               price: parseFloat(variant.price),
               compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
@@ -255,9 +275,30 @@ serve(async (req) => {
               option2: variant.option2,
               option3: variant.option3,
               barcode: variant.barcode,
-            });
+            }, {
+              onConflict: 'product_id,source_variant_id',
+            })
+            .select('id')
+            .single();
 
-          if (!variantError) syncedVariants++;
+          if (!variantError && v) {
+            syncedVariantIds.push(v.id);
+            syncedVariants++;
+          }
+        }
+
+        // Clean up variants that no longer exist in Shopify
+        if (syncedVariantIds.length > 0) {
+          await supabase
+            .from('product_variants')
+            .delete()
+            .eq('product_id', product.id)
+            .not('id', 'in', `(${syncedVariantIds.join(',')})`);
+        } else if (shopifyProduct.variants.length === 0) {
+          await supabase
+            .from('product_variants')
+            .delete()
+            .eq('product_id', product.id);
         }
 
       } catch (error) {
