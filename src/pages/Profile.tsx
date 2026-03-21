@@ -297,35 +297,7 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  // Loyalty points
-  const { data: loyaltyPoints } = useQuery({
-    queryKey: ["loyalty-points", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("loyalty_points")
-        .select("*")
-        .eq("user_id", userId!)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId,
-  });
 
-  const { data: loyaltyTransactions } = useQuery({
-    queryKey: ["loyalty-transactions", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("loyalty_transactions")
-        .select("*")
-        .eq("user_id", userId!)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userId,
-  });
 
   // User coupons
   const { data: userCoupons, isLoading: userCouponsLoading } = useQuery({
