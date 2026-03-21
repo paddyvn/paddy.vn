@@ -3311,6 +3311,8 @@ export type Database = {
           created_at: string
           handle: string
           id: string
+          meta_description: string | null
+          meta_title: string | null
           published: boolean | null
           shopify_created_at: string | null
           shopify_page_id: string | null
@@ -3325,6 +3327,8 @@ export type Database = {
           created_at?: string
           handle: string
           id?: string
+          meta_description?: string | null
+          meta_title?: string | null
           published?: boolean | null
           shopify_created_at?: string | null
           shopify_page_id?: string | null
@@ -3339,6 +3343,8 @@ export type Database = {
           created_at?: string
           handle?: string
           id?: string
+          meta_description?: string | null
+          meta_title?: string | null
           published?: boolean | null
           shopify_created_at?: string | null
           shopify_page_id?: string | null

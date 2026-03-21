@@ -50,6 +50,7 @@ const BlogPostEdit = lazy(() => import("./pages/admin/BlogPostEdit"));
 const BlogCategories = lazy(() => import("./pages/admin/BlogCategories"));
 const ContentAIGenerator = lazy(() => import("./pages/admin/ContentAIGenerator"));
 const Pages = lazy(() => import("./pages/admin/Pages"));
+const PageEdit = lazy(() => import("./pages/admin/PageEdit"));
 const MarketingBanners = lazy(() => import("./pages/admin/MarketingBanners"));
 const PromotionsManagement = lazy(() => import("./pages/admin/PromotionsManagement"));
 const PromotionEdit = lazy(() => import("./pages/admin/PromotionEdit"));
@@ -151,6 +152,7 @@ const App = () => (
             <Route path="content/blog/:id/edit" element={<BlogPostEdit />} />
             <Route path="content/blog-categories" element={<BlogCategories />} />
             <Route path="content/pages" element={<Pages />} />
+            <Route path="content/pages/:id/edit" element={<PageEdit />} />
             <Route path="content/ai-generator" element={<ContentAIGenerator />} />
             <Route path="marketing/banners" element={<MarketingBanners />} />
             <Route path="promotions" element={<PromotionsManagement />} />

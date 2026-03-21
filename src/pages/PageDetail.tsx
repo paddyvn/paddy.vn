@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
 import DOMPurify from "isomorphic-dompurify";
 
 const PageDetail = () => {
   const { handle } = useParams<{ handle: string }>();
 
-  const { data: page, isLoading, error } = useQuery({
+  const { data: page, isLoading } = useQuery({
     queryKey: ["page", handle],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,6 +28,14 @@ const PageDetail = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {page && (
+        <Helmet>
+          <title>{(page as any).meta_title || page.title} | Paddy.vn</title>
+          {(page as any).meta_description && (
+            <meta name="description" content={(page as any).meta_description} />
+          )}
+        </Helmet>
+      )}
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
         {isLoading ? (
