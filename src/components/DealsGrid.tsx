@@ -70,7 +70,7 @@ export const DealsGrid = () => {
 
   if (isLoading) {
     return (
-      <section className="pt-5 pb-10 bg-background">
+      <section className="py-6 bg-background">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-8 w-48" />
