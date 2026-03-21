@@ -223,20 +223,35 @@ const Profile = () => {
   });
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ["orders", userId],
+    queryKey: ["my-orders", userId, profile?.email, profile?.phone],
     queryFn: async () => {
+      if (!profile) return [];
+      
+      // Match orders by email or normalized phone instead of user_id
+      const filters: string[] = [];
+      if (profile.email) filters.push(`customer_email.ilike.${profile.email}`);
+      if (profile.phone) {
+        const normalized = profile.phone.replace(/[^0-9]/g, '').replace(/^84/, '0').replace(/^00/, '0');
+        if (normalized.length >= 9) {
+          filters.push(`customer_phone.ilike.%${normalized}%`);
+        }
+      }
+      
+      if (filters.length === 0) return [];
+      
       const { data, error } = await supabase
         .from("orders")
         .select(`
           *,
           order_items (*)
         `)
-        .eq("user_id", userId!)
-        .order("created_at", { ascending: false });
+        .or(filters.join(','))
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (error) throw error;
       return (data as unknown as Order[]) || [];
     },
-    enabled: !!userId,
+    enabled: !!userId && !!profile,
   });
 
   const { data: pets, isLoading: petsLoading } = useQuery({
