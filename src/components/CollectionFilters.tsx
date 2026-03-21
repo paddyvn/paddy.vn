@@ -189,7 +189,7 @@ export const CollectionFilters = ({
         {showBrandFilter && (
           <AccordionItem value="brand">
             <AccordionTrigger className="text-base font-semibold">
-              Brand
+              Thương hiệu
             </AccordionTrigger>
             <AccordionContent>
               {availableBrands.length > SEARCHABLE_THRESHOLD && (
