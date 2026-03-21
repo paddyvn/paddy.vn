@@ -11,7 +11,25 @@ interface BrandCollection {
 }
 
 export const Brands = () => {
-  const { data: brands } = useQuery({
+  // 1. Fetch curated homepage brands
+  const { data: featuredBrands } = useQuery({
+    queryKey: ["homepage-featured-brands"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("homepage_featured_brands")
+        .select(`
+          brand_id,
+          position,
+          brand:categories (id, name, slug, image_url)
+        `)
+        .order("position");
+      if (error) throw error;
+      return (data || []).map((row: any) => row.brand as BrandCollection).filter(Boolean);
+    },
+  });
+
+  // 2. Fallback: first 12 brand collections by display_order
+  const { data: defaultBrands } = useQuery({
     queryKey: ['brand-collections'],
     queryFn: async () => {
       const { data } = await supabase
@@ -21,10 +39,11 @@ export const Brands = () => {
         .eq('is_active', true)
         .order('display_order', { ascending: true })
         .limit(12);
-      
       return data as BrandCollection[] || [];
     }
   });
+
+  const brands = featuredBrands && featuredBrands.length > 0 ? featuredBrands : defaultBrands;
 
   if (!brands || brands.length === 0) return null;
 

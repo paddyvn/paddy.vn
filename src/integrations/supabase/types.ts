@@ -1495,6 +1495,35 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_featured_brands: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          position: number
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          position?: number
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_featured_brands_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: true
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homepage_featured_config: {
         Row: {
           collection_id: string | null
