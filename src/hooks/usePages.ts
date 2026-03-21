@@ -11,6 +11,8 @@ export interface Page {
   author: string | null;
   published: boolean;
   template_suffix: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   created_at: string;
   updated_at: string;
   shopify_created_at: string | null;
@@ -39,7 +41,6 @@ export const useSyncPages = () => {
   return useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("shopify-sync-pages");
-
       if (error) throw error;
       return data;
     },
@@ -53,6 +54,52 @@ export const useSyncPages = () => {
     onError: (error: Error) => {
       toast({
         title: "Sync Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useCreatePage = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (page: {
+      title: string;
+      handle: string;
+      body_html?: string | null;
+      published?: boolean;
+      meta_title?: string | null;
+      meta_description?: string | null;
+    }) => {
+      const { data, error } = await supabase
+        .from("pages")
+        .insert({
+          title: page.title,
+          handle: page.handle,
+          body_html: page.body_html || null,
+          published: page.published ?? true,
+          meta_title: page.meta_title || null,
+          meta_description: page.meta_description || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pages"] });
+      toast({
+        title: "Page Created",
+        description: "New page has been created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Create Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -103,7 +150,6 @@ export const useDeletePage = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("pages").delete().eq("id", id);
-
       if (error) throw error;
     },
     onSuccess: () => {
