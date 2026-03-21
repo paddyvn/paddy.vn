@@ -75,7 +75,7 @@ const categorySchema = z.object({
 interface SortableRowProps {
   category: BlogCategory;
   onEdit: (category: BlogCategory) => void;
-  onDelete: (id: string) => void;
+  onDelete: (category: BlogCategory) => void;
   onToggleActive: (category: BlogCategory) => void;
 }
 
@@ -95,6 +95,8 @@ const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRow
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const postCount = category.post_count ?? 0;
+
   return (
     <TableRow ref={setNodeRef} style={style} className={isDragging ? "bg-muted" : ""}>
       <TableCell>
@@ -106,12 +108,16 @@ const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRow
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </button>
       </TableCell>
-      <TableCell className="font-medium">{category.name}</TableCell>
-      <TableCell className="font-mono text-sm">{category.slug}</TableCell>
-      <TableCell className="max-w-[200px] truncate">
-        {category.description || "-"}
+      <TableCell>
+        <div>
+          <span className="font-medium">{category.name_vi || category.name}</span>
+          {category.name_vi && (
+            <span className="text-xs text-muted-foreground ml-2">({category.name})</span>
+          )}
+        </div>
       </TableCell>
-      <TableCell>{category.display_order}</TableCell>
+      <TableCell className="font-mono text-sm">{category.slug}</TableCell>
+      <TableCell className="text-center">{postCount}</TableCell>
       <TableCell>
         <Switch
           checked={category.is_active}
@@ -123,8 +129,14 @@ const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRow
           <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onDelete(category.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(category)}
+            disabled={postCount > 0}
+            title={postCount > 0 ? `Has ${postCount} posts — reassign them first` : "Delete category"}
+          >
+            <Trash2 className={`h-4 w-4 ${postCount > 0 ? "text-muted-foreground" : "text-destructive"}`} />
           </Button>
         </div>
       </TableCell>
@@ -140,7 +152,7 @@ const BlogCategories = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BlogCategory | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteCategory_target, setDeleteTarget] = useState<BlogCategory | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -259,9 +271,9 @@ const BlogCategories = () => {
   };
 
   const handleDelete = () => {
-    if (deleteId) {
-      deleteCategory.mutate(deleteId, {
-        onSuccess: () => setDeleteId(null),
+    if (deleteCategory_target) {
+      deleteCategory.mutate(deleteCategory_target.id, {
+        onSuccess: () => setDeleteTarget(null),
       });
     }
   };
@@ -293,12 +305,11 @@ const BlogCategories = () => {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+             <TableRow>
               <TableHead className="w-12"></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-20">Order</TableHead>
+              <TableHead className="w-20 text-center">Posts</TableHead>
               <TableHead className="w-20">Active</TableHead>
               <TableHead className="w-24">Actions</TableHead>
             </TableRow>
@@ -306,13 +317,13 @@ const BlogCategories = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : sortedCategories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   No categories found. Create your first category.
                 </TableCell>
               </TableRow>
@@ -331,7 +342,7 @@ const BlogCategories = () => {
                       key={category.id}
                       category={category}
                       onEdit={handleOpenEdit}
-                      onDelete={setDeleteId}
+                      onDelete={setDeleteTarget}
                       onToggleActive={handleToggleActive}
                     />
                   ))}
@@ -448,13 +459,12 @@ const BlogCategories = () => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={!!deleteCategory_target} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Category?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Blog posts using this category will
-              need to be reassigned.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
