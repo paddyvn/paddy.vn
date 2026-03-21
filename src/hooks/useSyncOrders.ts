@@ -114,6 +114,7 @@ export const useSyncOrders = () => {
 
   return {
     syncOrders: (fullSync = false) => mutation.mutate(fullSync),
+    syncOrdersAsync: (fullSync = false) => mutation.mutateAsync(fullSync),
     isPending: mutation.isPending,
     progress,
   };
