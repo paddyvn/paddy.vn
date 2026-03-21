@@ -105,6 +105,7 @@ const mainItems = [
     subItems: [
       { title: "Delivery Methods", url: "/admin/settings/delivery-methods" },
       { title: "Store Locations", url: "/admin/settings/stores" },
+      { title: "Data Sync", url: "/admin/settings/sync" },
     ],
   },
 ];

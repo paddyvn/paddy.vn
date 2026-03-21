@@ -71,6 +71,7 @@ const TrafficAnalytics = lazy(() => import("./pages/admin/TrafficAnalytics"));
 const DeliveryMethods = lazy(() => import("./pages/admin/DeliveryMethods"));
 const StoresManagement = lazy(() => import("./pages/admin/StoresManagement"));
 const StoreEdit = lazy(() => import("./pages/admin/StoreEdit"));
+const SyncDashboard = lazy(() => import("./pages/admin/SyncDashboard"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -173,6 +174,7 @@ const App = () => (
             <Route path="settings/delivery-methods" element={<DeliveryMethods />} />
             <Route path="settings/stores" element={<StoresManagement />} />
             <Route path="settings/stores/:id" element={<StoreEdit />} />
+            <Route path="settings/sync" element={<SyncDashboard />} />
           </Route>
           {/* Redirect legacy /category/ links to /collections/ */}
           <Route path="/category/:slug" element={<CategoryRedirect />} />
