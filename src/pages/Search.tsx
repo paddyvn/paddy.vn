@@ -165,6 +165,7 @@ const Search = () => {
       filters={filters}
       onFiltersChange={setFilters}
       maxPrice={filterOptions.maxPrice}
+      availableProductTypes={[]}
       availableBrands={filterOptions.brands}
       availableAgeRangeIds={filterOptions.ageRangeIds}
       availableSizeIds={filterOptions.sizeIds}
