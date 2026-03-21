@@ -66,50 +66,59 @@ serve(async (req) => {
       throw new Error('Required credentials not configured');
     }
 
-    // Verify admin authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Check for cron secret bypass
+    const cronSecret = req.headers.get('x-cron-secret');
+    const expectedCronSecret = Deno.env.get('CRON_SECRET');
+    const isCronRequest = cronSecret && expectedCronSecret && cronSecret === expectedCronSecret;
+
+    if (isCronRequest) {
+      console.log('Cron request authenticated via CRON_SECRET');
     }
 
-    // Extract JWT token from Authorization header
-    const token = authHeader.replace('Bearer ', '');
-    
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
-    if (authError || !user) {
-      console.error('Authentication failed:', authError?.message || 'Auth session missing!');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify user has admin role using service role client
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
 
-    if (roleError || !roleData) {
-      console.error('Admin check failed:', roleError?.message || 'No admin role found');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!isCronRequest) {
+      // Verify admin authentication
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing authorization header' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+
+      const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+      if (authError || !user) {
+        console.error('Authentication failed:', authError?.message || 'Auth session missing!');
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleError || !roleData) {
+        console.error('Admin check failed:', roleError?.message || 'No admin role found');
+        return new Response(
+          JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Admin authenticated:', user.id);
     }
-
-    console.log('Admin authenticated:', user.id);
     
     const { continueFrom, createdAtMin, createdAtMax } = await req.json();
 
