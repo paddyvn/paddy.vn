@@ -1,81 +1,146 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, ShoppingCart, Users, TrendingUp, Package } from "lucide-react";
+import { DollarSign, ShoppingCart, Users, TrendingUp, TrendingDown, Package } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
+const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
+
+type DateRange = "7d" | "14d" | "30d" | "90d";
+
+const getDays = (range: DateRange) => {
+  switch (range) {
+    case "7d": return 7;
+    case "14d": return 14;
+    case "30d": return 30;
+    case "90d": return 90;
+  }
+};
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
+
+function TrendBadge({ current, previous, label }: { current: number; previous: number; label: string }) {
+  const change = previous > 0 ? ((current - previous) / previous) * 100 : 0;
+  const isPositive = change >= 0;
+  return (
+    <p className="text-xs text-muted-foreground flex items-center gap-1">
+      {isPositive ? (
+        <TrendingUp className="h-3 w-3 text-green-500" />
+      ) : (
+        <TrendingDown className="h-3 w-3 text-red-500" />
+      )}
+      <span className={isPositive ? "text-green-500" : "text-red-500"}>
+        {Math.abs(change).toFixed(1)}%
+      </span>
+      <span>vs previous {label}</span>
+    </p>
+  );
+}
 
 export default function SalesAnalytics() {
-  // Fetch orders data
-  const { data: orders = [] } = useQuery({
-    queryKey: ["admin-orders-analytics"],
+  const [dateRange, setDateRange] = useState<DateRange>("30d");
+
+  const days = getDays(dateRange);
+  const startDate = startOfDay(subDays(new Date(), days));
+  const prevStartDate = startOfDay(subDays(new Date(), days * 2));
+
+  // Current period orders (specific fields, date-scoped)
+  const { data: currentOrders = [] } = useQuery({
+    queryKey: ["sales-current", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("id, total, status, created_at")
+        .gte("created_at", startDate.toISOString())
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch customers data
-  const { data: customers = [] } = useQuery({
-    queryKey: ["admin-customers-analytics"],
+  // Previous period orders (for comparison)
+  const { data: prevOrders = [] } = useQuery({
+    queryKey: ["sales-previous", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
+        .from("orders")
+        .select("id, total, status, created_at")
+        .gte("created_at", prevStartDate.toISOString())
+        .lt("created_at", startDate.toISOString());
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // New customers count (head: true)
+  const { data: newCustomersCount = 0 } = useQuery({
+    queryKey: ["sales-customers", dateRange],
+    queryFn: async () => {
+      const { count, error } = await supabase
         .from("customers")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", startDate.toISOString());
       if (error) throw error;
-      return data;
+      return count || 0;
     },
   });
 
-  // Fetch products data
-  const { data: products = [] } = useQuery({
-    queryKey: ["admin-products-analytics"],
+  // Previous period customer count
+  const { data: prevCustomersCount = 0 } = useQuery({
+    queryKey: ["sales-customers-prev", dateRange],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
+        .from("customers")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", prevStartDate.toISOString())
+        .lt("created_at", startDate.toISOString());
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Active products count (cached)
+  const { data: productsCount = 0 } = useQuery({
+    queryKey: ["sales-products-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
         .from("products")
-        .select("*")
+        .select("*", { count: "exact", head: true })
         .eq("is_active", true);
       if (error) throw error;
-      return data;
+      return count || 0;
     },
+    staleTime: 60000,
   });
 
-  // Calculate sales metrics
-  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
-  const totalOrders = orders.length;
-  const newCustomers = customers.filter(c => {
-    const createdAt = new Date(c.created_at);
-    const thirtyDaysAgo = subDays(new Date(), 30);
-    return createdAt >= thirtyDaysAgo;
-  }).length;
-  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  // Computed metrics
+  const currentRevenue = currentOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const prevRevenue = prevOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const currentOrderCount = currentOrders.length;
+  const prevOrderCount = prevOrders.length;
+  const avgOrderValue = currentOrderCount > 0 ? currentRevenue / currentOrderCount : 0;
 
-  // Daily revenue for the last 7 days
-  const dailyRevenue = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
-    const dayStart = startOfDay(date);
-    const dayEnd = endOfDay(date);
-    const dayOrders = orders.filter(order => {
-      const orderDate = new Date(order.created_at);
-      return orderDate >= dayStart && orderDate <= dayEnd;
-    });
-    const revenue = dayOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+  const rangeLabel = dateRange.replace("d", " days");
+
+  // Daily revenue chart
+  const dailyRevenue = eachDayOfInterval({ start: startDate, end: new Date() }).map((day) => {
+    const dayStr = format(day, "yyyy-MM-dd");
+    const dayOrders = currentOrders.filter(
+      (o) => format(new Date(o.created_at), "yyyy-MM-dd") === dayStr
+    );
     return {
-      date: format(date, "EEE"),
-      revenue,
+      date: format(day, dateRange === "7d" ? "EEE" : "MMM dd"),
+      revenue: dayOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
       orders: dayOrders.length,
     };
   });
 
-  // Order status distribution
-  const orderStatusData = orders.reduce((acc, order) => {
+  // Order status pie chart
+  const orderStatusData = currentOrders.reduce((acc, order) => {
     const status = order.status || "unknown";
     acc[status] = (acc[status] || 0) + 1;
     return acc;
@@ -86,41 +151,47 @@ export default function SalesAnalytics() {
     value,
   }));
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
-  };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Sales Analytics</h1>
-        <p className="text-muted-foreground">Track your revenue and order performance</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Sales Analytics</h1>
+          <p className="text-muted-foreground">Track your revenue and order performance</p>
+        </div>
+        <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="14d">Last 14 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="90d">Last 90 days</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">All time revenue</p>
+            <div className="text-2xl font-bold">{formatCurrency(currentRevenue)}</div>
+            <TrendBadge current={currentRevenue} previous={prevRevenue} label={rangeLabel} />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Orders</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalOrders.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">All time orders</p>
+            <div className="text-2xl font-bold">{currentOrderCount.toLocaleString()}</div>
+            <TrendBadge current={currentOrderCount} previous={prevOrderCount} label={rangeLabel} />
           </CardContent>
         </Card>
 
@@ -130,8 +201,8 @@ export default function SalesAnalytics() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{newCustomers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
+            <div className="text-2xl font-bold">{newCustomersCount.toLocaleString()}</div>
+            <TrendBadge current={newCustomersCount} previous={prevCustomersCount} label={rangeLabel} />
           </CardContent>
         </Card>
 
@@ -152,7 +223,7 @@ export default function SalesAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Daily Revenue</CardTitle>
-            <CardDescription>Revenue over the last 7 days</CardDescription>
+            <CardDescription>Revenue over the last {rangeLabel}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -160,7 +231,7 @@ export default function SalesAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" className="text-xs" />
                 <YAxis className="text-xs" tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => formatCurrency(value)}
                   contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
                 />
@@ -209,7 +280,7 @@ export default function SalesAnalytics() {
           <div className="flex items-center gap-4">
             <Package className="h-8 w-8 text-primary" />
             <div>
-              <p className="text-2xl font-bold">{products.length.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{productsCount.toLocaleString()}</p>
               <p className="text-sm text-muted-foreground">Active products in catalog</p>
             </div>
           </div>
