@@ -110,6 +110,9 @@ export default function ContentMenus() {
         </Button>
       </div>
 
+      {/* Top Nav Bar Manager */}
+      <TopNavManager menus={menus} />
+
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Menu List */}
         <Card className="lg:col-span-1">
