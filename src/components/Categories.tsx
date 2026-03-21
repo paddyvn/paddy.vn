@@ -14,7 +14,7 @@ export const Categories = () => {
   const { data: categories = [] } = useActiveHomepageCategories(activePet);
 
   return (
-    <section className="py-6 md:py-8 bg-muted/30">
+    <section className="py-6 bg-muted/30">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">

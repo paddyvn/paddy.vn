@@ -41,7 +41,7 @@ export const FeaturedProducts = () => {
   }
 
   return (
-    <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
+    <section className="py-6" style={{ backgroundColor: '#fefefe' }}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4 animate-in fade-in slide-in-from-bottom duration-700">
           <div>

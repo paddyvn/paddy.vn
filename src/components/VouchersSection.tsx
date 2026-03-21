@@ -189,7 +189,7 @@ export const VouchersSection = () => {
   }
 
   return (
-    <section className="py-4 bg-background">
+    <section className="py-6 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
