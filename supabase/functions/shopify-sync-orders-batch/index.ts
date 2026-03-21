@@ -311,8 +311,16 @@ serve(async (req) => {
         try {
           const shippingFee = shopifyOrder.total_shipping_price_set?.shop_money?.amount || '0';
 
-          const customerEmail = shopifyOrder.email || shopifyOrder.customer?.email || null;
-          const customerPhone = shopifyOrder.phone || shopifyOrder.customer?.phone || null;
+          // FIXED: Extract contact info with shipping_address fallback
+          // Vietnamese Shopify orders often have phone in shipping_address but not in order.phone
+          const customerEmail = shopifyOrder.email 
+            || shopifyOrder.customer?.email 
+            || shopifyOrder.shipping_address?.email 
+            || null;
+          const customerPhone = shopifyOrder.phone 
+            || shopifyOrder.customer?.phone 
+            || shopifyOrder.shipping_address?.phone 
+            || null;
 
           // Upsert order
           const { data: order, error: orderError } = await supabase
