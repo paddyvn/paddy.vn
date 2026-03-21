@@ -137,7 +137,7 @@ export const FlashSaleSection = () => {
 
   if (isLoadingPromo) {
     return (
-      <section className="py-4 bg-background">
+      <section className="py-6 bg-background">
         <div className="container mx-auto px-4">
           <Skeleton className="h-48 w-full rounded-xl" />
         </div>
@@ -146,7 +146,7 @@ export const FlashSaleSection = () => {
   }
 
   return (
-    <section className="py-4 bg-background">
+    <section className="py-6 bg-background">
       <div className="container mx-auto px-4">
         {/* Flash Sale Card with Products Inside */}
         <div

@@ -17,7 +17,7 @@ export const FeaturedProducts = () => {
 
   if (isLoading) {
     return (
-      <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
+      <section className="py-6" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -31,7 +31,7 @@ export const FeaturedProducts = () => {
 
   if (!products || products.length === 0) {
     return (
-      <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
+      <section className="py-6" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Sản phẩm nổi bật</h2>
           <p className="text-lg text-muted-foreground">No featured products available yet.</p>
@@ -41,7 +41,7 @@ export const FeaturedProducts = () => {
   }
 
   return (
-    <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
+    <section className="py-6" style={{ backgroundColor: '#fefefe' }}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4 animate-in fade-in slide-in-from-bottom duration-700">
           <div>
