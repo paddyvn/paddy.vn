@@ -112,14 +112,18 @@ serve(async (req) => {
     console.log('Admin authenticated:', user.id);
 
     // Get batch parameters from request
-    const { batchSize = 50, continueFrom = null } = await req.json().catch(() => ({}));
+    const { batchSize = 50, continueFrom = null, updatedAtMin = null } = await req.json().catch(() => ({}));
 
-    console.log(`Starting batch sync (batch size: ${batchSize}, continue from: ${continueFrom || 'start'})...`);
+    console.log(`Starting batch sync (batch size: ${batchSize}, continue from: ${continueFrom || 'start'}, updatedAtMin: ${updatedAtMin || 'none'})...`);
 
     // Build URL with pagination
-    let url = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/products.json?limit=${batchSize}`;
+    let url: string;
     if (continueFrom) {
       url = continueFrom;
+    } else if (updatedAtMin) {
+      url = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/products.json?limit=${batchSize}&updated_at_min=${updatedAtMin}`;
+    } else {
+      url = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/products.json?limit=${batchSize}`;
     }
 
     const response: Response = await fetch(url, {

@@ -34,7 +34,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Starting Shopify blog posts sync...');
+    // Parse request body for incremental sync
+    const { updatedAtMin } = await req.json().catch(() => ({}));
+    console.log('Starting Shopify blog posts sync...', updatedAtMin ? `(incremental from ${updatedAtMin})` : '(full)');
 
     const shopifyDomain = Deno.env.get('SHOPIFY_STORE_DOMAIN');
     const shopifyToken = Deno.env.get('SHOPIFY_ADMIN_API_TOKEN');
@@ -144,9 +146,15 @@ Deno.serve(async (req) => {
       let pageInfo: string | null = null;
 
       while (hasNextPage) {
-        const url: string = pageInfo
-          ? `https://${shopifyDomain}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=250&page_info=${pageInfo}`
-          : `https://${shopifyDomain}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=250`;
+        let url: string;
+        if (pageInfo) {
+          url = `https://${shopifyDomain}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=250&page_info=${pageInfo}`;
+        } else {
+          url = `https://${shopifyDomain}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=250`;
+          if (updatedAtMin) {
+            url += `&updated_at_min=${updatedAtMin}`;
+          }
+        }
 
         const response: Response = await fetch(url, {
           headers: {

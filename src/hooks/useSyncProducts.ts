@@ -20,8 +20,26 @@ export const useSyncProducts = () => {
         batchCount++;
         console.log(`Syncing batch ${batchCount}...`);
         
+        const body: any = {};
+        if (nextBatch) {
+          body.continueFrom = nextBatch;
+        } else if (batchCount === 1) {
+          // Incremental sync: only fetch products updated since last sync
+          const { data: latest } = await supabase
+            .from('products')
+            .select('source_updated_at')
+            .order('source_updated_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latest?.source_updated_at) {
+            body.updatedAtMin = latest.source_updated_at;
+            console.log(`Incremental sync from: ${latest.source_updated_at}`);
+          }
+        }
+
         const { data, error } = await supabase.functions.invoke('shopify-sync-batch', {
-          body: nextBatch ? { continueFrom: nextBatch } : {},
+          body,
         });
 
         if (error) throw error;
