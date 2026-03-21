@@ -161,7 +161,7 @@ export default function ContentAIGenerator() {
     try {
       const response = await fetch(generatedImage);
       const blob = await response.blob();
-      const fileName = `pet-generated-${Date.now()}.png`;
+      const fileName = `uploads/pet-generated-${Date.now()}.png`;
 
       const { error } = await supabase.storage
         .from("product-images")
