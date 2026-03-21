@@ -121,6 +121,7 @@ const SyncDashboard = () => {
   const customers = useSyncCustomers();
   const abandonedCheckouts = useSyncAbandonedCheckouts();
   const brands = useSyncBrands();
+  const blogPosts = useSyncBlogPosts();
 
   const isAnySyncing =
     Object.values(statuses).includes("running") ||
@@ -130,7 +131,8 @@ const SyncDashboard = () => {
     orders.isPending ||
     customers.isPending ||
     abandonedCheckouts.isPending ||
-    brands.isPending;
+    brands.isPending ||
+    blogPosts.isPending;
 
   const runSync = useCallback(async (key: string, title: string, action: () => Promise<unknown>) => {
     setStatus(key, "running");
