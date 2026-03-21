@@ -174,6 +174,7 @@ const App = () => (
             <Route path="settings/delivery-methods" element={<DeliveryMethods />} />
             <Route path="settings/stores" element={<StoresManagement />} />
             <Route path="settings/stores/:id" element={<StoreEdit />} />
+            <Route path="settings/sync" element={<SyncDashboard />} />
           </Route>
           {/* Redirect legacy /category/ links to /collections/ */}
           <Route path="/category/:slug" element={<CategoryRedirect />} />
