@@ -87,9 +87,9 @@ export const FeaturedProducts = () => {
   const productIds = useMemo(() => displayProducts.map(p => p.id), [displayProducts]);
   const { data: promotionsMap } = useProductsPromotions(productIds);
 
-  const viewAllLink = (config?.collection as any)?.slug
-    ? `/collections/${(config?.collection as any).slug}`
-    : "/collections/featured";
+  const viewAllLink = config?.collectionSlug
+    ? `/collections/${config.collectionSlug}`
+    : "/collections";
 
   // If section is disabled, don't render
   if (config && !config.is_active) return null;
