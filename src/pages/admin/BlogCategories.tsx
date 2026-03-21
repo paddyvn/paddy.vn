@@ -342,7 +342,7 @@ const BlogCategories = () => {
                       key={category.id}
                       category={category}
                       onEdit={handleOpenEdit}
-                      onDelete={setDeleteId}
+                      onDelete={setDeleteTarget}
                       onToggleActive={handleToggleActive}
                     />
                   ))}
