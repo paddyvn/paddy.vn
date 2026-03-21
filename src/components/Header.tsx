@@ -4,7 +4,8 @@ import paddyLogo from "@/assets/paddy-logo.avif";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { MegaMenu } from "@/components/MegaMenu";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
@@ -19,6 +26,54 @@ import { CartDrawer } from "@/components/CartDrawer";
 import categoryDogs from "@/assets/category-dogs.jpg";
 import categoryCats from "@/assets/category-cats.jpg";
 import { useActiveBanners } from "@/hooks/useBanners";
+import { useMegaMenuData } from "@/hooks/useMegaMenuData";
+
+function MobileMenuAccordion({
+  label,
+  menuSlug,
+  onNavigate,
+}: {
+  label: string;
+  menuSlug: string;
+  onNavigate: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const { data: menuData } = useMegaMenuData(expanded ? menuSlug : null);
+
+  return (
+    <div>
+      <button
+        className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {label}
+        <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
+
+      {expanded && menuData && (
+        <div className="bg-muted/30 px-4 py-2">
+          {menuData.columns.map((column) => (
+            <div key={column.id} className="py-2">
+              <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">
+                {column.title}
+              </p>
+              {column.items.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className="block py-1.5 text-sm hover:text-primary"
+                  onClick={onNavigate}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const Header = () => {
   const [userId, setUserId] = useState<string | undefined>();
@@ -27,20 +82,36 @@ export const Header = () => {
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
   const [hideHeader, setHideHeader] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { cart } = useCart(userId);
   const cartCount = cart.length;
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const { data: announcements = [] } = useActiveBanners('announcement');
-  const activeAnnouncement = announcements[0]; // Show first active announcement
+  const activeAnnouncement = announcements[0];
+
+  // Fetch DB-driven top nav items
+  const { data: navItems } = useQuery({
+    queryKey: ["top-nav-items"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("top_nav_items")
+        .select(`
+          id, label, link_url, mega_menu_id, position,
+          mega_menu:navigation_menus(id, slug)
+        `)
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Progressive header hiding on scroll with direction detection
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let rafId = 0;
-
-    // local (non-state) cached values to avoid redundant setState calls
     let cachedIsAtTop = true;
     let cachedHideHeader = false;
 
@@ -51,9 +122,6 @@ export const Header = () => {
         const scrollY = window.scrollY;
         const isScrollingUp = scrollY < lastScrollY;
 
-        // --- Mobile announcement/search: stable hysteresis to prevent blink
-        // If currently "at top", only switch off after a clear scroll.
-        // If currently "not at top", only switch back on when very close to top.
         let nextIsAtTop = cachedIsAtTop;
         if (cachedIsAtTop) {
           if (scrollY > 40) nextIsAtTop = false;
@@ -66,13 +134,10 @@ export const Header = () => {
           setIsAtTop(nextIsAtTop);
         }
 
-        // --- Header hide/show: add hysteresis too to avoid jitter
         let nextHideHeader = cachedHideHeader;
         if (cachedHideHeader) {
-          // Once hidden, reveal early when user scrolls up or returns near top
           if (isScrollingUp || scrollY < 80) nextHideHeader = false;
         } else {
-          // Only hide after a meaningful scroll down
           if (!isScrollingUp && scrollY > 140) nextHideHeader = true;
         }
 
@@ -85,7 +150,6 @@ export const Header = () => {
       });
     };
 
-    // Initialize correct state on mount
     handleScroll();
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -152,23 +216,28 @@ export const Header = () => {
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-2 md:px-4">
           <div className="flex h-16 items-center justify-between gap-6 relative">
-            {/* Mobile Menu Button - in blue bar */}
-            <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/90">
+            {/* Mobile Menu Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden text-primary-foreground hover:bg-primary/90"
+              onClick={() => setMobileMenuOpen(true)}
+            >
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Logo - centered on mobile */}
+            {/* Logo */}
             <a href="/" className="flex-shrink-0 absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
               <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto brightness-0 invert" />
             </a>
 
-            {/* Search Bar - Centered (desktop only) */}
+            {/* Search Bar - Desktop only */}
             <SearchAutocomplete
               className="hidden md:block flex-1 max-w-lg"
               inputClassName="w-full pr-12 h-11 bg-background text-foreground rounded-md"
             />
 
-            {/* Profile - positioned independently on mobile */}
+            {/* Profile - mobile */}
             <div className="md:hidden absolute right-10">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -315,7 +384,7 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Navigation Bar - Desktop Only */}
+      {/* Navigation Bar - Desktop Only (DB-driven) */}
       <div 
         className="hidden md:block bg-primary-foreground text-foreground border-t border-border/20 relative"
         onMouseLeave={() => setActiveMegaMenu(null)}
@@ -323,67 +392,49 @@ export const Header = () => {
         <div className="container mx-auto px-4">
           <nav className="hidden md:flex h-12 items-center justify-between text-sm font-medium">
             <div className="flex items-center gap-6">
-              <button 
-                className="flex items-center gap-1 hover:text-primary transition-smooth"
-                onMouseEnter={() => setActiveMegaMenu('dog')}
-              >
-                Dog
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              <button 
-                className="flex items-center gap-1 hover:text-primary transition-smooth"
-                onMouseEnter={() => setActiveMegaMenu('cat')}
-              >
-                Cat
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              <button 
-                className="flex items-center gap-1 hover:text-primary transition-smooth"
-                onMouseEnter={() => setActiveMegaMenu(null)}
-              >
-                Other Animals
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              <a 
-                href="/blogs" 
-                className="hover:text-primary transition-smooth"
-                onMouseEnter={() => setActiveMegaMenu(null)}
-              >
-                Pagazine chăm Boss
-              </a>
-              <a 
-                href="/brands-thuong-hieu-thu-cung" 
-                className="hover:text-primary transition-smooth"
-                onMouseEnter={() => setActiveMegaMenu(null)}
-              >
-                Thương hiệu
-              </a>
-              <a 
-                href="#" 
-                className="hover:text-primary transition-smooth"
-                onMouseEnter={() => setActiveMegaMenu(null)}
-              >
-                Today's Deals
-              </a>
+              {navItems?.map((item) => {
+                const menuSlug = (item.mega_menu as any)?.slug;
+
+                if (menuSlug) {
+                  return (
+                    <button
+                      key={item.id}
+                      className="flex items-center gap-1 hover:text-primary transition-smooth"
+                      onMouseEnter={() => setActiveMegaMenu(menuSlug)}
+                    >
+                      {item.label}
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.link_url || "#"}
+                    className="hover:text-primary transition-smooth"
+                    onMouseEnter={() => setActiveMegaMenu(null)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
             <div className="text-secondary font-semibold text-sm">
               Tiết kiệm đến 25% khi là thành viên Paddy
             </div>
           </nav>
-
         </div>
 
-        {/* Mega Menus */}
-        {activeMegaMenu === 'dog' && (
+        {/* Mega Menu - dynamic for any slug */}
+        {activeMegaMenu && (
           <MegaMenu
-            menuSlug="dog"
-            fallbackPromoImage={categoryDogs}
-          />
-        )}
-        {activeMegaMenu === 'cat' && (
-          <MegaMenu
-            menuSlug="cat"
-            fallbackPromoImage={categoryCats}
+            menuSlug={activeMegaMenu}
+            fallbackPromoImage={
+              activeMegaMenu === 'dog' ? categoryDogs :
+              activeMegaMenu === 'cat' ? categoryCats :
+              undefined
+            }
           />
         )}
       </div>
@@ -461,6 +512,54 @@ export const Header = () => {
           </div>
         ) : null}
       </div>
+
+      {/* Mobile Navigation Sheet */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-[300px] p-0">
+          <SheetHeader className="p-4 border-b">
+            <SheetTitle>
+              <img src={paddyLogo} alt="Paddy.vn" className="h-8 w-auto" />
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="py-2">
+            {navItems?.map((item) => {
+              const menuSlug = (item.mega_menu as any)?.slug;
+
+              if (menuSlug) {
+                return (
+                  <MobileMenuAccordion
+                    key={item.id}
+                    label={item.label}
+                    menuSlug={menuSlug}
+                    onNavigate={() => setMobileMenuOpen(false)}
+                  />
+                );
+              }
+
+              return (
+                <Link
+                  key={item.id}
+                  to={item.link_url || "#"}
+                  className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="border-t mt-4 pt-4 px-4 space-y-3">
+            <Link to="/track-order" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+              Tra cứu đơn hàng
+            </Link>
+            <Link to="/orders" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+              Đơn hàng của tôi
+            </Link>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 };

@@ -32,6 +32,7 @@ import {
   NavigationMenu,
 } from "@/hooks/useNavigationMenus";
 import MenuEditor from "@/components/admin/MenuEditor";
+import TopNavManager from "@/components/admin/TopNavManager";
 
 export default function ContentMenus() {
   const { data: menus, isLoading } = useNavigationMenus();
@@ -108,6 +109,9 @@ export default function ContentMenus() {
           Create menu
         </Button>
       </div>
+
+      {/* Top Nav Bar Manager */}
+      <TopNavManager menus={menus} />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Menu List */}

@@ -66,7 +66,7 @@ export const MegaMenu = ({ menuSlug, fallbackPromoImage }: MegaMenuProps) => {
                       to={column.shop_all_link}
                       className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline pt-2"
                     >
-                      Shop All {column.title}
+                      Xem tất cả {column.title}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   )}
