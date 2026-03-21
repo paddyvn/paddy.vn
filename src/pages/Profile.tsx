@@ -296,7 +296,51 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const getStatusStep = (status: OrderStatus) => {
+  // Loyalty points
+  const { data: loyaltyPoints } = useQuery({
+    queryKey: ["loyalty-points", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loyalty_points")
+        .select("*")
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: loyaltyTransactions } = useQuery({
+    queryKey: ["loyalty-transactions", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loyalty_transactions")
+        .select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+  // User coupons
+  const { data: userCoupons, isLoading: userCouponsLoading } = useQuery({
+    queryKey: ["user-coupons", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_coupons")
+        .select("*, coupons(*)")
+        .eq("user_id", userId!);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+
     if (status === "cancelled") return -1;
     return ORDER_STEPS.indexOf(status);
   };
