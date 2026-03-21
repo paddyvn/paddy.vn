@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { RefreshCw, Package, ShoppingCart, Users, Tag, Link2, ShoppingBag, Loader2, CheckCircle2, XCircle, Clock, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,15 +103,12 @@ const formatTime = (date: Date) =>
 const SyncDashboard = () => {
   const [statuses, setStatuses] = useState<Record<string, SyncStatus>>({});
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
-  const [logCounter, setLogCounter] = useState(0);
+  const logCounterRef = useRef(0);
 
   const addLogEntry = useCallback((title: string, status: "success" | "error") => {
-    setSyncLog((prev) => {
-      const newEntry: SyncLogEntry = { id: logCounter, title, status, timestamp: new Date() };
-      setLogCounter((c) => c + 1);
-      return [newEntry, ...prev].slice(0, 7);
-    });
-  }, [logCounter]);
+    const id = logCounterRef.current++;
+    setSyncLog((prev) => [{ id, title, status, timestamp: new Date() }, ...prev].slice(0, 7));
+  }, []);
 
   const setStatus = (key: string, status: SyncStatus) =>
     setStatuses((prev) => ({ ...prev, [key]: status }));
@@ -138,25 +135,38 @@ const SyncDashboard = () => {
     return statuses[key] || "idle";
   };
 
-  // Track completed syncs for log
-  const prevStatuses = useState<Record<string, SyncStatus>>(() => ({}))[0];
-  const checkAndLog = (key: string, title: string, isPending: boolean, isSuccess: boolean, isError: boolean) => {
-    const current = getStatus(key, isPending, isSuccess, isError);
-    if (prevStatuses[key] === "running" && current === "success") {
-      addLogEntry(title, "success");
-    } else if (prevStatuses[key] === "running" && current === "error") {
-      addLogEntry(title, "error");
-    }
-    prevStatuses[key] = current;
-    return current;
-  };
+  // Track status transitions and log completed syncs via useEffect
+  const prevStatusesRef = useRef<Record<string, SyncStatus>>({});
+
+  const syncEntries = [
+    { key: "products", title: "Products & Variants", isPending: products.isPending, isSuccess: products.isSuccess, isError: products.isError },
+    { key: "collections", title: "Collections", isPending: collections.isPending, isSuccess: collections.isSuccess, isError: collections.isError },
+    { key: "productCollections", title: "Product ↔ Collection Links", isPending: productCollections.isPending, isSuccess: productCollections.isSuccess, isError: productCollections.isError },
+    { key: "brands", title: "Brands", isPending: brands.isPending, isSuccess: brands.isSuccess, isError: brands.isError },
+    { key: "orders", title: "Orders", isPending: orders.isPending, isSuccess: (orders as any).isSuccess ?? false, isError: (orders as any).isError ?? false },
+    { key: "customers", title: "Customers", isPending: customers.isPending, isSuccess: customers.isSuccess, isError: customers.isError },
+    { key: "abandonedCheckouts", title: "Abandoned Checkouts", isPending: abandonedCheckouts.isPending, isSuccess: abandonedCheckouts.isSuccess, isError: abandonedCheckouts.isError },
+  ];
+
+  useEffect(() => {
+    syncEntries.forEach(({ key, title, isPending, isSuccess, isError }) => {
+      const current = getStatus(key, isPending, isSuccess, isError);
+      const prev = prevStatusesRef.current[key];
+      if (prev === "running" && current === "success") {
+        addLogEntry(title, "success");
+      } else if (prev === "running" && current === "error") {
+        addLogEntry(title, "error");
+      }
+      prevStatusesRef.current[key] = current;
+    });
+  });
 
   const syncCards = [
     {
       key: "products", title: "Products & Variants",
       description: "Sync all products, variants, and images from Shopify",
       icon: <Package className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("products", "Products & Variants", products.isPending, products.isSuccess, products.isError),
+      status: getStatus("products", products.isPending, products.isSuccess, products.isError),
       progress: (products as any).progress,
       onSync: () => wrapSync("products", "Products & Variants", () => products.mutate()),
     },
@@ -164,28 +174,28 @@ const SyncDashboard = () => {
       key: "collections", title: "Collections",
       description: "Sync all collections (categories) from Shopify",
       icon: <Tag className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("collections", "Collections", collections.isPending, collections.isSuccess, collections.isError),
+      status: getStatus("collections", collections.isPending, collections.isSuccess, collections.isError),
       onSync: () => wrapSync("collections", "Collections", () => collections.mutate()),
     },
     {
       key: "productCollections", title: "Product ↔ Collection Links",
       description: "Link products to their collections (run after syncing both)",
       icon: <Link2 className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("productCollections", "Product ↔ Collection Links", productCollections.isPending, productCollections.isSuccess, productCollections.isError),
+      status: getStatus("productCollections", productCollections.isPending, productCollections.isSuccess, productCollections.isError),
       onSync: () => wrapSync("productCollections", "Product ↔ Collection Links", () => productCollections.mutate()),
     },
     {
       key: "brands", title: "Brands",
       description: "Sync brand data from Shopify product vendors",
       icon: <ShoppingBag className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("brands", "Brands", brands.isPending, brands.isSuccess, brands.isError),
+      status: getStatus("brands", brands.isPending, brands.isSuccess, brands.isError),
       onSync: () => wrapSync("brands", "Brands", () => brands.mutate()),
     },
     {
       key: "orders", title: "Orders",
       description: "Sync orders, line items, fulfillments, and timeline events",
       icon: <ShoppingCart className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("orders", "Orders", orders.isPending, false, false),
+      status: getStatus("orders", orders.isPending, (orders as any).isSuccess ?? false, (orders as any).isError ?? false),
       progress: orders.progress,
       onSync: () => { setStatus("orders", "running"); orders.syncOrders(false); },
       secondaryAction: {
@@ -197,7 +207,7 @@ const SyncDashboard = () => {
       key: "customers", title: "Customers",
       description: "Sync all customer profiles from Shopify",
       icon: <Users className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("customers", "Customers", customers.isPending, customers.isSuccess, customers.isError),
+      status: getStatus("customers", customers.isPending, customers.isSuccess, customers.isError),
       progress: (customers as any).progress,
       onSync: () => wrapSync("customers", "Customers", () => customers.mutate()),
     },
@@ -205,7 +215,7 @@ const SyncDashboard = () => {
       key: "abandonedCheckouts", title: "Abandoned Checkouts",
       description: "Sync abandoned checkout data for recovery analysis",
       icon: <ShoppingCart className="h-5 w-5 text-muted-foreground" />,
-      status: checkAndLog("abandonedCheckouts", "Abandoned Checkouts", abandonedCheckouts.isPending, abandonedCheckouts.isSuccess, abandonedCheckouts.isError),
+      status: getStatus("abandonedCheckouts", abandonedCheckouts.isPending, abandonedCheckouts.isSuccess, abandonedCheckouts.isError),
       progress: (abandonedCheckouts as any).progress,
       onSync: () => wrapSync("abandonedCheckouts", "Abandoned Checkouts", () => abandonedCheckouts.mutate()),
     },
