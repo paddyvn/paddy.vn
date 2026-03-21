@@ -6766,13 +6766,6 @@ export type Database = {
           revenue: number
         }[]
       }
-      get_customers_without_addresses: {
-        Args: { p_limit?: number; p_offset?: number }
-        Returns: {
-          id: string
-          shopify_customer_id: string
-        }[]
-      }
       get_inventory_health_metrics: {
         Args: { p_end_month: string; p_start_month: string }
         Returns: {
