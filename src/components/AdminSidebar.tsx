@@ -142,11 +142,11 @@ export function AdminSidebar() {
             />
           </div>
         ) : (
-          <div className="flex items-center justify-center h-16">
+          <div className="flex items-center justify-center h-10">
             <img 
               src={paddyLogoFull} 
               alt="Paddy.vn" 
-              className="h-10 w-auto object-contain max-w-full"
+              className="h-8 w-auto object-contain max-w-full"
             />
           </div>
         )}
