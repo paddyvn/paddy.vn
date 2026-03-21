@@ -416,6 +416,10 @@ const MarketingBanners = () => {
         <TabsContent value="featured">
           <HomepageFeaturedManager />
         </TabsContent>
+
+        <TabsContent value="brands">
+          <HomepageBrandsManager />
+        </TabsContent>
       </Tabs>
     </div>
   );
