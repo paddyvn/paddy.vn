@@ -15,6 +15,9 @@ export interface BlogPost {
   published: boolean;
   tags: string | null;
   image_url: string | null;
+  category_id: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   created_at: string;
   updated_at: string;
   shopify_created_at: string | null;
