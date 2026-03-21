@@ -32,6 +32,7 @@ import {
   NavigationMenu,
 } from "@/hooks/useNavigationMenus";
 import MenuEditor from "@/components/admin/MenuEditor";
+import TopNavManager from "@/components/admin/TopNavManager";
 
 export default function ContentMenus() {
   const { data: menus, isLoading } = useNavigationMenus();
