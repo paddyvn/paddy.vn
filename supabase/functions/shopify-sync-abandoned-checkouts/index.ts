@@ -77,8 +77,9 @@ Deno.serve(async (req) => {
         global: { headers: { Authorization: authHeader } }
       });
 
-      const { data: { user }, error: authError } = await authClient.auth.getUser();
-      if (authError || !user) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: authError } = await authClient.auth.getClaims(token);
+      if (authError || !claimsData?.claims) {
         console.error('Authentication failed:', authError?.message);
         return new Response(
           JSON.stringify({ success: false, error: 'Unauthorized' }),
@@ -86,10 +87,12 @@ Deno.serve(async (req) => {
         );
       }
 
+      const userId = claimsData.claims.sub;
+
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('role', 'admin')
         .maybeSingle();
 
@@ -101,7 +104,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log('Admin authenticated:', user.id);
+      console.log('Admin authenticated:', userId);
     }
 
     let { continueFrom, createdAtMin } = await req.json().catch(() => ({}));
