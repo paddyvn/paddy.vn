@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Image, Bell, LayoutTemplate, GripVertical, Pencil, Trash2, Eye, EyeOff, Calendar, Grid3X3, Star } from "lucide-react";
+import { Plus, Image, Bell, LayoutTemplate, GripVertical, Pencil, Trash2, Eye, EyeOff, Calendar, Grid3X3, Star, Award } from "lucide-react";
 import HomepageCategoriesManager from "@/components/admin/HomepageCategoriesManager";
 import HomepagePromosManager from "@/components/admin/HomepagePromosManager";
 import HomepageFeaturedManager from "@/components/admin/HomepageFeaturedManager";
