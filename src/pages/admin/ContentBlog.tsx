@@ -546,6 +546,24 @@ export default function ContentBlog() {
         </DialogContent>
       </Dialog>
 
+      {/* Comment Moderation Section (Fix 5) */}
+      <Card>
+        <CardHeader className="py-4">
+          <CardTitle className="text-lg flex items-center gap-2">
+            Comments
+            <Badge variant="secondary">{commentsCount}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {commentsCount === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No comments yet.
+            </p>
+          ) : (
+            <BlogCommentsManager />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
