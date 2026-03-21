@@ -374,6 +374,10 @@ const MarketingBanners = () => {
             <Grid3X3 className="h-4 w-4" />
             Homepage Categories
           </TabsTrigger>
+          <TabsTrigger value="featured" className="gap-2">
+            <Star className="h-4 w-4" />
+            Featured Products
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
