@@ -26,6 +26,19 @@ async function fetchWithRetry(
       });
       
       clearTimeout(timeoutId);
+
+      // Handle 429 rate limiting with retry
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000 * attempt;
+        console.warn(`Rate limited (429), waiting ${waitMs}ms before retry ${attempt}/${retries}`);
+        await response.text(); // consume body
+        if (attempt < retries) {
+          await new Promise(resolve => setTimeout(resolve, waitMs));
+          continue;
+        }
+      }
+
       return response;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
@@ -499,7 +512,7 @@ serve(async (req) => {
 
       // Small delay between pages to avoid rate limiting
       if (continueFrom) {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 2000));
       }
 
     } while (continueFrom && pageCount < MAX_PAGES);
