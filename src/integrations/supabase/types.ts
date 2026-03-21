@@ -7223,6 +7223,7 @@ export type Database = {
       }
       mark_orders_invoiced: { Args: { p_order_ids: string[] }; Returns: number }
       normalize_phone: { Args: { phone: string }; Returns: string }
+      recalculate_loyalty_spending: { Args: never; Returns: undefined }
       refresh_paddy_customers_monthly_counts_cache: {
         Args: never
         Returns: undefined

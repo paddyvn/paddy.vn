@@ -337,7 +337,7 @@ export const CollectionFilters = ({
                   </label>
                 ))}
                 {filteredHealthConditions.length === 0 && healthSearch && (
-                  <p className="text-sm text-muted-foreground py-2">No conditions found</p>
+                  <p className="text-sm text-muted-foreground py-2">Không tìm thấy</p>
                 )}
               </div>
             </AccordionContent>
