@@ -152,43 +152,44 @@ serve(async (req) => {
       `Authorization format ok: ${authHeader.startsWith('Bearer ')} | length: ${authHeader.length}`
     );
 
-    // In Edge runtime, don't rely on session storage. Parse the JWT and pass it explicitly.
-    // Also handle cases where proxies concatenate duplicate headers.
-    const bearerValue = authHeader.includes(',') ? authHeader.split(',')[0].trim() : authHeader;
-    const jwt = bearerValue.replace(/^Bearer\s+/i, '').trim();
-
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false },
-    });
-
-    const { data: { user }, error: authError } = await authClient.auth.getUser(jwt);
-    if (authError || !user) {
-      console.error('Authentication failed:', authError?.message);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify user has admin role using service role client
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
 
-    if (roleError || !roleData) {
-      console.error('Admin check failed:', roleError?.message || 'No admin role found');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!isCronRequest) {
+      // In Edge runtime, don't rely on session storage. Parse the JWT and pass it explicitly.
+      // Also handle cases where proxies concatenate duplicate headers.
+      const bearerValue = authHeader!.includes(',') ? authHeader!.split(',')[0].trim() : authHeader!;
+      const jwt = bearerValue.replace(/^Bearer\s+/i, '').trim();
+
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false },
+      });
+
+      const { data: { user }, error: authError } = await authClient.auth.getUser(jwt);
+      if (authError || !user) {
+        console.error('Authentication failed:', authError?.message);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleError || !roleData) {
+        console.error('Admin check failed:', roleError?.message || 'No admin role found');
+        return new Response(
+          JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Admin authenticated:', user.id);
     }
-
-    console.log('Admin authenticated:', user.id);
     
     const { continueFrom, updatedAtMin, createdAtMax, syncEvents = true } = await req.json();
 
