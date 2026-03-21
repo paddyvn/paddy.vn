@@ -279,8 +279,11 @@ const Search = () => {
                     <Button
                       variant="outline"
                       onClick={() => setFilters({
+                        productTypes: [],
                         brands: [],
                         priceRange: [0, filterOptions.maxPrice],
+                        stockStatus: "all",
+                        onSale: false,
                         ageRanges: [],
                         sizes: [],
                         healthConditions: [],
