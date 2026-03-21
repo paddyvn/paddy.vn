@@ -512,7 +512,7 @@ serve(async (req) => {
 
       // Small delay between pages to avoid rate limiting
       if (continueFrom) {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 2000));
       }
 
     } while (continueFrom && pageCount < MAX_PAGES);
