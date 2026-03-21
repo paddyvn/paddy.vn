@@ -103,15 +103,12 @@ const formatTime = (date: Date) =>
 const SyncDashboard = () => {
   const [statuses, setStatuses] = useState<Record<string, SyncStatus>>({});
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
-  const [logCounter, setLogCounter] = useState(0);
+  const logCounterRef = useRef(0);
 
   const addLogEntry = useCallback((title: string, status: "success" | "error") => {
-    setSyncLog((prev) => {
-      const newEntry: SyncLogEntry = { id: logCounter, title, status, timestamp: new Date() };
-      setLogCounter((c) => c + 1);
-      return [newEntry, ...prev].slice(0, 7);
-    });
-  }, [logCounter]);
+    const id = logCounterRef.current++;
+    setSyncLog((prev) => [{ id, title, status, timestamp: new Date() }, ...prev].slice(0, 7));
+  }, []);
 
   const setStatus = (key: string, status: SyncStatus) =>
     setStatuses((prev) => ({ ...prev, [key]: status }));
@@ -138,18 +135,31 @@ const SyncDashboard = () => {
     return statuses[key] || "idle";
   };
 
-  // Track completed syncs for log
-  const prevStatuses = useState<Record<string, SyncStatus>>(() => ({}))[0];
-  const checkAndLog = (key: string, title: string, isPending: boolean, isSuccess: boolean, isError: boolean) => {
-    const current = getStatus(key, isPending, isSuccess, isError);
-    if (prevStatuses[key] === "running" && current === "success") {
-      addLogEntry(title, "success");
-    } else if (prevStatuses[key] === "running" && current === "error") {
-      addLogEntry(title, "error");
-    }
-    prevStatuses[key] = current;
-    return current;
-  };
+  // Track status transitions and log completed syncs via useEffect
+  const prevStatusesRef = useRef<Record<string, SyncStatus>>({});
+
+  const syncEntries = [
+    { key: "products", title: "Products & Variants", isPending: products.isPending, isSuccess: products.isSuccess, isError: products.isError },
+    { key: "collections", title: "Collections", isPending: collections.isPending, isSuccess: collections.isSuccess, isError: collections.isError },
+    { key: "productCollections", title: "Product ↔ Collection Links", isPending: productCollections.isPending, isSuccess: productCollections.isSuccess, isError: productCollections.isError },
+    { key: "brands", title: "Brands", isPending: brands.isPending, isSuccess: brands.isSuccess, isError: brands.isError },
+    { key: "orders", title: "Orders", isPending: orders.isPending, isSuccess: (orders as any).isSuccess ?? false, isError: (orders as any).isError ?? false },
+    { key: "customers", title: "Customers", isPending: customers.isPending, isSuccess: customers.isSuccess, isError: customers.isError },
+    { key: "abandonedCheckouts", title: "Abandoned Checkouts", isPending: abandonedCheckouts.isPending, isSuccess: abandonedCheckouts.isSuccess, isError: abandonedCheckouts.isError },
+  ];
+
+  useEffect(() => {
+    syncEntries.forEach(({ key, title, isPending, isSuccess, isError }) => {
+      const current = getStatus(key, isPending, isSuccess, isError);
+      const prev = prevStatusesRef.current[key];
+      if (prev === "running" && current === "success") {
+        addLogEntry(title, "success");
+      } else if (prev === "running" && current === "error") {
+        addLogEntry(title, "error");
+      }
+      prevStatusesRef.current[key] = current;
+    });
+  });
 
   const syncCards = [
     {
