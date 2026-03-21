@@ -48,9 +48,6 @@ export const FeaturedProducts = () => {
             <h2 className="text-xl md:text-2xl font-bold text-primary mb-1">
               Featured Products
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Hand-picked favorites loved by pets everywhere
-            </p>
           </div>
           <Link 
             to="/collections/featured" 
