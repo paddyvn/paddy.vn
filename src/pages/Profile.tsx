@@ -1078,6 +1078,12 @@ const Profile = () => {
                                 {pet.age_months ? `${pet.age_months} tháng` : ""}
                               </p>
                             )}
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              {pet.weight_kg && <span>{pet.weight_kg} kg</span>}
+                              {pet.gender && (
+                                <span>{pet.gender === "male" ? "♂ Đực" : pet.gender === "female" ? "♀ Cái" : "Không rõ"}</span>
+                              )}
+                            </div>
                           </div>
                           <Button
                             variant="ghost"
