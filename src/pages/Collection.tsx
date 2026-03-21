@@ -91,6 +91,7 @@ const Collection = () => {
             brand,
             created_at,
             source_created_at,
+            product_type,
             sold_count,
             target_age_id,
             target_size_id,
