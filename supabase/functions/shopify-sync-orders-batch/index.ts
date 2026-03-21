@@ -32,7 +32,6 @@ async function fetchWithRetry(
       console.warn(`Fetch attempt ${attempt}/${retries} failed: ${lastError.message}`);
       
       if (attempt < retries) {
-        // Wait before retry with exponential backoff
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
@@ -148,15 +147,15 @@ serve(async (req) => {
     }
 
     // Safe diagnostics (no token leakage)
-    console.log(
-      `Authorization format ok: ${authHeader.startsWith('Bearer ')} | length: ${authHeader.length}`
-    );
+    if (authHeader) {
+      console.log(
+        `Authorization format ok: ${authHeader.startsWith('Bearer ')} | length: ${authHeader.length}`
+      );
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (!isCronRequest) {
-      // In Edge runtime, don't rely on session storage. Parse the JWT and pass it explicitly.
-      // Also handle cases where proxies concatenate duplicate headers.
       const bearerValue = authHeader!.includes(',') ? authHeader!.split(',')[0].trim() : authHeader!;
       const jwt = bearerValue.replace(/^Bearer\s+/i, '').trim();
 
@@ -193,21 +192,17 @@ serve(async (req) => {
     
     const { continueFrom, updatedAtMin, createdAtMax, syncEvents = true } = await req.json();
 
-    const batchSize = 50; // Process 50 orders at a time
+    const batchSize = 50;
     
     // Build Shopify API URL
     let url: string;
     if (continueFrom) {
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`;
     } else if (updatedAtMin) {
-      // Incremental sync - fetch orders updated after the most recent one we have
-      // This catches both new orders AND orders with status/fulfillment changes
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&updated_at_min=${updatedAtMin}`;
     } else if (createdAtMax) {
-      // Backward sync - fetch orders created before the oldest one we have
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_max=${createdAtMax}`;
     } else {
-      // Full sync from the beginning
       url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any`;
     }
 
@@ -217,7 +212,7 @@ serve(async (req) => {
       headers: {
         'X-Shopify-Access-Token': shopifyToken,
       },
-    }, 3, 30000); // 30 second timeout for main orders request
+    }, 3, 30000);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -275,11 +270,10 @@ serve(async (req) => {
       try {
         const shippingFee = shopifyOrder.total_shipping_price_set?.shop_money?.amount || '0';
         
-        // Get customer email/phone from customer object or order directly
         const customerEmail = shopifyOrder.email || shopifyOrder.customer?.email || null;
         const customerPhone = shopifyOrder.phone || shopifyOrder.customer?.phone || null;
         
-        // Upsert order with all new fields
+        // Upsert order
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .upsert({
@@ -293,7 +287,6 @@ serve(async (req) => {
             total: parseFloat(shopifyOrder.total_price),
             shipping_address: shopifyOrder.shipping_address || {},
             notes: shopifyOrder.note,
-            // New fields
             financial_status: shopifyOrder.financial_status,
             fulfillment_status: shopifyOrder.fulfillment_status || 'unfulfilled',
             payment_gateway: shopifyOrder.gateway,
@@ -321,14 +314,9 @@ serve(async (req) => {
 
         syncedOrders++;
 
-        // Delete existing order items
-        await supabase
-          .from('order_items')
-          .delete()
-          .eq('order_id', order.id);
-
-        // Batch insert order items
-        const orderItems = shopifyOrder.line_items.map(lineItem => {
+        // Fix 3: Upsert order items then cleanup orphans
+        const syncedItemIds: string[] = [];
+        for (const lineItem of shopifyOrder.line_items) {
           const productId = lineItem.product_id 
             ? productMap.get(lineItem.product_id.toString()) || null 
             : null;
@@ -336,100 +324,126 @@ serve(async (req) => {
             ? variantMap.get(lineItem.variant_id.toString()) || null 
             : null;
 
-          return {
-            order_id: order.id,
-            product_id: productId,
-            product_name: lineItem.title,
-            variant_id: variantId,
-            variant_name: lineItem.variant_title,
-            price: parseFloat(lineItem.price),
-            quantity: lineItem.quantity,
-            subtotal: parseFloat(lineItem.price) * lineItem.quantity,
-          };
-        });
+          const { data: item, error: itemError } = await supabase
+            .from('order_items')
+            .upsert({
+              order_id: order.id,
+              shopify_line_item_id: lineItem.id.toString(),
+              product_id: productId,
+              product_name: lineItem.title,
+              variant_id: variantId,
+              variant_name: lineItem.variant_title,
+              price: parseFloat(lineItem.price),
+              quantity: lineItem.quantity,
+              subtotal: parseFloat(lineItem.price) * lineItem.quantity,
+            }, {
+              onConflict: 'order_id,shopify_line_item_id',
+            })
+            .select('id')
+            .single();
 
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
-
-        if (!itemsError) {
-          syncedItems += orderItems.length;
-        } else {
-          console.error(`Error inserting items for order ${shopifyOrder.name}:`, itemsError);
-        }
-
-        // Sync fulfillments
-        if (shopifyOrder.fulfillments && shopifyOrder.fulfillments.length > 0) {
-          // Delete existing fulfillments for this order
-          await supabase
-            .from('order_fulfillments')
-            .delete()
-            .eq('order_id', order.id);
-
-          const fulfillments = shopifyOrder.fulfillments.map(f => ({
-            order_id: order.id,
-            shopify_fulfillment_id: f.id.toString(),
-            status: f.status,
-            tracking_number: f.tracking_number,
-            tracking_url: f.tracking_url,
-            tracking_company: f.tracking_company,
-            shipment_status: f.shipment_status,
-            created_at: f.created_at,
-            updated_at: f.updated_at,
-          }));
-
-          const { error: fulfillmentError } = await supabase
-            .from('order_fulfillments')
-            .insert(fulfillments);
-
-          if (!fulfillmentError) {
-            syncedFulfillments += fulfillments.length;
-          } else {
-            console.error(`Error inserting fulfillments for order ${shopifyOrder.name}:`, fulfillmentError);
+          if (!itemError && item) {
+            syncedItemIds.push(item.id);
+            syncedItems++;
           }
         }
 
-        // Sync order events/timeline if enabled
+        // Clean up items no longer in Shopify
+        if (syncedItemIds.length > 0) {
+          await supabase
+            .from('order_items')
+            .delete()
+            .eq('order_id', order.id)
+            .not('id', 'in', `(${syncedItemIds.join(',')})`);
+        }
+
+        // Fix 3: Upsert fulfillments then cleanup orphans
+        if (shopifyOrder.fulfillments && shopifyOrder.fulfillments.length > 0) {
+          const syncedFulfillmentIds: string[] = [];
+          
+          for (const f of shopifyOrder.fulfillments) {
+            const { data: ful, error: fulfillmentError } = await supabase
+              .from('order_fulfillments')
+              .upsert({
+                order_id: order.id,
+                shopify_fulfillment_id: f.id.toString(),
+                status: f.status,
+                tracking_number: f.tracking_number,
+                tracking_url: f.tracking_url,
+                tracking_company: f.tracking_company,
+                shipment_status: f.shipment_status,
+                created_at: f.created_at,
+                updated_at: f.updated_at,
+              }, {
+                onConflict: 'order_id,shopify_fulfillment_id',
+              })
+              .select('id')
+              .single();
+
+            if (!fulfillmentError && ful) {
+              syncedFulfillmentIds.push(ful.id);
+              syncedFulfillments++;
+            }
+          }
+
+          // Clean up fulfillments no longer in Shopify
+          if (syncedFulfillmentIds.length > 0) {
+            await supabase
+              .from('order_fulfillments')
+              .delete()
+              .eq('order_id', order.id)
+              .not('id', 'in', `(${syncedFulfillmentIds.join(',')})`);
+          }
+        }
+
+        // Fix 3: Upsert order events then cleanup orphans
         if (syncEvents) {
           try {
             const eventsUrl = `https://${shopifyDomain}/admin/api/2024-01/orders/${shopifyOrder.id}/events.json`;
             const eventsResponse = await fetchWithRetry(eventsUrl, {
               headers: { 'X-Shopify-Access-Token': shopifyToken },
-            }, 2, 10000); // 2 retries, 10 second timeout for events
+            }, 2, 10000);
 
             if (eventsResponse.ok) {
               const eventsData = await safeJsonParse(eventsResponse);
               const events: ShopifyEvent[] = eventsData.events || [];
 
               if (events.length > 0) {
-                // Delete existing events for this order
-                await supabase
-                  .from('order_events')
-                  .delete()
-                  .eq('order_id', order.id);
+                const syncedEventIds: string[] = [];
 
-                const orderEvents = events.map(event => ({
-                  order_id: order.id,
-                  shopify_event_id: event.id.toString(),
-                  event_type: event.verb,
-                  message: event.message,
-                  author: event.author,
-                  created_at: event.created_at,
-                }));
+                for (const event of events) {
+                  const { data: ev, error: eventsError } = await supabase
+                    .from('order_events')
+                    .upsert({
+                      order_id: order.id,
+                      shopify_event_id: event.id.toString(),
+                      event_type: event.verb,
+                      message: event.message,
+                      author: event.author,
+                      created_at: event.created_at,
+                    }, {
+                      onConflict: 'order_id,shopify_event_id',
+                    })
+                    .select('id')
+                    .single();
 
-                const { error: eventsError } = await supabase
-                  .from('order_events')
-                  .insert(orderEvents);
+                  if (!eventsError && ev) {
+                    syncedEventIds.push(ev.id);
+                    syncedEvents++;
+                  }
+                }
 
-                if (!eventsError) {
-                  syncedEvents += orderEvents.length;
-                } else {
-                  console.error(`Error inserting events for order ${shopifyOrder.name}:`, eventsError);
+                // Clean up events no longer in Shopify
+                if (syncedEventIds.length > 0) {
+                  await supabase
+                    .from('order_events')
+                    .delete()
+                    .eq('order_id', order.id)
+                    .not('id', 'in', `(${syncedEventIds.join(',')})`);
                 }
               }
             }
           } catch (eventError) {
-            // Don't fail the whole sync if events fail - just log and continue
             console.warn(`Skipping events for order ${shopifyOrder.name}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`);
           }
         }

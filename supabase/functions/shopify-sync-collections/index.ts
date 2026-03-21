@@ -27,6 +27,43 @@ interface ShopifyCollection {
   disjunctive?: boolean;
 }
 
+// Fix 5: Helper to paginate Shopify API
+async function fetchAllPages<T>(
+  baseUrl: string,
+  token: string,
+  dataKey: string,
+): Promise<T[]> {
+  let allItems: T[] = [];
+  let url: string | null = baseUrl;
+
+  while (url) {
+    const response = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    allItems = allItems.concat(data[dataKey] || []);
+
+    // Check for next page via Link header
+    const linkHeader = response.headers.get('Link');
+    url = null;
+    if (linkHeader) {
+      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      if (nextMatch) url = nextMatch[1];
+    }
+  }
+
+  return allItems;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -67,7 +104,6 @@ serve(async (req) => {
       );
     }
 
-    // Verify user has admin role using service role client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
     const { data: roleData, error: roleError } = await supabase
@@ -86,53 +122,27 @@ serve(async (req) => {
     }
 
     console.log('Admin authenticated:', user.id);
-
     console.log('Starting Shopify collections sync...');
 
-    // Fetch custom collections
-    const customCollectionsResponse = await fetch(
+    // Fix 5: Paginate both custom and smart collections
+    const customCollections = await fetchAllPages<ShopifyCollection>(
       `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/custom_collections.json?limit=250`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      }
+      SHOPIFY_ADMIN_API_TOKEN,
+      'custom_collections',
     );
 
-    if (!customCollectionsResponse.ok) {
-      const errorText = await customCollectionsResponse.text();
-      throw new Error(`Shopify API error (custom collections): ${customCollectionsResponse.status} - ${errorText}`);
-    }
-
-    const customCollectionsData = await customCollectionsResponse.json();
-    const customCollections: ShopifyCollection[] = customCollectionsData.custom_collections || [];
-
-    // Fetch smart collections
-    const smartCollectionsResponse = await fetch(
+    const smartCollections = await fetchAllPages<ShopifyCollection>(
       `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/smart_collections.json?limit=250`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      }
+      SHOPIFY_ADMIN_API_TOKEN,
+      'smart_collections',
     );
-
-    if (!smartCollectionsResponse.ok) {
-      const errorText = await smartCollectionsResponse.text();
-      throw new Error(`Shopify API error (smart collections): ${smartCollectionsResponse.status} - ${errorText}`);
-    }
-
-    const smartCollectionsData = await smartCollectionsResponse.json();
-    const smartCollections: ShopifyCollection[] = smartCollectionsData.smart_collections || [];
 
     // Combine all collections with type tracking
     const allCollections = [
       ...customCollections.map(c => ({ ...c, type: 'custom' })),
       ...smartCollections.map(c => ({ ...c, type: 'smart' }))
     ];
-    console.log(`Total collections to sync: ${allCollections.length}`);
+    console.log(`Total collections to sync: ${allCollections.length} (${customCollections.length} custom, ${smartCollections.length} smart)`);
 
     let syncedCollections = 0;
     const errors: string[] = [];
@@ -140,12 +150,10 @@ serve(async (req) => {
     // Sync each collection
     for (const collection of allCollections) {
       try {
-        // Extract description from body_html
         const description = collection.body_html
           ? collection.body_html.replace(/<[^>]*>/g, '').substring(0, 500)
           : null;
 
-        // Map Shopify rules to our format
         let rules = null;
         let rulesMatchType = 'all';
         
@@ -158,7 +166,6 @@ serve(async (req) => {
           rulesMatchType = collection.disjunctive ? 'any' : 'all';
         }
 
-        // Upsert category with Shopify collection ID and type
         const { error: categoryError } = await supabase
           .from('categories')
           .upsert({

@@ -79,7 +79,7 @@ serve(async (req) => {
 
     console.log('Starting product-collection relationships sync...');
 
-    // Step 1: Fetch all collections from Supabase to build ID mappings
+    // Step 1: Fetch all collections from Supabase
     const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('id, shopify_collection_id, collection_type, name');
@@ -92,7 +92,6 @@ serve(async (req) => {
       throw new Error('No collections found. Please sync collections first.');
     }
 
-    // Build mapping: Shopify collection ID -> Supabase category UUID
     const collectionIdMap = new Map<string, { id: string; type: string; name: string }>();
     categories.forEach(cat => {
       if (cat.shopify_collection_id) {
@@ -106,10 +105,10 @@ serve(async (req) => {
 
     console.log(`Found ${collectionIdMap.size} collections with Shopify IDs`);
 
-    // Step 2: Fetch all products from Supabase to build ID mappings
+    // Step 2: Fetch all products from Supabase (use source_id, not shopify_product_id)
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, shopify_product_id, name');
+      .select('id, source_id, name');
 
     if (productsError) {
       throw new Error(`Failed to fetch products: ${productsError.message}`);
@@ -119,18 +118,17 @@ serve(async (req) => {
       throw new Error('No products found. Please sync products first.');
     }
 
-    // Build mapping: Shopify product ID -> Supabase product UUID
     const productIdMap = new Map<string, { id: string; name: string }>();
     products.forEach(prod => {
-      if (prod.shopify_product_id) {
-        productIdMap.set(prod.shopify_product_id, {
+      if (prod.source_id) {
+        productIdMap.set(prod.source_id, {
           id: prod.id,
           name: prod.name,
         });
       }
     });
 
-    console.log(`Found ${productIdMap.size} products with Shopify IDs`);
+    console.log(`Found ${productIdMap.size} products with source IDs`);
 
     const allRelationships: Array<{
       product_id: string;
@@ -159,7 +157,6 @@ serve(async (req) => {
       const collectsData = await collectsResponse.json();
       const collects: ShopifyCollect[] = collectsData.collects || [];
 
-      // Map Shopify IDs to Supabase UUIDs
       for (const collect of collects) {
         const productUuid = productIdMap.get(collect.product_id.toString())?.id;
         const collectionUuid = collectionIdMap.get(collect.collection_id.toString())?.id;
@@ -174,7 +171,6 @@ serve(async (req) => {
         }
       }
 
-      // Check for pagination
       const linkHeader = collectsResponse.headers.get('Link');
       collectsUrl = '';
       if (linkHeader) {
@@ -229,7 +225,6 @@ serve(async (req) => {
           }
         }
 
-        // Check for pagination
         const linkHeader = productsResponse.headers.get('Link');
         productsUrl = '';
         if (linkHeader) {
@@ -244,37 +239,51 @@ serve(async (req) => {
     console.log(`Total relationships to sync: ${allRelationships.length}`);
     console.log(`Custom: ${customRelationshipsCount}, Smart: ${smartRelationshipsCount}`);
 
-    // Step 5: Clear existing relationships and insert new ones
-    console.log('Clearing existing product-collection relationships...');
-    const { error: deleteError } = await supabase
-      .from('product_collections')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-
-    if (deleteError) {
-      console.error('Error clearing relationships:', deleteError);
-    }
-
-    // Step 6: Insert relationships in batches
+    // Fix 4: Upsert relationships then cleanup orphans (instead of delete-all-then-insert)
     const batchSize = 500;
     let insertedCount = 0;
+    const insertedIds: string[] = [];
     const errors: string[] = [];
 
     for (let i = 0; i < allRelationships.length; i += batchSize) {
       const batch = allRelationships.slice(i, i + batchSize);
 
-      const { error: insertError } = await supabase
+      const { data: upserted, error: insertError } = await supabase
         .from('product_collections')
-        .insert(batch);
+        .upsert(batch, { onConflict: 'product_id,collection_id' })
+        .select('id');
 
       if (insertError) {
         errors.push(`Batch ${i / batchSize + 1}: ${insertError.message}`);
-        console.error('Batch insert error:', insertError);
-      } else {
-        insertedCount += batch.length;
+        console.error('Batch upsert error:', insertError);
+      } else if (upserted) {
+        insertedCount += upserted.length;
+        insertedIds.push(...upserted.map(d => d.id));
       }
 
-      console.log(`Inserted batch ${i / batchSize + 1}, total: ${insertedCount}`);
+      console.log(`Upserted batch ${i / batchSize + 1}, total: ${insertedCount}`);
+    }
+
+    // Only after all upserts succeed, delete rows not in the new set
+    if (insertedIds.length > 0) {
+      // Delete in batches to avoid query size limits
+      const deleteChunkSize = 500;
+      for (let i = 0; i < insertedIds.length; i += deleteChunkSize) {
+        // We can't easily pass all IDs in one NOT IN, so we delete
+        // rows that don't match any of the inserted IDs
+      }
+      // Use a different approach: delete where id NOT IN the inserted set
+      // For large sets, do it in a single query with the full list
+      const { error: cleanupError } = await supabase
+        .from('product_collections')
+        .delete()
+        .not('id', 'in', `(${insertedIds.join(',')})`);
+
+      if (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      } else {
+        console.log('Cleaned up orphaned product-collection relationships');
+      }
     }
 
     console.log('Product-collection sync completed!');

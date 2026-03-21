@@ -3135,6 +3135,7 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          shopify_line_item_id: string | null
           subtotal: number
           variant_id: string | null
           variant_name: string | null
@@ -3147,6 +3148,7 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity: number
+          shopify_line_item_id?: string | null
           subtotal: number
           variant_id?: string | null
           variant_name?: string | null
@@ -3159,6 +3161,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          shopify_line_item_id?: string | null
           subtotal?: number
           variant_id?: string | null
           variant_name?: string | null
