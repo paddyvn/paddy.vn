@@ -1,145 +1,125 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import { usePromotions } from "@/hooks/usePromotions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon, FishIcon } from "@/components/PaddyIconPatterns";
+import type { Promotion } from "@/hooks/usePromotions";
 
-interface CustomIcon {
-  position: "top_left" | "top_right" | "bottom_left" | "bottom_right";
-  url: string;
+function assignSlots(promos: Promotion[]) {
+  const hero = promos.find(p => p.layout_slot === "hero");
+  const wide = promos.find(p => p.layout_slot === "wide");
+  const halves = promos.filter(p => p.layout_slot === "half").slice(0, 2);
+  const used = new Set([hero?.id, wide?.id, ...halves.map(h => h.id)].filter(Boolean));
+  const rest = promos.filter(p => !used.has(p.id));
+  return {
+    hero: hero || rest.shift() || null,
+    wide: wide || rest.shift() || null,
+    halves: halves.length >= 2 ? halves : [...halves, ...rest].slice(0, 2),
+  };
 }
 
-const positionStyles: Record<string, string> = {
-  top_left: "-top-2 -left-2",
-  top_right: "-top-2 -right-2",
-  bottom_left: "-bottom-2 -left-2",
-  bottom_right: "-bottom-2 -right-2",
-};
+function getLink(promo: Promotion) {
+  if (promo.promo_type === "flash_sale") return "/flash-sale";
+  if (promo.promo_type === "subscription_deals") return "/subscription-deals";
+  if (promo.link_destination) return `/collections/${promo.link_destination}`;
+  return "/promotions";
+}
 
-// Map icon_type to icon components
-const iconTypeMap: Record<string, { TopIcon: React.FC<{ className?: string }>; BottomIcon: React.FC<{ className?: string }> }> = {
-  dog_cat: { TopIcon: DogIcon, BottomIcon: CatIcon },
-  cat_dog: { TopIcon: CatIcon, BottomIcon: DogIcon },
-  dog_face_2: { TopIcon: DogFace2Icon, BottomIcon: CatFace2Icon },
-  paw_bone: { TopIcon: PawIcon, BottomIcon: BoneIcon },
-  bone_paw: { TopIcon: BoneIcon, BottomIcon: PawIcon },
-  fish_paw: { TopIcon: FishIcon, BottomIcon: PawIcon },
-};
+function BentoCard({ promo, slot }: { promo: Promotion | null; slot: string }) {
+  if (!promo) return null;
+  const hasImage = !!promo.image_url;
+  const isDark = hasImage;
 
-// Fallback cycling for promotions without icon_type
-const iconPatterns = [
-  { TopIcon: DogIcon, BottomIcon: CatIcon },
-  { TopIcon: CatIcon, BottomIcon: DogIcon },
-  { TopIcon: DogFace2Icon, BottomIcon: CatFace2Icon },
-  { TopIcon: PawIcon, BottomIcon: BoneIcon },
-];
+  const paddingClass = slot === "hero" ? "p-5" : slot === "half" ? "p-3.5" : "p-4";
+
+  return (
+    <Link
+      to={getLink(promo)}
+      className={`group relative rounded-[14px] overflow-hidden flex text-decoration-none cursor-pointer bg-cover bg-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${slot === "wide" ? "flex-1" : ""}`}
+      style={{
+        backgroundImage: hasImage ? `url(${promo.image_url})` : "none",
+        backgroundColor: hasImage ? "#333" : (promo.bg_color || "#DBEAFE"),
+      }}
+    >
+      {/* Dark overlay for text readability on images */}
+      {hasImage && (
+        <div className="absolute inset-0 bg-gradient-to-br from-black/45 to-black/15 z-[1]" />
+      )}
+
+      <div className={`relative z-[2] ${paddingClass} flex flex-col gap-1 justify-end h-full w-full`}>
+        {promo.eyebrow && (
+          <span className={`text-[11px] font-semibold ${isDark ? "text-white/80" : "text-foreground/60"}`}>
+            {promo.eyebrow}
+          </span>
+        )}
+        <h3
+          className={`font-extrabold leading-tight m-0 whitespace-pre-line ${
+            slot === "hero" ? "text-[22px]" : slot === "half" ? "text-[15px]" : "text-[17px]"
+          } ${isDark ? "text-white drop-shadow-md" : "text-foreground"}`}
+        >
+          {promo.title}
+        </h3>
+        <span
+          className={`inline-flex text-xs font-bold px-3.5 py-1.5 rounded-full self-start mt-1.5 shadow-sm transition-colors ${
+            isDark
+              ? "bg-white/95 text-foreground group-hover:bg-white/80"
+              : "bg-white text-foreground group-hover:bg-muted"
+          }`}
+        >
+          {promo.cta_text || "Mua ngay"}
+        </span>
+      </div>
+    </Link>
+  );
+}
 
 export const DealsGrid = () => {
   const { data: promotions, isLoading } = usePromotions();
 
-  const getLink = (promo: { promo_type: string; link_type: string; link_destination: string }) => {
-    // Special promo types with dedicated pages
-    if (promo.promo_type === "flash_sale") return "/flash-sale";
-    if (promo.promo_type === "subscription_deals") return "/subscription-deals";
-
-    // Other types use collections
-    if (promo.link_destination) {
-      return `/collections/${promo.link_destination}`;
-    }
-
-    // Fallback to collections with promo_type slug
-    return `/collections/${promo.promo_type.replace("_", "-")}`;
-  };
-
   if (isLoading) {
     return (
-      <section className="py-4 bg-background">
+      <section className="py-5 bg-background">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-6 w-24" />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="aspect-square rounded-xl max-w-[180px]" />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-2.5 h-auto md:h-[360px]">
+            <Skeleton className="rounded-[14px] min-h-[200px]" />
+            <div className="flex flex-col gap-2.5">
+              <Skeleton className="rounded-[14px] flex-1 min-h-[140px]" />
+              <div className="grid grid-cols-2 gap-2.5 flex-1">
+                <Skeleton className="rounded-[14px] min-h-[140px]" />
+                <Skeleton className="rounded-[14px] min-h-[140px]" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
     );
   }
 
-  if (!promotions || promotions.length === 0) {
-    return null;
-  }
+  if (!promotions || promotions.length === 0) return null;
+
+  // Filter to only promotions with display_visibility = 'homepage' or layout_slot set
+  const bentoPromos = promotions.filter(
+    p => p.layout_slot === "hero" || p.layout_slot === "wide" || p.layout_slot === "half"
+  );
+
+  // Fallback: if no bento-assigned promos, use first 4
+  const effectivePromos = bentoPromos.length > 0 ? bentoPromos : promotions.slice(0, 4);
+
+  const { hero, wide, halves } = assignSlots(effectivePromos);
+
+  if (!hero && !wide && halves.length === 0) return null;
 
   return (
-    <section className="py-4 bg-background">
+    <section className="py-5 bg-background">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl md:text-2xl font-bold text-primary">Year-end Deals at Paddy</h2>
-          <Link 
-            to="/promotions" 
-            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
-          >
-            Xem tất cả
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {promotions.slice(0, 6).map((promo, index) => (
-            <Link
-              key={promo.id}
-              to={getLink(promo)}
-              className={`group relative aspect-square rounded-xl overflow-hidden hover:scale-105 transition-smooth max-w-[180px] shadow-card ${index >= 4 ? 'hidden md:block' : ''}`}
-              style={{
-                background: `linear-gradient(to bottom right, ${promo.gradient_from}, ${promo.gradient_to})`,
-              }}
-            >
-              {/* Decorative brand pattern icons - only render if explicitly set */}
-              {(() => {
-                // Check for custom_icons first
-                const customIcons = Array.isArray(promo.custom_icons) ? promo.custom_icons as CustomIcon[] : [];
-                
-                if (customIcons.length > 0) {
-                  return customIcons.map((icon) => (
-                    <img 
-                      key={icon.position}
-                      src={icon.url} 
-                      alt="" 
-                      className={`absolute w-14 h-14 object-contain opacity-20 ${positionStyles[icon.position]}`}
-                    />
-                  ));
-                }
-                
-                // Only show icons if icon_type is explicitly set
-                if (promo.icon_type && iconTypeMap[promo.icon_type]) {
-                  const { TopIcon, BottomIcon } = iconTypeMap[promo.icon_type];
-                  return (
-                    <>
-                      <TopIcon className="absolute -top-2 -right-2 w-16 h-16 text-white/15 rotate-12" />
-                      <BottomIcon className="absolute -bottom-3 -left-3 w-14 h-14 text-white/10 -rotate-12" />
-                    </>
-                  );
-                }
-                
-                // No icons if nothing is set
-                return null;
-              })()}
-              
-              {/* Content */}
-              <div className="relative z-10 h-full flex flex-col items-center justify-center p-3 text-center">
-                <p className="text-white text-sm md:text-base font-bold whitespace-pre-line leading-tight drop-shadow-md">
-                  {promo.title}
-                </p>
-                {promo.subtitle && (
-                  <p className="text-white/90 text-xs md:text-sm mt-1 drop-shadow-md">
-                    {promo.subtitle}
-                  </p>
-                )}
-              </div>
-            </Link>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-2.5 h-auto md:h-[360px]">
+          <BentoCard promo={hero} slot="hero" />
+          <div className="flex flex-col gap-2.5">
+            <BentoCard promo={wide} slot="wide" />
+            <div className="grid grid-cols-2 gap-2.5 flex-1">
+              {halves.map(p => (
+                <BentoCard key={p.id} promo={p} slot="half" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
