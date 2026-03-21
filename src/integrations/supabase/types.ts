@@ -737,6 +737,8 @@ export type Database = {
           handle: string
           id: string
           image_url: string | null
+          meta_description: string | null
+          meta_title: string | null
           published: boolean | null
           shopify_article_id: string | null
           shopify_blog_id: string | null
@@ -757,6 +759,8 @@ export type Database = {
           handle: string
           id?: string
           image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           published?: boolean | null
           shopify_article_id?: string | null
           shopify_blog_id?: string | null
@@ -777,6 +781,8 @@ export type Database = {
           handle?: string
           id?: string
           image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           published?: boolean | null
           shopify_article_id?: string | null
           shopify_blog_id?: string | null
