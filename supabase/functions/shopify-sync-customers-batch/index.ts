@@ -11,11 +11,11 @@ interface ShopifyAddress {
   first_name: string | null;
   last_name: string | null;
   company: string | null;
-  address1: string;
+  address1: string | null;
   address2: string | null;
-  city: string;
+  city: string | null;
   province: string | null;
-  country: string;
+  country: string | null;
   country_code: string | null;
   zip: string | null;
   phone: string | null;
