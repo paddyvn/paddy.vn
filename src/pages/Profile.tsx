@@ -1595,14 +1595,14 @@ const Profile = () => {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Điểm thưởng hiện có</p>
-                          <p className="text-3xl font-bold text-primary">0</p>
-                          <p className="text-xs text-muted-foreground">= 0đ giá trị quy đổi</p>
+                          <p className="text-3xl font-bold text-primary">{loyaltyPoints?.points_balance || 0}</p>
+                          <p className="text-xs text-muted-foreground">= {formatPrice((loyaltyPoints?.points_balance || 0) * 10)}đ giá trị quy đổi</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <Badge variant="secondary" className="mb-2">
                           <Star className="h-3 w-3 mr-1" />
-                          Thành viên
+                          {loyaltyPoints?.tier === "platinum" ? "Bạch kim" : loyaltyPoints?.tier === "gold" ? "Vàng" : loyaltyPoints?.tier === "silver" ? "Bạc" : "Thành viên"}
                         </Badge>
                         <p className="text-xs text-muted-foreground">Hạng thành viên</p>
                       </div>
@@ -1611,29 +1611,23 @@ const Profile = () => {
                 </Card>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">0</p>
+                      <p className="text-2xl font-bold text-primary">{loyaltyPoints?.lifetime_earned || 0}</p>
                       <p className="text-xs text-muted-foreground">Điểm đã tích lũy</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-green-600">0</p>
+                      <p className="text-2xl font-bold text-muted-foreground">{loyaltyPoints?.lifetime_redeemed || 0}</p>
                       <p className="text-xs text-muted-foreground">Điểm đã sử dụng</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-orange-500">0</p>
-                      <p className="text-xs text-muted-foreground">Điểm sắp hết hạn</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-secondary">0</p>
-                      <p className="text-xs text-muted-foreground">Quà đã nhận</p>
+                      <p className="text-2xl font-bold text-secondary">{loyaltyPoints?.points_balance || 0}</p>
+                      <p className="text-xs text-muted-foreground">Điểm hiện có</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -1645,29 +1639,32 @@ const Profile = () => {
                     <CardDescription>Theo dõi điểm tích lũy và sử dụng</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Chưa có lịch sử điểm thưởng</p>
-                      <p className="text-sm mb-4">Mua sắm để tích lũy điểm thưởng</p>
-                      <Button onClick={() => navigate("/")} size="sm">
-                        Mua sắm ngay
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Available Gifts */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Quà tặng có thể đổi</CardTitle>
-                    <CardDescription>Sử dụng điểm để đổi quà hấp dẫn</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Chưa có quà tặng</p>
-                      <p className="text-sm">Tích lũy thêm điểm để đổi quà</p>
-                    </div>
+                    {loyaltyTransactions && loyaltyTransactions.length > 0 ? (
+                      <div className="space-y-3">
+                        {loyaltyTransactions.map((tx: any) => (
+                          <div key={tx.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                            <div>
+                              <p className="text-sm font-medium">{tx.description || tx.type}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
+                              </p>
+                            </div>
+                            <span className={cn("font-semibold", tx.points > 0 ? "text-primary" : "text-destructive")}>
+                              {tx.points > 0 ? `+${tx.points}` : tx.points}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Chưa có lịch sử điểm thưởng</p>
+                        <p className="text-sm mb-4">Mua sắm để tích lũy điểm thưởng</p>
+                        <Button onClick={() => navigate("/")} size="sm">
+                          Mua sắm ngay
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
