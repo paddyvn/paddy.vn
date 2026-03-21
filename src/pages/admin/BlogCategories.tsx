@@ -305,12 +305,11 @@ const BlogCategories = () => {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+             <TableRow>
               <TableHead className="w-12"></TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-20">Order</TableHead>
+              <TableHead className="w-20 text-center">Posts</TableHead>
               <TableHead className="w-20">Active</TableHead>
               <TableHead className="w-24">Actions</TableHead>
             </TableRow>
