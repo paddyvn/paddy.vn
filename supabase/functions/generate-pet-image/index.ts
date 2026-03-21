@@ -12,10 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error("Missing authorization header");
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -26,7 +24,6 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("Missing Supabase configuration");
       throw new Error("Server configuration error");
     }
 
@@ -36,30 +33,17 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("Authentication failed:", authError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log("User authenticated:", user.id);
-
     const { petImage, accessoryImage, prompt, size } = await req.json();
 
-    // Input validation
     if (!petImage || !accessoryImage) {
       return new Response(
         JSON.stringify({ error: 'Missing required images (petImage and accessoryImage)' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate URL format
-    const urlPattern = /^https?:\/\/.+/;
-    if (!urlPattern.test(petImage) || !urlPattern.test(accessoryImage)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid image URLs - must be valid HTTP/HTTPS URLs' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -69,11 +53,8 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Starting pet image generation with accessory for user:", user.id);
-    console.log("Prompt:", prompt);
-    console.log("Size:", size);
+    console.log("Starting pet image generation for user:", user.id);
 
-    // Parse size for the prompt
     const sizeInstruction = size ? `Generate the image at ${size} resolution.` : "";
     
     const systemPrompt = `You are an expert at compositing images of pets with accessories and toys. 
@@ -114,14 +95,12 @@ ${sizeInstruction}`;
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Payment required. Please add credits to your workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       
@@ -129,8 +108,6 @@ ${sizeInstruction}`;
     }
 
     const data = await response.json();
-    console.log("AI response received successfully for user:", user.id);
-
     const generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     const textResponse = data.choices?.[0]?.message?.content;
 

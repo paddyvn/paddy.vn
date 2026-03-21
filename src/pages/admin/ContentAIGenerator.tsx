@@ -14,50 +14,76 @@ const IMAGE_SIZES = [
   { value: "1024x1536", label: "1024 × 1536 (Portrait)" },
 ];
 
+async function uploadToTempStorage(file: File): Promise<string> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const fileName = `ai-temp/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("product-images")
+    .upload(fileName, file, { contentType: file.type, cacheControl: "300" });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("product-images").getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
 export default function ContentAIGenerator() {
   const { toast } = useToast();
-  const [petImage, setPetImage] = useState<string | null>(null);
-  const [accessoryImage, setAccessoryImage] = useState<string | null>(null);
+  const [petPreview, setPetPreview] = useState<string | null>(null);
+  const [accessoryPreview, setAccessoryPreview] = useState<string | null>(null);
+  const [petUrl, setPetUrl] = useState<string | null>(null);
+  const [accessoryUrl, setAccessoryUrl] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [imageSize, setImageSize] = useState("1024x1024");
   const [downloadFormat, setDownloadFormat] = useState<"png" | "jpeg" | "webp">("png");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [isUploading, setIsUploading] = useState<"pet" | "accessory" | null>(null);
+
   const petInputRef = useRef<HTMLInputElement>(null);
   const accessoryInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    setImage: (image: string | null) => void
+    type: "pet" | "accessory"
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please upload an image file",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid file", description: "Please upload an image file", variant: "destructive" });
       return;
     }
 
+    // Show local preview immediately
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImage(e.target?.result as string);
+      if (type === "pet") setPetPreview(e.target?.result as string);
+      else setAccessoryPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
+
+    // Upload to Supabase Storage
+    setIsUploading(type);
+    try {
+      const publicUrl = await uploadToTempStorage(file);
+      if (type === "pet") setPetUrl(publicUrl);
+      else setAccessoryUrl(publicUrl);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({ title: "Upload failed", description: "Failed to upload image. Please try again.", variant: "destructive" });
+      if (type === "pet") { setPetPreview(null); setPetUrl(null); }
+      else { setAccessoryPreview(null); setAccessoryUrl(null); }
+    } finally {
+      setIsUploading(null);
+    }
   };
 
   const handleGenerate = async () => {
-    if (!petImage || !accessoryImage) {
-      toast({
-        title: "Missing images",
-        description: "Please upload both a pet image and an accessory/toy image",
-        variant: "destructive",
-      });
+    if (!petUrl || !accessoryUrl) {
+      toast({ title: "Missing images", description: "Please upload both a pet image and an accessory/toy image", variant: "destructive" });
       return;
     }
 
@@ -67,31 +93,21 @@ export default function ContentAIGenerator() {
     try {
       const { data, error } = await supabase.functions.invoke("generate-pet-image", {
         body: {
-          petImage,
-          accessoryImage,
+          petImage: petUrl,
+          accessoryImage: accessoryUrl,
           prompt: customPrompt || undefined,
           size: imageSize,
         },
       });
 
       if (error) throw error;
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (data.error) throw new Error(data.error);
 
       setGeneratedImage(data.generatedImage);
-      toast({
-        title: "Image generated!",
-        description: data.message || "Your pet image has been created successfully",
-      });
+      toast({ title: "Image generated!", description: data.message || "Your pet image has been created successfully" });
     } catch (error) {
       console.error("Generation error:", error);
-      toast({
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "Failed to generate image",
-        variant: "destructive",
-      });
+      toast({ title: "Generation failed", description: error instanceof Error ? error.message : "Failed to generate image", variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -99,39 +115,36 @@ export default function ContentAIGenerator() {
 
   const handleDownload = async () => {
     if (!generatedImage) return;
-    
+
     try {
-      // Create canvas to convert image format
       const img = new Image();
       img.crossOrigin = "anonymous";
-      
+
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = reject;
         img.src = generatedImage;
       });
-      
+
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      
+
       ctx.drawImage(img, 0, 0);
-      
+
       const mimeType = `image/${downloadFormat}`;
       const quality = downloadFormat === "png" ? undefined : 0.92;
       const dataUrl = canvas.toDataURL(mimeType, quality);
-      
+
       const link = document.createElement("a");
       link.href = dataUrl;
       link.download = `pet-with-accessory-${Date.now()}.${downloadFormat}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (error) {
-      console.error("Download error:", error);
-      // Fallback to direct download
+    } catch {
       const link = document.createElement("a");
       link.href = generatedImage;
       link.download = `pet-with-accessory-${Date.now()}.png`;
@@ -143,45 +156,33 @@ export default function ContentAIGenerator() {
 
   const handleSaveToFiles = async () => {
     if (!generatedImage) return;
-    
+
     setIsSaving(true);
     try {
-      // Convert base64 to blob
       const response = await fetch(generatedImage);
       const blob = await response.blob();
-      
-      // Generate filename at root level
       const fileName = `pet-generated-${Date.now()}.png`;
-      
-      // Upload to Supabase Storage
+
       const { error } = await supabase.storage
         .from("product-images")
-        .upload(fileName, blob, {
-          contentType: "image/png",
-          cacheControl: "3600",
-        });
-      
+        .upload(fileName, blob, { contentType: "image/png", cacheControl: "3600" });
+
       if (error) throw error;
-      
-      toast({
-        title: "Image saved!",
-        description: "Image has been saved to Files storage",
-      });
+
+      toast({ title: "Image saved!", description: "Image has been saved to Files storage" });
     } catch (error) {
       console.error("Save error:", error);
-      toast({
-        title: "Save failed",
-        description: error instanceof Error ? error.message : "Failed to save image",
-        variant: "destructive",
-      });
+      toast({ title: "Save failed", description: error instanceof Error ? error.message : "Failed to save image", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleClear = () => {
-    setPetImage(null);
-    setAccessoryImage(null);
+    setPetPreview(null);
+    setAccessoryPreview(null);
+    setPetUrl(null);
+    setAccessoryUrl(null);
     setGeneratedImage(null);
     setCustomPrompt("");
     setImageSize("1024x1024");
@@ -217,16 +218,17 @@ export default function ContentAIGenerator() {
                 type="file"
                 accept="image/*"
                 ref={petInputRef}
-                onChange={(e) => handleImageUpload(e, setPetImage)}
+                onChange={(e) => handleImageUpload(e, "pet")}
                 className="hidden"
               />
-              {petImage ? (
+              {petPreview ? (
                 <div className="relative group">
-                  <img
-                    src={petImage}
-                    alt="Pet"
-                    className="w-full h-48 object-contain rounded-lg bg-muted"
-                  />
+                  <img src={petPreview} alt="Pet" className="w-full h-48 object-contain rounded-lg bg-muted" />
+                  {isUploading === "pet" && (
+                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-lg">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
                   <Button
                     variant="secondary"
                     size="sm"
@@ -263,16 +265,17 @@ export default function ContentAIGenerator() {
                 type="file"
                 accept="image/*"
                 ref={accessoryInputRef}
-                onChange={(e) => handleImageUpload(e, setAccessoryImage)}
+                onChange={(e) => handleImageUpload(e, "accessory")}
                 className="hidden"
               />
-              {accessoryImage ? (
+              {accessoryPreview ? (
                 <div className="relative group">
-                  <img
-                    src={accessoryImage}
-                    alt="Accessory"
-                    className="w-full h-48 object-contain rounded-lg bg-muted"
-                  />
+                  <img src={accessoryPreview} alt="Accessory" className="w-full h-48 object-contain rounded-lg bg-muted" />
+                  {isUploading === "accessory" && (
+                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-lg">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
                   <Button
                     variant="secondary"
                     size="sm"
@@ -345,7 +348,7 @@ export default function ContentAIGenerator() {
           <div className="flex gap-3">
             <Button
               onClick={handleGenerate}
-              disabled={!petImage || !accessoryImage || isGenerating}
+              disabled={!petUrl || !accessoryUrl || isGenerating || isUploading !== null}
               className="flex-1"
             >
               {isGenerating ? (
@@ -403,9 +406,9 @@ export default function ContentAIGenerator() {
                     Download
                   </Button>
                 </div>
-                <Button 
-                  onClick={handleSaveToFiles} 
-                  variant="outline" 
+                <Button
+                  onClick={handleSaveToFiles}
+                  variant="outline"
                   className="w-full"
                   disabled={isSaving}
                 >
