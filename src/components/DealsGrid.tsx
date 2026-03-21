@@ -109,7 +109,7 @@ export const DealsGrid = () => {
   if (!hero && !wide && halves.length === 0) return null;
 
   return (
-    <section className="py-5 bg-background">
+    <section className="pt-5 pb-10 bg-background">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl md:text-2xl font-bold text-primary">Ưu đãi tại Paddy</h2>
