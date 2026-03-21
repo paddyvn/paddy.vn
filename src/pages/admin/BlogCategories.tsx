@@ -271,9 +271,9 @@ const BlogCategories = () => {
   };
 
   const handleDelete = () => {
-    if (deleteId) {
-      deleteCategory.mutate(deleteId, {
-        onSuccess: () => setDeleteId(null),
+    if (deleteCategory_target) {
+      deleteCategory.mutate(deleteCategory_target.id, {
+        onSuccess: () => setDeleteTarget(null),
       });
     }
   };
