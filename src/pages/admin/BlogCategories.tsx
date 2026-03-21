@@ -75,7 +75,7 @@ const categorySchema = z.object({
 interface SortableRowProps {
   category: BlogCategory;
   onEdit: (category: BlogCategory) => void;
-  onDelete: (id: string) => void;
+  onDelete: (category: BlogCategory) => void;
   onToggleActive: (category: BlogCategory) => void;
 }
 
@@ -95,6 +95,8 @@ const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRow
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const postCount = category.post_count ?? 0;
+
   return (
     <TableRow ref={setNodeRef} style={style} className={isDragging ? "bg-muted" : ""}>
       <TableCell>
@@ -106,12 +108,16 @@ const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRow
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </button>
       </TableCell>
-      <TableCell className="font-medium">{category.name}</TableCell>
-      <TableCell className="font-mono text-sm">{category.slug}</TableCell>
-      <TableCell className="max-w-[200px] truncate">
-        {category.description || "-"}
+      <TableCell>
+        <div>
+          <span className="font-medium">{category.name_vi || category.name}</span>
+          {category.name_vi && (
+            <span className="text-xs text-muted-foreground ml-2">({category.name})</span>
+          )}
+        </div>
       </TableCell>
-      <TableCell>{category.display_order}</TableCell>
+      <TableCell className="font-mono text-sm">{category.slug}</TableCell>
+      <TableCell className="text-center">{postCount}</TableCell>
       <TableCell>
         <Switch
           checked={category.is_active}
@@ -123,8 +129,14 @@ const SortableRow = ({ category, onEdit, onDelete, onToggleActive }: SortableRow
           <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onDelete(category.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(category)}
+            disabled={postCount > 0}
+            title={postCount > 0 ? `Has ${postCount} posts — reassign them first` : "Delete category"}
+          >
+            <Trash2 className={`h-4 w-4 ${postCount > 0 ? "text-muted-foreground" : "text-destructive"}`} />
           </Button>
         </div>
       </TableCell>

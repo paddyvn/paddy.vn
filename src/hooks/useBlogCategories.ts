@@ -23,11 +23,15 @@ export const useBlogCategories = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_categories" as any)
-        .select("*")
+        .select("*, blog_posts!blog_posts_category_id_fkey(count)")
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data as unknown as BlogCategory[];
+      return (data as any[]).map((cat) => ({
+        ...cat,
+        post_count: cat.blog_posts?.[0]?.count ?? 0,
+        blog_posts: undefined,
+      })) as BlogCategory[];
     },
   });
 };
