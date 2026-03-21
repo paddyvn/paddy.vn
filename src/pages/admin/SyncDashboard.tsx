@@ -306,6 +306,7 @@ const SyncDashboard = () => {
                 <li>Brands</li>
                 <li>Orders & Customers</li>
                 <li>Abandoned Checkouts</li>
+                <li>Blog Posts</li>
               </ol>
             </CardContent>
           </Card>
