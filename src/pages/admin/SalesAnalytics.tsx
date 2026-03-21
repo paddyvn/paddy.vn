@@ -29,11 +29,11 @@ function TrendBadge({ current, previous, label }: { current: number; previous: n
   return (
     <p className="text-xs text-muted-foreground flex items-center gap-1">
       {isPositive ? (
-        <TrendingUp className="h-3 w-3 text-green-500" />
+        <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
       ) : (
-        <TrendingDown className="h-3 w-3 text-red-500" />
+        <TrendingDown className="h-3 w-3 text-destructive" />
       )}
-      <span className={isPositive ? "text-green-500" : "text-red-500"}>
+      <span className={isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}>
         {Math.abs(change).toFixed(1)}%
       </span>
       <span>vs previous {label}</span>
