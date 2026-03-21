@@ -170,6 +170,9 @@ export const useCreateBlogPost = () => {
           tags: post.tags || null,
           image_url: post.image_url || null,
           blog_title: post.blog_title || "Paddy's Magazine",
+          category_id: post.category_id || null,
+          meta_title: post.meta_title || null,
+          meta_description: post.meta_description || null,
         })
         .select()
         .single();
