@@ -222,12 +222,13 @@ serve(async (req) => {
                 .from('customer_addresses')
                 .upsert({
                   customer_id: customerData.id,
+                  shopify_address_id: address.id.toString(),
                   first_name: address.first_name,
                   last_name: address.last_name,
                   company: address.company,
-                  address1: address.address1,
+                  address1: address.address1 || null,
                   address2: address.address2,
-                  city: address.city,
+                  city: address.city || null,
                   province: address.province,
                   country: address.country || 'Vietnam',
                   country_code: address.country_code || 'VN',
@@ -235,7 +236,7 @@ serve(async (req) => {
                   phone: address.phone,
                   is_default: address.default,
                 }, {
-                  onConflict: 'customer_id,address1,city',
+                  onConflict: 'customer_id,shopify_address_id',
                   ignoreDuplicates: false,
                 });
 
