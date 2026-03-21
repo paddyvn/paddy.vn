@@ -71,19 +71,18 @@ export const FeaturedProducts = () => {
   const products = hasCollection ? collectionProducts : newestProducts;
   const isLoading = !config || (config.collection_id ? collectionLoading : newestLoading);
   const sectionTitle = config?.section_title || "Sản phẩm nổi bật";
-
-  // If section is disabled, don't render
-  if (config && !config.is_active) return null;
-
   const displayProducts = products?.slice(0, maxProducts) || [];
 
-  // Get product IDs for promotion lookup
+  // Get product IDs for promotion lookup (must be before any returns)
   const productIds = useMemo(() => displayProducts.map(p => p.id), [displayProducts]);
   const { data: promotionsMap } = useProductsPromotions(productIds);
 
   const viewAllLink = (config?.collection as any)?.slug
     ? `/collections/${(config?.collection as any).slug}`
     : "/collections/featured";
+
+  // If section is disabled, don't render
+  if (config && !config.is_active) return null;
 
   if (isLoading) {
     return (
