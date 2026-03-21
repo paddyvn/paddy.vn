@@ -132,13 +132,13 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="border-b border-border p-4">
+      <SidebarHeader className={`border-b border-border ${collapsed ? "p-2" : "p-4"}`}>
         {collapsed ? (
           <div className="flex items-center justify-center">
             <img 
               src={paddyFavicon} 
               alt="Paddy.vn" 
-              className="h-12 w-12 object-contain"
+              className="h-8 w-8 object-contain"
             />
           </div>
         ) : (
