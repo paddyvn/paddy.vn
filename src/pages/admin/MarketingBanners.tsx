@@ -396,13 +396,7 @@ const MarketingBanners = () => {
         </TabsContent>
 
         <TabsContent value="promotional">
-          <BannerList
-            type="promotional"
-            title="Promotional Sections"
-            description="Custom promotional blocks and feature sections"
-            icon={<LayoutTemplate className="h-12 w-12 text-muted-foreground" />}
-            emptyMessage="Create custom promotional sections to highlight special offers, featured categories, or seasonal campaigns."
-          />
+          <HomepagePromosManager />
         </TabsContent>
 
         <TabsContent value="categories">
