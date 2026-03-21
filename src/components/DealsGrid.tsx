@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { usePromotions } from "@/hooks/usePromotions";
+import { useActiveHomepagePromos, type HomepagePromo } from "@/hooks/useHomepagePromos";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Promotion } from "@/hooks/usePromotions";
 
-function assignSlots(promos: Promotion[]) {
+function assignSlots(promos: HomepagePromo[]) {
   const hero = promos.find(p => p.layout_slot === "hero");
   const wide = promos.find(p => p.layout_slot === "wide");
   const halves = promos.filter(p => p.layout_slot === "half").slice(0, 2);
@@ -17,18 +16,14 @@ function assignSlots(promos: Promotion[]) {
   };
 }
 
-function getLink(promo: Promotion) {
-  if (promo.promo_type === "flash_sale") return "/flash-sale";
-  if (promo.promo_type === "subscription_deals") return "/subscription-deals";
-  if (promo.link_destination) return `/collections/${promo.link_destination}`;
-  return "/promotions";
+function getLink(promo: HomepagePromo) {
+  return promo.link_url || "/promotions";
 }
 
-function BentoCard({ promo, slot }: { promo: Promotion | null; slot: string }) {
+function BentoCard({ promo, slot }: { promo: HomepagePromo | null; slot: string }) {
   if (!promo) return null;
   const hasImage = !!promo.image_url;
   const isDark = hasImage;
-
   const paddingClass = slot === "hero" ? "p-5" : slot === "half" ? "p-3.5" : "p-4";
 
   return (
@@ -40,11 +35,9 @@ function BentoCard({ promo, slot }: { promo: Promotion | null; slot: string }) {
         backgroundColor: hasImage ? "#333" : (promo.bg_color || "#DBEAFE"),
       }}
     >
-      {/* Dark overlay for text readability on images */}
       {hasImage && (
         <div className="absolute inset-0 bg-gradient-to-br from-black/45 to-black/15 z-[1]" />
       )}
-
       <div className={`relative z-[2] ${paddingClass} flex flex-col gap-1 justify-end h-full w-full`}>
         {promo.eyebrow && (
           <span className={`text-[11px] font-semibold ${isDark ? "text-white/80" : "text-foreground/60"}`}>
@@ -73,12 +66,16 @@ function BentoCard({ promo, slot }: { promo: Promotion | null; slot: string }) {
 }
 
 export const DealsGrid = () => {
-  const { data: promotions, isLoading } = usePromotions();
+  const { data: promos, isLoading } = useActiveHomepagePromos();
 
   if (isLoading) {
     return (
-      <section className="py-5 bg-background">
+      <section className="pt-5 pb-10 bg-background">
         <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-6 w-24" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-2.5 h-auto md:h-[360px]">
             <Skeleton className="rounded-[14px] min-h-[200px]" />
             <div className="flex flex-col gap-2.5">
@@ -94,18 +91,9 @@ export const DealsGrid = () => {
     );
   }
 
-  if (!promotions || promotions.length === 0) return null;
+  if (!promos || promos.length === 0) return null;
 
-  // Filter to only promotions with display_visibility = 'homepage' or layout_slot set
-  const bentoPromos = promotions.filter(
-    p => p.layout_slot === "hero" || p.layout_slot === "wide" || p.layout_slot === "half"
-  );
-
-  // Fallback: if no bento-assigned promos, use first 4
-  const effectivePromos = bentoPromos.length > 0 ? bentoPromos : promotions.slice(0, 4);
-
-  const { hero, wide, halves } = assignSlots(effectivePromos);
-
+  const { hero, wide, halves } = assignSlots(promos);
   if (!hero && !wide && halves.length === 0) return null;
 
   return (
