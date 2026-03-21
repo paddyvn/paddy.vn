@@ -258,11 +258,11 @@ const BlogPostDetail = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
-        <title>{post.title} | Paddy's Magazine</title>
-        {post.summary_html && (
+        <title>{(post as any).meta_title || post.title} | Paddy's Magazine</title>
+        {((post as any).meta_description || post.summary_html) && (
           <meta
             name="description"
-            content={post.summary_html.replace(/<[^>]*>/g, "").slice(0, 160)}
+            content={(post as any).meta_description || post.summary_html?.replace(/<[^>]*>/g, "").slice(0, 160)}
           />
         )}
         <link rel="canonical" href={canonicalUrl} />
