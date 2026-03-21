@@ -580,7 +580,7 @@ const Collection = () => {
                     </span>
                   )}
                   <button
-                    onClick={() => handleFiltersChange({ brands: [], priceRange: [0, maxPrice], ageRanges: [], sizes: [], healthConditions: [] })}
+                    onClick={() => handleFiltersChange({ productTypes: [], brands: [], priceRange: [0, maxPrice], stockStatus: "all", onSale: false, ageRanges: [], sizes: [], healthConditions: [] })}
                     className="text-sm text-destructive hover:underline"
                   >
                     Xóa tất cả
