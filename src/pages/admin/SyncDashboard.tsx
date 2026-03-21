@@ -11,6 +11,7 @@ import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useSyncCustomers } from "@/hooks/useSyncCustomers";
 import { useSyncAbandonedCheckouts } from "@/hooks/useSyncAbandonedCheckouts";
 import { useSyncBrands } from "@/hooks/useSyncBrands";
+import { useSyncBlogPosts } from "@/hooks/useBlogPosts";
 
 type SyncStatus = "idle" | "running" | "success" | "error";
 
