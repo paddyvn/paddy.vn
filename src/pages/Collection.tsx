@@ -26,8 +26,11 @@ const Collection = () => {
   const [sortBy, setSortBy] = useState("default");
   const [gridCols, setGridCols] = useState<4 | 5>(5);
   const [filters, setFilters] = useState<FilterState>({
+    productTypes: [],
     brands: [],
     priceRange: [0, DEFAULT_MAX_PRICE],
+    stockStatus: "all",
+    onSale: false,
     ageRanges: [],
     sizes: [],
     healthConditions: [],
