@@ -214,18 +214,13 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
   };
 
   const handleSavePromo = () => {
-    updateMenu.mutate(
-      {
-        id: menu.id,
-        promo_title: promoTitle || null,
-        promo_badge: promoBadge || null,
-        promo_link: promoLink || null,
-        promo_image_url: promoImage || null,
-      },
-      {
-        onSuccess: () => setShowPromoEdit(false),
-      }
-    );
+    updateMenu.mutate({
+      id: menu.id,
+      promo_title: promoTitle || null,
+      promo_badge: promoBadge || null,
+      promo_link: promoLink || null,
+      promo_image_url: promoImage || null,
+    });
   };
 
   return (
