@@ -51,7 +51,7 @@ export const Brands = () => {
               to={`/collections/${brand.slug}`}
               className={`group ${index >= 6 ? 'hidden sm:block' : ''}`}
             >
-              <div className="bg-muted/30 border rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md hover:border-primary/50 overflow-hidden">
+              <div className="bg-muted/30 rounded-lg p-4 h-24 flex items-center justify-center transition-all hover:shadow-md overflow-hidden">
                 {brand.image_url ? (
                   <img 
                     src={brand.image_url} 
