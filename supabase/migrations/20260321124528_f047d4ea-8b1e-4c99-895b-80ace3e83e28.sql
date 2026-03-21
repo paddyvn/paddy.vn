@@ -1,0 +1,1 @@
+UPDATE top_nav_items SET link_url = '/brands-thuong-hieu-thu-cung' WHERE id = 'dedb4e7e-6755-4cf6-8632-a2bd828fecb8';
