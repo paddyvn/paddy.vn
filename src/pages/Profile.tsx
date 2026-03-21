@@ -1741,118 +1741,179 @@ const Profile = () => {
 
             {/* Vouchers Section */}
             {activeSection === "vouchers" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mã giảm giá của tôi</CardTitle>
-                  <CardDescription>Các mã giảm giá bạn đã lưu</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {savedVouchersLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : savedVouchers && savedVouchers.length > 0 ? (
-                    <div className="space-y-4">
-                      {savedVouchers.map((voucher: any) => {
-                        const discountType = voucher.discount_type || "percentage";
-                        const discountValue = voucher.discount_value || 0;
-                        const minOrderValue = voucher.min_order_value || 0;
-                        const maxDiscount = voucher.max_discount;
-                        const usageLimit = voucher.usage_limit || 0;
-                        const usedCount = voucher.used_count || 0;
-                        const usagePercent = usageLimit > 0 ? Math.min(100, Math.round((usedCount / usageLimit) * 100)) : 0;
-                        const remaining = usageLimit > 0 ? usageLimit - usedCount : null;
-                        
-                        const now = new Date();
-                        const endDate = voucher.end_date ? new Date(voucher.end_date) : null;
-                        const isExpired = endDate && endDate < now;
-                        const isFullyUsed = usageLimit > 0 && usedCount >= usageLimit;
-                        const isAvailable = voucher.is_active && !isExpired && !isFullyUsed;
+              <div className="space-y-6">
+                {/* User Coupons (assigned by admin) */}
+                {userCoupons && userCoupons.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Mã giảm giá được tặng</CardTitle>
+                      <CardDescription>Mã giảm giá dành riêng cho bạn</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {userCoupons.map((uc: any) => {
+                          const coupon = uc.coupons;
+                          if (!coupon) return null;
+                          const isUsed = uc.is_used;
+                          const isExpired = coupon.expires_at && new Date(coupon.expires_at) < new Date();
+                          const isAvailable = !isUsed && !isExpired && coupon.is_active;
 
-                        const getDiscountText = () => {
-                          if (discountType === "percentage") {
-                            return `Giảm ${discountValue}%`;
-                          } else {
-                            return `Giảm ${formatPrice(discountValue)}đ`;
-                          }
-                        };
-
-                        const getConditionText = () => {
-                          const conditions: string[] = [];
-                          if (minOrderValue > 0) {
-                            conditions.push(`Đơn tối thiểu ${formatPrice(minOrderValue)}đ`);
-                          }
-                          if (maxDiscount && discountType === "percentage") {
-                            conditions.push(`Giảm tối đa ${formatPrice(maxDiscount)}đ`);
-                          }
-                          return conditions.length > 0 ? conditions.join(" · ") : "Áp dụng cho tất cả sản phẩm";
-                        };
-
-                        return (
-                          <div
-                            key={voucher.id}
-                            className={cn(
-                              "relative border rounded-lg p-4 transition-colors",
-                              isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
-                            )}
-                          >
-                            {/* Ticket notch design */}
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
-                            
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 pl-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h3 className="text-lg font-bold text-destructive">
-                                    {getDiscountText()}
-                                  </h3>
-                                  {!isAvailable && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {isExpired ? "Hết hạn" : isFullyUsed ? "Hết lượt" : "Không khả dụng"}
+                          return (
+                            <div
+                              key={uc.id}
+                              className={cn(
+                                "relative border rounded-lg p-4 transition-colors",
+                                isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
+                              )}
+                            >
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
+                              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
+                              
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 pl-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-lg font-bold text-destructive">
+                                      {coupon.discount_type === "percentage" ? `Giảm ${coupon.discount_value}%` : `Giảm ${formatPrice(coupon.discount_value)}đ`}
+                                    </h3>
+                                    {isUsed && <Badge variant="secondary" className="text-xs">Đã sử dụng</Badge>}
+                                    {isExpired && !isUsed && <Badge variant="secondary" className="text-xs">Hết hạn</Badge>}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {coupon.description || (coupon.min_purchase ? `Đơn tối thiểu ${formatPrice(coupon.min_purchase)}đ` : "Áp dụng cho tất cả")}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    <Badge
+                                      variant="secondary"
+                                      className="font-mono text-xs cursor-pointer"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(coupon.code);
+                                        toast({ title: "Đã sao chép mã!" });
+                                      }}
+                                    >
+                                      {coupon.code} 📋
                                     </Badge>
+                                    {coupon.expires_at && (
+                                      <span className="text-xs text-muted-foreground">
+                                        HSD: {format(new Date(coupon.expires_at), "dd/MM/yyyy")}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isUsed && uc.used_at && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Đã dùng: {format(new Date(uc.used_at), "dd/MM/yyyy")}
+                                    </p>
                                   )}
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {getConditionText()}
-                                </p>
-                                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                  {voucher.voucher_code && (
-                                    <Badge variant="secondary" className="font-mono text-xs">
-                                      {voucher.voucher_code}
-                                    </Badge>
-                                  )}
-                                  {endDate && (
-                                    <span className="text-xs text-muted-foreground">
-                                      HSD: {format(endDate, "dd/MM/yyyy")}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Saved Vouchers (from promotions) */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Voucher đã lưu</CardTitle>
+                    <CardDescription>Các voucher bạn đã lưu từ chương trình khuyến mãi</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {savedVouchersLoading || userCouponsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    ) : savedVouchers && savedVouchers.length > 0 ? (
+                      <div className="space-y-4">
+                        {savedVouchers.map((voucher: any) => {
+                          const discountType = voucher.discount_type || "percentage";
+                          const discountValue = voucher.discount_value || 0;
+                          const minOrderValue = voucher.min_order_value || 0;
+                          const maxDiscount = voucher.max_discount;
+                          const usageLimit = voucher.usage_limit || 0;
+                          const usedCount = voucher.used_count || 0;
+                          const remaining = usageLimit > 0 ? usageLimit - usedCount : null;
+                          
+                          const now = new Date();
+                          const endDate = voucher.end_date ? new Date(voucher.end_date) : null;
+                          const isExpired = endDate && endDate < now;
+                          const isFullyUsed = usageLimit > 0 && usedCount >= usageLimit;
+                          const isAvailable = voucher.is_active && !isExpired && !isFullyUsed;
+
+                          return (
+                            <div
+                              key={voucher.id}
+                              className={cn(
+                                "relative border rounded-lg p-4 transition-colors",
+                                isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
+                              )}
+                            >
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
+                              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
+                              
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 pl-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-lg font-bold text-destructive">
+                                      {discountType === "percentage" ? `Giảm ${discountValue}%` : `Giảm ${formatPrice(discountValue)}đ`}
+                                    </h3>
+                                    {!isAvailable && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {isExpired ? "Hết hạn" : isFullyUsed ? "Hết lượt" : "Không khả dụng"}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {minOrderValue > 0 ? `Đơn tối thiểu ${formatPrice(minOrderValue)}đ` : "Áp dụng cho tất cả"}
+                                    {maxDiscount && discountType === "percentage" ? ` · Giảm tối đa ${formatPrice(maxDiscount)}đ` : ""}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    {voucher.voucher_code && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="font-mono text-xs cursor-pointer"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(voucher.voucher_code);
+                                          toast({ title: "Đã sao chép mã!" });
+                                        }}
+                                      >
+                                        {voucher.voucher_code} 📋
+                                      </Badge>
+                                    )}
+                                    {endDate && (
+                                      <span className="text-xs text-muted-foreground">
+                                        HSD: {format(endDate, "dd/MM/yyyy")}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="text-right pr-2">
+                                  {remaining !== null && (
+                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                      Còn {remaining} lượt
                                     </span>
                                   )}
                                 </div>
                               </div>
-                              
-                              <div className="text-right pr-2">
-                                {remaining !== null && (
-                                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                                    Còn {remaining} lượt
-                                  </span>
-                                )}
-                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Chưa có mã giảm giá nào</p>
-                      <p className="text-sm mb-4">Lưu mã giảm giá từ trang chủ để sử dụng</p>
-                      <Button onClick={() => navigate("/")} size="sm">
-                        Khám phá mã giảm giá
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Chưa có mã giảm giá nào</p>
+                        <p className="text-sm mb-4">Lưu mã giảm giá từ trang chủ để sử dụng</p>
+                        <Button onClick={() => navigate("/")} size="sm">
+                          Khám phá mã giảm giá
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {/* Wishlist Section */}
