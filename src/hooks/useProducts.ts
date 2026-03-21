@@ -78,7 +78,7 @@ export const useProduct = (slug: string) => {
         .from("products")
         .select(`
           *,
-          product_images (image_url, alt_text, is_primary, display_order),
+          product_images (image_url, alt_text, is_primary, display_order, variant_ids),
           product_variants (*),
           product_collections (
             collection_id,

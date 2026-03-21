@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +16,10 @@ interface ProductImageGalleryProps {
   productName: string;
   isFeatured?: boolean;
   isOnSale?: boolean;
+  activeIndex?: number;
 }
 
-export function ProductImageGallery({ images, productName, isFeatured, isOnSale }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, productName, isFeatured, isOnSale, activeIndex }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
@@ -28,6 +29,13 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
     return (a.display_order || 0) - (b.display_order || 0);
   });
 
+  // Respond to external activeIndex changes (variant image switching)
+  useEffect(() => {
+    if (activeIndex !== undefined && activeIndex >= 0 && activeIndex < sortedImages.length) {
+      setSelectedImage(activeIndex);
+    }
+  }, [activeIndex, sortedImages.length]);
+
   const maxVisibleThumbnails = 4;
   const hiddenCount = sortedImages.length - maxVisibleThumbnails;
   const visibleThumbnails = sortedImages.slice(0, maxVisibleThumbnails);
@@ -36,7 +44,7 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
     return (
       <div className="space-y-4">
         <div className="aspect-square bg-muted rounded-xl flex items-center justify-center">
-          <span className="text-muted-foreground">No image available</span>
+          <span className="text-muted-foreground">Không có hình ảnh</span>
         </div>
       </div>
     );
@@ -59,12 +67,12 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
       >
         {isOnSale && (
           <Badge className="absolute top-4 left-4 z-10 bg-secondary text-secondary-foreground hover:bg-secondary font-semibold px-3 py-1">
-            Sale
+            Giảm giá
           </Badge>
         )}
         {isFeatured && !isOnSale && (
           <Badge className="absolute top-4 left-4 z-10 bg-green-500 hover:bg-green-500 text-white font-semibold px-3 py-1">
-            BEST SELLER
+            Bán chạy
           </Badge>
         )}
         <img
@@ -79,14 +87,14 @@ export function ProductImageGallery({ images, productName, isFeatured, isOnSale 
             <button
               onClick={(e) => { e.stopPropagation(); scrollPrev(); }}
               className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
-              aria-label="Previous image"
+              aria-label="Ảnh trước"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); scrollNext(); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-colors"
-              aria-label="Next image"
+              aria-label="Ảnh tiếp theo"
             >
               <ChevronRight className="h-5 w-5 text-foreground" />
             </button>
