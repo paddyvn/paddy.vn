@@ -111,7 +111,16 @@ export const DealsGrid = () => {
   return (
     <section className="py-5 bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-2.5 h-auto md:h-[360px]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-primary">Ưu đãi tại Paddy</h2>
+          <Link
+            to="/promotions"
+            className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
+          >
+            Xem tất cả
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
           <BentoCard promo={hero} slot="hero" />
           <div className="flex flex-col gap-2.5">
             <BentoCard promo={wide} slot="wide" />
