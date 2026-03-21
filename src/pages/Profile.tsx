@@ -82,6 +82,8 @@ interface Pet {
   breed: string | null;
   age_years: number | null;
   age_months: number | null;
+  weight_kg: number | null;
+  gender: string | null;
   photo_url: string | null;
   created_at: string;
   updated_at: string;
@@ -221,20 +223,35 @@ const Profile = () => {
   });
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ["orders", userId],
+    queryKey: ["my-orders", userId, profile?.email, profile?.phone],
     queryFn: async () => {
+      if (!profile) return [];
+      
+      // Match orders by email or normalized phone instead of user_id
+      const filters: string[] = [];
+      if (profile.email) filters.push(`customer_email.ilike.${profile.email}`);
+      if (profile.phone) {
+        const normalized = profile.phone.replace(/[^0-9]/g, '').replace(/^84/, '0').replace(/^00/, '0');
+        if (normalized.length >= 9) {
+          filters.push(`customer_phone.ilike.%${normalized}%`);
+        }
+      }
+      
+      if (filters.length === 0) return [];
+      
       const { data, error } = await supabase
         .from("orders")
         .select(`
           *,
           order_items (*)
         `)
-        .eq("user_id", userId!)
-        .order("created_at", { ascending: false });
+        .or(filters.join(','))
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (error) throw error;
       return (data as unknown as Order[]) || [];
     },
-    enabled: !!userId,
+    enabled: !!userId && !!profile,
   });
 
   const { data: pets, isLoading: petsLoading } = useQuery({
@@ -279,8 +296,52 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const getStatusStep = (status: OrderStatus) => {
-    if (status === "cancelled") return -1;
+  // Loyalty points
+  const { data: loyaltyPoints } = useQuery({
+    queryKey: ["loyalty-points", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loyalty_points")
+        .select("*")
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: loyaltyTransactions } = useQuery({
+    queryKey: ["loyalty-transactions", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loyalty_transactions")
+        .select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+  // User coupons
+  const { data: userCoupons, isLoading: userCouponsLoading } = useQuery({
+    queryKey: ["user-coupons", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_coupons")
+        .select("*, coupons(*)")
+        .eq("user_id", userId!);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+
+    const getStatusStep = (status: OrderStatus) => {
     return ORDER_STEPS.indexOf(status);
   };
 
@@ -448,6 +509,8 @@ const Profile = () => {
           breed: pet.breed || null,
           age_years: pet.age_years || null,
           age_months: pet.age_months || null,
+          weight_kg: pet.weight_kg || null,
+          gender: pet.gender || null,
           photo_url: photoUrl,
         });
       if (error) throw error;
@@ -516,6 +579,8 @@ const Profile = () => {
           breed: pet.breed || null,
           age_years: pet.age_years || null,
           age_months: pet.age_months || null,
+          weight_kg: pet.weight_kg || null,
+          gender: pet.gender || null,
           photo_url: photoUrl,
         })
         .eq("id", editingPet.id);
@@ -587,6 +652,8 @@ const Profile = () => {
       name: pet.name,
       species: pet.species,
       breed: pet.breed || undefined,
+      weight_kg: pet.weight_kg,
+      gender: pet.gender,
     });
     // Calculate birthday from age if available
     if (pet.age_years || pet.age_months) {
@@ -954,6 +1021,33 @@ const Profile = () => {
                               </p>
                             )}
                           </div>
+                          <div className="space-y-2">
+                            <Label>Cân nặng (kg)</Label>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={newPet.weight_kg || ""}
+                              onChange={(e) => setNewPet({ ...newPet, weight_kg: e.target.value ? parseFloat(e.target.value) : null })}
+                              placeholder="5.5"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Giới tính</Label>
+                            <Select
+                              value={newPet.gender || ""}
+                              onValueChange={(value) => setNewPet({ ...newPet, gender: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn giới tính..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="male">Đực</SelectItem>
+                                <SelectItem value="female">Cái</SelectItem>
+                                <SelectItem value="unknown">Không rõ</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <div className="space-y-2 sm:col-span-2">
                             <Label>Ảnh Boss</Label>
                             <Input
@@ -1028,6 +1122,12 @@ const Profile = () => {
                                 {pet.age_months ? `${pet.age_months} tháng` : ""}
                               </p>
                             )}
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              {pet.weight_kg && <span>{pet.weight_kg} kg</span>}
+                              {pet.gender && (
+                                <span>{pet.gender === "male" ? "♂ Đực" : pet.gender === "female" ? "♀ Cái" : "Không rõ"}</span>
+                              )}
+                            </div>
                           </div>
                           <Button
                             variant="ghost"
@@ -1173,6 +1273,33 @@ const Profile = () => {
                             Tuổi: {differenceInYears(new Date(), editPetBirthday)} năm {differenceInMonths(new Date(), editPetBirthday) % 12} tháng
                           </p>
                         )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cân nặng (kg)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={editPetForm.weight_kg || ""}
+                          onChange={(e) => setEditPetForm({ ...editPetForm, weight_kg: e.target.value ? parseFloat(e.target.value) : null })}
+                          placeholder="5.5"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Giới tính</Label>
+                        <Select
+                          value={editPetForm.gender || ""}
+                          onValueChange={(value) => setEditPetForm({ ...editPetForm, gender: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn giới tính..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Đực</SelectItem>
+                            <SelectItem value="female">Cái</SelectItem>
+                            <SelectItem value="unknown">Không rõ</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2 sm:col-span-2">
                         <Label>Ảnh Boss</Label>
@@ -1468,14 +1595,14 @@ const Profile = () => {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Điểm thưởng hiện có</p>
-                          <p className="text-3xl font-bold text-primary">0</p>
-                          <p className="text-xs text-muted-foreground">= 0đ giá trị quy đổi</p>
+                          <p className="text-3xl font-bold text-primary">{loyaltyPoints?.points_balance || 0}</p>
+                          <p className="text-xs text-muted-foreground">= {formatPrice((loyaltyPoints?.points_balance || 0) * 10)}đ giá trị quy đổi</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <Badge variant="secondary" className="mb-2">
                           <Star className="h-3 w-3 mr-1" />
-                          Thành viên
+                          {loyaltyPoints?.tier === "platinum" ? "Bạch kim" : loyaltyPoints?.tier === "gold" ? "Vàng" : loyaltyPoints?.tier === "silver" ? "Bạc" : "Thành viên"}
                         </Badge>
                         <p className="text-xs text-muted-foreground">Hạng thành viên</p>
                       </div>
@@ -1484,29 +1611,23 @@ const Profile = () => {
                 </Card>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">0</p>
+                      <p className="text-2xl font-bold text-primary">{loyaltyPoints?.lifetime_earned || 0}</p>
                       <p className="text-xs text-muted-foreground">Điểm đã tích lũy</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-green-600">0</p>
+                      <p className="text-2xl font-bold text-muted-foreground">{loyaltyPoints?.lifetime_redeemed || 0}</p>
                       <p className="text-xs text-muted-foreground">Điểm đã sử dụng</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-orange-500">0</p>
-                      <p className="text-xs text-muted-foreground">Điểm sắp hết hạn</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-secondary">0</p>
-                      <p className="text-xs text-muted-foreground">Quà đã nhận</p>
+                      <p className="text-2xl font-bold text-secondary">{loyaltyPoints?.points_balance || 0}</p>
+                      <p className="text-xs text-muted-foreground">Điểm hiện có</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -1518,29 +1639,32 @@ const Profile = () => {
                     <CardDescription>Theo dõi điểm tích lũy và sử dụng</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Chưa có lịch sử điểm thưởng</p>
-                      <p className="text-sm mb-4">Mua sắm để tích lũy điểm thưởng</p>
-                      <Button onClick={() => navigate("/")} size="sm">
-                        Mua sắm ngay
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Available Gifts */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Quà tặng có thể đổi</CardTitle>
-                    <CardDescription>Sử dụng điểm để đổi quà hấp dẫn</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Chưa có quà tặng</p>
-                      <p className="text-sm">Tích lũy thêm điểm để đổi quà</p>
-                    </div>
+                    {loyaltyTransactions && loyaltyTransactions.length > 0 ? (
+                      <div className="space-y-3">
+                        {loyaltyTransactions.map((tx: any) => (
+                          <div key={tx.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                            <div>
+                              <p className="text-sm font-medium">{tx.description || tx.type}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
+                              </p>
+                            </div>
+                            <span className={cn("font-semibold", tx.points > 0 ? "text-primary" : "text-destructive")}>
+                              {tx.points > 0 ? `+${tx.points}` : tx.points}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Chưa có lịch sử điểm thưởng</p>
+                        <p className="text-sm mb-4">Mua sắm để tích lũy điểm thưởng</p>
+                        <Button onClick={() => navigate("/")} size="sm">
+                          Mua sắm ngay
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -1617,118 +1741,179 @@ const Profile = () => {
 
             {/* Vouchers Section */}
             {activeSection === "vouchers" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mã giảm giá của tôi</CardTitle>
-                  <CardDescription>Các mã giảm giá bạn đã lưu</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {savedVouchersLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : savedVouchers && savedVouchers.length > 0 ? (
-                    <div className="space-y-4">
-                      {savedVouchers.map((voucher: any) => {
-                        const discountType = voucher.discount_type || "percentage";
-                        const discountValue = voucher.discount_value || 0;
-                        const minOrderValue = voucher.min_order_value || 0;
-                        const maxDiscount = voucher.max_discount;
-                        const usageLimit = voucher.usage_limit || 0;
-                        const usedCount = voucher.used_count || 0;
-                        const usagePercent = usageLimit > 0 ? Math.min(100, Math.round((usedCount / usageLimit) * 100)) : 0;
-                        const remaining = usageLimit > 0 ? usageLimit - usedCount : null;
-                        
-                        const now = new Date();
-                        const endDate = voucher.end_date ? new Date(voucher.end_date) : null;
-                        const isExpired = endDate && endDate < now;
-                        const isFullyUsed = usageLimit > 0 && usedCount >= usageLimit;
-                        const isAvailable = voucher.is_active && !isExpired && !isFullyUsed;
+              <div className="space-y-6">
+                {/* User Coupons (assigned by admin) */}
+                {userCoupons && userCoupons.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Mã giảm giá được tặng</CardTitle>
+                      <CardDescription>Mã giảm giá dành riêng cho bạn</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {userCoupons.map((uc: any) => {
+                          const coupon = uc.coupons;
+                          if (!coupon) return null;
+                          const isUsed = uc.is_used;
+                          const isExpired = coupon.expires_at && new Date(coupon.expires_at) < new Date();
+                          const isAvailable = !isUsed && !isExpired && coupon.is_active;
 
-                        const getDiscountText = () => {
-                          if (discountType === "percentage") {
-                            return `Giảm ${discountValue}%`;
-                          } else {
-                            return `Giảm ${formatPrice(discountValue)}đ`;
-                          }
-                        };
-
-                        const getConditionText = () => {
-                          const conditions: string[] = [];
-                          if (minOrderValue > 0) {
-                            conditions.push(`Đơn tối thiểu ${formatPrice(minOrderValue)}đ`);
-                          }
-                          if (maxDiscount && discountType === "percentage") {
-                            conditions.push(`Giảm tối đa ${formatPrice(maxDiscount)}đ`);
-                          }
-                          return conditions.length > 0 ? conditions.join(" · ") : "Áp dụng cho tất cả sản phẩm";
-                        };
-
-                        return (
-                          <div
-                            key={voucher.id}
-                            className={cn(
-                              "relative border rounded-lg p-4 transition-colors",
-                              isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
-                            )}
-                          >
-                            {/* Ticket notch design */}
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
-                            
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 pl-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h3 className="text-lg font-bold text-destructive">
-                                    {getDiscountText()}
-                                  </h3>
-                                  {!isAvailable && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {isExpired ? "Hết hạn" : isFullyUsed ? "Hết lượt" : "Không khả dụng"}
+                          return (
+                            <div
+                              key={uc.id}
+                              className={cn(
+                                "relative border rounded-lg p-4 transition-colors",
+                                isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
+                              )}
+                            >
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
+                              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
+                              
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 pl-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-lg font-bold text-destructive">
+                                      {coupon.discount_type === "percentage" ? `Giảm ${coupon.discount_value}%` : `Giảm ${formatPrice(coupon.discount_value)}đ`}
+                                    </h3>
+                                    {isUsed && <Badge variant="secondary" className="text-xs">Đã sử dụng</Badge>}
+                                    {isExpired && !isUsed && <Badge variant="secondary" className="text-xs">Hết hạn</Badge>}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {coupon.description || (coupon.min_purchase ? `Đơn tối thiểu ${formatPrice(coupon.min_purchase)}đ` : "Áp dụng cho tất cả")}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    <Badge
+                                      variant="secondary"
+                                      className="font-mono text-xs cursor-pointer"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(coupon.code);
+                                        toast({ title: "Đã sao chép mã!" });
+                                      }}
+                                    >
+                                      {coupon.code} 📋
                                     </Badge>
+                                    {coupon.expires_at && (
+                                      <span className="text-xs text-muted-foreground">
+                                        HSD: {format(new Date(coupon.expires_at), "dd/MM/yyyy")}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isUsed && uc.used_at && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Đã dùng: {format(new Date(uc.used_at), "dd/MM/yyyy")}
+                                    </p>
                                   )}
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {getConditionText()}
-                                </p>
-                                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                  {voucher.voucher_code && (
-                                    <Badge variant="secondary" className="font-mono text-xs">
-                                      {voucher.voucher_code}
-                                    </Badge>
-                                  )}
-                                  {endDate && (
-                                    <span className="text-xs text-muted-foreground">
-                                      HSD: {format(endDate, "dd/MM/yyyy")}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Saved Vouchers (from promotions) */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Voucher đã lưu</CardTitle>
+                    <CardDescription>Các voucher bạn đã lưu từ chương trình khuyến mãi</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {savedVouchersLoading || userCouponsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    ) : savedVouchers && savedVouchers.length > 0 ? (
+                      <div className="space-y-4">
+                        {savedVouchers.map((voucher: any) => {
+                          const discountType = voucher.discount_type || "percentage";
+                          const discountValue = voucher.discount_value || 0;
+                          const minOrderValue = voucher.min_order_value || 0;
+                          const maxDiscount = voucher.max_discount;
+                          const usageLimit = voucher.usage_limit || 0;
+                          const usedCount = voucher.used_count || 0;
+                          const remaining = usageLimit > 0 ? usageLimit - usedCount : null;
+                          
+                          const now = new Date();
+                          const endDate = voucher.end_date ? new Date(voucher.end_date) : null;
+                          const isExpired = endDate && endDate < now;
+                          const isFullyUsed = usageLimit > 0 && usedCount >= usageLimit;
+                          const isAvailable = voucher.is_active && !isExpired && !isFullyUsed;
+
+                          return (
+                            <div
+                              key={voucher.id}
+                              className={cn(
+                                "relative border rounded-lg p-4 transition-colors",
+                                isAvailable ? "hover:bg-muted/50" : "opacity-60 bg-muted/30"
+                              )}
+                            >
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-r-full -ml-[1px] border-r" />
+                              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background rounded-l-full -mr-[1px] border-l" />
+                              
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 pl-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-lg font-bold text-destructive">
+                                      {discountType === "percentage" ? `Giảm ${discountValue}%` : `Giảm ${formatPrice(discountValue)}đ`}
+                                    </h3>
+                                    {!isAvailable && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {isExpired ? "Hết hạn" : isFullyUsed ? "Hết lượt" : "Không khả dụng"}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {minOrderValue > 0 ? `Đơn tối thiểu ${formatPrice(minOrderValue)}đ` : "Áp dụng cho tất cả"}
+                                    {maxDiscount && discountType === "percentage" ? ` · Giảm tối đa ${formatPrice(maxDiscount)}đ` : ""}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    {voucher.voucher_code && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="font-mono text-xs cursor-pointer"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(voucher.voucher_code);
+                                          toast({ title: "Đã sao chép mã!" });
+                                        }}
+                                      >
+                                        {voucher.voucher_code} 📋
+                                      </Badge>
+                                    )}
+                                    {endDate && (
+                                      <span className="text-xs text-muted-foreground">
+                                        HSD: {format(endDate, "dd/MM/yyyy")}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="text-right pr-2">
+                                  {remaining !== null && (
+                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                      Còn {remaining} lượt
                                     </span>
                                   )}
                                 </div>
                               </div>
-                              
-                              <div className="text-right pr-2">
-                                {remaining !== null && (
-                                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                                    Còn {remaining} lượt
-                                  </span>
-                                )}
-                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Chưa có mã giảm giá nào</p>
-                      <p className="text-sm mb-4">Lưu mã giảm giá từ trang chủ để sử dụng</p>
-                      <Button onClick={() => navigate("/")} size="sm">
-                        Khám phá mã giảm giá
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Chưa có mã giảm giá nào</p>
+                        <p className="text-sm mb-4">Lưu mã giảm giá từ trang chủ để sử dụng</p>
+                        <Button onClick={() => navigate("/")} size="sm">
+                          Khám phá mã giảm giá
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {/* Wishlist Section */}
