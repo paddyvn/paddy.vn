@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { RefreshCw, Package, ShoppingCart, Users, Tag, Link2, ShoppingBag, Loader2, CheckCircle2, XCircle, Clock, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,103 +121,90 @@ const SyncDashboard = () => {
   const abandonedCheckouts = useSyncAbandonedCheckouts();
   const brands = useSyncBrands();
 
-  const isAnySyncing = products.isPending || collections.isPending || productCollections.isPending || orders.isPending || customers.isPending || abandonedCheckouts.isPending || brands.isPending;
+  const isAnySyncing =
+    Object.values(statuses).includes("running") ||
+    products.isPending ||
+    collections.isPending ||
+    productCollections.isPending ||
+    orders.isPending ||
+    customers.isPending ||
+    abandonedCheckouts.isPending ||
+    brands.isPending;
 
-  const wrapSync = (key: string, title: string, mutate: () => void) => {
+  const runSync = useCallback(async (key: string, title: string, action: () => Promise<unknown>) => {
     setStatus(key, "running");
-    mutate();
-  };
+    try {
+      await action();
+      setStatus(key, "success");
+      addLogEntry(title, "success");
+    } catch {
+      setStatus(key, "error");
+      addLogEntry(title, "error");
+    }
+  }, [addLogEntry]);
 
-  const getStatus = (key: string, isPending: boolean, isSuccess: boolean, isError: boolean): SyncStatus => {
-    if (isPending) return "running";
-    if (isSuccess && statuses[key] !== "idle") return "success";
-    if (isError && statuses[key] !== "idle") return "error";
-    return statuses[key] || "idle";
-  };
-
-  // Track status transitions and log completed syncs via useEffect
-  const prevStatusesRef = useRef<Record<string, SyncStatus>>({});
-
-  const syncEntries = [
-    { key: "products", title: "Products & Variants", isPending: products.isPending, isSuccess: products.isSuccess, isError: products.isError },
-    { key: "collections", title: "Collections", isPending: collections.isPending, isSuccess: collections.isSuccess, isError: collections.isError },
-    { key: "productCollections", title: "Product ↔ Collection Links", isPending: productCollections.isPending, isSuccess: productCollections.isSuccess, isError: productCollections.isError },
-    { key: "brands", title: "Brands", isPending: brands.isPending, isSuccess: brands.isSuccess, isError: brands.isError },
-    { key: "orders", title: "Orders", isPending: orders.isPending, isSuccess: (orders as any).isSuccess ?? false, isError: (orders as any).isError ?? false },
-    { key: "customers", title: "Customers", isPending: customers.isPending, isSuccess: customers.isSuccess, isError: customers.isError },
-    { key: "abandonedCheckouts", title: "Abandoned Checkouts", isPending: abandonedCheckouts.isPending, isSuccess: abandonedCheckouts.isSuccess, isError: abandonedCheckouts.isError },
-  ];
-
-  useEffect(() => {
-    syncEntries.forEach(({ key, title, isPending, isSuccess, isError }) => {
-      const current = getStatus(key, isPending, isSuccess, isError);
-      const prev = prevStatusesRef.current[key];
-      if (prev === "running" && current === "success") {
-        addLogEntry(title, "success");
-      } else if (prev === "running" && current === "error") {
-        addLogEntry(title, "error");
-      }
-      prevStatusesRef.current[key] = current;
-    });
-  });
+  const getStatus = useCallback(
+    (key: string, isPending: boolean): SyncStatus => statuses[key] || (isPending ? "running" : "idle"),
+    [statuses]
+  );
 
   const syncCards = [
     {
       key: "products", title: "Products & Variants",
       description: "Sync all products, variants, and images from Shopify",
       icon: <Package className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("products", products.isPending, products.isSuccess, products.isError),
+      status: getStatus("products", products.isPending),
       progress: (products as any).progress,
-      onSync: () => wrapSync("products", "Products & Variants", () => products.mutate()),
+      onSync: () => void runSync("products", "Products & Variants", () => products.mutateAsync()),
     },
     {
       key: "collections", title: "Collections",
       description: "Sync all collections (categories) from Shopify",
       icon: <Tag className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("collections", collections.isPending, collections.isSuccess, collections.isError),
-      onSync: () => wrapSync("collections", "Collections", () => collections.mutate()),
+      status: getStatus("collections", collections.isPending),
+      onSync: () => void runSync("collections", "Collections", () => collections.mutateAsync()),
     },
     {
       key: "productCollections", title: "Product ↔ Collection Links",
       description: "Link products to their collections (run after syncing both)",
       icon: <Link2 className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("productCollections", productCollections.isPending, productCollections.isSuccess, productCollections.isError),
-      onSync: () => wrapSync("productCollections", "Product ↔ Collection Links", () => productCollections.mutate()),
+      status: getStatus("productCollections", productCollections.isPending),
+      onSync: () => void runSync("productCollections", "Product ↔ Collection Links", () => productCollections.mutateAsync()),
     },
     {
       key: "brands", title: "Brands",
       description: "Sync brand data from Shopify product vendors",
       icon: <ShoppingBag className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("brands", brands.isPending, brands.isSuccess, brands.isError),
-      onSync: () => wrapSync("brands", "Brands", () => brands.mutate()),
+      status: getStatus("brands", brands.isPending),
+      onSync: () => void runSync("brands", "Brands", () => brands.mutateAsync()),
     },
     {
       key: "orders", title: "Orders",
       description: "Sync orders, line items, fulfillments, and timeline events",
       icon: <ShoppingCart className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("orders", orders.isPending, (orders as any).isSuccess ?? false, (orders as any).isError ?? false),
+      status: getStatus("orders", orders.isPending),
       progress: orders.progress,
-      onSync: () => { setStatus("orders", "running"); orders.syncOrders(false); },
+      onSync: () => void runSync("orders", "Orders", () => orders.syncOrdersAsync(false)),
       secondaryAction: {
         label: "Full Sync",
-        onClick: () => { setStatus("orders", "running"); orders.syncOrders(true); },
+        onClick: () => void runSync("orders", "Orders", () => orders.syncOrdersAsync(true)),
       },
     },
     {
       key: "customers", title: "Customers",
       description: "Sync all customer profiles from Shopify",
       icon: <Users className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("customers", customers.isPending, customers.isSuccess, customers.isError),
+      status: getStatus("customers", customers.isPending),
       progress: (customers as any).progress,
-      onSync: () => wrapSync("customers", "Customers", () => customers.mutate()),
+      onSync: () => void runSync("customers", "Customers", () => customers.mutateAsync()),
     },
     {
       key: "abandonedCheckouts", title: "Abandoned Checkouts",
       description: "Sync abandoned checkout data for recovery analysis",
       icon: <ShoppingCart className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("abandonedCheckouts", abandonedCheckouts.isPending, abandonedCheckouts.isSuccess, abandonedCheckouts.isError),
+      status: getStatus("abandonedCheckouts", abandonedCheckouts.isPending),
       progress: (abandonedCheckouts as any).progress,
-      onSync: () => wrapSync("abandonedCheckouts", "Abandoned Checkouts", () => abandonedCheckouts.mutate()),
+      onSync: () => void runSync("abandonedCheckouts", "Abandoned Checkouts", () => abandonedCheckouts.mutateAsync()),
     },
   ];
 
