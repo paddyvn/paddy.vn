@@ -308,11 +308,14 @@ const Collection = () => {
   };
 
   const activeFilterCount =
+    filters.productTypes.length +
     filters.brands.length +
     filters.ageRanges.length +
     filters.sizes.length +
     filters.healthConditions.length +
-    (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0);
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0) +
+    (filters.stockStatus !== "all" ? 1 : 0) +
+    (filters.onSale ? 1 : 0);
 
   // SEO fallback
   const metaTitle = collection?.meta_title || (collection ? `${collection.name} | Paddy.vn - Pet Shop` : "Paddy.vn");
