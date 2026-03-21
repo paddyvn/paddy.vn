@@ -6453,6 +6453,47 @@ export type Database = {
           },
         ]
       }
+      top_nav_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          link_url: string | null
+          mega_menu_id: string | null
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          link_url?: string | null
+          mega_menu_id?: string | null
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          link_url?: string | null
+          mega_menu_id?: string | null
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "top_nav_items_mega_menu_id_fkey"
+            columns: ["mega_menu_id"]
+            isOneToOne: false
+            referencedRelation: "navigation_menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_custom_roles: {
         Row: {
           created_at: string
