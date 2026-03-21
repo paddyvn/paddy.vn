@@ -22,6 +22,7 @@ import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 const PageDetail = lazy(() => import("./pages/PageDetail"));
+const LandingPageEmbed = lazy(() => import("./pages/LandingPageEmbed"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
