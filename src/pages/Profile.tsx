@@ -969,7 +969,7 @@ const Profile = () => {
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                   ) : pets && pets.length > 0 ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4">
                       {pets.map((pet) => (
                         <div
                           key={pet.id}
