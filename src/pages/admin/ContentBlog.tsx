@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSyncBlogPosts, BlogPost } from "@/hooks/useBlogPosts";
+import { BlogCommentsManager } from "@/components/admin/BlogCommentsManager";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Input } from "@/components/ui/input";
 import {
   Table,
