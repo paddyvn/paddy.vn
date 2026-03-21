@@ -219,7 +219,7 @@ export const CollectionFilters = ({
                   </label>
                 ))}
                 {filteredBrands.length === 0 && brandSearch && (
-                  <p className="text-sm text-muted-foreground py-2">No brands found</p>
+                  <p className="text-sm text-muted-foreground py-2">Không tìm thấy thương hiệu</p>
                 )}
               </div>
             </AccordionContent>
