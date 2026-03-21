@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { RefreshCw, Package, ShoppingCart, Users, Tag, Link2, ShoppingBag, Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { useState, useCallback } from "react";
+import { RefreshCw, Package, ShoppingCart, Users, Tag, Link2, ShoppingBag, Loader2, CheckCircle2, XCircle, Clock, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,13 @@ import { useSyncBrands } from "@/hooks/useSyncBrands";
 
 type SyncStatus = "idle" | "running" | "success" | "error";
 
+interface SyncLogEntry {
+  id: number;
+  title: string;
+  status: "success" | "error";
+  timestamp: Date;
+}
+
 interface SyncCardProps {
   title: string;
   description: string;
@@ -23,10 +30,7 @@ interface SyncCardProps {
   onSync: () => void;
   disabled: boolean;
   buttonLabel?: string;
-  secondaryAction?: {
-    label: string;
-    onClick: () => void;
-  };
+  secondaryAction?: { label: string; onClick: () => void };
 }
 
 const statusConfig: Record<SyncStatus, { badge: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -75,32 +79,15 @@ const SyncCard = ({ title, description, icon, status, progress, onSync, disabled
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={onSync}
-            disabled={disabled}
-            className="flex-1"
-          >
+          <Button size="sm" onClick={onSync} disabled={disabled} className="flex-1">
             {status === "running" ? (
-              <>
-                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                Syncing…
-              </>
+              <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Syncing…</>
             ) : (
-              <>
-                <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                {buttonLabel || "Sync Now"}
-              </>
+              <><RefreshCw className="mr-2 h-3.5 w-3.5" />{buttonLabel || "Sync Now"}</>
             )}
           </Button>
           {secondaryAction && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={secondaryAction.onClick}
-              disabled={disabled}
-              className="flex-1"
-            >
+            <Button size="sm" variant="outline" onClick={secondaryAction.onClick} disabled={disabled} className="flex-1">
               {secondaryAction.label}
             </Button>
           )}
@@ -110,8 +97,21 @@ const SyncCard = ({ title, description, icon, status, progress, onSync, disabled
   );
 };
 
+const formatTime = (date: Date) =>
+  date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
 const SyncDashboard = () => {
   const [statuses, setStatuses] = useState<Record<string, SyncStatus>>({});
+  const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
+  const [logCounter, setLogCounter] = useState(0);
+
+  const addLogEntry = useCallback((title: string, status: "success" | "error") => {
+    setSyncLog((prev) => {
+      const newEntry: SyncLogEntry = { id: logCounter, title, status, timestamp: new Date() };
+      setLogCounter((c) => c + 1);
+      return [newEntry, ...prev].slice(0, 7);
+    });
+  }, [logCounter]);
 
   const setStatus = (key: string, status: SyncStatus) =>
     setStatuses((prev) => ({ ...prev, [key]: status }));
@@ -126,12 +126,11 @@ const SyncDashboard = () => {
 
   const isAnySyncing = products.isPending || collections.isPending || productCollections.isPending || orders.isPending || customers.isPending || abandonedCheckouts.isPending || brands.isPending;
 
-  const wrapSync = (key: string, mutate: () => void) => {
+  const wrapSync = (key: string, title: string, mutate: () => void) => {
     setStatus(key, "running");
     mutate();
   };
 
-  // Track statuses via effects-like approach using mutation states
   const getStatus = (key: string, isPending: boolean, isSuccess: boolean, isError: boolean): SyncStatus => {
     if (isPending) return "running";
     if (isSuccess && statuses[key] !== "idle") return "success";
@@ -139,46 +138,54 @@ const SyncDashboard = () => {
     return statuses[key] || "idle";
   };
 
+  // Track completed syncs for log
+  const prevStatuses = useState<Record<string, SyncStatus>>(() => ({}))[0];
+  const checkAndLog = (key: string, title: string, isPending: boolean, isSuccess: boolean, isError: boolean) => {
+    const current = getStatus(key, isPending, isSuccess, isError);
+    if (prevStatuses[key] === "running" && current === "success") {
+      addLogEntry(title, "success");
+    } else if (prevStatuses[key] === "running" && current === "error") {
+      addLogEntry(title, "error");
+    }
+    prevStatuses[key] = current;
+    return current;
+  };
+
   const syncCards = [
     {
-      key: "products",
-      title: "Products & Variants",
+      key: "products", title: "Products & Variants",
       description: "Sync all products, variants, and images from Shopify",
       icon: <Package className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("products", products.isPending, products.isSuccess, products.isError),
+      status: checkAndLog("products", "Products & Variants", products.isPending, products.isSuccess, products.isError),
       progress: (products as any).progress,
-      onSync: () => wrapSync("products", () => products.mutate()),
+      onSync: () => wrapSync("products", "Products & Variants", () => products.mutate()),
     },
     {
-      key: "collections",
-      title: "Collections",
+      key: "collections", title: "Collections",
       description: "Sync all collections (categories) from Shopify",
       icon: <Tag className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("collections", collections.isPending, collections.isSuccess, collections.isError),
-      onSync: () => wrapSync("collections", () => collections.mutate()),
+      status: checkAndLog("collections", "Collections", collections.isPending, collections.isSuccess, collections.isError),
+      onSync: () => wrapSync("collections", "Collections", () => collections.mutate()),
     },
     {
-      key: "productCollections",
-      title: "Product ↔ Collection Links",
+      key: "productCollections", title: "Product ↔ Collection Links",
       description: "Link products to their collections (run after syncing both)",
       icon: <Link2 className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("productCollections", productCollections.isPending, productCollections.isSuccess, productCollections.isError),
-      onSync: () => wrapSync("productCollections", () => productCollections.mutate()),
+      status: checkAndLog("productCollections", "Product ↔ Collection Links", productCollections.isPending, productCollections.isSuccess, productCollections.isError),
+      onSync: () => wrapSync("productCollections", "Product ↔ Collection Links", () => productCollections.mutate()),
     },
     {
-      key: "brands",
-      title: "Brands",
+      key: "brands", title: "Brands",
       description: "Sync brand data from Shopify product vendors",
       icon: <ShoppingBag className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("brands", brands.isPending, brands.isSuccess, brands.isError),
-      onSync: () => wrapSync("brands", () => brands.mutate()),
+      status: checkAndLog("brands", "Brands", brands.isPending, brands.isSuccess, brands.isError),
+      onSync: () => wrapSync("brands", "Brands", () => brands.mutate()),
     },
     {
-      key: "orders",
-      title: "Orders",
+      key: "orders", title: "Orders",
       description: "Sync orders, line items, fulfillments, and timeline events",
       icon: <ShoppingCart className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("orders", orders.isPending, false, false),
+      status: checkAndLog("orders", "Orders", orders.isPending, false, false),
       progress: orders.progress,
       onSync: () => { setStatus("orders", "running"); orders.syncOrders(false); },
       secondaryAction: {
@@ -187,22 +194,20 @@ const SyncDashboard = () => {
       },
     },
     {
-      key: "customers",
-      title: "Customers",
+      key: "customers", title: "Customers",
       description: "Sync all customer profiles from Shopify",
       icon: <Users className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("customers", customers.isPending, customers.isSuccess, customers.isError),
+      status: checkAndLog("customers", "Customers", customers.isPending, customers.isSuccess, customers.isError),
       progress: (customers as any).progress,
-      onSync: () => wrapSync("customers", () => customers.mutate()),
+      onSync: () => wrapSync("customers", "Customers", () => customers.mutate()),
     },
     {
-      key: "abandonedCheckouts",
-      title: "Abandoned Checkouts",
+      key: "abandonedCheckouts", title: "Abandoned Checkouts",
       description: "Sync abandoned checkout data for recovery analysis",
       icon: <ShoppingCart className="h-5 w-5 text-muted-foreground" />,
-      status: getStatus("abandonedCheckouts", abandonedCheckouts.isPending, abandonedCheckouts.isSuccess, abandonedCheckouts.isError),
+      status: checkAndLog("abandonedCheckouts", "Abandoned Checkouts", abandonedCheckouts.isPending, abandonedCheckouts.isSuccess, abandonedCheckouts.isError),
       progress: (abandonedCheckouts as any).progress,
-      onSync: () => wrapSync("abandonedCheckouts", () => abandonedCheckouts.mutate()),
+      onSync: () => wrapSync("abandonedCheckouts", "Abandoned Checkouts", () => abandonedCheckouts.mutate()),
     },
   ];
 
@@ -223,37 +228,82 @@ const SyncDashboard = () => {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {syncCards.map((card) => (
-          <SyncCard
-            key={card.key}
-            title={card.title}
-            description={card.description}
-            icon={card.icon}
-            status={card.status}
-            progress={card.progress}
-            onSync={card.onSync}
-            disabled={isAnySyncing}
-            secondaryAction={card.secondaryAction}
-          />
-        ))}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.54fr] gap-6">
+        {/* Left: Sync Cards */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          {syncCards.map((card) => (
+            <SyncCard
+              key={card.key}
+              title={card.title}
+              description={card.description}
+              icon={card.icon}
+              status={card.status}
+              progress={card.progress}
+              onSync={card.onSync}
+              disabled={isAnySyncing}
+              secondaryAction={card.secondaryAction}
+            />
+          ))}
+        </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Recommended Sync Order</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Products & Variants — the foundation of your catalog</li>
-            <li>Collections — sync category structure</li>
-            <li>Product ↔ Collection Links — establish relationships</li>
-            <li>Brands — extract vendor data</li>
-            <li>Orders & Customers — can run in parallel</li>
-            <li>Abandoned Checkouts — for recovery analytics</li>
-          </ol>
-        </CardContent>
-      </Card>
+        {/* Right: Sync History */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Sync History</CardTitle>
+              </div>
+              <CardDescription className="text-xs">Last 7 syncs this session</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {syncLog.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-6 text-center">
+                  No syncs yet. Run a sync to see history here.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {syncLog.map((entry) => (
+                    <div key={entry.id} className="flex items-start gap-3">
+                      {entry.status === "success" ? (
+                        <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mt-0.5 shrink-0 text-destructive" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{entry.title}</p>
+                        <p className="text-xs text-muted-foreground">{formatTime(entry.timestamp)}</p>
+                      </div>
+                      <Badge
+                        variant={entry.status === "success" ? "secondary" : "destructive"}
+                        className="text-xs shrink-0"
+                      >
+                        {entry.status === "success" ? "Done" : "Failed"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Recommended Sync Order</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Products & Variants</li>
+                <li>Collections</li>
+                <li>Product ↔ Collection Links</li>
+                <li>Brands</li>
+                <li>Orders & Customers</li>
+                <li>Abandoned Checkouts</li>
+              </ol>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
