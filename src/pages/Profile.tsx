@@ -1019,6 +1019,7 @@ const Profile = () => {
                   ) : null}
                 </CardContent>
               </Card>
+              </div>
 
               {/* Edit Pet Dialog */}
               <Dialog open={!!editingPet} onOpenChange={(open) => !open && setEditingPet(null)}>
