@@ -71,6 +71,7 @@ const TrafficAnalytics = lazy(() => import("./pages/admin/TrafficAnalytics"));
 const DeliveryMethods = lazy(() => import("./pages/admin/DeliveryMethods"));
 const StoresManagement = lazy(() => import("./pages/admin/StoresManagement"));
 const StoreEdit = lazy(() => import("./pages/admin/StoreEdit"));
+const SyncDashboard = lazy(() => import("./pages/admin/SyncDashboard"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
