@@ -152,6 +152,7 @@ const App = () => (
             <Route path="content/blog/:id/edit" element={<BlogPostEdit />} />
             <Route path="content/blog-categories" element={<BlogCategories />} />
             <Route path="content/pages" element={<Pages />} />
+            <Route path="content/pages/:id/edit" element={<PageEdit />} />
             <Route path="content/ai-generator" element={<ContentAIGenerator />} />
             <Route path="marketing/banners" element={<MarketingBanners />} />
             <Route path="promotions" element={<PromotionsManagement />} />
