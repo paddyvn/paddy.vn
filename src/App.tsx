@@ -149,6 +149,7 @@ const App = () => (
             <Route path="customers" element={<CustomersManagement />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="customers/segments" element={<CustomerSegments />} />
+            <Route path="loyalty" element={<LoyaltyManagement />} />
             <Route path="content/metaobjects" element={<ContentMetaobjects />} />
             <Route path="content/files" element={<ContentFiles />} />
             <Route path="content/menus" element={<ContentMenus />} />

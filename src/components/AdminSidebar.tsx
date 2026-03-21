@@ -55,6 +55,7 @@ const mainItems = [
     subItems: [
       { title: "All Customers", url: "/admin/customers" },
       { title: "Segments", url: "/admin/customers/segments" },
+      { title: "Loyalty", url: "/admin/loyalty" },
     ],
   },
   {
