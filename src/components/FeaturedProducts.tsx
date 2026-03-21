@@ -15,13 +15,23 @@ export const FeaturedProducts = () => {
       const { data, error } = await supabase
         .from("homepage_featured_config")
         .select(`
-          collection_id, section_title, product_count, is_active,
-          collection:categories(slug)
+          collection_id, section_title, product_count, is_active
         `)
         .limit(1)
         .single();
       if (error) throw error;
-      return data;
+
+      let collectionSlug: string | null = null;
+      if (data?.collection_id) {
+        const { data: cat } = await supabase
+          .from("categories")
+          .select("slug")
+          .eq("id", data.collection_id)
+          .single();
+        collectionSlug = cat?.slug ?? null;
+      }
+
+      return { ...data, collectionSlug };
     },
   });
 
