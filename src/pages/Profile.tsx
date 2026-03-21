@@ -389,6 +389,33 @@ const Profile = () => {
     },
   });
 
+  const updateAddressMutation = useMutation({
+    mutationFn: async (address: Partial<Address> & { id: string }) => {
+      const { error } = await supabase
+        .from("addresses")
+        .update({
+          full_name: address.full_name!,
+          phone: address.phone!,
+          address_line1: address.address_line1!,
+          address_line2: address.address_line2 || null,
+          city: address.city!,
+          district: address.district || null,
+          ward: address.ward || null,
+        })
+        .eq("id", address.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses", userId] });
+      setEditingAddress(null);
+      setEditAddressForm({});
+      toast({ title: "Cập nhật địa chỉ thành công" });
+    },
+    onError: () => {
+      toast({ title: "Lỗi", description: "Không thể cập nhật địa chỉ.", variant: "destructive" });
+    },
+  });
+
   const addPetMutation = useMutation({
     mutationFn: async (pet: Partial<Pet> & { photoFile?: File }) => {
       let photoUrl: string | null = null;
