@@ -348,105 +348,96 @@ export default function Checkout() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const generateOrderNumber = () => {
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `PD${timestamp}${random}`;
-  };
-
   const handlePlaceOrder = async () => {
     if (!userId) return;
     
     setIsSubmitting(true);
     try {
       const address = getSelectedAddress();
-      const newOrderNumber = generateOrderNumber();
-      
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: userId,
-          order_number: newOrderNumber,
-          subtotal: subtotal,
-          shipping_fee: shippingCost,
-          discount: discount + totalDealDiscount,
-          total: total,
-          status: "pending",
-          financial_status: selectedPayment === "cod" ? "pending" : "pending",
-          notes: orderNotes || null,
-          delivery_method: deliveryMethod?.name || null,
-          payment_gateway: selectedPayment,
-          source_name: "web",
-          customer_email: userEmail || null,
-          customer_phone: useNewAddress ? addressForm.phone : (address?.phone || null),
-          coupon_code: appliedVoucher?.code || null,
-          promotion_id: appliedVoucher?.promotionId || null,
-          shipping_address: useNewAddress 
-            ? {
-                full_name: addressForm.fullName,
-                phone: addressForm.phone,
-                address_line1: addressForm.addressLine1,
-                address_line2: addressForm.addressLine2,
-                city: addressForm.city,
-                district: addressForm.district,
-                ward: addressForm.ward,
-              }
-            : {
-                full_name: address.full_name,
-                phone: address.phone,
-                address_line1: address.address_line1,
-                address_line2: address.address_line2,
-                city: address.city,
-                district: address.district,
-                ward: address.ward,
-              },
-        })
-        .select()
-        .single();
 
-      if (orderError) throw orderError;
+      // Generate sequential order number via DB
+      const { data: orderNumber, error: numError } = await supabase.rpc('generate_web_order_number');
+      if (numError || !orderNumber) throw new Error('Không thể tạo mã đơn hàng');
 
-      // Create order items with promotion-adjusted prices
+      // Build shipping address object
+      const shippingAddress = useNewAddress
+        ? {
+            full_name: addressForm.fullName,
+            phone: addressForm.phone,
+            address_line1: addressForm.addressLine1,
+            address_line2: addressForm.addressLine2,
+            city: addressForm.city,
+            district: addressForm.district,
+            ward: addressForm.ward,
+          }
+        : {
+            full_name: address.full_name,
+            phone: address.phone,
+            address_line1: address.address_line1,
+            address_line2: address.address_line2,
+            city: address.city,
+            district: address.district,
+            ward: address.ward,
+          };
+
+      // Build order items with promotion-adjusted prices
       const orderItems = cart.map(item => {
         const basePrice = getItemBasePrice(item);
         const promotion = promotionsMap?.[item.product_id];
         const { effectivePrice } = getEffectivePrice(basePrice, promotion);
         return {
-          order_id: order.id,
           product_id: item.product_id,
-          variant_id: item.variant_id,
-          product_name: item.products?.name || "Unknown Product",
-          variant_name: item.product_variants?.name || null,
+          variant_id: item.variant_id || '',
+          product_name: item.products?.name || 'Unknown Product',
+          variant_name: item.product_variants?.name || '',
           quantity: item.quantity,
           price: effectivePrice,
           subtotal: effectivePrice * item.quantity,
         };
       });
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
+      // Atomic order placement via RPC
+      const { data: result, error: rpcError } = await supabase.rpc('place_order', {
+        p_user_id: userId,
+        p_order_number: orderNumber,
+        p_subtotal: subtotal,
+        p_shipping_fee: shippingCost,
+        p_discount: discount + totalDealDiscount,
+        p_total: total,
+        p_shipping_address: shippingAddress,
+        p_payment_gateway: selectedPayment,
+        p_delivery_method: deliveryMethod?.name || '',
+        p_customer_email: userEmail || '',
+        p_customer_phone: useNewAddress ? addressForm.phone : (address?.phone || ''),
+        p_customer_name: shippingAddress.full_name,
+        p_coupon_code: appliedVoucher?.code || '',
+        p_notes: orderNotes || '',
+        p_items: orderItems,
+      });
 
-      if (itemsError) throw itemsError;
+      if (rpcError) throw rpcError;
+
+      // Handle stock validation errors from RPC
+      if (!result?.success) {
+        const errors = (result?.errors as string[]) || ['Đã có lỗi xảy ra khi đặt hàng'];
+        toast({
+          title: 'Không thể đặt hàng',
+          description: errors.join('\n'),
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Increment voucher usage
       if (appliedVoucher?.promotionId) {
-        await supabase.rpc("increment_voucher_usage", {
+        await supabase.rpc('increment_voucher_usage', {
           p_promotion_id: appliedVoucher.promotionId,
         });
       }
 
-      // Clear cart
-      const cartItemIds = cart.map(item => item.id);
-      await supabase
-        .from("cart_items")
-        .delete()
-        .in("id", cartItemIds);
-
       // Save new address if requested
       if (useNewAddress && addressForm.fullName) {
-        await supabase.from("addresses").insert({
+        await supabase.from('addresses').insert({
           user_id: userId,
           full_name: addressForm.fullName,
           phone: addressForm.phone,
@@ -461,31 +452,11 @@ export default function Checkout() {
 
       // Create subscription if enabled
       if (enableSubscription) {
-        const shippingAddr = useNewAddress 
-          ? {
-              full_name: addressForm.fullName,
-              phone: addressForm.phone,
-              address_line1: addressForm.addressLine1,
-              address_line2: addressForm.addressLine2,
-              city: addressForm.city,
-              district: addressForm.district,
-              ward: addressForm.ward,
-            }
-          : {
-              full_name: address.full_name,
-              phone: address.phone,
-              address_line1: address.address_line1,
-              address_line2: address.address_line2,
-              city: address.city,
-              district: address.district,
-              ward: address.ward,
-            };
-
         await createSubscription.mutateAsync({
           user_id: userId,
           frequency: subscriptionFrequency,
           discount_percent: subscriptionDiscountPct,
-          shipping_address: shippingAddr,
+          shipping_address: shippingAddress,
           delivery_method: deliveryMethod?.name,
           items: cart.map(item => {
             const basePrice = getItemBasePrice(item);
@@ -501,14 +472,14 @@ export default function Checkout() {
         });
       }
 
-      navigate(`/order-confirmation/${newOrderNumber}`);
+      navigate(`/order-confirmation/${orderNumber}`);
       
     } catch (error: any) {
-      console.error("Order error:", error);
+      console.error('Order error:', error);
       toast({
-        title: "Lỗi đặt hàng",
-        description: error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.",
-        variant: "destructive",
+        title: 'Lỗi đặt hàng',
+        description: error.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
