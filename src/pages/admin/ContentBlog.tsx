@@ -72,6 +72,17 @@ export default function ContentBlog() {
 
   const syncPosts = useSyncBlogPosts();
 
+  const { data: commentsCount = 0 } = useQuery({
+    queryKey: ["admin-blog-comments-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("blog_comments")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
     return () => clearTimeout(timer);
