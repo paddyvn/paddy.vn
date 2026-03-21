@@ -82,7 +82,7 @@ export function RelatedProducts({ currentProductId, collectionId, productType, b
   return (
     <div className="mb-16">
       <h2 className="text-xl md:text-2xl font-bold text-primary mb-6">Sản phẩm liên quan</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         {relatedProducts.map((product: any) => (
           <ProductCard key={product.id} product={product} />
         ))}
