@@ -10,8 +10,13 @@ export interface Promotion {
   id: string;
   title: string;
   subtitle: string | null;
-  gradient_from: string;
-  gradient_to: string;
+  eyebrow: string | null;
+  cta_text: string | null;
+  image_url: string | null;
+  bg_color: string | null;
+  layout_slot: string | null;
+  gradient_from: string | null;
+  gradient_to: string | null;
   link_type: string;
   link_destination: string;
   display_order: number;

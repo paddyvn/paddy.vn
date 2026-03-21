@@ -4200,19 +4200,24 @@ export type Database = {
       }
       promotions: {
         Row: {
+          bg_color: string | null
           bottom_icon_url: string | null
           created_at: string
+          cta_text: string | null
           custom_icons: Json | null
           discount_type: string | null
           discount_value: number | null
           display_order: number | null
           display_visibility: string | null
           end_date: string | null
+          eyebrow: string | null
           gradient_from: string | null
           gradient_to: string | null
           icon_type: string | null
           id: string
+          image_url: string | null
           is_active: boolean | null
+          layout_slot: string | null
           link_destination: string
           link_type: string
           max_discount: number | null
@@ -4232,19 +4237,24 @@ export type Database = {
           voucher_type: string | null
         }
         Insert: {
+          bg_color?: string | null
           bottom_icon_url?: string | null
           created_at?: string
+          cta_text?: string | null
           custom_icons?: Json | null
           discount_type?: string | null
           discount_value?: number | null
           display_order?: number | null
           display_visibility?: string | null
           end_date?: string | null
+          eyebrow?: string | null
           gradient_from?: string | null
           gradient_to?: string | null
           icon_type?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
+          layout_slot?: string | null
           link_destination: string
           link_type?: string
           max_discount?: number | null
@@ -4264,19 +4274,24 @@ export type Database = {
           voucher_type?: string | null
         }
         Update: {
+          bg_color?: string | null
           bottom_icon_url?: string | null
           created_at?: string
+          cta_text?: string | null
           custom_icons?: Json | null
           discount_type?: string | null
           discount_value?: number | null
           display_order?: number | null
           display_visibility?: string | null
           end_date?: string | null
+          eyebrow?: string | null
           gradient_from?: string | null
           gradient_to?: string | null
           icon_type?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
+          layout_slot?: string | null
           link_destination?: string
           link_type?: string
           max_discount?: number | null
