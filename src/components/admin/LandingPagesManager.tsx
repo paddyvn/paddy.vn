@@ -134,6 +134,12 @@ export default function LandingPagesManager() {
         </Button>
       </div>
 
+      <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <strong className="text-foreground">💡 Tip:</strong> When building campaign pages in separate Lovable projects, use{" "}
+        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">target="_top"</code>{" "}
+        on links back to paddy.vn so they navigate the full browser instead of inside the iframe.
+      </div>
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
