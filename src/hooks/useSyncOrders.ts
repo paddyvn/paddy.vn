@@ -3,12 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const SUPABASE_FUNCTIONS_BASE_URL =
-  "https://fexafkqzpbzjcupvbfhe.supabase.co/functions/v1";
-// Anon key is safe to ship to the client (it’s already used in browser requests)
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZleGFma3F6cGJ6amN1cHZiZmhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNzU4NzksImV4cCI6MjA3OTk1MTg3OX0.4pGuz_-KaRXZkOf1-3FlOzLuSDMJRAReg9a88JpTuw4";
-
 export const useSyncOrders = () => {
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const { toast } = useToast();
@@ -17,25 +11,16 @@ export const useSyncOrders = () => {
   const syncOrders = async (fullSync = false) => {
     setProgress({ current: 0, total: 0 });
 
-    // Ensure user is authenticated
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error("You must be logged in to sync orders");
-    }
-
     let updatedAtMin: string | null = null;
-    
+
     if (!fullSync) {
-      // Use updated_at to catch both new orders AND orders with status/fulfillment changes
       const { data: mostRecentOrder } = await supabase
         .from("orders")
         .select("updated_at")
         .order("updated_at", { ascending: false })
         .limit(1)
         .single();
-      
+
       updatedAtMin = mostRecentOrder?.updated_at || null;
     }
 
@@ -64,36 +49,20 @@ export const useSyncOrders = () => {
       batchCount++;
       console.log(`Syncing orders batch ${batchCount}...`);
 
-      const body: any = {};
+      const body: Record<string, unknown> = {};
       if (nextBatch) {
         body.continueFrom = nextBatch;
       } else if (updatedAtMin && !fullSync) {
         body.updatedAtMin = updatedAtMin;
       }
-      // For full sync, we don't send any date filters
 
-      const response = await fetch(
-        `${SUPABASE_FUNCTIONS_BASE_URL}/shopify-sync-orders-batch`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify(body),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("shopify-sync-orders-batch", {
+        body,
+      });
 
-      const result = await response.json().catch(() => null);
-      if (!response.ok) {
-        const msg =
-          (result && (result.error || result.message)) ||
-          `Orders sync failed (HTTP ${response.status})`;
-        throw new Error(msg);
+      if (error) {
+        throw new Error(error.message || `Orders sync failed`);
       }
-
-      const data = result;
 
       if (data) {
         totalSynced += data.stats.syncedOrders;
@@ -149,4 +118,3 @@ export const useSyncOrders = () => {
     progress,
   };
 };
-
