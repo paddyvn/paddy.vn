@@ -307,7 +307,7 @@ export const CollectionFilters = ({
         {showHealthFilter && (
           <AccordionItem value="health-condition">
             <AccordionTrigger className="text-base font-semibold">
-              Health Condition
+              Tình trạng sức khỏe
             </AccordionTrigger>
             <AccordionContent>
               {healthConditions.length > SEARCHABLE_THRESHOLD && (
