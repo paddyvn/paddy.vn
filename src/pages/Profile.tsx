@@ -608,6 +608,8 @@ const Profile = () => {
       name: pet.name,
       species: pet.species,
       breed: pet.breed || undefined,
+      weight_kg: pet.weight_kg,
+      gender: pet.gender,
     });
     // Calculate birthday from age if available
     if (pet.age_years || pet.age_months) {
