@@ -2730,6 +2730,7 @@ export type Database = {
           lifetime_redeemed: number
           points_balance: number
           tier: string | null
+          total_spent: number
           updated_at: string
           user_id: string
         }
@@ -2740,6 +2741,7 @@ export type Database = {
           lifetime_redeemed?: number
           points_balance?: number
           tier?: string | null
+          total_spent?: number
           updated_at?: string
           user_id: string
         }
@@ -2750,6 +2752,7 @@ export type Database = {
           lifetime_redeemed?: number
           points_balance?: number
           tier?: string | null
+          total_spent?: number
           updated_at?: string
           user_id?: string
         }
@@ -2762,6 +2765,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loyalty_tier_benefits: {
+        Row: {
+          birthday_discount_orders: number | null
+          birthday_discount_pct: number | null
+          created_at: string
+          display_name: string
+          freeship_max: number | null
+          freeship_min_order: number | null
+          id: string
+          min_spent: number
+          product_samples: boolean
+          promotion_notifications: boolean
+          tier: string
+          tier_color: string | null
+          tier_order: number
+          upgrade_voucher_amount: number | null
+        }
+        Insert: {
+          birthday_discount_orders?: number | null
+          birthday_discount_pct?: number | null
+          created_at?: string
+          display_name: string
+          freeship_max?: number | null
+          freeship_min_order?: number | null
+          id?: string
+          min_spent: number
+          product_samples?: boolean
+          promotion_notifications?: boolean
+          tier: string
+          tier_color?: string | null
+          tier_order: number
+          upgrade_voucher_amount?: number | null
+        }
+        Update: {
+          birthday_discount_orders?: number | null
+          birthday_discount_pct?: number | null
+          created_at?: string
+          display_name?: string
+          freeship_max?: number | null
+          freeship_min_order?: number | null
+          id?: string
+          min_spent?: number
+          product_samples?: boolean
+          promotion_notifications?: boolean
+          tier?: string
+          tier_color?: string | null
+          tier_order?: number
+          upgrade_voucher_amount?: number | null
+        }
+        Relationships: []
       }
       loyalty_transactions: {
         Row: {
@@ -6887,6 +6941,7 @@ export type Database = {
           updated_count: number
         }[]
       }
+      calculate_loyalty_tier: { Args: { spent: number }; Returns: string }
       decrement_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
@@ -7200,6 +7255,7 @@ export type Database = {
           total_spent: number
         }[]
       }
+      vnd_to_points: { Args: { amount: number }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "customer"
