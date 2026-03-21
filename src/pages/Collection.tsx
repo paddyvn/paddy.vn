@@ -235,8 +235,12 @@ const Collection = () => {
   // Apply filters
   const filteredProducts = useMemo(() => {
     return allProducts.filter((product: any) => {
+      if (filters.productTypes.length > 0 && !filters.productTypes.includes(product.product_type)) return false;
       if (filters.brands.length > 0 && !filters.brands.includes(product.brand)) return false;
       if (product.base_price < filters.priceRange[0] || product.base_price > filters.priceRange[1]) return false;
+      if (filters.stockStatus === "in_stock" && product.total_stock !== null && product.total_stock <= 0) return false;
+      if (filters.stockStatus === "out_of_stock" && (product.total_stock === null || product.total_stock > 0)) return false;
+      if (filters.onSale && !(product.compare_at_price && product.compare_at_price > product.base_price)) return false;
       if (filters.ageRanges.length > 0 && !filters.ageRanges.includes(product.target_age_id)) return false;
       if (filters.sizes.length > 0 && !filters.sizes.includes(product.target_size_id)) return false;
       if (filters.healthConditions.length > 0) {
