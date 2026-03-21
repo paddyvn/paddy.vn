@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { RefreshCw, Package, ShoppingCart, Users, Tag, Link2, ShoppingBag, Loader2, CheckCircle2, XCircle, Clock, History } from "lucide-react";
+import { RefreshCw, Package, ShoppingCart, Users, Tag, Link2, ShoppingBag, Loader2, CheckCircle2, XCircle, Clock, History, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { useSyncOrders } from "@/hooks/useSyncOrders";
 import { useSyncCustomers } from "@/hooks/useSyncCustomers";
 import { useSyncAbandonedCheckouts } from "@/hooks/useSyncAbandonedCheckouts";
 import { useSyncBrands } from "@/hooks/useSyncBrands";
+import { useSyncBlogPosts } from "@/hooks/useBlogPosts";
 
 type SyncStatus = "idle" | "running" | "success" | "error";
 
@@ -120,6 +121,7 @@ const SyncDashboard = () => {
   const customers = useSyncCustomers();
   const abandonedCheckouts = useSyncAbandonedCheckouts();
   const brands = useSyncBrands();
+  const blogPosts = useSyncBlogPosts();
 
   const isAnySyncing =
     Object.values(statuses).includes("running") ||
@@ -129,7 +131,8 @@ const SyncDashboard = () => {
     orders.isPending ||
     customers.isPending ||
     abandonedCheckouts.isPending ||
-    brands.isPending;
+    brands.isPending ||
+    blogPosts.isPending;
 
   const runSync = useCallback(async (key: string, title: string, action: () => Promise<unknown>) => {
     setStatus(key, "running");
@@ -205,6 +208,13 @@ const SyncDashboard = () => {
       status: getStatus("abandonedCheckouts", abandonedCheckouts.isPending),
       progress: (abandonedCheckouts as any).progress,
       onSync: () => void runSync("abandonedCheckouts", "Abandoned Checkouts", () => abandonedCheckouts.mutateAsync()),
+    },
+    {
+      key: "blogPosts", title: "Blog Posts",
+      description: "Sync blog posts and categories from Shopify",
+      icon: <FileText className="h-5 w-5 text-muted-foreground" />,
+      status: getStatus("blogPosts", blogPosts.isPending),
+      onSync: () => void runSync("blogPosts", "Blog Posts", () => blogPosts.mutateAsync()),
     },
   ];
 
