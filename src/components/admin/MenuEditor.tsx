@@ -85,12 +85,17 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
   const [deleteColumnId, setDeleteColumnId] = useState<string | null>(null);
   const [deleteItemId, setDeleteItemId] = useState<{ id: string; columnId: string } | null>(null);
 
-  const [showPromoEdit, setShowPromoEdit] = useState(false);
   const [promoTitle, setPromoTitle] = useState(menu.promo_title || "");
   const [promoBadge, setPromoBadge] = useState(menu.promo_badge || "");
   const [promoLink, setPromoLink] = useState(menu.promo_link || "");
   const [promoImage, setPromoImage] = useState(menu.promo_image_url || "");
   const [showImagePicker, setShowImagePicker] = useState(false);
+
+  const promoChanged =
+    promoTitle !== (menu.promo_title || "") ||
+    promoBadge !== (menu.promo_badge || "") ||
+    promoLink !== (menu.promo_link || "") ||
+    promoImage !== (menu.promo_image_url || "");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
