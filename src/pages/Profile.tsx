@@ -341,7 +341,7 @@ const Profile = () => {
   });
 
 
-    if (status === "cancelled") return -1;
+    const getStatusStep = (status: OrderStatus) => {
     return ORDER_STEPS.indexOf(status);
   };
 
