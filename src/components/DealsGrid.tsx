@@ -121,6 +121,7 @@ export const DealsGrid = () => {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-2.5 h-auto md:h-[360px]">
           <BentoCard promo={hero} slot="hero" />
           <div className="flex flex-col gap-2.5">
             <BentoCard promo={wide} slot="wide" />
