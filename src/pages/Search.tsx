@@ -83,8 +83,11 @@ const Search = () => {
 
   // Initialize filters
   const [filters, setFilters] = useState<FilterState>({
+    productTypes: [],
     brands: [],
     priceRange: [0, 10000000],
+    stockStatus: "all",
+    onSale: false,
     ageRanges: [],
     sizes: [],
     healthConditions: [],
