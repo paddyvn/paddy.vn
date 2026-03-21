@@ -125,12 +125,21 @@ serve(async (req) => {
       throw new Error('Required credentials not configured');
     }
 
-    // Verify admin authentication
+    // Check for cron secret bypass
+    const cronSecret = req.headers.get('x-cron-secret');
+    const expectedCronSecret = Deno.env.get('CRON_SECRET');
+    const isCronRequest = cronSecret && expectedCronSecret && cronSecret === expectedCronSecret;
+
+    if (isCronRequest) {
+      console.log('Cron request authenticated via CRON_SECRET');
+    }
+
+    // Verify admin authentication (skip if cron request)
     const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
     const keys = Array.from(req.headers.keys());
     console.log(`Received headers: ${keys.join(', ')}`);
 
-    if (!authHeader) {
+    if (!isCronRequest && !authHeader) {
       console.error('Authentication failed: Authorization header missing');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
