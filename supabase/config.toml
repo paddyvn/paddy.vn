@@ -6,31 +6,16 @@ verify_jwt = false
 [functions.shopify-sync-blog-posts]
 verify_jwt = false
 
-[functions.shopify-customers-count]
-verify_jwt = false
-
-[functions.shopify-orders-count]
-verify_jwt = false
-
 [functions.shopify-sync-customers-batch]
 verify_jwt = false
 
 [functions.shopify-sync-abandoned-checkouts]
 verify_jwt = false
 
-[functions.shopify-test]
-verify_jwt = false
-
-[functions.shopify-sync]
-verify_jwt = false
-
 [functions.shopify-sync-batch]
 verify_jwt = false
 
 [functions.shopify-sync-collections]
-verify_jwt = false
-
-[functions.shopify-sync-orders]
 verify_jwt = false
 
 [functions.shopify-sync-orders-batch]
@@ -45,15 +30,6 @@ verify_jwt = false
 [functions.generate-pet-image]
 verify_jwt = false
 
-[functions.shopify-sync-seo]
-verify_jwt = false
-
-[functions.shopify-list-metafields]
-verify_jwt = false
-
-[functions.shopify-sync-ratings]
-verify_jwt = false
-
 [functions.shopify-sync-option-names]
 verify_jwt = false
 
@@ -64,4 +40,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.track-order]
+verify_jwt = false
+
+[functions.shopify-sync-brands]
+verify_jwt = false
+
+[functions.seed-navigation-menus]
 verify_jwt = false
