@@ -85,12 +85,17 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
   const [deleteColumnId, setDeleteColumnId] = useState<string | null>(null);
   const [deleteItemId, setDeleteItemId] = useState<{ id: string; columnId: string } | null>(null);
 
-  const [showPromoEdit, setShowPromoEdit] = useState(false);
   const [promoTitle, setPromoTitle] = useState(menu.promo_title || "");
   const [promoBadge, setPromoBadge] = useState(menu.promo_badge || "");
   const [promoLink, setPromoLink] = useState(menu.promo_link || "");
   const [promoImage, setPromoImage] = useState(menu.promo_image_url || "");
   const [showImagePicker, setShowImagePicker] = useState(false);
+
+  const promoChanged =
+    promoTitle !== (menu.promo_title || "") ||
+    promoBadge !== (menu.promo_badge || "") ||
+    promoLink !== (menu.promo_link || "") ||
+    promoImage !== (menu.promo_image_url || "");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -209,18 +214,13 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
   };
 
   const handleSavePromo = () => {
-    updateMenu.mutate(
-      {
-        id: menu.id,
-        promo_title: promoTitle || null,
-        promo_badge: promoBadge || null,
-        promo_link: promoLink || null,
-        promo_image_url: promoImage || null,
-      },
-      {
-        onSuccess: () => setShowPromoEdit(false),
-      }
-    );
+    updateMenu.mutate({
+      id: menu.id,
+      promo_title: promoTitle || null,
+      promo_badge: promoBadge || null,
+      promo_link: promoLink || null,
+      promo_image_url: promoImage || null,
+    });
   };
 
   return (
@@ -244,38 +244,66 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
         </CardHeader>
       </Card>
 
-      {/* Promotional Banner */}
+      {/* Promotional Banner - Inline Edit */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-lg">Promotional Banner</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setShowPromoEdit(true)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {menu.promo_image_url || menu.promo_title ? (
-            <div className="flex gap-4">
-              {menu.promo_image_url && (
-                <img
-                  src={menu.promo_image_url}
-                  alt="Promo"
-                  className="w-32 h-20 object-cover rounded-lg"
-                />
-              )}
-              <div>
-                {menu.promo_badge && (
-                  <Badge variant="secondary" className="mb-1">{menu.promo_badge}</Badge>
-                )}
-                {menu.promo_title && <p className="font-medium">{menu.promo_title}</p>}
-                {menu.promo_link && (
-                  <p className="text-sm text-muted-foreground">{menu.promo_link}</p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No promotional banner configured</p>
+          {promoChanged && (
+            <Button size="sm" onClick={handleSavePromo} disabled={updateMenu.isPending}>
+              Save changes
+            </Button>
           )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Promo image</Label>
+            <div className="flex items-center gap-2">
+              {promoImage ? (
+                <img src={promoImage} alt="Promo" className="w-20 h-12 object-cover rounded" />
+              ) : (
+                <div className="w-20 h-12 bg-muted rounded flex items-center justify-center">
+                  <Image className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setShowImagePicker(true)}>
+                {promoImage ? "Change" : "Select image"}
+              </Button>
+              {promoImage && (
+                <Button variant="ghost" size="sm" onClick={() => setPromoImage("")}>
+                  Remove
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="promoTitle">Title</Label>
+              <Input
+                id="promoTitle"
+                placeholder="e.g., New Arrivals"
+                value={promoTitle}
+                onChange={(e) => setPromoTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="promoBadge">Badge (optional)</Label>
+              <Input
+                id="promoBadge"
+                placeholder="e.g., NEW, SALE"
+                value={promoBadge}
+                onChange={(e) => setPromoBadge(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="promoLink">Link</Label>
+              <Input
+                id="promoLink"
+                placeholder="e.g., /collections/new-arrivals"
+                value={promoLink}
+                onChange={(e) => setPromoLink(e.target.value)}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -540,72 +568,6 @@ export default function MenuEditor({ menu, onToggleActive, onDelete }: MenuEdito
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Edit Promo Dialog */}
-      <Dialog open={showPromoEdit} onOpenChange={setShowPromoEdit}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit promotional banner</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Promo image</Label>
-              <div className="flex items-center gap-2">
-                {promoImage ? (
-                  <img src={promoImage} alt="Promo" className="w-20 h-12 object-cover rounded" />
-                ) : (
-                  <div className="w-20 h-12 bg-muted rounded flex items-center justify-center">
-                    <Image className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                )}
-                <Button variant="outline" size="sm" onClick={() => setShowImagePicker(true)}>
-                  {promoImage ? "Change" : "Select image"}
-                </Button>
-                {promoImage && (
-                  <Button variant="ghost" size="sm" onClick={() => setPromoImage("")}>
-                    Remove
-                  </Button>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="promoTitle">Title</Label>
-              <Input
-                id="promoTitle"
-                placeholder="e.g., New Arrivals"
-                value={promoTitle}
-                onChange={(e) => setPromoTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="promoBadge">Badge (optional)</Label>
-              <Input
-                id="promoBadge"
-                placeholder="e.g., NEW, SALE"
-                value={promoBadge}
-                onChange={(e) => setPromoBadge(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="promoLink">Link</Label>
-              <Input
-                id="promoLink"
-                placeholder="e.g., /collections/new-arrivals"
-                value={promoLink}
-                onChange={(e) => setPromoLink(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPromoEdit(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSavePromo} disabled={updateMenu.isPending}>
-              Save changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Image Picker */}
       <ImagePickerDialog
