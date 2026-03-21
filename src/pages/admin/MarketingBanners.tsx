@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Image, Bell, LayoutTemplate, GripVertical, Pencil, Trash2, Eye, EyeOff, Calendar, Grid3X3 } from "lucide-react";
+import { Plus, Image, Bell, LayoutTemplate, GripVertical, Pencil, Trash2, Eye, EyeOff, Calendar, Grid3X3, Star } from "lucide-react";
 import HomepageCategoriesManager from "@/components/admin/HomepageCategoriesManager";
 import HomepagePromosManager from "@/components/admin/HomepagePromosManager";
+import HomepageFeaturedManager from "@/components/admin/HomepageFeaturedManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
@@ -373,6 +374,10 @@ const MarketingBanners = () => {
             <Grid3X3 className="h-4 w-4" />
             Homepage Categories
           </TabsTrigger>
+          <TabsTrigger value="featured" className="gap-2">
+            <Star className="h-4 w-4" />
+            Featured Products
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
@@ -401,6 +406,10 @@ const MarketingBanners = () => {
 
         <TabsContent value="categories">
           <HomepageCategoriesManager />
+        </TabsContent>
+
+        <TabsContent value="featured">
+          <HomepageFeaturedManager />
         </TabsContent>
       </Tabs>
     </div>
