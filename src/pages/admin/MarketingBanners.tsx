@@ -379,6 +379,10 @@ const MarketingBanners = () => {
             <Star className="h-4 w-4" />
             Featured Products
           </TabsTrigger>
+          <TabsTrigger value="brands" className="gap-2">
+            <Award className="h-4 w-4" />
+            Homepage Brands
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
