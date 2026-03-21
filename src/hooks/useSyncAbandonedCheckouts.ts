@@ -23,6 +23,19 @@ export const useSyncAbandonedCheckouts = () => {
         const body: any = {};
         if (nextBatch) {
           body.continueFrom = nextBatch;
+        } else if (batchCount === 1) {
+          // Incremental sync: only fetch checkouts created after the last one
+          const { data: latest } = await supabase
+            .from('abandoned_checkouts')
+            .select('shopify_created_at')
+            .order('shopify_created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latest?.shopify_created_at) {
+            body.createdAtMin = latest.shopify_created_at;
+            console.log(`Incremental sync from: ${latest.shopify_created_at}`);
+          }
         }
 
         const { data, error } = await supabase.functions.invoke('shopify-sync-abandoned-checkouts', {

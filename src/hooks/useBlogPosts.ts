@@ -47,7 +47,21 @@ export const useSyncBlogPosts = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("shopify-sync-blog-posts");
+      // Incremental sync: only fetch articles updated since last sync
+      const { data: latest } = await supabase
+        .from('blog_posts')
+        .select('shopify_updated_at')
+        .order('shopify_updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const body: any = {};
+      if (latest?.shopify_updated_at) {
+        body.updatedAtMin = latest.shopify_updated_at;
+        console.log(`Blog incremental sync from: ${latest.shopify_updated_at}`);
+      }
+
+      const { data, error } = await supabase.functions.invoke("shopify-sync-blog-posts", { body });
 
       if (error) throw error;
       return data;
