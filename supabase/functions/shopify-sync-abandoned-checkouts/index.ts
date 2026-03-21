@@ -104,114 +104,150 @@ Deno.serve(async (req) => {
       console.log('Admin authenticated:', user.id);
     }
 
-    const { continueFrom, createdAtMin } = await req.json();
+    let { continueFrom, createdAtMin } = await req.json().catch(() => ({}));
 
-    // Build Shopify API URL
-    let url = `https://${shopifyDomain}/admin/api/2024-01/checkouts.json?limit=250&status=open`;
-    
-    if (continueFrom) {
-      url += `&since_id=${continueFrom}`;
-    }
-    
-    if (createdAtMin) {
-      url += `&created_at_min=${createdAtMin}`;
-    }
+    // When called by cron with empty body, auto-determine incremental sync point
+    if (isCronRequest && !continueFrom && !createdAtMin) {
+      const { data: lastCheckout } = await supabase
+        .from('abandoned_checkouts')
+        .select('shopify_created_at')
+        .order('shopify_created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-    console.log(`Fetching abandoned checkouts from: ${url}`);
-
-    const response = await fetch(url, {
-      headers: {
-        "X-Shopify-Access-Token": shopifyToken,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Shopify API error: ${response.status} - ${errorText}`);
-      throw new Error(`Shopify API error: ${response.status}`);
+      if (lastCheckout?.shopify_created_at) {
+        createdAtMin = lastCheckout.shopify_created_at;
+        console.log(`Cron: incremental sync from ${createdAtMin}`);
+      } else {
+        console.log('Cron: no existing checkouts, doing full sync');
+      }
     }
 
-    const data = await response.json();
-    const checkouts: ShopifyCheckout[] = data.checkouts || [];
+    const MAX_PAGES = 20;
+    let totalSyncedCount = 0;
+    let totalReceived = 0;
+    let pageCount = 0;
 
-    console.log(`Received ${checkouts.length} abandoned checkouts from Shopify`);
+    do {
+      pageCount++;
 
-    // Sync checkouts to database
-    let syncedCount = 0;
-    for (const checkout of checkouts) {
-      try {
-        // Find customer in our database by email
-        let customerId = null;
-        if (checkout.email) {
-          const { data: customer } = await supabase
-            .from("customers")
-            .select("id")
-            .eq("email", checkout.email)
-            .single();
-          
-          if (customer) {
-            customerId = customer.id;
+      // Build Shopify API URL
+      let url = `https://${shopifyDomain}/admin/api/2024-01/checkouts.json?limit=250&status=open`;
+
+      if (continueFrom) {
+        url += `&since_id=${continueFrom}`;
+      }
+
+      if (createdAtMin) {
+        url += `&created_at_min=${createdAtMin}`;
+      }
+
+      console.log(`Fetching abandoned checkouts page ${pageCount}...`);
+
+      const response = await fetch(url, {
+        headers: {
+          "X-Shopify-Access-Token": shopifyToken,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Shopify API error: ${response.status} - ${errorText}`);
+        throw new Error(`Shopify API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const checkouts: ShopifyCheckout[] = data.checkouts || [];
+
+      console.log(`Received ${checkouts.length} abandoned checkouts`);
+      totalReceived += checkouts.length;
+
+      // Sync checkouts to database
+      let syncedCount = 0;
+      for (const checkout of checkouts) {
+        try {
+          // Find customer in our database by email
+          let customerId = null;
+          if (checkout.email) {
+            const { data: customer } = await supabase
+              .from("customers")
+              .select("id")
+              .eq("email", checkout.email)
+              .single();
+
+            if (customer) {
+              customerId = customer.id;
+            }
           }
+
+          const { error } = await supabase.from("abandoned_checkouts").upsert(
+            {
+              shopify_checkout_id: checkout.id.toString(),
+              email: checkout.email,
+              phone: checkout.phone,
+              customer_id: customerId,
+              cart_token: checkout.cart_token,
+              abandoned_checkout_url: checkout.abandoned_checkout_url,
+              line_items: checkout.line_items,
+              subtotal_price: parseFloat(checkout.subtotal_price),
+              total_price: parseFloat(checkout.total_price),
+              currency: checkout.currency,
+              billing_address: checkout.billing_address,
+              shipping_address: checkout.shipping_address,
+              completed_at: checkout.completed_at,
+              shopify_created_at: checkout.created_at,
+              shopify_updated_at: checkout.updated_at,
+            },
+            { onConflict: "shopify_checkout_id" }
+          );
+
+          if (error) {
+            console.error(`Error syncing checkout ${checkout.id}:`, error);
+          } else {
+            syncedCount++;
+          }
+        } catch (error) {
+          console.error(`Error processing checkout ${checkout.id}:`, error);
         }
+      }
 
-        const { error } = await supabase.from("abandoned_checkouts").upsert(
-          {
-            shopify_checkout_id: checkout.id.toString(),
-            email: checkout.email,
-            phone: checkout.phone,
-            customer_id: customerId,
-            cart_token: checkout.cart_token,
-            abandoned_checkout_url: checkout.abandoned_checkout_url,
-            line_items: checkout.line_items,
-            subtotal_price: parseFloat(checkout.subtotal_price),
-            total_price: parseFloat(checkout.total_price),
-            currency: checkout.currency,
-            billing_address: checkout.billing_address,
-            shipping_address: checkout.shipping_address,
-            completed_at: checkout.completed_at,
-            shopify_created_at: checkout.created_at,
-            shopify_updated_at: checkout.updated_at,
-          },
-          { onConflict: "shopify_checkout_id" }
-        );
+      totalSyncedCount += syncedCount;
 
-        if (error) {
-          console.error(`Error syncing checkout ${checkout.id}:`, error);
-        } else {
-          syncedCount++;
+      // Check if there are more checkouts to fetch
+      const linkHeader = response.headers.get("Link");
+      continueFrom = null;
+
+      if (linkHeader && linkHeader.includes('rel="next"')) {
+        const match = linkHeader.match(/since_id=(\d+)/);
+        if (match) {
+          continueFrom = match[1];
+        } else if (checkouts.length > 0) {
+          continueFrom = checkouts[checkouts.length - 1].id.toString();
         }
-      } catch (error) {
-        console.error(`Error processing checkout ${checkout.id}:`, error);
       }
-    }
 
-    // Check if there are more checkouts to fetch
-    const linkHeader = response.headers.get("Link");
-    let hasMore = false;
-    let nextContinueFrom = null;
+      // Only loop if cron request; manual requests return after one page
+      if (!isCronRequest) break;
 
-    if (linkHeader && linkHeader.includes('rel="next"')) {
-      hasMore = true;
-      // Extract the next page_info from the Link header
-      const match = linkHeader.match(/since_id=(\d+)/);
-      if (match) {
-        nextContinueFrom = match[1];
-      } else if (checkouts.length > 0) {
-        nextContinueFrom = checkouts[checkouts.length - 1].id.toString();
+      // Small delay between pages to avoid rate limiting
+      if (continueFrom) {
+        await new Promise(r => setTimeout(r, 500));
       }
-    }
 
-    console.log(`Synced ${syncedCount} abandoned checkouts. Has more: ${hasMore}`);
+    } while (continueFrom && pageCount < MAX_PAGES);
+
+    console.log(`Sync complete: ${totalSyncedCount} abandoned checkouts (${pageCount} pages)`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        hasMore,
-        continueFrom: nextContinueFrom,
+        hasMore: !!continueFrom,
+        continueFrom,
         stats: {
-          syncedCheckouts: syncedCount,
-          totalReceived: checkouts.length,
+          syncedCheckouts: totalSyncedCount,
+          totalReceived,
+          pagesProcessed: pageCount,
         },
       }),
       {

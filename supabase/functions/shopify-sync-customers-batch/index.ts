@@ -120,132 +120,168 @@ serve(async (req) => {
       console.log('Admin authenticated:', user.id);
     }
     
-    const { continueFrom, createdAtMin, createdAtMax } = await req.json();
+    let { continueFrom, createdAtMin, createdAtMax } = await req.json().catch(() => ({}));
 
-    const batchSize = 50;
-    
-    // Build Shopify API URL
-    let url: string;
-    if (continueFrom) {
-      url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}&page_info=${continueFrom}`;
-    } else if (createdAtMin) {
-      url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}&created_at_min=${createdAtMin}`;
-    } else if (createdAtMax) {
-      url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}&created_at_max=${createdAtMax}`;
-    } else {
-      url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}`;
-    }
+    // When called by cron with empty body, auto-determine incremental sync point
+    if (isCronRequest && !continueFrom && !createdAtMin && !createdAtMax) {
+      const { data: lastCustomer } = await supabase
+        .from('customers')
+        .select('shopify_created_at')
+        .order('shopify_created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-    console.log('Fetching batch of customers...');
-
-    const response: Response = await fetch(url, {
-      headers: {
-        'X-Shopify-Access-Token': shopifyToken,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    const customers: ShopifyCustomer[] = data.customers;
-
-    console.log(`Processing ${customers.length} customers...`);
-
-    let syncedCustomers = 0;
-
-    // Process each customer
-    for (const shopifyCustomer of customers) {
-      try {
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .upsert({
-            shopify_customer_id: shopifyCustomer.id.toString(),
-            email: shopifyCustomer.email,
-            phone: shopifyCustomer.phone,
-            first_name: shopifyCustomer.first_name,
-            last_name: shopifyCustomer.last_name,
-            orders_count: shopifyCustomer.orders_count,
-            total_spent: parseFloat(shopifyCustomer.total_spent),
-            accepts_marketing: shopifyCustomer.accepts_marketing,
-            marketing_opt_in_level: shopifyCustomer.marketing_opt_in_level,
-            tags: shopifyCustomer.tags,
-            note: shopifyCustomer.note,
-            verified_email: shopifyCustomer.verified_email,
-            shopify_created_at: shopifyCustomer.created_at,
-            shopify_updated_at: shopifyCustomer.updated_at,
-            state: shopifyCustomer.state || 'enabled',
-            tax_exempt: shopifyCustomer.tax_exempt || false,
-            sms_marketing_consent: shopifyCustomer.sms_marketing_consent,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'shopify_customer_id',
-            ignoreDuplicates: false,
-          })
-          .select('id')
-          .single();
-
-        if (customerError || !customerData) {
-          console.error(`Error upserting customer ${shopifyCustomer.email}:`, customerError);
-          continue;
-        }
-
-        // Sync customer addresses
-        if (shopifyCustomer.addresses && shopifyCustomer.addresses.length > 0) {
-          for (const address of shopifyCustomer.addresses) {
-            const { error: addressError } = await supabase
-              .from('customer_addresses')
-              .upsert({
-                customer_id: customerData.id,
-                first_name: address.first_name,
-                last_name: address.last_name,
-                company: address.company,
-                address1: address.address1,
-                address2: address.address2,
-                city: address.city,
-                province: address.province,
-                country: address.country || 'Vietnam',
-                country_code: address.country_code || 'VN',
-                postal_code: address.zip,
-                phone: address.phone,
-                is_default: address.default,
-              }, {
-                onConflict: 'customer_id,address1,city',
-                ignoreDuplicates: false,
-              });
-
-            if (addressError) {
-              console.error(`Error upserting address for customer ${shopifyCustomer.email}:`, addressError);
-            }
-          }
-        }
-
-        syncedCustomers++;
-      } catch (error) {
-        console.error(`Error processing customer ${shopifyCustomer.email}:`, error);
+      if (lastCustomer?.shopify_created_at) {
+        createdAtMin = lastCustomer.shopify_created_at;
+        console.log(`Cron: incremental sync from ${createdAtMin}`);
+      } else {
+        console.log('Cron: no existing customers, doing full sync');
       }
     }
 
-    // Check for next page
-    const linkHeader: string | null = response.headers.get('Link');
-    let nextBatch = null;
-    
-    if (linkHeader?.includes('rel="next"')) {
-      const match: RegExpMatchArray | null = linkHeader.match(/<[^>]*page_info=([^>&]+)[^>]*>;\s*rel="next"/);
-      nextBatch = match ? match[1] : null;
-    }
+    const batchSize = 50;
+    const MAX_PAGES = 20;
+    let totalSyncedCustomers = 0;
+    let pageCount = 0;
 
-    console.log(`Batch complete: ${syncedCustomers} customers`);
+    do {
+      pageCount++;
+
+      // Build Shopify API URL
+      let url: string;
+      if (continueFrom) {
+        url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}&page_info=${continueFrom}`;
+      } else if (createdAtMin) {
+        url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}&created_at_min=${createdAtMin}`;
+      } else if (createdAtMax) {
+        url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}&created_at_max=${createdAtMax}`;
+      } else {
+        url = `https://${shopifyDomain}/admin/api/2024-01/customers.json?limit=${batchSize}`;
+      }
+
+      console.log(`Fetching customers page ${pageCount}...`);
+
+      const response: Response = await fetch(url, {
+        headers: {
+          'X-Shopify-Access-Token': shopifyToken,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      const customers: ShopifyCustomer[] = data.customers;
+
+      console.log(`Processing ${customers.length} customers...`);
+
+      let syncedCustomers = 0;
+
+      // Process each customer
+      for (const shopifyCustomer of customers) {
+        try {
+          const { data: customerData, error: customerError } = await supabase
+            .from('customers')
+            .upsert({
+              shopify_customer_id: shopifyCustomer.id.toString(),
+              email: shopifyCustomer.email,
+              phone: shopifyCustomer.phone,
+              first_name: shopifyCustomer.first_name,
+              last_name: shopifyCustomer.last_name,
+              orders_count: shopifyCustomer.orders_count,
+              total_spent: parseFloat(shopifyCustomer.total_spent),
+              accepts_marketing: shopifyCustomer.accepts_marketing,
+              marketing_opt_in_level: shopifyCustomer.marketing_opt_in_level,
+              tags: shopifyCustomer.tags,
+              note: shopifyCustomer.note,
+              verified_email: shopifyCustomer.verified_email,
+              shopify_created_at: shopifyCustomer.created_at,
+              shopify_updated_at: shopifyCustomer.updated_at,
+              state: shopifyCustomer.state || 'enabled',
+              tax_exempt: shopifyCustomer.tax_exempt || false,
+              sms_marketing_consent: shopifyCustomer.sms_marketing_consent,
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'shopify_customer_id',
+              ignoreDuplicates: false,
+            })
+            .select('id')
+            .single();
+
+          if (customerError || !customerData) {
+            console.error(`Error upserting customer ${shopifyCustomer.email}:`, customerError);
+            continue;
+          }
+
+          // Sync customer addresses
+          if (shopifyCustomer.addresses && shopifyCustomer.addresses.length > 0) {
+            for (const address of shopifyCustomer.addresses) {
+              const { error: addressError } = await supabase
+                .from('customer_addresses')
+                .upsert({
+                  customer_id: customerData.id,
+                  first_name: address.first_name,
+                  last_name: address.last_name,
+                  company: address.company,
+                  address1: address.address1,
+                  address2: address.address2,
+                  city: address.city,
+                  province: address.province,
+                  country: address.country || 'Vietnam',
+                  country_code: address.country_code || 'VN',
+                  postal_code: address.zip,
+                  phone: address.phone,
+                  is_default: address.default,
+                }, {
+                  onConflict: 'customer_id,address1,city',
+                  ignoreDuplicates: false,
+                });
+
+              if (addressError) {
+                console.error(`Error upserting address for customer ${shopifyCustomer.email}:`, addressError);
+              }
+            }
+          }
+
+          syncedCustomers++;
+        } catch (error) {
+          console.error(`Error processing customer ${shopifyCustomer.email}:`, error);
+        }
+      }
+
+      totalSyncedCustomers += syncedCustomers;
+
+      // Check for next page
+      const linkHeader: string | null = response.headers.get('Link');
+      continueFrom = null;
+
+      if (linkHeader?.includes('rel="next"')) {
+        const match: RegExpMatchArray | null = linkHeader.match(/<[^>]*page_info=([^>&]+)[^>]*>;\s*rel="next"/);
+        continueFrom = match ? match[1] : null;
+      }
+
+      // Only loop if cron request; manual requests return after one page
+      if (!isCronRequest) break;
+
+      // Small delay between pages to avoid rate limiting
+      if (continueFrom) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+    } while (continueFrom && pageCount < MAX_PAGES);
+
+    console.log(`Sync complete: ${totalSyncedCustomers} customers (${pageCount} pages)`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        hasMore: !!nextBatch,
-        nextBatch,
+        hasMore: !!continueFrom,
+        nextBatch: continueFrom,
         stats: {
-          syncedCustomers,
+          syncedCustomers: totalSyncedCustomers,
+          pagesProcessed: pageCount,
         },
       }),
       {

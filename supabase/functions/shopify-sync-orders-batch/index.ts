@@ -190,289 +190,333 @@ serve(async (req) => {
       console.log('Admin authenticated:', user.id);
     }
     
-    const { continueFrom, updatedAtMin, createdAtMax, syncEvents = true } = await req.json();
+    let { continueFrom, updatedAtMin, createdAtMax, syncEvents = true } = await req.json().catch(() => ({}));
+
+    // When called by cron with empty body, auto-determine incremental sync point
+    if (isCronRequest && !continueFrom && !updatedAtMin && !createdAtMax) {
+      const { data: lastOrder } = await supabase
+        .from('orders')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (lastOrder?.updated_at) {
+        updatedAtMin = lastOrder.updated_at;
+        console.log(`Cron: incremental sync from ${updatedAtMin}`);
+      } else {
+        console.log('Cron: no existing orders, doing full sync');
+      }
+      // Disable events sync for cron to stay within timeout
+      syncEvents = false;
+    }
 
     const batchSize = 50;
-    
-    // Build Shopify API URL
-    let url: string;
-    if (continueFrom) {
-      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`;
-    } else if (updatedAtMin) {
-      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&updated_at_min=${updatedAtMin}`;
-    } else if (createdAtMax) {
-      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_max=${createdAtMax}`;
-    } else {
-      url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any`;
-    }
+    const MAX_PAGES = 20;
+    let totalSyncedOrders = 0;
+    let totalSyncedItems = 0;
+    let totalSyncedFulfillments = 0;
+    let totalSyncedEvents = 0;
+    let pageCount = 0;
 
-    console.log('Fetching batch of orders...');
+    do {
+      pageCount++;
 
-    const response = await fetchWithRetry(url, {
-      headers: {
-        'X-Shopify-Access-Token': shopifyToken,
-      },
-    }, 3, 30000);
+      // Build Shopify API URL
+      let url: string;
+      if (continueFrom) {
+        url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&page_info=${continueFrom}`;
+      } else if (updatedAtMin) {
+        url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&updated_at_min=${updatedAtMin}`;
+      } else if (createdAtMax) {
+        url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any&created_at_max=${createdAtMax}`;
+      } else {
+        url = `https://${shopifyDomain}/admin/api/2024-01/orders.json?limit=${batchSize}&status=any`;
+      }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
-    }
+      console.log(`Fetching orders page ${pageCount}...`);
 
-    const data = await safeJsonParse(response);
-    const orders: ShopifyOrder[] = data.orders;
+      const response = await fetchWithRetry(url, {
+        headers: {
+          'X-Shopify-Access-Token': shopifyToken,
+        },
+      }, 3, 30000);
 
-    console.log(`Processing ${orders.length} orders...`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Shopify API error: ${response.status} - ${errorText}`);
+      }
 
-    // Map Shopify order status to our enum
-    const mapOrderStatus = (financial: string, fulfillment: string | null) => {
-      if (fulfillment === 'fulfilled') return 'delivered';
-      if (fulfillment === 'partial') return 'shipped';
-      if (financial === 'paid') return 'processing';
-      if (financial === 'pending') return 'pending';
-      if (financial === 'refunded' || financial === 'voided') return 'cancelled';
-      return 'pending';
-    };
+      const data = await safeJsonParse(response);
+      const orders: ShopifyOrder[] = data.orders;
 
-    // Collect all unique Shopify product and variant IDs
-    const productIds = new Set<string>();
-    const variantIds = new Set<string>();
-    
-    orders.forEach(order => {
-      order.line_items.forEach(item => {
-        if (item.product_id) productIds.add(item.product_id.toString());
-        if (item.variant_id) variantIds.add(item.variant_id.toString());
+      console.log(`Processing ${orders.length} orders...`);
+
+      // Map Shopify order status to our enum
+      const mapOrderStatus = (financial: string, fulfillment: string | null) => {
+        if (fulfillment === 'fulfilled') return 'delivered';
+        if (fulfillment === 'partial') return 'shipped';
+        if (financial === 'paid') return 'processing';
+        if (financial === 'pending') return 'pending';
+        if (financial === 'refunded' || financial === 'voided') return 'cancelled';
+        return 'pending';
+      };
+
+      // Collect all unique Shopify product and variant IDs
+      const productIds = new Set<string>();
+      const variantIds = new Set<string>();
+
+      orders.forEach(order => {
+        order.line_items.forEach(item => {
+          if (item.product_id) productIds.add(item.product_id.toString());
+          if (item.variant_id) variantIds.add(item.variant_id.toString());
+        });
       });
-    });
 
-    // Batch fetch all products and variants
-    const { data: products } = await supabase
-      .from('products')
-      .select('id, source_id')
-      .in('source_id', Array.from(productIds));
+      // Batch fetch all products and variants
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, source_id')
+        .in('source_id', Array.from(productIds));
 
-    const { data: variants } = await supabase
-      .from('product_variants')
-      .select('id, product_id, source_variant_id')
-      .in('source_variant_id', Array.from(variantIds));
+      const { data: variants } = await supabase
+        .from('product_variants')
+        .select('id, product_id, source_variant_id')
+        .in('source_variant_id', Array.from(variantIds));
 
-    // Create lookup maps
-    const productMap = new Map(products?.map(p => [p.source_id, p.id]) || []);
-    const variantMap = new Map(variants?.map(v => [v.source_variant_id, v.id]) || []);
+      // Create lookup maps
+      const productMap = new Map(products?.map(p => [p.source_id, p.id]) || []);
+      const variantMap = new Map(variants?.map(v => [v.source_variant_id, v.id]) || []);
 
-    let syncedOrders = 0;
-    let syncedItems = 0;
-    let syncedEvents = 0;
-    let syncedFulfillments = 0;
+      let syncedOrders = 0;
+      let syncedItems = 0;
+      let syncedEvents = 0;
+      let syncedFulfillments = 0;
 
-    // Process each order
-    for (const shopifyOrder of orders) {
-      try {
-        const shippingFee = shopifyOrder.total_shipping_price_set?.shop_money?.amount || '0';
-        
-        const customerEmail = shopifyOrder.email || shopifyOrder.customer?.email || null;
-        const customerPhone = shopifyOrder.phone || shopifyOrder.customer?.phone || null;
-        
-        // Upsert order
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .upsert({
-            shopify_order_id: shopifyOrder.id.toString(),
-            order_number: shopifyOrder.name,
-            user_id: null,
-            status: mapOrderStatus(shopifyOrder.financial_status, shopifyOrder.fulfillment_status),
-            subtotal: parseFloat(shopifyOrder.subtotal_price),
-            shipping_fee: parseFloat(shippingFee),
-            discount: parseFloat(shopifyOrder.total_discounts),
-            total: parseFloat(shopifyOrder.total_price),
-            shipping_address: shopifyOrder.shipping_address || {},
-            notes: shopifyOrder.note,
-            financial_status: shopifyOrder.financial_status,
-            fulfillment_status: shopifyOrder.fulfillment_status || 'unfulfilled',
-            payment_gateway: shopifyOrder.gateway,
-            currency: shopifyOrder.currency || 'VND',
-            tags: shopifyOrder.tags,
-            source_name: shopifyOrder.source_name,
-            customer_email: customerEmail,
-            customer_phone: customerPhone,
-            cancelled_at: shopifyOrder.cancelled_at,
-            closed_at: shopifyOrder.closed_at,
-            processed_at: shopifyOrder.processed_at,
-            created_at: shopifyOrder.created_at,
-            updated_at: shopifyOrder.updated_at,
-          }, {
-            onConflict: 'shopify_order_id',
-            ignoreDuplicates: false,
-          })
-          .select()
-          .single();
+      // Process each order
+      for (const shopifyOrder of orders) {
+        try {
+          const shippingFee = shopifyOrder.total_shipping_price_set?.shop_money?.amount || '0';
 
-        if (orderError) {
-          console.error(`Error upserting order ${shopifyOrder.name}:`, orderError);
-          continue;
-        }
+          const customerEmail = shopifyOrder.email || shopifyOrder.customer?.email || null;
+          const customerPhone = shopifyOrder.phone || shopifyOrder.customer?.phone || null;
 
-        syncedOrders++;
-
-        // Fix 3: Upsert order items then cleanup orphans
-        const syncedItemIds: string[] = [];
-        for (const lineItem of shopifyOrder.line_items) {
-          const productId = lineItem.product_id 
-            ? productMap.get(lineItem.product_id.toString()) || null 
-            : null;
-          const variantId = lineItem.variant_id 
-            ? variantMap.get(lineItem.variant_id.toString()) || null 
-            : null;
-
-          const { data: item, error: itemError } = await supabase
-            .from('order_items')
+          // Upsert order
+          const { data: order, error: orderError } = await supabase
+            .from('orders')
             .upsert({
-              order_id: order.id,
-              shopify_line_item_id: lineItem.id.toString(),
-              product_id: productId,
-              product_name: lineItem.title,
-              variant_id: variantId,
-              variant_name: lineItem.variant_title,
-              price: parseFloat(lineItem.price),
-              quantity: lineItem.quantity,
-              subtotal: parseFloat(lineItem.price) * lineItem.quantity,
+              shopify_order_id: shopifyOrder.id.toString(),
+              order_number: shopifyOrder.name,
+              user_id: null,
+              status: mapOrderStatus(shopifyOrder.financial_status, shopifyOrder.fulfillment_status),
+              subtotal: parseFloat(shopifyOrder.subtotal_price),
+              shipping_fee: parseFloat(shippingFee),
+              discount: parseFloat(shopifyOrder.total_discounts),
+              total: parseFloat(shopifyOrder.total_price),
+              shipping_address: shopifyOrder.shipping_address || {},
+              notes: shopifyOrder.note,
+              financial_status: shopifyOrder.financial_status,
+              fulfillment_status: shopifyOrder.fulfillment_status || 'unfulfilled',
+              payment_gateway: shopifyOrder.gateway,
+              currency: shopifyOrder.currency || 'VND',
+              tags: shopifyOrder.tags,
+              source_name: shopifyOrder.source_name,
+              customer_email: customerEmail,
+              customer_phone: customerPhone,
+              cancelled_at: shopifyOrder.cancelled_at,
+              closed_at: shopifyOrder.closed_at,
+              processed_at: shopifyOrder.processed_at,
+              created_at: shopifyOrder.created_at,
+              updated_at: shopifyOrder.updated_at,
             }, {
-              onConflict: 'order_id,shopify_line_item_id',
+              onConflict: 'shopify_order_id',
+              ignoreDuplicates: false,
             })
-            .select('id')
+            .select()
             .single();
 
-          if (!itemError && item) {
-            syncedItemIds.push(item.id);
-            syncedItems++;
+          if (orderError) {
+            console.error(`Error upserting order ${shopifyOrder.name}:`, orderError);
+            continue;
           }
-        }
 
-        // Clean up items no longer in Shopify
-        if (syncedItemIds.length > 0) {
-          await supabase
-            .from('order_items')
-            .delete()
-            .eq('order_id', order.id)
-            .not('id', 'in', `(${syncedItemIds.join(',')})`);
-        }
+          syncedOrders++;
 
-        // Fix 3: Upsert fulfillments then cleanup orphans
-        if (shopifyOrder.fulfillments && shopifyOrder.fulfillments.length > 0) {
-          const syncedFulfillmentIds: string[] = [];
-          
-          for (const f of shopifyOrder.fulfillments) {
-            const { data: ful, error: fulfillmentError } = await supabase
-              .from('order_fulfillments')
+          // Upsert order items then cleanup orphans
+          const syncedItemIds: string[] = [];
+          for (const lineItem of shopifyOrder.line_items) {
+            const productId = lineItem.product_id
+              ? productMap.get(lineItem.product_id.toString()) || null
+              : null;
+            const variantId = lineItem.variant_id
+              ? variantMap.get(lineItem.variant_id.toString()) || null
+              : null;
+
+            const { data: item, error: itemError } = await supabase
+              .from('order_items')
               .upsert({
                 order_id: order.id,
-                shopify_fulfillment_id: f.id.toString(),
-                status: f.status,
-                tracking_number: f.tracking_number,
-                tracking_url: f.tracking_url,
-                tracking_company: f.tracking_company,
-                shipment_status: f.shipment_status,
-                created_at: f.created_at,
-                updated_at: f.updated_at,
+                shopify_line_item_id: lineItem.id.toString(),
+                product_id: productId,
+                product_name: lineItem.title,
+                variant_id: variantId,
+                variant_name: lineItem.variant_title,
+                price: parseFloat(lineItem.price),
+                quantity: lineItem.quantity,
+                subtotal: parseFloat(lineItem.price) * lineItem.quantity,
               }, {
-                onConflict: 'order_id,shopify_fulfillment_id',
+                onConflict: 'order_id,shopify_line_item_id',
               })
               .select('id')
               .single();
 
-            if (!fulfillmentError && ful) {
-              syncedFulfillmentIds.push(ful.id);
-              syncedFulfillments++;
+            if (!itemError && item) {
+              syncedItemIds.push(item.id);
+              syncedItems++;
             }
           }
 
-          // Clean up fulfillments no longer in Shopify
-          if (syncedFulfillmentIds.length > 0) {
+          // Clean up items no longer in Shopify
+          if (syncedItemIds.length > 0) {
             await supabase
-              .from('order_fulfillments')
+              .from('order_items')
               .delete()
               .eq('order_id', order.id)
-              .not('id', 'in', `(${syncedFulfillmentIds.join(',')})`);
+              .not('id', 'in', `(${syncedItemIds.join(',')})`);
           }
-        }
 
-        // Fix 3: Upsert order events then cleanup orphans
-        if (syncEvents) {
-          try {
-            const eventsUrl = `https://${shopifyDomain}/admin/api/2024-01/orders/${shopifyOrder.id}/events.json`;
-            const eventsResponse = await fetchWithRetry(eventsUrl, {
-              headers: { 'X-Shopify-Access-Token': shopifyToken },
-            }, 2, 10000);
+          // Upsert fulfillments then cleanup orphans
+          if (shopifyOrder.fulfillments && shopifyOrder.fulfillments.length > 0) {
+            const syncedFulfillmentIds: string[] = [];
 
-            if (eventsResponse.ok) {
-              const eventsData = await safeJsonParse(eventsResponse);
-              const events: ShopifyEvent[] = eventsData.events || [];
+            for (const f of shopifyOrder.fulfillments) {
+              const { data: ful, error: fulfillmentError } = await supabase
+                .from('order_fulfillments')
+                .upsert({
+                  order_id: order.id,
+                  shopify_fulfillment_id: f.id.toString(),
+                  status: f.status,
+                  tracking_number: f.tracking_number,
+                  tracking_url: f.tracking_url,
+                  tracking_company: f.tracking_company,
+                  shipment_status: f.shipment_status,
+                  created_at: f.created_at,
+                  updated_at: f.updated_at,
+                }, {
+                  onConflict: 'order_id,shopify_fulfillment_id',
+                })
+                .select('id')
+                .single();
 
-              if (events.length > 0) {
-                const syncedEventIds: string[] = [];
-
-                for (const event of events) {
-                  const { data: ev, error: eventsError } = await supabase
-                    .from('order_events')
-                    .upsert({
-                      order_id: order.id,
-                      shopify_event_id: event.id.toString(),
-                      event_type: event.verb,
-                      message: event.message,
-                      author: event.author,
-                      created_at: event.created_at,
-                    }, {
-                      onConflict: 'order_id,shopify_event_id',
-                    })
-                    .select('id')
-                    .single();
-
-                  if (!eventsError && ev) {
-                    syncedEventIds.push(ev.id);
-                    syncedEvents++;
-                  }
-                }
-
-                // Clean up events no longer in Shopify
-                if (syncedEventIds.length > 0) {
-                  await supabase
-                    .from('order_events')
-                    .delete()
-                    .eq('order_id', order.id)
-                    .not('id', 'in', `(${syncedEventIds.join(',')})`);
-                }
+              if (!fulfillmentError && ful) {
+                syncedFulfillmentIds.push(ful.id);
+                syncedFulfillments++;
               }
             }
-          } catch (eventError) {
-            console.warn(`Skipping events for order ${shopifyOrder.name}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`);
+
+            // Clean up fulfillments no longer in Shopify
+            if (syncedFulfillmentIds.length > 0) {
+              await supabase
+                .from('order_fulfillments')
+                .delete()
+                .eq('order_id', order.id)
+                .not('id', 'in', `(${syncedFulfillmentIds.join(',')})`);
+            }
           }
+
+          // Upsert order events then cleanup orphans
+          if (syncEvents) {
+            try {
+              const eventsUrl = `https://${shopifyDomain}/admin/api/2024-01/orders/${shopifyOrder.id}/events.json`;
+              const eventsResponse = await fetchWithRetry(eventsUrl, {
+                headers: { 'X-Shopify-Access-Token': shopifyToken },
+              }, 2, 10000);
+
+              if (eventsResponse.ok) {
+                const eventsData = await safeJsonParse(eventsResponse);
+                const events: ShopifyEvent[] = eventsData.events || [];
+
+                if (events.length > 0) {
+                  const syncedEventIds: string[] = [];
+
+                  for (const event of events) {
+                    const { data: ev, error: eventsError } = await supabase
+                      .from('order_events')
+                      .upsert({
+                        order_id: order.id,
+                        shopify_event_id: event.id.toString(),
+                        event_type: event.verb,
+                        message: event.message,
+                        author: event.author,
+                        created_at: event.created_at,
+                      }, {
+                        onConflict: 'order_id,shopify_event_id',
+                      })
+                      .select('id')
+                      .single();
+
+                    if (!eventsError && ev) {
+                      syncedEventIds.push(ev.id);
+                      syncedEvents++;
+                    }
+                  }
+
+                  // Clean up events no longer in Shopify
+                  if (syncedEventIds.length > 0) {
+                    await supabase
+                      .from('order_events')
+                      .delete()
+                      .eq('order_id', order.id)
+                      .not('id', 'in', `(${syncedEventIds.join(',')})`);
+                  }
+                }
+              }
+            } catch (eventError) {
+              console.warn(`Skipping events for order ${shopifyOrder.name}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing order ${shopifyOrder.name}:`, error);
         }
-      } catch (error) {
-        console.error(`Error processing order ${shopifyOrder.name}:`, error);
       }
-    }
 
-    // Check for next page
-    const linkHeader: string | null = response.headers.get('Link');
-    let nextBatch = null;
-    
-    if (linkHeader?.includes('rel="next"')) {
-      const match: RegExpMatchArray | null = linkHeader.match(/<[^>]*page_info=([^>&]+)[^>]*>;\s*rel="next"/);
-      nextBatch = match ? match[1] : null;
-    }
+      totalSyncedOrders += syncedOrders;
+      totalSyncedItems += syncedItems;
+      totalSyncedFulfillments += syncedFulfillments;
+      totalSyncedEvents += syncedEvents;
 
-    console.log(`Batch complete: ${syncedOrders} orders, ${syncedItems} items, ${syncedFulfillments} fulfillments, ${syncedEvents} events`);
+      // Check for next page
+      const linkHeader: string | null = response.headers.get('Link');
+      continueFrom = null;
+
+      if (linkHeader?.includes('rel="next"')) {
+        const match: RegExpMatchArray | null = linkHeader.match(/<[^>]*page_info=([^>&]+)[^>]*>;\s*rel="next"/);
+        continueFrom = match ? match[1] : null;
+      }
+
+      // Only loop if cron request; manual requests return after one page
+      if (!isCronRequest) break;
+
+      // Small delay between pages to avoid rate limiting
+      if (continueFrom) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+    } while (continueFrom && pageCount < MAX_PAGES);
+
+    console.log(`Sync complete: ${totalSyncedOrders} orders, ${totalSyncedItems} items, ${totalSyncedFulfillments} fulfillments, ${totalSyncedEvents} events (${pageCount} pages)`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        hasMore: !!nextBatch,
-        nextBatch,
+        hasMore: !!continueFrom,
+        nextBatch: continueFrom,
         stats: {
-          syncedOrders,
-          syncedItems,
-          syncedFulfillments,
-          syncedEvents,
+          syncedOrders: totalSyncedOrders,
+          syncedItems: totalSyncedItems,
+          syncedFulfillments: totalSyncedFulfillments,
+          syncedEvents: totalSyncedEvents,
+          pagesProcessed: pageCount,
         },
       }),
       {
