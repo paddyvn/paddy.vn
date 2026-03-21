@@ -33,7 +33,7 @@ export const BlogSection = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-xl md:text-2xl font-bold text-primary mb-2">
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-1">
             Paddy's Magazine
           </h2>
           <p className="text-muted-foreground">
