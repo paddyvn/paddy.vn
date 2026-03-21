@@ -12,7 +12,7 @@ export function ProductBreadcrumb({ productName, categoryName, categorySlug }: P
     <nav className="container mx-auto px-4 py-2 overflow-hidden">
       <div className="text-xs text-muted-foreground leading-relaxed">
         <Link to="/" className="hover:text-primary transition-smooth">
-          Home
+          Trang chủ
         </Link>
 
         <ChevronRight className="h-3 w-3 mx-1 inline-block align-middle" />
@@ -26,8 +26,8 @@ export function ProductBreadcrumb({ productName, categoryName, categorySlug }: P
           </>
         ) : (
           <>
-            <Link to="/" className="hover:text-primary transition-smooth">
-              Products
+            <Link to="/collections" className="hover:text-primary transition-smooth">
+              Sản phẩm
             </Link>
             <ChevronRight className="h-3 w-3 mx-1 inline-block align-middle" />
           </>

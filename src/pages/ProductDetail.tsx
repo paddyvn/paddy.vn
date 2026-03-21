@@ -6,13 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShoppingCart, Heart, Ticket, Copy, CheckCircle } from "lucide-react";
 import { ProductTrustBadges } from "@/components/ProductTrustBadges";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
-import { ProductReviews } from "@/components/ProductReviews";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -22,6 +20,13 @@ import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { useProductPromotion } from "@/hooks/useProductPromotions";
 import { useProductVouchers } from "@/hooks/useProductVouchers";
 
+function sanitizeDescription(html: string): string {
+  return html
+    .replace(/\s*data-mce-[a-z]+="[^"]*"/g, '')
+    .replace(/\s*style="[^"]*font-family[^"]*"/g, '')
+    .replace(/\s*style="[^"]*font-size[^"]*"/g, '');
+}
+
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -29,8 +34,6 @@ export default function ProductDetail() {
   const { data: product, isLoading, error } = useProduct(slug || "");
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
-  const [subscribeEnabled, setSubscribeEnabled] = useState(false);
-  const [showFullDescription, setShowFullDescription] = useState(false);
   const [expandedTabs, setExpandedTabs] = useState<Record<string, boolean>>({
     description: false,
     ingredients: false,
@@ -63,6 +66,11 @@ export default function ProductDetail() {
     }
   }, [product]);
 
+  // Reset quantity when variant changes
+  useEffect(() => {
+    setQuantity(1);
+  }, [selectedVariant?.id]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -84,8 +92,8 @@ export default function ProductDetail() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-          <Button onClick={() => navigate("/")}>Return to home</Button>
+          <h1 className="text-2xl font-bold mb-4">Không tìm thấy sản phẩm</h1>
+          <Button onClick={() => navigate("/")}>Về trang chủ</Button>
         </div>
         <Footer />
       </div>
@@ -94,9 +102,6 @@ export default function ProductDetail() {
 
   const basePrice = selectedVariant?.price || product.base_price;
   const comparePrice = selectedVariant?.compare_at_price || product.compare_at_price;
-  const averageRating = product.reviews?.length > 0
-    ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / product.reviews.length
-    : 0;
   
   // Calculate pricing based on promotion or compare_at_price
   const hasPromotionDiscount = promotion?.discount_value && promotion.discount_value > 0;
@@ -126,9 +131,23 @@ export default function ProductDetail() {
 
   const hasDiscount = discountPercentage > 0;
 
+  // Breadcrumb: use category or first collection as fallback
   const primaryCategory = product.product_collections?.[0]?.categories;
   
-  const isInStock = selectedVariant?.stock_quantity == null || selectedVariant?.stock_quantity > 0;
+  // Per-variant stock check
+  const variantStock = selectedVariant?.stock_quantity;
+  const isInStock = variantStock == null || variantStock > 0;
+  
+  // Check if ALL variants are out of stock
+  const allVariantsOOS = product.product_variants?.length > 0 && 
+    product.product_variants.every((v: any) => v.stock_quantity !== null && v.stock_quantity <= 0);
+
+  // Collection ID for related products
+  const collectionId = product.category_id || product.product_collections?.[0]?.collection_id;
+
+  // Hide variant selector for single-variant "Title" products
+  const shouldShowVariants = product.product_variants && product.product_variants.length > 0 && 
+    !(product.product_variants.length === 1 && product.option1_name === "Title");
 
   const handleAddToCart = () => {
     addToCart({
@@ -136,6 +155,26 @@ export default function ProductDetail() {
       variantId: selectedVariant?.id,
       quantity,
     });
+  };
+
+  // Handle variant change with image switching
+  const handleVariantChange = (variant: any) => {
+    setSelectedVariant(variant);
+  };
+
+  // Find image index for selected variant
+  const getVariantImageIndex = () => {
+    if (!selectedVariant?.source_variant_id || !product.product_images) return undefined;
+    const variantSourceId = Number(selectedVariant.source_variant_id);
+    const sortedImages = [...(product.product_images || [])].sort((a: any, b: any) => {
+      if (a.is_primary) return -1;
+      if (b.is_primary) return 1;
+      return (a.display_order || 0) - (b.display_order || 0);
+    });
+    const idx = sortedImages.findIndex((img: any) => 
+      img.variant_ids && Array.isArray(img.variant_ids) && img.variant_ids.includes(variantSourceId)
+    );
+    return idx >= 0 ? idx : undefined;
   };
 
   return (
@@ -158,6 +197,7 @@ export default function ProductDetail() {
               productName={product.name}
               isFeatured={product.is_featured}
               isOnSale={hasDiscount}
+              activeIndex={getVariantImageIndex()}
             />
           </div>
 
@@ -168,33 +208,45 @@ export default function ProductDetail() {
               {product.name}
             </h1>
 
-            {/* Rating and Stock Row */}
+            {/* Stock Status Row (no fake reviews) */}
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <span 
-                      key={i} 
-                      className={`text-lg ${i < Math.round(averageRating) ? "text-yellow-400" : "text-muted"}`}
-                    >
-                      ★
+              {/* Only show real reviews if they exist */}
+              {product.rating && product.rating_count && product.rating_count > 0 && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <span 
+                          key={i} 
+                          className={`text-lg ${i < Math.round(product.rating!) ? "text-yellow-400" : "text-muted"}`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-sm text-primary">
+                      ({product.rating_count} đánh giá)
                     </span>
-                  ))}
-                </div>
-                <span className="text-sm text-primary hover:underline cursor-pointer">
-                  {(product.reviews?.length || 0).toLocaleString()} reviews
-                </span>
-              </div>
-              <span className="text-muted-foreground">|</span>
+                  </div>
+                  <span className="text-muted-foreground">|</span>
+                </>
+              )}
               {isInStock ? (
                 <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
                   <CheckCircle className="h-4 w-4" />
-                  In Stock
+                  Còn hàng {variantStock != null && `(${variantStock})`}
                 </span>
               ) : (
-                <span className="text-sm text-red-600 font-medium">Out of Stock</span>
+                <span className="text-sm text-destructive font-medium">Hết hàng</span>
               )}
             </div>
+
+            {/* All variants OOS banner */}
+            {allVariantsOOS && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm font-medium text-destructive">Sản phẩm này đã hết hàng</p>
+              </div>
+            )}
 
             {/* Price */}
             <div className="flex items-center gap-3 flex-wrap">
@@ -255,17 +307,9 @@ export default function ProductDetail() {
 
             {/* Short Description (from meta_description) */}
             {product.meta_description && (
-              <div>
-                <p className={`text-sm text-muted-foreground leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
-                  {product.meta_description}
-                </p>
-                <button
-                  onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="text-sm text-primary font-medium mt-1 hover:underline"
-                >
-                  {showFullDescription ? 'Thu gọn' : 'Xem thêm'}
-                </button>
-              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                {product.meta_description}
+              </p>
             )}
 
             {/* Brand & Origin */}
@@ -292,11 +336,11 @@ export default function ProductDetail() {
             )}
 
             {/* Variants Selector */}
-            {product.product_variants && product.product_variants.length > 0 && (
+            {shouldShowVariants && (
               <ProductVariantSelector
                 variants={product.product_variants}
                 selectedVariant={selectedVariant}
-                onVariantChange={setSelectedVariant}
+                onVariantChange={handleVariantChange}
                 optionNames={{
                   option1: product.option1_name,
                   option2: product.option2_name,
@@ -305,36 +349,22 @@ export default function ProductDetail() {
               />
             )}
 
-            {/* Subscribe & Save - Hidden for now, will be enabled later
-            <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 border border-border rounded-lg bg-muted/30">
-              <Checkbox 
-                id="subscribe" 
-                checked={subscribeEnabled}
-                onCheckedChange={(checked) => setSubscribeEnabled(!!checked)}
-                className="mt-0.5"
-              />
-              <label htmlFor="subscribe" className="cursor-pointer">
-                <span className="font-semibold text-sm md:text-base text-foreground">Subscribe & Save 10%</span>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  Never run out! Get tailored deliveries and save on every order.
-                </p>
-              </label>
-            </div>
-            */}
-
             {/* Stock Quantity Display */}
             {selectedVariant?.stock_quantity != null && (
               <p className="text-sm text-muted-foreground">
-                Số lượng sản phẩm có sẵn: <span className="font-medium text-foreground">{selectedVariant.stock_quantity}</span>
+                Số lượng có sẵn: <span className={`font-medium ${isInStock ? 'text-foreground' : 'text-destructive'}`}>
+                  {isInStock ? selectedVariant.stock_quantity : 'Hết hàng'}
+                </span>
               </p>
             )}
 
             {/* Quantity and Add to Cart Row */}
             <div className="flex items-center gap-2 md:gap-3">
               {/* Quantity Selector */}
-              <div className="flex items-center border border-border rounded-lg">
+              <div className={`flex items-center border border-border rounded-lg ${!isInStock ? 'opacity-50 pointer-events-none' : ''}`}>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={!isInStock || quantity <= 1}
                   className="px-2.5 py-2 md:px-4 md:py-3 text-base md:text-lg font-medium hover:bg-muted transition-colors"
                 >
                   −
@@ -343,7 +373,11 @@ export default function ProductDetail() {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => {
+                    const max = variantStock != null ? variantStock : Infinity;
+                    setQuantity(Math.min(quantity + 1, max));
+                  }}
+                  disabled={!isInStock}
                   className="px-2.5 py-2 md:px-4 md:py-3 text-base md:text-lg font-medium hover:bg-muted transition-colors"
                 >
                   +
@@ -353,12 +387,12 @@ export default function ProductDetail() {
               {/* Add to Cart Button */}
               <Button
                 size="lg"
-                className="flex-1 h-10 md:h-14 text-sm md:text-base bg-green-500 hover:bg-green-600 text-white"
+                className="flex-1 h-10 md:h-14 text-sm md:text-base bg-green-500 hover:bg-green-600 text-white disabled:bg-muted disabled:text-muted-foreground"
                 onClick={handleAddToCart}
                 disabled={!isInStock}
               >
                 <ShoppingCart className="mr-1.5 md:mr-2 h-4 w-4 md:h-5 md:w-5" />
-                Add to Cart
+                {isInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
               </Button>
 
               {/* Wishlist Button */}
@@ -378,9 +412,9 @@ export default function ProductDetail() {
 
         {/* Product Details Tabs and Nutrition Facts */}
         {(() => {
-          const hasIngredients = product.show_ingredients !== false && !!product.ingredients;
-          const hasFeeding = product.show_feeding_guidelines !== false && !!product.feeding_guidelines;
-          const hasNutrition = product.show_nutrition_facts !== false && product.nutrition_facts
+          const hasIngredients = !!product.ingredients && product.ingredients.trim() !== '';
+          const hasFeeding = !!product.feeding_guidelines && product.feeding_guidelines.trim() !== '';
+          const hasNutrition = product.nutrition_facts
             && Array.isArray(product.nutrition_facts) && (product.nutrition_facts as any[]).length > 0;
 
           return (
@@ -421,7 +455,7 @@ export default function ProductDetail() {
                       >
                         <div 
                           className="prose prose-sm max-w-none text-foreground text-sm break-words overflow-x-hidden [&_p]:text-sm [&_li]:text-sm [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_strong]:text-sm [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"
-                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) || "No description available." }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(sanitizeDescription(product.description || '')) || "Chưa có mô tả." }}
                         />
                       </div>
                       {!expandedTabs.description && (
@@ -442,7 +476,7 @@ export default function ProductDetail() {
                         <div className={`overflow-hidden transition-all ${!expandedTabs.ingredients ? 'max-h-[200px]' : ''}`}>
                           <div 
                             className="prose prose-sm max-w-none text-sm [&_p]:text-sm"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.ingredients) || "" }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(sanitizeDescription(product.ingredients || '')) }}
                           />
                         </div>
                         {!expandedTabs.ingredients && (
@@ -464,7 +498,7 @@ export default function ProductDetail() {
                         <div className={`overflow-hidden transition-all ${!expandedTabs.feeding ? 'max-h-[200px]' : ''}`}>
                           <div 
                             className="prose prose-sm max-w-none text-sm [&_p]:text-sm [&_table]:block [&_table]:overflow-x-auto"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.feeding_guidelines) || "" }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(sanitizeDescription(product.feeding_guidelines || '')) }}
                           />
                         </div>
                         {!expandedTabs.feeding && (
@@ -499,18 +533,10 @@ export default function ProductDetail() {
           );
         })()}
 
-        {/* Reviews Section */}
-        <div className="mb-16">
-          <ProductReviews
-            productId={product.id}
-            reviews={product.reviews || []}
-            userId={session?.user?.id}
-          />
-        </div>
-
-        {/* Related Products */}
+        {/* Related Products - using collection */}
         <RelatedProducts
           currentProductId={product.id}
+          collectionId={collectionId}
           productType={product.product_type}
           brand={product.brand}
         />
