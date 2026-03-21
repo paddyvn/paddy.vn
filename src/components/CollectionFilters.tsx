@@ -280,7 +280,7 @@ export const CollectionFilters = ({
         {showSizeFilter && (
           <AccordionItem value="breed-size">
             <AccordionTrigger className="text-base font-semibold">
-              Breed Size
+              Giống chó
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2">
