@@ -15,6 +15,9 @@ export interface BlogPost {
   published: boolean;
   tags: string | null;
   image_url: string | null;
+  category_id: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   created_at: string;
   updated_at: string;
   shopify_created_at: string | null;
@@ -151,6 +154,9 @@ export const useCreateBlogPost = () => {
       tags?: string;
       image_url?: string;
       blog_title?: string;
+      category_id?: string;
+      meta_title?: string;
+      meta_description?: string;
     }) => {
       const { data, error } = await supabase
         .from("blog_posts")
@@ -164,6 +170,9 @@ export const useCreateBlogPost = () => {
           tags: post.tags || null,
           image_url: post.image_url || null,
           blog_title: post.blog_title || "Paddy's Magazine",
+          category_id: post.category_id || null,
+          meta_title: post.meta_title || null,
+          meta_description: post.meta_description || null,
         })
         .select()
         .single();

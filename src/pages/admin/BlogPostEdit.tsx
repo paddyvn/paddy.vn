@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useBlogPosts, useUpdateBlogPost, useCreateBlogPost, useDeleteBlogPost } from "@/hooks/useBlogPosts";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useUpdateBlogPost, useCreateBlogPost, useDeleteBlogPost, BlogPost } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,7 +52,6 @@ import { format } from "date-fns";
 export default function BlogPostEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: posts, isLoading } = useBlogPosts();
   const { data: categories } = useBlogCategories();
   const updatePost = useUpdateBlogPost();
   const createPost = useCreateBlogPost();
@@ -57,47 +59,82 @@ export default function BlogPostEdit() {
 
   const isNewPost = id === "new";
 
+  // Fetch ONLY the current post (Fix 3)
+  const { data: post, isLoading } = useQuery({
+    queryKey: ["admin-blog-post", id],
+    queryFn: async () => {
+      if (id === "new") return null;
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data as BlogPost | null;
+    },
+    enabled: id !== "new",
+  });
+
+  // Prev/next navigation — lightweight queries (Fix 3)
+  const { data: prevPost } = useQuery({
+    queryKey: ["admin-blog-prev", post?.shopify_published_at, post?.updated_at],
+    queryFn: async () => {
+      const refDate = post?.shopify_published_at || post?.updated_at;
+      if (!refDate) return null;
+      const { data } = await supabase
+        .from("blog_posts")
+        .select("id")
+        .gt("shopify_published_at", refDate)
+        .order("shopify_published_at", { ascending: true, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!post && !isNewPost,
+  });
+
+  const { data: nextPost } = useQuery({
+    queryKey: ["admin-blog-next", post?.shopify_published_at, post?.updated_at],
+    queryFn: async () => {
+      const refDate = post?.shopify_published_at || post?.updated_at;
+      if (!refDate) return null;
+      const { data } = await supabase
+        .from("blog_posts")
+        .select("id")
+        .lt("shopify_published_at", refDate)
+        .order("shopify_published_at", { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!post && !isNewPost,
+  });
+
   const [title, setTitle] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
   const [summaryHtml, setSummaryHtml] = useState("");
   const [author, setAuthor] = useState("");
-  const [blogTitle, setBlogTitle] = useState("Paddy's Magazine");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [tags, setTags] = useState("");
   const [published, setPublished] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [handle, setHandle] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   
   const [isExcerptEditing, setIsExcerptEditing] = useState(false);
   const [isSeoEditing, setIsSeoEditing] = useState(false);
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const post = !isNewPost ? posts?.find((p) => p.id === id) : null;
   
-  // Get category slug for view URL
+  // Get category slug for view URL (Fix 1)
   const categorySlug = useMemo(() => {
-    const category = categories?.find((c) => c.name === blogTitle);
+    const category = categories?.find((c) => c.id === categoryId);
     return category?.slug || 'articles';
-  }, [categories, blogTitle]);
+  }, [categories, categoryId]);
 
-  // Always use category-based URLs for better SEO
   const getViewUrl = () => `/blogs/${categorySlug}/${handle}`;
-  
-  // Get all posts for navigation (only for edit mode)
-  const sortedPosts = posts?.slice().sort((a, b) => {
-    const dateA = a.shopify_published_at || a.updated_at;
-    const dateB = b.shopify_published_at || b.updated_at;
-    return new Date(dateB).getTime() - new Date(dateA).getTime();
-  });
-  const currentIndex = sortedPosts?.findIndex((p) => p.id === id) ?? -1;
-  const prevPost = !isNewPost && currentIndex > 0 ? sortedPosts?.[currentIndex - 1] : null;
-  const nextPost = !isNewPost && currentIndex < (sortedPosts?.length ?? 0) - 1 ? sortedPosts?.[currentIndex + 1] : null;
-
-  // Get unique blog titles for selector
-  const uniqueBlogs = posts
-    ? Array.from(new Set(posts.map((p) => p.blog_title).filter(Boolean)))
-    : [];
 
   useEffect(() => {
     if (post && !isNewPost) {
@@ -105,11 +142,13 @@ export default function BlogPostEdit() {
       setBodyHtml(post.body_html || "");
       setSummaryHtml(post.summary_html || "");
       setAuthor(post.author || "");
-      setBlogTitle(post.blog_title || "Paddy's Magazine");
+      setCategoryId(post.category_id || null);
       setTags(post.tags || "");
       setPublished(post.published ?? true);
       setImageUrl(post.image_url || "");
       setHandle(post.handle);
+      setMetaTitle((post as any).meta_title || "");
+      setMetaDescription((post as any).meta_description || "");
       setHasChanges(false);
     }
   }, [post, isNewPost]);
@@ -127,6 +166,8 @@ export default function BlogPostEdit() {
   };
 
   const handleSave = () => {
+    const selectedCat = categories?.find(c => c.id === categoryId);
+
     if (isNewPost) {
       const finalHandle = handle.trim() || generateHandle(title);
       createPost.mutate(
@@ -136,10 +177,13 @@ export default function BlogPostEdit() {
           body_html: bodyHtml || undefined,
           summary_html: summaryHtml || undefined,
           author: author || undefined,
-          blog_title: blogTitle || undefined,
+          blog_title: selectedCat?.name || undefined,
+          category_id: categoryId || undefined,
           tags: tags || undefined,
           published,
           image_url: imageUrl || undefined,
+          meta_title: metaTitle || undefined,
+          meta_description: metaDescription || undefined,
         },
         {
           onSuccess: () => {
@@ -157,11 +201,14 @@ export default function BlogPostEdit() {
             body_html: bodyHtml,
             summary_html: summaryHtml || null,
             author: author || null,
-            blog_title: blogTitle || null,
+            blog_title: selectedCat?.name || null,
+            category_id: categoryId || null,
             tags: tags || null,
             published,
             image_url: imageUrl || null,
-          },
+            meta_title: metaTitle || null,
+            meta_description: metaDescription || null,
+          } as any,
         },
         {
           onSuccess: () => {
@@ -361,7 +408,7 @@ export default function BlogPostEdit() {
             </CardContent>
           </Card>
 
-          {/* SEO Card */}
+          {/* SEO Card (Fix 4) */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between py-4">
               <CardTitle className="text-base font-medium">Search engine listing</CardTitle>
@@ -379,6 +426,31 @@ export default function BlogPostEdit() {
             <CardContent className="pt-0">
               {isSeoEditing ? (
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="metaTitle">Page title</Label>
+                    <Input
+                      id="metaTitle"
+                      value={metaTitle}
+                      onChange={(e) => { setMetaTitle(e.target.value); markChanged(); }}
+                      placeholder={title || "Page title for search engines"}
+                      maxLength={70}
+                    />
+                    <p className="text-xs text-muted-foreground">{metaTitle.length}/70 characters</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="metaDescription">Meta description</Label>
+                    <Textarea
+                      id="metaDescription"
+                      value={metaDescription}
+                      onChange={(e) => { setMetaDescription(e.target.value); markChanged(); }}
+                      placeholder="Brief description for search engines..."
+                      maxLength={160}
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">{metaDescription.length}/160 characters</p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="handle">URL handle</Label>
                     <Input
@@ -408,17 +480,17 @@ export default function BlogPostEdit() {
                   </div>
                 </div>
               ) : (
-              <div className="space-y-1">
+                <div className="space-y-1">
                   <p className="text-sm font-medium text-primary">Paddy Pet Shop</p>
                   <p className="text-sm text-muted-foreground">
                     https://paddy.vn › blogs › {categorySlug} › {handle}
                   </p>
                   <p className="text-base text-primary hover:underline cursor-pointer">
-                    {title}
+                    {metaTitle || title}
                   </p>
-                  {summaryHtml && (
+                  {(metaDescription || summaryHtml) && (
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      <span dangerouslySetInnerHTML={{ __html: summaryHtml.replace(/<[^>]*>/g, '') }} />
+                      {metaDescription || <span dangerouslySetInnerHTML={{ __html: (summaryHtml || '').replace(/<[^>]*>/g, '') }} />}
                     </p>
                   )}
                 </div>
@@ -516,7 +588,7 @@ export default function BlogPostEdit() {
             </CardContent>
           </Card>
 
-          {/* Organization Card */}
+          {/* Organization Card (Fix 1 — category picker) */}
           <Card>
             <CardHeader className="py-4">
               <CardTitle className="text-base font-medium">Organization</CardTitle>
@@ -536,26 +608,26 @@ export default function BlogPostEdit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="blog">Blog</Label>
+                <Label htmlFor="category">Category</Label>
                 <Select
-                  value={blogTitle}
+                  value={categoryId || ""}
                   onValueChange={(val) => {
-                    setBlogTitle(val);
+                    setCategoryId(val);
                     markChanged();
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select blog" />
+                    <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {uniqueBlogs.map((blog) => (
-                      <SelectItem key={blog} value={blog!}>
-                        {blog}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="Paddy's Magazine">
-                      Paddy's Magazine
-                    </SelectItem>
+                    {categories
+                      ?.filter(c => c.is_active)
+                      .map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name_vi || cat.name}
+                        </SelectItem>
+                      ))
+                    }
                   </SelectContent>
                 </Select>
               </div>

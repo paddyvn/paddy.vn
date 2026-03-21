@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -18,69 +18,120 @@ const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ["blog-posts-public"],
+  // Fetch categories from blog_categories table (Fix 2)
+  const { data: blogCategories } = useQuery({
+    queryKey: ["blog-categories-public"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("blog_posts")
-        .select("*, blog_categories(slug, name)")
-        .eq("published", true)
-        .order("shopify_published_at", { ascending: false, nullsFirst: false })
-        .order("updated_at", { ascending: false });
-
+        .from("blog_categories")
+        .select("id, name, name_vi, slug")
+        .eq("is_active", true)
+        .order("display_order");
       if (error) throw error;
       return data;
     },
   });
 
-  // Extract unique categories and tags
-  const { categories, tags } = useMemo(() => {
-    if (!posts) return { categories: [], tags: [] };
-    
-    const categorySet = new Set<string>();
-    const tagSet = new Set<string>();
-    
-    posts.forEach(post => {
-      if (post.blog_title) categorySet.add(post.blog_title);
-      if (post.tags) {
-        post.tags.split(",").forEach(tag => tagSet.add(tag.trim()));
-      }
-    });
-    
-    return {
-      categories: Array.from(categorySet).sort(),
-      tags: Array.from(tagSet).sort()
-    };
-  }, [posts]);
+  // Lightweight tags query
+  const { data: allTags } = useQuery({
+    queryKey: ["blog-tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("tags")
+        .eq("published", true)
+        .not("tags", "is", null);
+      if (error) throw error;
 
-  // Filter posts based on selected category and tag
-  const filteredPosts = useMemo(() => {
-    if (!posts) return [];
-    
-    return posts.filter(post => {
-      const matchesCategory = !selectedCategory || post.blog_title === selectedCategory;
-      const matchesTag = !selectedTag || (post.tags && post.tags.includes(selectedTag));
-      return matchesCategory && matchesTag;
-    });
-  }, [posts, selectedCategory, selectedTag]);
+      const tagSet = new Set<string>();
+      data.forEach(post => {
+        post.tags?.split(",").forEach((t: string) => {
+          const trimmed = t.trim();
+          if (trimmed) tagSet.add(trimmed);
+        });
+      });
+      return Array.from(tagSet).sort();
+    },
+    staleTime: 60000,
+  });
 
   const isFiltering = selectedCategory || selectedTag;
-  
-  // When filtering, show all filtered posts; otherwise use original layout
-  const featuredPost = isFiltering ? null : filteredPosts?.[0];
-  const secondaryPosts = isFiltering ? [] : filteredPosts?.slice(1, 4) || [];
-  const popularPosts = isFiltering ? [] : filteredPosts?.slice(4, 9) || [];
-  const allPosts = isFiltering ? filteredPosts : filteredPosts?.slice(9) || [];
 
-  // Pagination calculations
-  const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
-  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const paginatedPosts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  // Count query
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ["blog-posts-count", selectedCategory, selectedTag],
+    queryFn: async () => {
+      let query = supabase
+        .from("blog_posts")
+        .select("*", { count: "exact", head: true })
+        .eq("published", true);
+
+      if (selectedCategory) {
+        query = query.eq("category_id", selectedCategory);
+      }
+      if (selectedTag) {
+        query = query.ilike("tags", `%${selectedTag}%`);
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Data query — only card fields, NOT body_html (Fix 2)
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["blog-posts-public", selectedCategory, selectedTag, currentPage],
+    queryFn: async () => {
+      // When not filtering, fetch enough for hero layout + first page
+      const heroSlots = isFiltering ? 0 : 9;
+      const from = isFiltering
+        ? (currentPage - 1) * POSTS_PER_PAGE
+        : heroSlots + (currentPage - 1) * POSTS_PER_PAGE;
+      const to = isFiltering
+        ? from + POSTS_PER_PAGE - 1
+        : (currentPage === 1 ? heroSlots + POSTS_PER_PAGE - 1 : from + POSTS_PER_PAGE - 1);
+      
+      // For first page without filter, fetch from 0
+      const actualFrom = (!isFiltering && currentPage === 1) ? 0 : from;
+      const actualTo = (!isFiltering && currentPage === 1) ? heroSlots + POSTS_PER_PAGE - 1 : to;
+
+      let query = supabase
+        .from("blog_posts")
+        .select("id, title, handle, summary_html, author, blog_title, tags, image_url, shopify_published_at, updated_at, category_id, blog_categories(slug, name)")
+        .eq("published", true)
+        .order("shopify_published_at", { ascending: false, nullsFirst: false });
+
+      if (selectedCategory) {
+        query = query.eq("category_id", selectedCategory);
+      }
+      if (selectedTag) {
+        query = query.ilike("tags", `%${selectedTag}%`);
+      }
+
+      query = query.range(actualFrom, actualTo);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Split posts into layout sections
+  const featuredPost = (!isFiltering && currentPage === 1) ? posts?.[0] : null;
+  const secondaryPosts = (!isFiltering && currentPage === 1) ? posts?.slice(1, 4) || [] : [];
+  const popularPosts = (!isFiltering && currentPage === 1) ? posts?.slice(4, 9) || [] : [];
+  const gridPosts = isFiltering
+    ? posts || []
+    : (currentPage === 1 ? posts?.slice(9) || [] : posts || []);
+
+  // Pagination
+  const gridTotal = isFiltering ? totalCount : Math.max(0, totalCount - 9);
+  const totalPages = Math.ceil(gridTotal / POSTS_PER_PAGE);
 
   const getBlogPostUrl = (post: any) => {
-    // Always use category-based URLs for better SEO
-    const categorySlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
-    return `/blogs/${categorySlug}/${post.handle}`;
+    const catSlug = (post?.blog_categories as { slug: string } | null)?.slug || 'articles';
+    return `/blogs/${catSlug}/${post.handle}`;
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -98,8 +149,8 @@ const Blog = () => {
     window.scrollTo({ top: document.getElementById("all-posts")?.offsetTop || 0, behavior: "smooth" });
   };
 
-  const handleCategoryChange = (category: string | null) => {
-    setSelectedCategory(category);
+  const handleCategoryChange = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
     setCurrentPage(1);
   };
 
@@ -119,12 +170,11 @@ const Blog = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        {/* Page Title */}
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-6">
           Paddy's Magazine
         </h1>
 
-        {/* Category Filter */}
+        {/* Category Filter — from blog_categories table */}
         <div className="flex flex-wrap gap-2 mb-4">
           <Button
             variant={selectedCategory === null ? "default" : "outline"}
@@ -134,23 +184,23 @@ const Blog = () => {
           >
             Tất cả
           </Button>
-          {categories.map((category) => (
+          {blogCategories?.map((cat) => (
             <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
+              key={cat.id}
+              variant={selectedCategory === cat.id ? "default" : "outline"}
               size="sm"
-              onClick={() => handleCategoryChange(category)}
+              onClick={() => handleCategoryChange(selectedCategory === cat.id ? null : cat.id)}
               className="rounded-full"
             >
-              {category}
+              {cat.name_vi || cat.name}
             </Button>
           ))}
         </div>
 
         {/* Tags Filter */}
-        {tags.length > 0 && (
+        {allTags && allTags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
-            {tags.slice(0, 15).map((tag) => (
+            {allTags.slice(0, 15).map((tag) => (
               <Badge
                 key={tag}
                 variant={selectedTag === tag ? "default" : "secondary"}
@@ -169,7 +219,7 @@ const Blog = () => {
             <span className="text-sm text-muted-foreground">Đang lọc:</span>
             {selectedCategory && (
               <Badge variant="outline" className="gap-1">
-                {selectedCategory}
+                {blogCategories?.find(c => c.id === selectedCategory)?.name_vi || blogCategories?.find(c => c.id === selectedCategory)?.name}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => handleCategoryChange(null)} />
               </Badge>
             )}
@@ -196,34 +246,25 @@ const Blog = () => {
         ) : (
           <>
             {/* Hero Section */}
-            {!isFiltering && featuredPost && (
+            {!isFiltering && currentPage === 1 && featuredPost && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
-                {/* Left + Center Section */}
                 <div className="lg:col-span-9 flex flex-col gap-6">
-                  {/* Row 1: Featured text + Large image */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Featured Article Text */}
                     <div className="flex items-center">
                       <Link to={getBlogPostUrl(featuredPost)} className="group">
                         <h2 className="text-xl lg:text-2xl font-bold text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
                           {featuredPost.title}
                         </h2>
                         <p className="text-sm text-muted-foreground line-clamp-4">
-                          {stripHtml(featuredPost.summary_html || featuredPost.body_html)}
+                          {stripHtml(featuredPost.summary_html)}
                         </p>
                       </Link>
                     </div>
-
-                    {/* Large Featured Image */}
                     <div className="lg:col-span-2">
                       <Link to={getBlogPostUrl(featuredPost)} className="block">
                         <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-muted">
                           {featuredPost.image_url ? (
-                            <img
-                              src={featuredPost.image_url}
-                              alt={featuredPost.title}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            />
+                            <img src={featuredPost.image_url} alt={featuredPost.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                           ) : (
                             <div className="w-full h-full bg-muted flex items-center justify-center">
                               <span className="text-muted-foreground">No image</span>
@@ -234,57 +275,33 @@ const Blog = () => {
                     </div>
                   </div>
 
-                  {/* Row 2: 3 Secondary Articles */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {secondaryPosts.map((post) => (
-                      <Link
-                        key={post.id}
-                        to={getBlogPostUrl(post)}
-                        className="group"
-                      >
+                      <Link key={post.id} to={getBlogPostUrl(post)} className="group">
                         <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
                           {post.image_url ? (
-                            <img
-                              src={post.image_url}
-                              alt={post.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                            <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           ) : (
                             <div className="w-full h-full bg-muted" />
                           )}
                         </div>
-                        <h3 className="font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
-                          {post.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {stripHtml(post.summary_html || post.body_html)}
-                        </p>
+                        <h3 className="font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">{post.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{stripHtml(post.summary_html)}</p>
                       </Link>
                     ))}
                   </div>
                 </div>
 
-                {/* Right Column - Popular Articles */}
                 <div className="lg:col-span-3 self-stretch">
                   <h3 className="text-lg font-bold text-foreground mb-4">Popular articles</h3>
                   <div className="divide-y divide-border">
                     {popularPosts.map((post, index) => (
-                      <Link
-                        key={post.id}
-                        to={getBlogPostUrl(post)}
-                        className="flex gap-4 py-5 group first:pt-0"
-                      >
-                        <span className="text-3xl font-bold text-amber-500 shrink-0">
-                          {index + 1}
-                        </span>
+                      <Link key={post.id} to={getBlogPostUrl(post)} className="flex gap-4 py-5 group first:pt-0">
+                        <span className="text-3xl font-bold text-amber-500 shrink-0">{index + 1}</span>
                         <div>
-                          <h4 className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
-                            {post.title}
-                          </h4>
+                          <h4 className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight">{post.title}</h4>
                           {post.blog_title && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {post.blog_title}
-                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">{post.blog_title}</p>
                           )}
                         </div>
                       </Link>
@@ -294,76 +311,45 @@ const Blog = () => {
               </div>
             )}
 
-            {/* All Posts with Pagination */}
-            {allPosts.length > 0 ? (
+            {/* Grid Posts */}
+            {gridPosts.length > 0 ? (
               <div id="all-posts">
-                {!isFiltering && (
-                  <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">
-                    Tất cả bài viết
-                  </h2>
+                {!isFiltering && currentPage === 1 && (
+                  <h2 className="text-2xl md:text-3xl font-bold text-primary mb-6">Tất cả bài viết</h2>
                 )}
                 
                 {isFiltering && (
-                  <p className="text-muted-foreground mb-6">
-                    Tìm thấy {filteredPosts.length} bài viết
-                  </p>
+                  <p className="text-muted-foreground mb-6">Tìm thấy {totalCount} bài viết</p>
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {paginatedPosts.map((post) => (
-                    <Link
-                      key={post.id}
-                      to={getBlogPostUrl(post)}
-                      className="group"
-                    >
+                  {gridPosts.map((post) => (
+                    <Link key={post.id} to={getBlogPostUrl(post)} className="group">
                       <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
                         {post.image_url ? (
-                          <img
-                            src={post.image_url}
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
+                          <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <span className="text-muted-foreground text-sm">No image</span>
                           </div>
                         )}
                       </div>
-                      <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                        {post.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(post.shopify_published_at)}
-                      </p>
+                      <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">{post.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{formatDate(post.shopify_published_at)}</p>
                     </Link>
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-8">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
+                    <Button variant="outline" size="icon" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                      if (
-                        page === 1 ||
-                        page === totalPages ||
-                        (page >= currentPage - 1 && page <= currentPage + 1)
-                      ) {
+                      if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
                         return (
-                          <Button
-                            key={page}
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="icon"
-                            onClick={() => handlePageChange(page)}
-                          >
+                          <Button key={page} variant={currentPage === page ? "default" : "outline"} size="icon" onClick={() => handlePageChange(page)}>
                             {page}
                           </Button>
                         );
@@ -374,28 +360,20 @@ const Blog = () => {
                       return null;
                     })}
                     
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
+                    <Button variant="outline" size="icon" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 )}
 
-                {/* Page info */}
                 <p className="text-center text-sm text-muted-foreground mt-4">
-                  Hiển thị {startIndex + 1} - {Math.min(startIndex + POSTS_PER_PAGE, allPosts.length)} trong {allPosts.length} bài viết
+                  Trang {currentPage} / {totalPages || 1}
                 </p>
               </div>
             ) : isFiltering ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">Không tìm thấy bài viết nào phù hợp</p>
-                <Button variant="outline" onClick={clearFilters}>
-                  Xóa bộ lọc
-                </Button>
+                <Button variant="outline" onClick={clearFilters}>Xóa bộ lọc</Button>
               </div>
             ) : null}
           </>

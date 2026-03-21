@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSyncBlogPosts, BlogPost } from "@/hooks/useBlogPosts";
+import { BlogCommentsManager } from "@/components/admin/BlogCommentsManager";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -69,6 +71,17 @@ export default function ContentBlog() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const syncPosts = useSyncBlogPosts();
+
+  const { data: commentsCount = 0 } = useQuery({
+    queryKey: ["admin-blog-comments-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("blog_comments")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
@@ -546,6 +559,24 @@ export default function ContentBlog() {
         </DialogContent>
       </Dialog>
 
+      {/* Comment Moderation Section (Fix 5) */}
+      <Card>
+        <CardHeader className="py-4">
+          <CardTitle className="text-lg flex items-center gap-2">
+            Comments
+            <Badge variant="secondary">{commentsCount}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {commentsCount === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No comments yet.
+            </p>
+          ) : (
+            <BlogCommentsManager />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
