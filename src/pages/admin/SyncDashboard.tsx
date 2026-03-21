@@ -39,7 +39,7 @@ const statusConfig: Record<SyncStatus, { badge: string; variant: "default" | "se
 const StatusIcon = ({ status }: { status: SyncStatus }) => {
   switch (status) {
     case "running": return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
-    case "success": return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    case "success": return <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
     case "error": return <XCircle className="h-4 w-4 text-destructive" />;
     default: return <Clock className="h-4 w-4 text-muted-foreground" />;
   }
