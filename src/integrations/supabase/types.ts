@@ -1495,6 +1495,41 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_featured_config: {
+        Row: {
+          collection_id: string | null
+          id: string
+          is_active: boolean
+          product_count: number
+          section_title: string
+          updated_at: string
+        }
+        Insert: {
+          collection_id?: string | null
+          id?: string
+          is_active?: boolean
+          product_count?: number
+          section_title?: string
+          updated_at?: string
+        }
+        Update: {
+          collection_id?: string | null
+          id?: string
+          is_active?: boolean
+          product_count?: number
+          section_title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_featured_config_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homepage_promos: {
         Row: {
           bg_color: string
