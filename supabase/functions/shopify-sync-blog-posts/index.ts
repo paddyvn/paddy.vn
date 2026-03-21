@@ -34,7 +34,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Starting Shopify blog posts sync...');
+    // Parse request body for incremental sync
+    const { updatedAtMin } = await req.json().catch(() => ({}));
+    console.log('Starting Shopify blog posts sync...', updatedAtMin ? `(incremental from ${updatedAtMin})` : '(full)');
 
     const shopifyDomain = Deno.env.get('SHOPIFY_STORE_DOMAIN');
     const shopifyToken = Deno.env.get('SHOPIFY_ADMIN_API_TOKEN');
