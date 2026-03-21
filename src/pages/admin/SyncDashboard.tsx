@@ -209,6 +209,13 @@ const SyncDashboard = () => {
       progress: (abandonedCheckouts as any).progress,
       onSync: () => void runSync("abandonedCheckouts", "Abandoned Checkouts", () => abandonedCheckouts.mutateAsync()),
     },
+    {
+      key: "blogPosts", title: "Blog Posts",
+      description: "Sync blog posts and categories from Shopify",
+      icon: <FileText className="h-5 w-5 text-muted-foreground" />,
+      status: getStatus("blogPosts", blogPosts.isPending),
+      onSync: () => void runSync("blogPosts", "Blog Posts", () => blogPosts.mutateAsync()),
+    },
   ];
 
   return (
