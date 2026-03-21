@@ -180,7 +180,7 @@ export const CollectionFilters = ({
           className="w-full justify-start text-destructive hover:text-destructive mb-2"
         >
           <X className="h-4 w-4 mr-2" />
-          Clear all filters
+          Xóa bộ lọc
         </Button>
       )}
 
@@ -189,14 +189,14 @@ export const CollectionFilters = ({
         {showBrandFilter && (
           <AccordionItem value="brand">
             <AccordionTrigger className="text-base font-semibold">
-              Brand
+              Thương hiệu
             </AccordionTrigger>
             <AccordionContent>
               {availableBrands.length > SEARCHABLE_THRESHOLD && (
                 <div className="relative mb-3">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search brands..."
+                    placeholder="Tìm thương hiệu..."
                     value={brandSearch}
                     onChange={(e) => setBrandSearch(e.target.value)}
                     className="pl-8 h-9"
@@ -219,7 +219,7 @@ export const CollectionFilters = ({
                   </label>
                 ))}
                 {filteredBrands.length === 0 && brandSearch && (
-                  <p className="text-sm text-muted-foreground py-2">No brands found</p>
+                  <p className="text-sm text-muted-foreground py-2">Không tìm thấy thương hiệu</p>
                 )}
               </div>
             </AccordionContent>
@@ -228,8 +228,8 @@ export const CollectionFilters = ({
 
         {/* Price Filter */}
         <AccordionItem value="price">
-          <AccordionTrigger className="text-base font-semibold">
-            Price
+            <AccordionTrigger className="text-base font-semibold">
+            Giá
           </AccordionTrigger>
           <AccordionContent>
             <div className="px-2 pt-2 pb-4">
@@ -253,7 +253,7 @@ export const CollectionFilters = ({
         {showLifeStageFilter && (
           <AccordionItem value="life-stage">
             <AccordionTrigger className="text-base font-semibold">
-              Life Stage
+              Độ tuổi
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2">
@@ -280,7 +280,7 @@ export const CollectionFilters = ({
         {showSizeFilter && (
           <AccordionItem value="breed-size">
             <AccordionTrigger className="text-base font-semibold">
-              Breed Size
+              Giống chó
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2">
@@ -307,14 +307,14 @@ export const CollectionFilters = ({
         {showHealthFilter && (
           <AccordionItem value="health-condition">
             <AccordionTrigger className="text-base font-semibold">
-              Health Condition
+              Tình trạng sức khỏe
             </AccordionTrigger>
             <AccordionContent>
               {healthConditions.length > SEARCHABLE_THRESHOLD && (
                 <div className="relative mb-3">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search conditions..."
+                    placeholder="Tìm tình trạng..."
                     value={healthSearch}
                     onChange={(e) => setHealthSearch(e.target.value)}
                     className="pl-8 h-9"
@@ -337,7 +337,7 @@ export const CollectionFilters = ({
                   </label>
                 ))}
                 {filteredHealthConditions.length === 0 && healthSearch && (
-                  <p className="text-sm text-muted-foreground py-2">No conditions found</p>
+                  <p className="text-sm text-muted-foreground py-2">Không tìm thấy</p>
                 )}
               </div>
             </AccordionContent>
