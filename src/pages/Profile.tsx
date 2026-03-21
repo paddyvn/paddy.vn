@@ -683,6 +683,7 @@ const Profile = () => {
             {/* Profile Section */}
             {activeSection === "profile" && (
               <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -777,7 +778,7 @@ const Profile = () => {
               </Card>
 
               {/* Boss Section - within Sen & Boss page */}
-              <Card className="mt-6">
+              <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>Boss</CardTitle>
@@ -1018,6 +1019,7 @@ const Profile = () => {
                   ) : null}
                 </CardContent>
               </Card>
+              </div>
 
               {/* Edit Pet Dialog */}
               <Dialog open={!!editingPet} onOpenChange={(open) => !open && setEditingPet(null)}>
