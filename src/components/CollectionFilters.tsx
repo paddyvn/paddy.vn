@@ -314,7 +314,7 @@ export const CollectionFilters = ({
                 <div className="relative mb-3">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search conditions..."
+                    placeholder="Tìm tình trạng..."
                     value={healthSearch}
                     onChange={(e) => setHealthSearch(e.target.value)}
                     className="pl-8 h-9"
