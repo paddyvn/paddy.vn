@@ -180,7 +180,7 @@ export const CollectionFilters = ({
           className="w-full justify-start text-destructive hover:text-destructive mb-2"
         >
           <X className="h-4 w-4 mr-2" />
-          Clear all filters
+          Xóa bộ lọc
         </Button>
       )}
 
