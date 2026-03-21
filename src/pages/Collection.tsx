@@ -135,11 +135,18 @@ const Collection = () => {
     const ageRangeIds = new Set<string>();
     const sizeIds = new Set<string>();
     const healthConditionIds = new Set<string>();
+    const productTypeCounts = new Map<string, number>();
     let productsWithAge = 0;
     let productsWithSize = 0;
+    let inStock = 0;
+    let outOfStock = 0;
+    let onSaleCount = 0;
 
     allProducts.forEach((product: any) => {
       if (product.brand) brands.add(product.brand);
+      if (product.product_type) {
+        productTypeCounts.set(product.product_type, (productTypeCounts.get(product.product_type) || 0) + 1);
+      }
       if (product.target_age_id) {
         ageRangeIds.add(product.target_age_id);
         productsWithAge++;
@@ -151,15 +158,33 @@ const Collection = () => {
       product.product_health_condition_links?.forEach((link: any) => {
         if (link.health_condition_id) healthConditionIds.add(link.health_condition_id);
       });
+
+      const totalStock = product.total_stock;
+      if (totalStock !== null && totalStock <= 0) {
+        outOfStock++;
+      } else {
+        inStock++;
+      }
+
+      if (product.compare_at_price && product.compare_at_price > product.base_price) {
+        onSaleCount++;
+      }
     });
 
     const total = allProducts.length || 1;
 
+    const productTypes = Array.from(productTypeCounts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
     return {
+      productTypes,
       brands: Array.from(brands).sort(),
       ageRangeIds: productsWithAge / total >= FILTER_THRESHOLD ? Array.from(ageRangeIds) : [],
       sizeIds: productsWithSize / total >= FILTER_THRESHOLD ? Array.from(sizeIds) : [],
       healthConditionIds: Array.from(healthConditionIds),
+      stockCounts: { inStock, outOfStock },
+      onSaleCount,
     };
   }, [allProducts]);
 
