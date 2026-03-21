@@ -228,8 +228,8 @@ export const CollectionFilters = ({
 
         {/* Price Filter */}
         <AccordionItem value="price">
-          <AccordionTrigger className="text-base font-semibold">
-            Price
+            <AccordionTrigger className="text-base font-semibold">
+            Giá
           </AccordionTrigger>
           <AccordionContent>
             <div className="px-2 pt-2 pb-4">
