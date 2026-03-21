@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +41,7 @@ import {
   FileText,
   UploadCloud,
 } from "lucide-react";
-import { useStorageFiles, SourceFilter } from "@/hooks/useStorageFiles";
+import { useStorageFiles, type StorageFile, type SourceFilter, formatFileSize } from "@/hooks/useStorageFiles";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SOURCE_TABS: { value: SourceFilter; label: string; icon: React.ReactNode }[] = [
@@ -54,7 +55,6 @@ const SOURCE_TABS: { value: SourceFilter; label: string; icon: React.ReactNode }
 export function StorageFileBrowser() {
   const {
     files,
-    allFiles,
     filteredCount,
     sourceCounts,
     sourceFilter,
@@ -71,10 +71,27 @@ export function StorageFileBrowser() {
     copyUrl,
   } = useStorageFiles();
 
-  const [selectedFile, setSelectedFile] = useState<typeof files[0] | null>(null);
-  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<StorageFile | null>(null);
+  const [fileToDelete, setFileToDelete] = useState<StorageFile | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // File size on demand (only when detail dialog is open)
+  const { data: fileMetadata } = useQuery({
+    queryKey: ["file-metadata", selectedFile?.publicUrl],
+    queryFn: async () => {
+      if (!selectedFile?.publicUrl) return null;
+      try {
+        const response = await fetch(selectedFile.publicUrl, { method: "HEAD" });
+        const size = response.headers.get("content-length");
+        return { size: size ? parseInt(size) : null };
+      } catch {
+        return { size: null };
+      }
+    },
+    enabled: !!selectedFile,
+    staleTime: 60000,
+  });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -95,13 +112,11 @@ export function StorageFileBrowser() {
     if (!fileToDelete) return;
     await deleteFile(fileToDelete);
     setFileToDelete(null);
-    if (selectedFile?.name === fileToDelete) {
-      setSelectedFile(null);
-    }
+    setSelectedFile(null);
   };
 
   const isImage = (url?: string) => {
-    if (!url) return true; // Assume image if no metadata
+    if (!url) return true;
     const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg'];
     return imageExts.some(ext => url.toLowerCase().includes(ext));
   };
@@ -180,7 +195,7 @@ export function StorageFileBrowser() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {files.map((file) => (
             <div
-              key={file.id}
+              key={`${file.source}-${file.id}`}
               onClick={() => setSelectedFile(file)}
               className="group relative aspect-square rounded-lg border overflow-hidden bg-muted cursor-pointer hover:border-primary transition-colors"
             >
@@ -189,6 +204,7 @@ export function StorageFileBrowser() {
                   src={file.publicUrl}
                   alt={file.name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -297,6 +313,14 @@ export function StorageFileBrowser() {
                     {new Date(selectedFile.created_at).toLocaleString()}
                   </span>
                 </div>
+                {fileMetadata?.size && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Size:</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatFileSize(fileMetadata.size)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -318,7 +342,7 @@ export function StorageFileBrowser() {
                   variant="destructive"
                   className="gap-2"
                   onClick={() => {
-                    setFileToDelete(selectedFile.name);
+                    setFileToDelete(selectedFile);
                     setSelectedFile(null);
                   }}
                 >
@@ -345,7 +369,23 @@ export function StorageFileBrowser() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete File</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{fileToDelete}"? This action cannot be undone.
+              Are you sure you want to delete "{fileToDelete?.name}"?
+              {fileToDelete?.source === "product" && (
+                <span className="block mt-2 text-destructive font-medium">
+                  This image is used by a product. Deleting it will remove the image from the product page.
+                </span>
+              )}
+              {fileToDelete?.source === "collection" && (
+                <span className="block mt-2 text-destructive font-medium">
+                  This image is used as a collection thumbnail. It will be removed.
+                </span>
+              )}
+              {fileToDelete?.source === "blog" && (
+                <span className="block mt-2 text-destructive font-medium">
+                  This image is the featured image for a blog post. It will be removed.
+                </span>
+              )}
+              <span className="block mt-1">This action cannot be undone.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
