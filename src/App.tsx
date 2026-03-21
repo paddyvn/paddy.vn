@@ -50,6 +50,7 @@ const BlogPostEdit = lazy(() => import("./pages/admin/BlogPostEdit"));
 const BlogCategories = lazy(() => import("./pages/admin/BlogCategories"));
 const ContentAIGenerator = lazy(() => import("./pages/admin/ContentAIGenerator"));
 const Pages = lazy(() => import("./pages/admin/Pages"));
+const PageEdit = lazy(() => import("./pages/admin/PageEdit"));
 const MarketingBanners = lazy(() => import("./pages/admin/MarketingBanners"));
 const PromotionsManagement = lazy(() => import("./pages/admin/PromotionsManagement"));
 const PromotionEdit = lazy(() => import("./pages/admin/PromotionEdit"));
