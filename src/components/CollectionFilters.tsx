@@ -253,7 +253,7 @@ export const CollectionFilters = ({
         {showLifeStageFilter && (
           <AccordionItem value="life-stage">
             <AccordionTrigger className="text-base font-semibold">
-              Life Stage
+              Độ tuổi
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2">
