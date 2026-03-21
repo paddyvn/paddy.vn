@@ -46,7 +46,7 @@ export const FeaturedProducts = () => {
         <div className="flex items-center justify-between mb-4 animate-in fade-in slide-in-from-bottom duration-700">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-primary mb-1">
-              Featured Products
+              Sản phẩm nổi bật
             </h2>
           </div>
           <Link 
