@@ -483,10 +483,13 @@ const Collection = () => {
                           filters={filters}
                           onFiltersChange={handleFiltersChange}
                           maxPrice={maxPrice}
+                          availableProductTypes={availableFilterOptions.productTypes}
                           availableBrands={availableFilterOptions.brands}
                           availableAgeRangeIds={availableFilterOptions.ageRangeIds}
                           availableSizeIds={availableFilterOptions.sizeIds}
                           availableHealthConditionIds={availableFilterOptions.healthConditionIds}
+                          stockCounts={availableFilterOptions.stockCounts}
+                          onSaleCount={availableFilterOptions.onSaleCount}
                         />
                       </div>
                     </SheetContent>
