@@ -1234,6 +1234,7 @@ const Profile = () => {
 
             {/* Addresses Section */}
             {activeSection === "addresses" && (
+              <>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
