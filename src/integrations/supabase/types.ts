@@ -1043,11 +1043,11 @@ export type Database = {
       }
       customer_addresses: {
         Row: {
-          address1: string
+          address1: string | null
           address2: string | null
-          city: string
+          city: string | null
           company: string | null
-          country: string
+          country: string | null
           country_code: string | null
           created_at: string
           customer_id: string
@@ -1058,14 +1058,15 @@ export type Database = {
           phone: string | null
           postal_code: string | null
           province: string | null
+          shopify_address_id: string | null
           updated_at: string
         }
         Insert: {
-          address1: string
+          address1?: string | null
           address2?: string | null
-          city: string
+          city?: string | null
           company?: string | null
-          country?: string
+          country?: string | null
           country_code?: string | null
           created_at?: string
           customer_id: string
@@ -1076,14 +1077,15 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           province?: string | null
+          shopify_address_id?: string | null
           updated_at?: string
         }
         Update: {
-          address1?: string
+          address1?: string | null
           address2?: string | null
-          city?: string
+          city?: string | null
           company?: string | null
-          country?: string
+          country?: string | null
           country_code?: string | null
           created_at?: string
           customer_id?: string
@@ -1094,6 +1096,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           province?: string | null
+          shopify_address_id?: string | null
           updated_at?: string
         }
         Relationships: [
