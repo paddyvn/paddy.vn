@@ -1230,6 +1230,33 @@ const Profile = () => {
                           </p>
                         )}
                       </div>
+                      <div className="space-y-2">
+                        <Label>Cân nặng (kg)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={editPetForm.weight_kg || ""}
+                          onChange={(e) => setEditPetForm({ ...editPetForm, weight_kg: e.target.value ? parseFloat(e.target.value) : null })}
+                          placeholder="5.5"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Giới tính</Label>
+                        <Select
+                          value={editPetForm.gender || ""}
+                          onValueChange={(value) => setEditPetForm({ ...editPetForm, gender: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn giới tính..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Đực</SelectItem>
+                            <SelectItem value="female">Cái</SelectItem>
+                            <SelectItem value="unknown">Không rõ</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="space-y-2 sm:col-span-2">
                         <Label>Ảnh Boss</Label>
                         {editingPet?.photo_url && !editPetPhotoFile && (
