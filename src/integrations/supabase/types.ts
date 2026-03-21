@@ -2722,6 +2722,92 @@ export type Database = {
           },
         ]
       }
+      loyalty_points: {
+        Row: {
+          created_at: string
+          id: string
+          lifetime_earned: number
+          lifetime_redeemed: number
+          points_balance: number
+          tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lifetime_earned?: number
+          lifetime_redeemed?: number
+          points_balance?: number
+          tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lifetime_earned?: number
+          lifetime_redeemed?: number
+          points_balance?: number
+          tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          points: number
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points: number
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points?: number
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       misa_invoice_marketplaces: {
         Row: {
           address: string | null
@@ -3412,36 +3498,42 @@ export type Database = {
           age_years: number | null
           breed: string | null
           created_at: string
+          gender: string | null
           id: string
           name: string
           photo_url: string | null
           species: string
           updated_at: string
           user_id: string
+          weight_kg: number | null
         }
         Insert: {
           age_months?: number | null
           age_years?: number | null
           breed?: string | null
           created_at?: string
+          gender?: string | null
           id?: string
           name: string
           photo_url?: string | null
           species: string
           updated_at?: string
           user_id: string
+          weight_kg?: number | null
         }
         Update: {
           age_months?: number | null
           age_years?: number | null
           breed?: string | null
           created_at?: string
+          gender?: string | null
           id?: string
           name?: string
           photo_url?: string | null
           species?: string
           updated_at?: string
           user_id?: string
+          weight_kg?: number | null
         }
         Relationships: [
           {
@@ -6557,6 +6649,58 @@ export type Database = {
           },
         ]
       }
+      user_coupons: {
+        Row: {
+          coupon_id: string
+          created_at: string
+          id: string
+          is_used: boolean | null
+          order_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          order_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          order_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coupons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_custom_roles: {
         Row: {
           created_at: string
@@ -7023,6 +7167,7 @@ export type Database = {
         Returns: undefined
       }
       mark_orders_invoiced: { Args: { p_order_ids: string[] }; Returns: number }
+      normalize_phone: { Args: { phone: string }; Returns: string }
       refresh_paddy_customers_monthly_counts_cache: {
         Args: never
         Returns: undefined
