@@ -150,6 +150,8 @@ const Profile = () => {
   const [editForm, setEditForm] = useState<Partial<Profile>>({});
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({});
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [editAddressForm, setEditAddressForm] = useState<Partial<Address>>({});
   const [isAddingPet, setIsAddingPet] = useState(false);
   const [newPet, setNewPet] = useState<Partial<Pet>>({ species: "dog" });
   const [petBirthday, setPetBirthday] = useState<Date | undefined>(undefined);
