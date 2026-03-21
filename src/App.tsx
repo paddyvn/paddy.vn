@@ -43,6 +43,7 @@ const CustomersManagement = lazy(() => import("./pages/admin/CustomersManagement
 const CustomerSegments = lazy(() => import("./pages/admin/CustomerSegments"));
 const CustomerDetail = lazy(() => import("./pages/admin/CustomerDetail"));
 const AbandonedCheckouts = lazy(() => import("./pages/admin/AbandonedCheckouts"));
+const LoyaltyManagement = lazy(() => import("./pages/admin/LoyaltyManagement"));
 const ContentMetaobjects = lazy(() => import("./pages/admin/ContentMetaobjects"));
 const ContentFiles = lazy(() => import("./pages/admin/ContentFiles"));
 const ContentMenus = lazy(() => import("./pages/admin/ContentMenus"));
