@@ -22,10 +22,13 @@ interface ProductCardProps {
     rating_count?: number | null;
     sold_count?: number | null;
     created_at?: string | null;
+    source_created_at?: string | null;
     option1_name?: string | null;
     option2_name?: string | null;
     option3_name?: string | null;
+    total_stock?: number | null;
     product_images?: Array<{ image_url: string; is_primary: boolean }>;
+    product_variants?: Array<{ stock_quantity: number | null }>;
     reviews?: Array<{ rating: number }>;
   };
   promotion?: ProductPromotion | null;
@@ -76,8 +79,14 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
     });
   }, []);
 
+  // — Stock status —
+  const totalStock = product.total_stock ?? 
+    product.product_variants?.reduce((sum, v) => sum + (v.stock_quantity ?? 0), 0) ?? null;
+  const isOutOfStock = totalStock !== null && totalStock <= 0;
+
   const handleQuickAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) return;
     setQuickAddOpen(true);
   };
 
@@ -102,23 +111,17 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
     return primary?.image_url || images[0]?.image_url;
   };
 
-  // — Rating (use demo data if no real reviews) —
+  // — Rating (only show real reviews) —
   const realAvgRating = product.reviews && product.reviews.length > 0
     ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
     : (product.rating ?? 0);
   const realReviewCount = product.reviews?.length ?? product.rating_count ?? 0;
   const hasRealReviews = realReviewCount > 0 && realAvgRating > 0;
 
-  // Demo: generate consistent pseudo-random rating from product id
-  const idHash = product.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const demoRating = 3.5 + (idHash % 15) / 10; // 3.5 - 4.9
-  const demoReviewCount = 8 + (idHash % 120); // 8 - 127
+  // — Sold count (only real data) —
+  const realSoldCount = product.sold_count ?? 0;
 
-  const avgRating = hasRealReviews ? realAvgRating : demoRating;
-  const reviewCount = hasRealReviews ? realReviewCount : demoReviewCount;
-  const hasReviews = true; // always show stars
-
-  // — Discount calculation (reuse existing logic) —
+  // — Discount calculation —
   const hasCompareAtDiscount = product.compare_at_price && product.compare_at_price > product.base_price;
   const hasPromotionDiscount = promotion?.discount_value && promotion.discount_value > 0;
   const showSale = hasPromotionDiscount || hasCompareAtDiscount;
@@ -147,20 +150,20 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
 
   // — Badges —
   const isBestseller = product.is_featured;
-  const realSoldCount = product.sold_count ?? 0;
-  const soldCount = realSoldCount > 0 ? realSoldCount : 15 + (idHash % 200);
-  const isNew = product.created_at
-    ? (Date.now() - new Date(product.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
+  // Use source_created_at for "Mới" badge (actual product creation date from Shopify)
+  const newDateSource = product.source_created_at || product.created_at;
+  const isNew = newDateSource
+    ? (Date.now() - new Date(newDateSource).getTime()) < 30 * 24 * 60 * 60 * 1000
     : false;
 
   return (
     <>
       <div
-        className="group relative flex flex-col bg-card rounded-2xl overflow-hidden cursor-pointer shadow-[0_1px_3px_rgba(8,73,255,0.06),0_4px_12px_rgba(8,73,255,0.04)] hover:shadow-[0_4px_16px_rgba(8,73,255,0.10),0_8px_28px_rgba(8,73,255,0.06)] hover:-translate-y-[3px] transition-all duration-300 ease-out"
+        className={`group relative flex flex-col bg-card rounded-2xl overflow-hidden cursor-pointer shadow-[0_1px_3px_rgba(8,73,255,0.06),0_4px_12px_rgba(8,73,255,0.04)] hover:shadow-[0_4px_16px_rgba(8,73,255,0.10),0_8px_28px_rgba(8,73,255,0.06)] hover:-translate-y-[3px] transition-all duration-300 ease-out ${isOutOfStock ? "opacity-75" : ""}`}
         onClick={() => navigate(`/products/${product.slug}`)}
       >
         {/* Image */}
-        <div className="relative aspect-square bg-muted overflow-hidden">
+        <div className={`relative aspect-square bg-muted overflow-hidden ${isOutOfStock ? "grayscale-[30%]" : ""}`}>
           <img
             src={getPrimaryImage(product.product_images)}
             alt={product.name}
@@ -169,17 +172,22 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
 
           {/* Badges top-left */}
           <div className="absolute top-2.5 left-2.5 flex gap-1.5 flex-wrap">
-            {isBestseller && (
+            {isOutOfStock && (
+              <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-destructive text-destructive-foreground">
+                Hết hàng
+              </span>
+            )}
+            {isBestseller && !isOutOfStock && (
               <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-orange-500 text-white">
                 Bán chạy
               </span>
             )}
-            {showSale && discountPercentage > 0 && (
+            {showSale && discountPercentage > 0 && !isOutOfStock && (
               <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
                 -{discountPercentage}%
               </span>
             )}
-            {isNew && (
+            {isNew && !isOutOfStock && (
               <span className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-primary text-primary-foreground">
                 Mới
               </span>
@@ -213,18 +221,18 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
             {product.name}
           </h3>
 
-          {/* Rating + sold count — always reserve space */}
+          {/* Rating + sold count — reserve space */}
           <div className="flex flex-col gap-0.5 mt-1 min-h-[38px]">
-            {hasReviews && (
+            {hasRealReviews && (
               <div className="flex items-center gap-[5px]">
-                <StarRating rating={avgRating} />
-                <span className="text-[12.5px] font-bold text-foreground">{avgRating.toFixed(1)}</span>
-                <span className="text-xs text-muted-foreground">({reviewCount})</span>
+                <StarRating rating={realAvgRating} />
+                <span className="text-[12.5px] font-bold text-foreground">{realAvgRating.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">({realReviewCount})</span>
               </div>
             )}
-            {soldCount >= 10 && (
+            {realSoldCount >= 10 && (
               <span className="text-[11.5px] text-muted-foreground font-medium">
-                Đã bán {formatSoldCount(soldCount)}
+                Đã bán {formatSoldCount(realSoldCount)}
               </span>
             )}
           </div>
@@ -251,14 +259,16 @@ export const ProductCard = ({ product, promotion, vouchers = [] }: ProductCardPr
               </div>
 
               <button
-                className={`w-[36px] h-[36px] rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 hover:scale-[1.06] active:scale-95 ${
-                  addedToCart
+                className={`w-[36px] h-[36px] rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                  isOutOfStock
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : addedToCart
                     ? "bg-green-500 text-white"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.06] active:scale-95"
                 }`}
                 onClick={handleQuickAddClick}
-                disabled={isAddingToCart}
-                aria-label="Thêm vào giỏ"
+                disabled={isAddingToCart || isOutOfStock}
+                aria-label={isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
               >
                 {isAddingToCart ? (
                   <Loader2 className="h-[15px] w-[15px] animate-spin" />
