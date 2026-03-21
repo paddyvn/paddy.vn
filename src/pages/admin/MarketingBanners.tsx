@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, Image, Bell, LayoutTemplate, GripVertical, Pencil, Trash2, Eye, EyeOff, Calendar, Grid3X3 } from "lucide-react";
 import HomepageCategoriesManager from "@/components/admin/HomepageCategoriesManager";
+import HomepagePromosManager from "@/components/admin/HomepagePromosManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
@@ -395,13 +396,7 @@ const MarketingBanners = () => {
         </TabsContent>
 
         <TabsContent value="promotional">
-          <BannerList
-            type="promotional"
-            title="Promotional Sections"
-            description="Custom promotional blocks and feature sections"
-            icon={<LayoutTemplate className="h-12 w-12 text-muted-foreground" />}
-            emptyMessage="Create custom promotional sections to highlight special offers, featured categories, or seasonal campaigns."
-          />
+          <HomepagePromosManager />
         </TabsContent>
 
         <TabsContent value="categories">
