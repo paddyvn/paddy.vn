@@ -152,7 +152,7 @@ const BlogCategories = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BlogCategory | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteCategory_target, setDeleteTarget] = useState<BlogCategory | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
