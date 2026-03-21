@@ -12,6 +12,7 @@ export interface BlogCategory {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  post_count?: number;
 }
 
 export const useBlogCategories = () => {
