@@ -82,6 +82,8 @@ interface Pet {
   breed: string | null;
   age_years: number | null;
   age_months: number | null;
+  weight_kg: number | null;
+  gender: string | null;
   photo_url: string | null;
   created_at: string;
   updated_at: string;
