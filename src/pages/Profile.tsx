@@ -150,6 +150,8 @@ const Profile = () => {
   const [editForm, setEditForm] = useState<Partial<Profile>>({});
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({});
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [editAddressForm, setEditAddressForm] = useState<Partial<Address>>({});
   const [isAddingPet, setIsAddingPet] = useState(false);
   const [newPet, setNewPet] = useState<Partial<Pet>>({ species: "dog" });
   const [petBirthday, setPetBirthday] = useState<Date | undefined>(undefined);
@@ -384,6 +386,33 @@ const Profile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["addresses", userId] });
       toast({ title: "Đã đặt làm địa chỉ mặc định" });
+    },
+  });
+
+  const updateAddressMutation = useMutation({
+    mutationFn: async (address: Partial<Address> & { id: string }) => {
+      const { error } = await supabase
+        .from("addresses")
+        .update({
+          full_name: address.full_name!,
+          phone: address.phone!,
+          address_line1: address.address_line1!,
+          address_line2: address.address_line2 || null,
+          city: address.city!,
+          district: address.district || null,
+          ward: address.ward || null,
+        })
+        .eq("id", address.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses", userId] });
+      setEditingAddress(null);
+      setEditAddressForm({});
+      toast({ title: "Cập nhật địa chỉ thành công" });
+    },
+    onError: () => {
+      toast({ title: "Lỗi", description: "Không thể cập nhật địa chỉ.", variant: "destructive" });
     },
   });
 
@@ -1205,6 +1234,7 @@ const Profile = () => {
 
             {/* Addresses Section */}
             {activeSection === "addresses" && (
+              <>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -1322,6 +1352,16 @@ const Profile = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => {
+                                setEditingAddress(address);
+                                setEditAddressForm(address);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="text-destructive hover:text-destructive"
                               onClick={() => deleteAddressMutation.mutate(address.id)}
                             >
@@ -1340,6 +1380,79 @@ const Profile = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Edit Address Dialog */}
+              <Dialog open={!!editingAddress} onOpenChange={(open) => !open && setEditingAddress(null)}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Chỉnh sửa địa chỉ</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Họ và tên *</Label>
+                        <Input
+                          value={editAddressForm.full_name || ""}
+                          onChange={(e) => setEditAddressForm({ ...editAddressForm, full_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Số điện thoại *</Label>
+                        <Input
+                          value={editAddressForm.phone || ""}
+                          onChange={(e) => setEditAddressForm({ ...editAddressForm, phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label>Địa chỉ *</Label>
+                        <Input
+                          value={editAddressForm.address_line1 || ""}
+                          onChange={(e) => setEditAddressForm({ ...editAddressForm, address_line1: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Phường/Xã</Label>
+                        <Input
+                          value={editAddressForm.ward || ""}
+                          onChange={(e) => setEditAddressForm({ ...editAddressForm, ward: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Quận/Huyện</Label>
+                        <Input
+                          value={editAddressForm.district || ""}
+                          onChange={(e) => setEditAddressForm({ ...editAddressForm, district: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tỉnh/Thành phố *</Label>
+                        <Input
+                          value={editAddressForm.city || ""}
+                          onChange={(e) => setEditAddressForm({ ...editAddressForm, city: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setEditingAddress(null)}>
+                        Hủy
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          if (!editAddressForm.full_name || !editAddressForm.phone || !editAddressForm.address_line1 || !editAddressForm.city) {
+                            toast({ title: "Vui lòng điền đầy đủ thông tin", variant: "destructive" });
+                            return;
+                          }
+                          updateAddressMutation.mutate({ ...editAddressForm, id: editingAddress!.id } as Partial<Address> & { id: string });
+                        }}
+                        disabled={updateAddressMutation.isPending}
+                      >
+                        {updateAddressMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              </>
             )}
 
             {/* Rewards Section */}
