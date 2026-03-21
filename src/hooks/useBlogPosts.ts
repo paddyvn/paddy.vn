@@ -154,6 +154,9 @@ export const useCreateBlogPost = () => {
       tags?: string;
       image_url?: string;
       blog_title?: string;
+      category_id?: string;
+      meta_title?: string;
+      meta_description?: string;
     }) => {
       const { data, error } = await supabase
         .from("blog_posts")
