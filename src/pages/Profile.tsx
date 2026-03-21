@@ -465,6 +465,8 @@ const Profile = () => {
           breed: pet.breed || null,
           age_years: pet.age_years || null,
           age_months: pet.age_months || null,
+          weight_kg: pet.weight_kg || null,
+          gender: pet.gender || null,
           photo_url: photoUrl,
         });
       if (error) throw error;
