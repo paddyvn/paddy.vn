@@ -1495,6 +1495,51 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_promos: {
+        Row: {
+          bg_color: string
+          created_at: string
+          cta_text: string
+          eyebrow: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          layout_slot: string
+          link_url: string | null
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          cta_text?: string
+          eyebrow?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          layout_slot: string
+          link_url?: string | null
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          cta_text?: string
+          eyebrow?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          layout_slot?: string
+          link_url?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hr_attendance_records: {
         Row: {
           check_in: string | null
