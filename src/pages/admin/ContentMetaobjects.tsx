@@ -21,10 +21,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, GripVertical, X } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type AttributeType = "age_ranges" | "sizes" | "health_conditions" | "origins";
@@ -90,6 +100,7 @@ function AttributeTable({ type }: { type: AttributeType }) {
   const config = ATTRIBUTE_CONFIG[type];
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Attribute | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     name_vi: "",
@@ -146,6 +157,7 @@ function AttributeTable({ type }: { type: AttributeType }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-attributes", type] });
       toast({ title: "Deleted", description: "Attribute deleted successfully." });
+      setDeleteTarget(null);
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -167,6 +179,34 @@ function AttributeTable({ type }: { type: AttributeType }) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
+      const { error } = await supabase
+        .from(config.table as "product_age_ranges")
+        .update({ display_order: newOrder } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-attributes", type] });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleMoveItem = (index: number, direction: "up" | "down") => {
+    if (!items) return;
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= items.length) return;
+
+    const currentItem = items[index];
+    const swapItem = items[swapIndex];
+
+    reorderMutation.mutate({ id: currentItem.id, newOrder: swapItem.display_order });
+    reorderMutation.mutate({ id: swapItem.id, newOrder: currentItem.display_order });
+  };
 
   const handleOpenDialog = (item?: Attribute) => {
     if (item) {
@@ -201,12 +241,6 @@ function AttributeTable({ type }: { type: AttributeType }) {
       data.country_code = formData.country_code;
     }
     saveMutation.mutate(data);
-  };
-
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
   };
 
   if (isLoading) {
@@ -292,7 +326,7 @@ function AttributeTable({ type }: { type: AttributeType }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10"></TableHead>
+              <TableHead className="w-20">Order</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Vietnamese</TableHead>
               {config.hasCountryCode && <TableHead>Code</TableHead>}
@@ -308,10 +342,29 @@ function AttributeTable({ type }: { type: AttributeType }) {
                 </TableCell>
               </TableRow>
             ) : (
-              items?.map((item) => (
+              items?.map((item, index) => (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === 0 || reorderMutation.isPending}
+                        onClick={() => handleMoveItem(index, "up")}
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === (items?.length ?? 0) - 1 || reorderMutation.isPending}
+                        onClick={() => handleMoveItem(index, "down")}
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>{item.name_vi}</TableCell>
@@ -342,7 +395,7 @@ function AttributeTable({ type }: { type: AttributeType }) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(item.id, item.name)}
+                        onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -354,6 +407,26 @@ function AttributeTable({ type }: { type: AttributeType }) {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this attribute. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -363,6 +436,7 @@ function OptionTemplatesTable() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<OptionTemplate | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     name_vi: "",
@@ -404,21 +478,18 @@ function OptionTemplatesTable() {
   const saveMutation = useMutation({
     mutationFn: async (data: { name: string; name_vi: string; is_active: boolean; values: OptionTemplateValue[] }) => {
       if (editingTemplate) {
-        // Update template
         const { error: updateError } = await supabase
           .from("product_option_templates")
           .update({ name: data.name, name_vi: data.name_vi, is_active: data.is_active })
           .eq("id", editingTemplate.id);
         if (updateError) throw updateError;
 
-        // Delete existing values
         const { error: deleteError } = await supabase
           .from("product_option_template_values")
           .delete()
           .eq("template_id", editingTemplate.id);
         if (deleteError) throw deleteError;
 
-        // Insert new values
         if (data.values.length > 0) {
           const { error: insertError } = await supabase
             .from("product_option_template_values")
@@ -433,7 +504,6 @@ function OptionTemplatesTable() {
           if (insertError) throw insertError;
         }
       } else {
-        // Create new template
         const maxOrder = templates?.reduce((max, t) => Math.max(max, t.display_order), 0) || 0;
         const { data: newTemplate, error: createError } = await supabase
           .from("product_option_templates")
@@ -442,7 +512,6 @@ function OptionTemplatesTable() {
           .single();
         if (createError) throw createError;
 
-        // Insert values
         if (data.values.length > 0) {
           const { error: insertError } = await supabase
             .from("product_option_template_values")
@@ -471,14 +540,12 @@ function OptionTemplatesTable() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Delete values first
       const { error: valuesError } = await supabase
         .from("product_option_template_values")
         .delete()
         .eq("template_id", id);
       if (valuesError) throw valuesError;
 
-      // Delete template
       const { error } = await supabase
         .from("product_option_templates")
         .delete()
@@ -489,6 +556,7 @@ function OptionTemplatesTable() {
       queryClient.invalidateQueries({ queryKey: ["option-templates-full"] });
       queryClient.invalidateQueries({ queryKey: ["option-templates"] });
       toast({ title: "Deleted", description: "Option template deleted successfully." });
+      setDeleteTarget(null);
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -511,6 +579,35 @@ function OptionTemplatesTable() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
+      const { error } = await supabase
+        .from("product_option_templates")
+        .update({ display_order: newOrder })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["option-templates-full"] });
+      queryClient.invalidateQueries({ queryKey: ["option-templates"] });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleMoveTemplate = (index: number, direction: "up" | "down") => {
+    if (!templates) return;
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= templates.length) return;
+
+    const currentItem = templates[index];
+    const swapItem = templates[swapIndex];
+
+    reorderMutation.mutate({ id: currentItem.id, newOrder: swapItem.display_order });
+    reorderMutation.mutate({ id: swapItem.id, newOrder: currentItem.display_order });
+  };
 
   const handleOpenDialog = (template?: OptionTemplate) => {
     if (template) {
@@ -556,12 +653,6 @@ function OptionTemplatesTable() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate(formData);
-  };
-
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
   };
 
   if (isLoading) {
@@ -688,7 +779,7 @@ function OptionTemplatesTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10"></TableHead>
+              <TableHead className="w-20">Order</TableHead>
               <TableHead>Option Name</TableHead>
               <TableHead>Values</TableHead>
               <TableHead>Status</TableHead>
@@ -703,10 +794,29 @@ function OptionTemplatesTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              templates?.map((template) => (
+              templates?.map((template, index) => (
                 <TableRow key={template.id}>
                   <TableCell>
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === 0 || reorderMutation.isPending}
+                        onClick={() => handleMoveTemplate(index, "up")}
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === (templates?.length ?? 0) - 1 || reorderMutation.isPending}
+                        onClick={() => handleMoveTemplate(index, "down")}
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium">
                     <div>{template.name}</div>
@@ -750,7 +860,7 @@ function OptionTemplatesTable() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(template.id, template.name)}
+                        onClick={() => setDeleteTarget({ id: template.id, name: template.name })}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -762,6 +872,26 @@ function OptionTemplatesTable() {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this option template and all its values. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
