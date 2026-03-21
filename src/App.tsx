@@ -122,6 +122,7 @@ const App = () => (
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
           <Route path="/order-confirmation/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><OrderConfirmation /></Suspense>} />
           <Route path="/pages/:handle" element={<Suspense fallback={<LoadingFallback />}><PageDetail /></Suspense>} />
+          <Route path="/lp/:handle" element={<Suspense fallback={<LoadingFallback />}><LandingPageEmbed /></Suspense>} />
           <Route
             path="/admin"
             element={
