@@ -683,6 +683,7 @@ const Profile = () => {
             {/* Profile Section */}
             {activeSection === "profile" && (
               <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
