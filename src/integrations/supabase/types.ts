@@ -3336,6 +3336,7 @@ export type Database = {
       orders: {
         Row: {
           cancelled_at: string | null
+          channel: string | null
           closed_at: string | null
           coupon_code: string | null
           created_at: string
@@ -3366,6 +3367,7 @@ export type Database = {
         }
         Insert: {
           cancelled_at?: string | null
+          channel?: string | null
           closed_at?: string | null
           coupon_code?: string | null
           created_at?: string
@@ -3396,6 +3398,7 @@ export type Database = {
         }
         Update: {
           cancelled_at?: string | null
+          channel?: string | null
           closed_at?: string | null
           coupon_code?: string | null
           created_at?: string
@@ -6947,6 +6950,7 @@ export type Database = {
         Returns: undefined
       }
       generate_pos_order_number: { Args: never; Returns: string }
+      generate_web_order_number: { Args: never; Returns: string }
       get_brand_sales_from_cache: {
         Args: { p_end_month?: string; p_limit?: number; p_start_month?: string }
         Returns: {
@@ -7223,6 +7227,26 @@ export type Database = {
       }
       mark_orders_invoiced: { Args: { p_order_ids: string[] }; Returns: number }
       normalize_phone: { Args: { phone: string }; Returns: string }
+      place_order: {
+        Args: {
+          p_coupon_code: string
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_delivery_method: string
+          p_discount: number
+          p_items: Json
+          p_notes: string
+          p_order_number: string
+          p_payment_gateway: string
+          p_shipping_address: Json
+          p_shipping_fee: number
+          p_subtotal: number
+          p_total: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       recalculate_loyalty_spending: { Args: never; Returns: undefined }
       refresh_paddy_customers_monthly_counts_cache: {
         Args: never
