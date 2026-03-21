@@ -531,6 +531,14 @@ const Collection = () => {
               {/* Active Filter Chips */}
               {activeFilterCount > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {filters.productTypes.map((type) => (
+                    <span key={`type-${type}`} className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      {type}
+                      <button onClick={() => handleFiltersChange({ ...filters, productTypes: filters.productTypes.filter((t) => t !== type) })} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
                   {filters.brands.map((brand) => (
                     <span key={`brand-${brand}`} className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
                       {brand}
@@ -539,6 +547,22 @@ const Collection = () => {
                       </button>
                     </span>
                   ))}
+                  {filters.stockStatus !== "all" && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      {filters.stockStatus === "in_stock" ? "Còn hàng" : "Hết hàng"}
+                      <button onClick={() => handleFiltersChange({ ...filters, stockStatus: "all" })} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.onSale && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                      Đang giảm giá
+                      <button onClick={() => handleFiltersChange({ ...filters, onSale: false })} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
                   {filters.ageRanges.map((id) => {
                     const age = ageRangesData?.find((a) => a.id === id);
                     return age ? (
