@@ -33,7 +33,7 @@ export const FeaturedProducts = () => {
     return (
       <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Featured Products</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Sản phẩm nổi bật</h2>
           <p className="text-lg text-muted-foreground">No featured products available yet.</p>
         </div>
       </section>
@@ -46,7 +46,7 @@ export const FeaturedProducts = () => {
         <div className="flex items-center justify-between mb-4 animate-in fade-in slide-in-from-bottom duration-700">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-primary mb-1">
-              Featured Products
+              Sản phẩm nổi bật
             </h2>
           </div>
           <Link 
