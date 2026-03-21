@@ -31,7 +31,7 @@ export const FeaturedProducts = () => {
 
   if (!products || products.length === 0) {
     return (
-      <section className="pt-3 pb-8 md:pt-4 md:pb-10" style={{ backgroundColor: '#fefefe' }}>
+      <section className="py-6" style={{ backgroundColor: '#fefefe' }}>
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Sản phẩm nổi bật</h2>
           <p className="text-lg text-muted-foreground">No featured products available yet.</p>
