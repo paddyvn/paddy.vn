@@ -418,8 +418,9 @@ export default function Checkout() {
       if (rpcError) throw rpcError;
 
       // Handle stock validation errors from RPC
-      if (!result?.success) {
-        const errors = (result?.errors as string[]) || ['Đã có lỗi xảy ra khi đặt hàng'];
+      const rpcResult = result as Record<string, unknown> | null;
+      if (!rpcResult?.success) {
+        const errors = (rpcResult?.errors as string[]) || ['Đã có lỗi xảy ra khi đặt hàng'];
         toast({
           title: 'Không thể đặt hàng',
           description: errors.join('\n'),
