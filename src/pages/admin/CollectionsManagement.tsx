@@ -40,8 +40,6 @@ import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon,
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
-import { useSyncCollections } from "@/hooks/useSyncCollections";
-import { useSyncProductCollections } from "@/hooks/useSyncProductCollections";
 import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
