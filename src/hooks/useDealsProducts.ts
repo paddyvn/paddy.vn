@@ -6,6 +6,7 @@ export interface DealsFilterState {
   petType: string | null;
   brands: string[];
   priceRange: [number, number];
+  categorySlug: string | null;
 }
 
 export const DEFAULT_DEALS_FILTERS: DealsFilterState = {
@@ -13,6 +14,7 @@ export const DEFAULT_DEALS_FILTERS: DealsFilterState = {
   petType: null,
   brands: [],
   priceRange: [0, 10000000],
+  categorySlug: null,
 };
 
 const PRODUCTS_PER_PAGE = 20;
