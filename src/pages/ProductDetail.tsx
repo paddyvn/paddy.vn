@@ -42,6 +42,8 @@ export default function ProductDetail() {
     ingredients: false,
     feeding: false,
   });
+  const [stockAlertEmail, setStockAlertEmail] = useState("");
+  const [stockAlertSubmitted, setStockAlertSubmitted] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session"],
