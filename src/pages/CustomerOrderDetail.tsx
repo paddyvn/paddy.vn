@@ -147,7 +147,7 @@ export default function CustomerOrderDetail() {
       if (skipped > 0) {
         toast({ title: `${skipped} sản phẩm không còn tồn tại và đã bị bỏ qua`, variant: "destructive" });
       }
-      navigate("/cart");
+      navigate("/gio-hang");
     } catch {
       toast({ title: "Có lỗi khi thêm vào giỏ hàng", variant: "destructive" });
     } finally {
