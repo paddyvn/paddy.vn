@@ -1114,7 +1114,7 @@ export default function Checkout() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Phí vận chuyển</span>
-                    <span>{formatPrice(shippingCost)}₫</span>
+                    <span>{isFreeShipping ? <span className="text-green-600 font-medium">Miễn phí</span> : `${formatPrice(shippingCost)}₫`}</span>
                   </div>
                   {voucherDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
