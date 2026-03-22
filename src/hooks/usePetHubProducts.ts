@@ -7,7 +7,7 @@ const DEFAULT_MAX_PRICE = 10000000;
 export interface PetHubFilterState {
   brands: string[];
   priceRange: [number, number];
-  categoryId: string | null;
+  categorySlug: string | null;
 }
 
 export const usePetHubProducts = (
@@ -19,15 +19,25 @@ export const usePetHubProducts = (
   return useQuery({
     queryKey: ["pet-hub-products", petType, filters, sortBy, page],
     queryFn: async () => {
-      // If a category is selected, get product IDs from product_collections
+      // If a category slug is selected, resolve to collection ID then get product IDs
       let categoryProductIds: string[] | null = null;
-      if (filters.categoryId) {
-        const { data: pcData } = await supabase
-          .from("product_collections")
-          .select("product_id")
-          .eq("collection_id", filters.categoryId);
-        categoryProductIds = (pcData || []).map((p) => p.product_id);
-        if (categoryProductIds.length === 0) {
+      if (filters.categorySlug) {
+        const { data: cat } = await supabase
+          .from("categories")
+          .select("id")
+          .eq("slug", filters.categorySlug)
+          .maybeSingle();
+
+        if (cat) {
+          const { data: pcData } = await supabase
+            .from("product_collections")
+            .select("product_id")
+            .eq("collection_id", cat.id);
+          categoryProductIds = (pcData || []).map((p) => p.product_id);
+          if (categoryProductIds.length === 0) {
+            return { products: [], total: 0 };
+          }
+        } else {
           return { products: [], total: 0 };
         }
       }
