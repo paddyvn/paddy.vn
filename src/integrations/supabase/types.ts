@@ -9420,16 +9420,17 @@ export type Database = {
       search_products: {
         Args: { p_limit?: number; p_offset?: number; p_query: string }
         Returns: {
-          brand_name: string
-          compare_price: number
+          base_price: number
+          brand: string
+          compare_at_price: number
+          health_condition_ids: string[]
           id: string
-          in_stock: boolean
-          min_price: number
+          image_url: string
           name: string
-          primary_image: string
-          product_type: string
-          relevance: number
+          pet_type: string
           slug: string
+          target_age_id: string
+          target_size_id: string
         }[]
       }
       search_sapo_customers: {

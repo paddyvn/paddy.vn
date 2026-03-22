@@ -1,17 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Tag, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Product {
-  id: string;
-  name: string;
+interface Suggestion {
+  suggestion: string;
+  type: string;
   slug: string;
-  base_price: number;
-  brand: string | null;
-  product_images: Array<{ image_url: string; is_primary: boolean }>;
+  image_url: string | null;
 }
 
 interface SearchAutocompleteProps {
@@ -28,7 +26,7 @@ export const SearchAutocomplete = ({
   isMobile = false,
 }: SearchAutocompleteProps) => {
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -37,11 +35,8 @@ export const SearchAutocomplete = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Debounced search
   useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (query.trim().length < 2) {
       setSuggestions([]);
@@ -52,26 +47,13 @@ export const SearchAutocomplete = ({
     setIsLoading(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        const { data, error } = await supabase
-          .from("products")
-          .select(`
-            id,
-            name,
-            slug,
-            base_price,
-            brand,
-            product_images (
-              image_url,
-              is_primary
-            )
-          `)
-          .eq("is_active", true)
-          .or(`name.ilike.%${query}%,brand.ilike.%${query}%,tags.ilike.%${query}%`)
-          .order("name")
-          .limit(8);
+        const { data, error } = await supabase.rpc("search_suggestions", {
+          p_query: query.trim(),
+          p_limit: 8,
+        });
 
         if (error) throw error;
-        setSuggestions(data || []);
+        setSuggestions((data as Suggestion[]) || []);
         setShowDropdown(true);
       } catch (error) {
         console.error("Search error:", error);
@@ -82,20 +64,16 @@ export const SearchAutocomplete = ({
     }, 300);
 
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -108,10 +86,16 @@ export const SearchAutocomplete = ({
     }
   };
 
-  const handleSelectProduct = (product: Product) => {
+  const handleSelect = (item: Suggestion) => {
     setShowDropdown(false);
     setQuery("");
-    navigate(`/products/${product.slug}`);
+    if (item.type === "product") {
+      navigate(`/products/${item.slug}`);
+    } else if (item.type === "brand") {
+      navigate(`/brands-thuong-hieu-thu-cung/${item.slug}`);
+    } else if (item.type === "category") {
+      navigate(`/collections/${item.slug}`);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -125,22 +109,22 @@ export const SearchAutocomplete = ({
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
-      handleSelectProduct(suggestions[selectedIndex]);
+      handleSelect(suggestions[selectedIndex]);
     } else if (e.key === "Escape") {
       setShowDropdown(false);
     }
   };
 
-  const getProductImage = (product: Product) => {
-    const primary = product.product_images?.find((img) => img.is_primary);
-    return primary?.image_url || product.product_images?.[0]?.image_url || "/placeholder.svg";
+  const getTypeIcon = (type: string) => {
+    if (type === "brand") return <Store className="h-3 w-3 text-muted-foreground" />;
+    if (type === "category") return <Tag className="h-3 w-3 text-muted-foreground" />;
+    return null;
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
+  const getTypeLabel = (type: string) => {
+    if (type === "brand") return "Thương hiệu";
+    if (type === "category") return "Danh mục";
+    return null;
   };
 
   return (
@@ -179,35 +163,34 @@ export const SearchAutocomplete = ({
         </div>
       </form>
 
-      {/* Suggestions Dropdown */}
       {showDropdown && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-[100] overflow-hidden">
           {suggestions.length > 0 ? (
             <>
               <ul className="max-h-[400px] overflow-y-auto">
-                {suggestions.map((product, index) => (
-                  <li key={product.id}>
+                {suggestions.map((item, index) => (
+                  <li key={`${item.type}-${item.slug}-${index}`}>
                     <button
                       type="button"
-                      onClick={() => handleSelectProduct(product)}
+                      onClick={() => handleSelect(item)}
                       className={`w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left ${
                         index === selectedIndex ? "bg-muted" : ""
                       }`}
                     >
                       <img
-                        src={getProductImage(product)}
-                        alt={product.name}
+                        src={item.image_url || "/placeholder.svg"}
+                        alt={item.suggestion}
                         className="w-12 h-12 object-contain rounded bg-muted flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium line-clamp-1">{product.name}</p>
-                        {product.brand && (
-                          <p className="text-xs text-muted-foreground">{product.brand}</p>
+                        <p className="text-sm font-medium line-clamp-1">{item.suggestion}</p>
+                        {(item.type === "brand" || item.type === "category") && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            {getTypeIcon(item.type)}
+                            {getTypeLabel(item.type)}
+                          </p>
                         )}
                       </div>
-                      <span className="text-sm font-semibold text-primary flex-shrink-0">
-                        {formatPrice(product.base_price)}
-                      </span>
                     </button>
                   </li>
                 ))}
@@ -218,13 +201,13 @@ export const SearchAutocomplete = ({
                   onClick={handleSubmit as any}
                   className="w-full p-3 text-sm text-center text-primary hover:bg-muted border-t border-border transition-colors"
                 >
-                  View all results for "{query}"
+                  Xem tất cả kết quả cho "{query}"
                 </button>
               )}
             </>
           ) : !isLoading && query.trim().length >= 2 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              No products found for "{query}"
+              Không tìm thấy kết quả cho "{query}"
             </div>
           ) : null}
         </div>

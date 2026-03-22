@@ -18,40 +18,29 @@ const Search = () => {
   const query = searchParams.get("q") || "";
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Fetch all matching products first (without client-side filtering)
+  // Fetch all matching products using RPC
   const { data: allProducts, isLoading } = useQuery({
     queryKey: ["search-products", query],
     queryFn: async () => {
       if (!query.trim()) return [];
 
-      const { data, error } = await supabase
-        .from("products")
-        .select(`
-          id,
-          name,
-          slug,
-          base_price,
-          compare_at_price,
-          brand,
-          pet_type,
-          is_active,
-          target_age_id,
-          target_size_id,
-          product_images (
-            image_url,
-            is_primary
-          ),
-          product_health_condition_links (
-            health_condition_id
-          )
-        `)
-        .eq("is_active", true)
-        .or(`name.ilike.%${query}%,brand.ilike.%${query}%,tags.ilike.%${query}%`)
-        .order("name")
-        .limit(200);
+      const { data, error } = await supabase.rpc("search_products", {
+        p_query: query.trim(),
+        p_limit: 200,
+        p_offset: 0,
+      });
 
       if (error) throw error;
-      return data;
+
+      // Transform RPC results to match expected shape
+      return (data || []).map((p: any) => ({
+        ...p,
+        is_active: true,
+        product_images: p.image_url ? [{ image_url: p.image_url, is_primary: true }] : [],
+        product_health_condition_links: (p.health_condition_ids || []).map((id: string) => ({
+          health_condition_id: id,
+        })),
+      }));
     },
     enabled: !!query.trim(),
   });
