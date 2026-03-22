@@ -17,7 +17,7 @@ function assignSlots(promos: HomepagePromo[]) {
 }
 
 function getLink(promo: HomepagePromo) {
-  return promo.link_url || "/promotions";
+  return promo.link_url || "/khuyen-mai";
 }
 
 function BentoCard({ promo, slot }: { promo: HomepagePromo | null; slot: string }) {
