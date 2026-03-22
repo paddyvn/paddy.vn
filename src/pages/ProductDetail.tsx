@@ -7,11 +7,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Heart, Ticket, Copy, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ShoppingCart, Heart, Ticket, Copy, CheckCircle, Bell } from "lucide-react";
 import { ProductTrustBadges } from "@/components/ProductTrustBadges";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { RelatedProducts } from "@/components/RelatedProducts";
+import { ProductReviewsSection } from "@/components/ProductReviewsSection";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductBreadcrumb } from "@/components/ProductBreadcrumb";
@@ -19,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { useProductPromotion } from "@/hooks/useProductPromotions";
 import { useProductVouchers } from "@/hooks/useProductVouchers";
+import { Helmet } from "react-helmet-async";
 
 function sanitizeDescription(html: string): string {
   return html
