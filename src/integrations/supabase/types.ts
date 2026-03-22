@@ -543,6 +543,21 @@ export type Database = {
           },
         ]
       }
+      backfill_cursors: {
+        Row: {
+          last_id: number
+          name: string
+        }
+        Insert: {
+          last_id?: number
+          name: string
+        }
+        Update: {
+          last_id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           background_color: string | null
@@ -7108,7 +7123,7 @@ export type Database = {
       }
     }
     Functions: {
-      backfill_customer_address_fields: { Args: never; Returns: undefined }
+      backfill_customer_address_fields: { Args: never; Returns: number }
       backfill_sapo_customer_order_stats: {
         Args: never
         Returns: {
