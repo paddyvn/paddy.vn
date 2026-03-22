@@ -77,7 +77,7 @@ const usePetCategories = (petType: "dog" | "cat") => {
         .from("categories")
         .select("id, name, slug, pet_type, display_order")
         .eq("is_active", true)
-        .eq("pet_type", petType)
+        .or(`pet_type.eq.${petType},pet_type.eq.both`)
         .order("display_order", { ascending: true })
         .order("name", { ascending: true });
 
