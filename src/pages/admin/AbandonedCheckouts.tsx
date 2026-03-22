@@ -44,7 +44,7 @@ import {
   DollarSign,
   RefreshCw,
 } from "lucide-react";
-import { useSyncAbandonedCheckouts } from "@/hooks/useSyncAbandonedCheckouts";
+
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import {
