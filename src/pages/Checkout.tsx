@@ -591,7 +591,7 @@ export default function Checkout() {
       
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="max-w-3xl mx-auto mb-4">
+        <div className="mb-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
