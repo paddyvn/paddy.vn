@@ -1,7 +1,7 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -20,19 +20,62 @@ interface CategoryWithCount {
   id: string;
   name: string;
   slug: string;
-  image_url: string | null;
   pet_type: string;
   display_order: number | null;
+  productCount: number;
 }
+
+// Emoji + color mapping by slug keyword
+const getCategoryStyle = (slug: string): { emoji: string; bg: string } => {
+  const s = slug.toLowerCase();
+  // Food
+  if (s.includes("thuc-an-hat") || s.includes("hat-cho") || s.includes("hat-meo"))
+    return { emoji: "🍖", bg: "hsl(40 60% 90%)" };
+  if (s.includes("pate") || s.includes("do-an-uot") || s.includes("thuc-an-uot"))
+    return { emoji: "🥫", bg: "hsl(40 60% 90%)" };
+  if (s.includes("banh") || s.includes("xuong-gam") || s.includes("snack") || s.includes("treats") || s.includes("sup-thuong"))
+    return { emoji: "🦴", bg: "hsl(40 60% 90%)" };
+  if (s.includes("thuc-an") || s.includes("food"))
+    return { emoji: "🍗", bg: "hsl(40 60% 90%)" };
+  // Toys
+  if (s.includes("do-choi") || s.includes("toy"))
+    return { emoji: "🎾", bg: "hsl(210 70% 90%)" };
+  // Health
+  if (s.includes("suc-khoe") || s.includes("health") || s.includes("vitamin") || s.includes("bo-sung"))
+    return { emoji: "💊", bg: "hsl(150 50% 90%)" };
+  if (s.includes("tri-ve") || s.includes("so-giun") || s.includes("ky-sinh"))
+    return { emoji: "🛡️", bg: "hsl(150 50% 90%)" };
+  // Hygiene / litter
+  if (s.includes("ve-sinh") || s.includes("cat-ve-sinh") || s.includes("ta-") || s.includes("khay"))
+    return { emoji: "🧹", bg: "hsl(150 50% 90%)" };
+  if (s.includes("dau-goi") || s.includes("sua-tam") || s.includes("cham-soc"))
+    return { emoji: "🧴", bg: "hsl(270 40% 90%)" };
+  if (s.includes("rang") || s.includes("mieng"))
+    return { emoji: "🪥", bg: "hsl(150 50% 90%)" };
+  // Accessories
+  if (s.includes("phu-kien") || s.includes("day-dat") || s.includes("vong-co") || s.includes("accessori"))
+    return { emoji: "🎒", bg: "hsl(270 40% 90%)" };
+  if (s.includes("nem") || s.includes("chuong") || s.includes("nha") || s.includes("cat-tree") || s.includes("giuong"))
+    return { emoji: "🏠", bg: "hsl(340 50% 92%)" };
+  // Puppy/kitten
+  if (s.includes("cho-con") || s.includes("puppy"))
+    return { emoji: "🐶", bg: "hsl(340 50% 92%)" };
+  if (s.includes("meo-con") || s.includes("kitten"))
+    return { emoji: "🐱", bg: "hsl(340 50% 92%)" };
+  // Fish (cat food)
+  if (s.includes("ca") && s.includes("meo"))
+    return { emoji: "🐟", bg: "hsl(210 70% 90%)" };
+  // Fallback
+  return { emoji: "📦", bg: "hsl(220 15% 93%)" };
+};
 
 const usePetCategories = (petType: "dog" | "cat") => {
   return useQuery({
-    queryKey: ["pet-categories-with-products", petType],
+    queryKey: ["pet-categories-with-counts", petType],
     queryFn: async () => {
-      // Get categories for this pet type that are active and not brands
       const { data: categories, error } = await supabase
         .from("categories")
-        .select("id, name, slug, image_url, pet_type, display_order")
+        .select("id, name, slug, pet_type, display_order")
         .eq("is_active", true)
         .eq("pet_type", petType)
         .order("display_order", { ascending: true })
@@ -40,22 +83,23 @@ const usePetCategories = (petType: "dog" | "cat") => {
 
       if (error) throw error;
 
-      // Get brand slugs to exclude
-      const { data: brands } = await supabase
-        .from("brands")
-        .select("slug");
+      const { data: brands } = await supabase.from("brands").select("slug");
       const brandSlugs = new Set((brands || []).map((b) => b.slug));
 
-      // Get categories that have products via product_collections
-      const { data: activeCatIds } = await supabase
+      // Get product counts per collection
+      const { data: pcRows } = await supabase
         .from("product_collections")
         .select("collection_id")
-        .limit(10000);
-      const activeIds = new Set((activeCatIds || []).map((pc) => pc.collection_id));
+        .limit(50000);
 
-      return (categories || []).filter(
-        (c) => !brandSlugs.has(c.slug) && activeIds.has(c.id)
-      ) as CategoryWithCount[];
+      const countMap = new Map<string, number>();
+      (pcRows || []).forEach((r) => {
+        countMap.set(r.collection_id, (countMap.get(r.collection_id) || 0) + 1);
+      });
+
+      return (categories || [])
+        .filter((c) => !brandSlugs.has(c.slug) && (countMap.get(c.id) || 0) > 0)
+        .map((c) => ({ ...c, productCount: countMap.get(c.id) || 0 })) as CategoryWithCount[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -70,9 +114,9 @@ const CategoryGrid = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-[4/3] rounded-xl" />
+          <Skeleton key={i} className="h-[72px] rounded-xl" />
         ))}
       </div>
     );
@@ -87,34 +131,30 @@ const CategoryGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-      {categories.map((cat) => (
-        <Link key={cat.id} to={`/collections/${cat.slug}`}>
-          <Card className="group overflow-hidden border border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-200">
-            <CardContent className="p-0">
-              <div className="aspect-[4/3] relative overflow-hidden bg-muted">
-                {cat.image_url ? (
-                  <img
-                    src={cat.image_url}
-                    alt={cat.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-secondary/50">
-                    <span className="text-3xl">📦</span>
-                  </div>
-                )}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {categories.map((cat) => {
+        const style = getCategoryStyle(cat.slug);
+        return (
+          <Link key={cat.id} to={`/collections/${cat.slug}`}>
+            <div className="group flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+              <div
+                className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-lg"
+                style={{ backgroundColor: style.bg }}
+              >
+                {style.emoji}
               </div>
-              <div className="p-3 text-center">
-                <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                   {cat.name}
                 </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {cat.productCount} sản phẩm
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 };
@@ -138,7 +178,6 @@ const Collections = () => {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-6 sm:py-8">
-        {/* Breadcrumb */}
         <Breadcrumb className="mb-5">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -153,7 +192,6 @@ const Collections = () => {
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* Page heading */}
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
             Danh Mục Sản Phẩm
@@ -168,10 +206,7 @@ const Collections = () => {
           <Link
             to="/cho"
             className="group relative overflow-hidden rounded-2xl p-6 sm:p-8 flex flex-col justify-between"
-            style={{
-              backgroundColor: "#0849FF",
-              minHeight: 180,
-            }}
+            style={{ backgroundColor: "#0849FF", minHeight: 180 }}
           >
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
@@ -189,10 +224,7 @@ const Collections = () => {
           <Link
             to="/meo"
             className="group relative overflow-hidden rounded-2xl p-6 sm:p-8 flex flex-col justify-between"
-            style={{
-              backgroundColor: "#FFD700",
-              minHeight: 180,
-            }}
+            style={{ backgroundColor: "#FFD700", minHeight: 180 }}
           >
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-1">
