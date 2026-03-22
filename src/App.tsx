@@ -89,6 +89,11 @@ const CategoryRedirect = () => {
   return <Navigate to={`/collections/${slug}`} replace />;
 };
 
+const OrderConfirmationRedirect = () => {
+  const { orderNumber } = useParams();
+  return <Navigate to={`/xac-nhan-don-hang/${orderNumber}`} replace />;
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -115,8 +120,14 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/flash-sale" element={<FlashSale />} />
           <Route path="/promotions" element={<Promotions />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
+          {/* Vietnamese checkout routes */}
+          <Route path="/gio-hang" element={<Cart />} />
+          <Route path="/thanh-toan" element={<Checkout />} />
+          <Route path="/xac-nhan-don-hang/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><OrderConfirmation /></Suspense>} />
+          {/* Legacy redirects */}
+          <Route path="/cart" element={<Navigate to="/gio-hang" replace />} />
+          <Route path="/checkout" element={<Navigate to="/thanh-toan" replace />} />
+          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmationRedirect />} />
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
           <Route path="/orders/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><CustomerOrderDetail /></Suspense>} />
           <Route path="/profile" element={<Profile />} />
@@ -125,7 +136,6 @@ const App = () => (
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blogs/:categorySlug/:handle" element={<BlogPostDetail />} />
           <Route path="/blogs/:handle" element={<BlogPostDetail />} />
-          <Route path="/order-confirmation/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><OrderConfirmation /></Suspense>} />
           <Route path="/pages/:handle" element={<Suspense fallback={<LoadingFallback />}><PageDetail /></Suspense>} />
           <Route path="/lp/:handle" element={<Suspense fallback={<LoadingFallback />}><LandingPageEmbed /></Suspense>} />
           <Route

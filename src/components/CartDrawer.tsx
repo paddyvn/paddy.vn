@@ -141,11 +141,11 @@ export const CartDrawer = ({ userId, trigger }: CartDrawerProps) => {
                 {formatPrice(calculateTotal())}₫
               </span>
             </div>
-            <Button className="w-full" size="lg" onClick={() => navigate('/checkout')}>
+            <Button className="w-full" size="lg" onClick={() => navigate('/thanh-toan')}>
               Thanh toán
             </Button>
             <SheetTrigger asChild>
-              <Button variant="outline" className="w-full" onClick={() => navigate('/cart')}>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/gio-hang')}>
                 Xem giỏ hàng
               </Button>
             </SheetTrigger>

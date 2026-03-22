@@ -9,7 +9,7 @@ import { useComboDeals } from "@/hooks/useComboDeals";
 import { useTieredDeals } from "@/hooks/useTieredDeals";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -20,22 +20,14 @@ import { Trash2, Plus, Minus, ShoppingBag, Truck, Tag, ArrowRight, Loader2 } fro
 import { useCart } from "@/hooks/useCart";
 import { useProductsPromotions } from "@/hooks/useProductPromotions";
 import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
+import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
+import { useProvinces, useDistricts, useWards } from "@/hooks/useVietnamAddress";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-const SHIPPING_RATES = [
-  { id: "standard", name: "Giao hàng tiêu chuẩn", price: 30000, days: "3-5 ngày" },
-  { id: "express", name: "Giao hàng nhanh", price: 50000, days: "1-2 ngày" },
-  { id: "free", name: "Miễn phí giao hàng", price: 0, days: "5-7 ngày", minOrder: 500000 },
-];
-
-const PROVINCES = [
-  "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
-  "An Giang", "Bà Rịa - Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
-  "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
-];
+const FREE_SHIPPING_THRESHOLD = 500000;
 
 export default function Cart() {
   const [userId, setUserId] = useState<string | undefined>();
@@ -49,8 +41,19 @@ export default function Cart() {
     max_discount: number | null;
   } | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedShipping, setSelectedShipping] = useState("standard");
+
+  // Cascading address
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
+  const [selectedWardCode, setSelectedWardCode] = useState<number | null>(null);
+  const { provinces, loading: provincesLoading } = useProvinces();
+  const { districts } = useDistricts(selectedProvinceCode);
+  const { wards } = useWards(selectedDistrictCode);
+
+  // Delivery
+  const [selectedDelivery, setSelectedDelivery] = useState<string>("");
+  const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
+
   const { cart, isLoading, removeFromCart, updateQuantity } = useCart(userId);
   const cartProductIds = (cart || [])
     .map((item) => item.product_id)
@@ -64,6 +67,13 @@ export default function Cart() {
       setUserId(session?.user?.id);
     });
   }, []);
+
+  // Set default delivery method
+  useEffect(() => {
+    if (deliveryMethods.length > 0 && !selectedDelivery) {
+      setSelectedDelivery(deliveryMethods[0].id);
+    }
+  }, [deliveryMethods, selectedDelivery]);
 
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
     if (!images || images.length === 0) {
@@ -83,6 +93,9 @@ export default function Cart() {
   };
 
   const subtotal = calculateSubtotal();
+  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
+  const shippingCost = isFreeShipping ? 0 : (deliveryMethod?.price || 0);
 
   // Combo & Tiered deal hooks
   const dealCartItems = (cart || []).map((item) => {
@@ -104,10 +117,6 @@ export default function Cart() {
     ...tieredDiscounts.map((d) => d.discountAmount),
   ].reduce((sum, d) => sum + d, 0);
 
-  const shippingRate = SHIPPING_RATES.find(r => r.id === selectedShipping);
-  const shippingCost = shippingRate?.minOrder && subtotal >= shippingRate.minOrder 
-    ? 0 
-    : (shippingRate?.price || 0);
   const discount = appliedCoupon?.discount || 0;
   const total = subtotal + shippingCost - discount - totalDealDiscount;
 
@@ -307,73 +316,131 @@ export default function Cart() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Truck className="h-5 w-5" />
-                    Tính phí vận chuyển
+                    Vận chuyển
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Province */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">Tỉnh/Thành phố</label>
-                    <Select value={selectedProvince} onValueChange={setSelectedProvince}>
+                    <Select
+                      value={selectedProvinceCode?.toString() || ""}
+                      onValueChange={(val) => {
+                        setSelectedProvinceCode(Number(val));
+                        setSelectedDistrictCode(null);
+                        setSelectedWardCode(null);
+                      }}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn tỉnh/thành phố" />
+                        <SelectValue placeholder={provincesLoading ? "Đang tải..." : "Chọn tỉnh/thành phố"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {PROVINCES.map((province) => (
-                          <SelectItem key={province} value={province}>
-                            {province}
+                        {provinces.map((p) => (
+                          <SelectItem key={p.code} value={p.code.toString()}>
+                            {p.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {selectedProvince && (
+                  {/* District */}
+                  {selectedProvinceCode && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Quận/Huyện</label>
+                      <Select
+                        value={selectedDistrictCode?.toString() || ""}
+                        onValueChange={(val) => {
+                          setSelectedDistrictCode(Number(val));
+                          setSelectedWardCode(null);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn quận/huyện" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districts.map((d) => (
+                            <SelectItem key={d.code} value={d.code.toString()}>
+                              {d.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Ward */}
+                  {selectedDistrictCode && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Phường/Xã</label>
+                      <Select
+                        value={selectedWardCode?.toString() || ""}
+                        onValueChange={(val) => setSelectedWardCode(Number(val))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn phường/xã" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {wards.map((w) => (
+                            <SelectItem key={w.code} value={w.code.toString()}>
+                              {w.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Free shipping badge */}
+                  {isFreeShipping && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 w-full justify-center py-1.5">
+                      🎉 Miễn phí vận chuyển cho đơn từ {formatPrice(FREE_SHIPPING_THRESHOLD)}₫
+                    </Badge>
+                  )}
+                  {!isFreeShipping && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Mua thêm {formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)}₫ để được miễn phí vận chuyển
+                    </p>
+                  )}
+
+                  {/* Delivery methods from DB */}
+                  {selectedProvinceCode && !deliveryMethodsLoading && (
                     <div className="space-y-2">
                       <label className="text-sm font-medium mb-2 block">Phương thức giao hàng</label>
-                      {SHIPPING_RATES.map((rate) => {
-                        const isFreeEligible = rate.minOrder && subtotal >= rate.minOrder;
-                        const isDisabled = rate.minOrder && subtotal < rate.minOrder;
-                        
-                        return (
-                          <div
-                            key={rate.id}
-                            className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors ${
-                              selectedShipping === rate.id 
-                                ? "border-primary bg-primary/5" 
-                                : isDisabled 
-                                  ? "opacity-50 cursor-not-allowed" 
-                                  : "hover:border-primary/50"
-                            }`}
-                            onClick={() => !isDisabled && setSelectedShipping(rate.id)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-4 h-4 rounded-full border-2 ${
-                                selectedShipping === rate.id 
-                                  ? "border-primary bg-primary" 
-                                  : "border-muted-foreground"
-                              }`}>
-                                {selectedShipping === rate.id && (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{rate.name}</p>
-                                <p className="text-xs text-muted-foreground">{rate.days}</p>
-                                {rate.minOrder && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Đơn tối thiểu {formatPrice(rate.minOrder)}₫
-                                  </p>
-                                )}
-                              </div>
+                      {deliveryMethods.map((method) => (
+                        <div
+                          key={method.id}
+                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedDelivery === method.id
+                              ? "border-primary bg-primary/5"
+                              : "hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedDelivery(method.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-4 h-4 rounded-full border-2 ${
+                              selectedDelivery === method.id
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground"
+                            }`}>
+                              {selectedDelivery === method.id && (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                                </div>
+                              )}
                             </div>
-                            <span className="font-semibold text-sm">
-                              {isFreeEligible || rate.price === 0 ? "Miễn phí" : `${formatPrice(rate.price)}₫`}
-                            </span>
+                            <div>
+                              <p className="font-medium text-sm">{method.name}</p>
+                              {method.description && (
+                                <p className="text-xs text-muted-foreground">{method.description}</p>
+                              )}
+                            </div>
                           </div>
-                        );
-                      })}
+                          <span className="font-semibold text-sm">
+                            {isFreeShipping ? "Miễn phí" : `${formatPrice(method.price)}₫`}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
@@ -444,11 +511,11 @@ export default function Cart() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Phí vận chuyển</span>
                     <span>
-                      {selectedProvince 
-                        ? shippingCost === 0 
-                          ? "Miễn phí" 
+                      {!selectedProvinceCode
+                        ? "Chưa tính"
+                        : shippingCost === 0
+                          ? <span className="text-green-600 font-medium">Miễn phí</span>
                           : `${formatPrice(shippingCost)}₫`
-                        : "Chưa tính"
                       }
                     </span>
                   </div>
@@ -483,16 +550,16 @@ export default function Cart() {
                   <Button 
                     className="w-full mt-4" 
                     size="lg"
-                    onClick={() => navigate("/checkout", {
+                    onClick={() => navigate("/thanh-toan", {
                       state: appliedCoupon ? { voucher: appliedCoupon } : undefined,
                     })}
-                    disabled={!selectedProvince}
+                    disabled={!selectedProvinceCode}
                   >
                     Tiến hành thanh toán
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   
-                  {!selectedProvince && (
+                  {!selectedProvinceCode && (
                     <p className="text-xs text-center text-muted-foreground">
                       Vui lòng chọn địa chỉ giao hàng
                     </p>

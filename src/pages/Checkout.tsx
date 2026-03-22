@@ -40,17 +40,14 @@ import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSu
 import { useComboDeals } from "@/hooks/useComboDeals";
 import { useTieredDeals } from "@/hooks/useTieredDeals";
 import { useSubscriptionDeal } from "@/hooks/useSubscriptionDeal";
+import { useProvinces, useDistricts, useWards } from "@/hooks/useVietnamAddress";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { validateVoucher, calculateVoucherDiscount as calcVoucherDiscount } from "@/lib/voucher-utils";
 
-const PROVINCES = [
-  "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
-  "An Giang", "Bà Rịa - Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
-  "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
-];
+const FREE_SHIPPING_THRESHOLD = 500000;
 
 const PAYMENT_METHODS = [
   { 
@@ -128,7 +125,13 @@ export default function Checkout() {
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<SubscriptionFrequency>("monthly");
-  
+  // Cascading address for new address form
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
+  const [selectedWardCode, setSelectedWardCode] = useState<number | null>(null);
+  const { provinces, loading: provincesLoading } = useProvinces();
+  const { districts } = useDistricts(selectedProvinceCode);
+  const { wards } = useWards(selectedDistrictCode);
   
   const { cart, isLoading: cartLoading } = useCart(userId);
   const cartProductIds = (cart || [])
@@ -222,7 +225,8 @@ export default function Checkout() {
 
   const subtotal = calculateSubtotal();
   const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
-  const shippingCost = deliveryMethod?.price || 0;
+  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const shippingCost = isFreeShipping ? 0 : (deliveryMethod?.price || 0);
 
   // Combo & Tiered deal hooks
   const dealCartItems = (cart || []).map((item) => {
@@ -473,7 +477,7 @@ export default function Checkout() {
         });
       }
 
-      navigate(`/order-confirmation/${orderNumber}`);
+      navigate(`/xac-nhan-don-hang/${orderNumber}`);
       
     } catch (error: any) {
       console.error('Order error:', error);
@@ -506,7 +510,7 @@ export default function Checkout() {
   }
 
   if (cart.length === 0) {
-    navigate("/cart");
+    navigate("/gio-hang");
     return null;
   }
 
@@ -668,38 +672,76 @@ export default function Checkout() {
                         <div className="space-y-2">
                           <Label>Tỉnh/Thành phố *</Label>
                           <Select 
-                            value={addressForm.city} 
-                            onValueChange={(value) => setAddressForm(prev => ({ ...prev, city: value }))}
+                            value={selectedProvinceCode?.toString() || ""}
+                            onValueChange={(val) => {
+                              const code = Number(val);
+                              setSelectedProvinceCode(code);
+                              setSelectedDistrictCode(null);
+                              setSelectedWardCode(null);
+                              const prov = provinces.find(p => p.code === code);
+                              setAddressForm(prev => ({ ...prev, city: prov?.name || "", district: "", ward: "" }));
+                            }}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn tỉnh/thành" />
+                              <SelectValue placeholder={provincesLoading ? "Đang tải..." : "Chọn tỉnh/thành"} />
                             </SelectTrigger>
                             <SelectContent>
-                              {PROVINCES.map((province) => (
-                                <SelectItem key={province} value={province}>
-                                  {province}
+                              {provinces.map((p) => (
+                                <SelectItem key={p.code} value={p.code.toString()}>
+                                  {p.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="district">Quận/Huyện</Label>
-                          <Input
-                            id="district"
-                            value={addressForm.district}
-                            onChange={(e) => setAddressForm(prev => ({ ...prev, district: e.target.value }))}
-                            placeholder="Quận/Huyện"
-                          />
+                          <Label>Quận/Huyện *</Label>
+                          <Select
+                            value={selectedDistrictCode?.toString() || ""}
+                            onValueChange={(val) => {
+                              const code = Number(val);
+                              setSelectedDistrictCode(code);
+                              setSelectedWardCode(null);
+                              const dist = districts.find(d => d.code === code);
+                              setAddressForm(prev => ({ ...prev, district: dist?.name || "", ward: "" }));
+                            }}
+                            disabled={!selectedProvinceCode}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn quận/huyện" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {districts.map((d) => (
+                                <SelectItem key={d.code} value={d.code.toString()}>
+                                  {d.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="ward">Phường/Xã</Label>
-                          <Input
-                            id="ward"
-                            value={addressForm.ward}
-                            onChange={(e) => setAddressForm(prev => ({ ...prev, ward: e.target.value }))}
-                            placeholder="Phường/Xã"
-                          />
+                          <Label>Phường/Xã *</Label>
+                          <Select
+                            value={selectedWardCode?.toString() || ""}
+                            onValueChange={(val) => {
+                              const code = Number(val);
+                              setSelectedWardCode(code);
+                              const w = wards.find(w => w.code === code);
+                              setAddressForm(prev => ({ ...prev, ward: w?.name || "" }));
+                            }}
+                            disabled={!selectedDistrictCode}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn phường/xã" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {wards.map((w) => (
+                                <SelectItem key={w.code} value={w.code.toString()}>
+                                  {w.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -727,7 +769,7 @@ export default function Checkout() {
                               <p className="text-sm text-muted-foreground">{method.description}</p>
                             </div>
                           </div>
-                          <span className="font-semibold">{formatPrice(method.price)}₫</span>
+                          <span className="font-semibold">{isFreeShipping ? "Miễn phí" : `${formatPrice(method.price)}₫`}</span>
                         </div>
                       ))}
                     </RadioGroup>
@@ -905,7 +947,7 @@ export default function Checkout() {
                   Quay lại
                 </Button>
               ) : (
-                <Button variant="outline" onClick={() => navigate("/cart")}>
+                <Button variant="outline" onClick={() => navigate("/gio-hang")}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Giỏ hàng
                 </Button>
@@ -1072,7 +1114,7 @@ export default function Checkout() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Phí vận chuyển</span>
-                    <span>{formatPrice(shippingCost)}₫</span>
+                    <span>{isFreeShipping ? <span className="text-green-600 font-medium">Miễn phí</span> : `${formatPrice(shippingCost)}₫`}</span>
                   </div>
                   {voucherDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
