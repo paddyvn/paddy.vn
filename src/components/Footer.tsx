@@ -238,10 +238,10 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
             <div className="flex flex-col gap-0.5 text-center md:text-left">
-              <p className="text-[11.5px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 © 2026 Công Ty Cổ Phần TM & DV Paddy. MST: 0316459054.
               </p>
-              <p className="text-[11.5px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 36 Mạc Đĩnh Chi, Phường Tân Định, TP. Hồ Chí Minh, Việt Nam
               </p>
             </div>
