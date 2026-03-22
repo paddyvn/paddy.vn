@@ -629,6 +629,12 @@ export default function ProductDetail() {
           );
         })()}
 
+        {/* Reviews Section */}
+        <ProductReviewsSection
+          productId={product.id}
+          userId={session?.user?.id}
+        />
+
         {/* Related Products - using collection */}
         <RelatedProducts
           currentProductId={product.id}
