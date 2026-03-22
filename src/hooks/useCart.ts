@@ -259,16 +259,28 @@ export const useCart = (userId?: string) => {
         saveGuestCart(currentCart);
       }
     },
-    onSuccess: () => {
-      if (userId) {
-        queryClient.invalidateQueries({ queryKey: ["cart", userId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["guest-cart"] });
+    onMutate: async (cartItemId: string) => {
+      const queryKey = userId ? ["cart", userId] : ["guest-cart"];
+      await queryClient.cancelQueries({ queryKey });
+      const previousCart = queryClient.getQueryData<CartItem[]>(queryKey);
+      queryClient.setQueryData<CartItem[]>(queryKey, (old) =>
+        (old || []).filter((item) => item.id !== cartItemId)
+      );
+      return { previousCart, queryKey };
+    },
+    onError: (_err, _id, context) => {
+      if (context) {
+        queryClient.setQueryData(context.queryKey, context.previousCart);
       }
       toast({
-        title: "Removed from cart",
-        description: "Product has been removed from your cart",
+        title: "Lỗi",
+        description: "Không thể xóa sản phẩm khỏi giỏ hàng",
+        variant: "destructive",
       });
+    },
+    onSettled: () => {
+      const queryKey = userId ? ["cart", userId] : ["guest-cart"];
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -305,6 +317,7 @@ export const useCart = (userId?: string) => {
     addToCart: addToCart.mutateAsync,
     addToCartMutation: addToCart,
     removeFromCart: removeFromCart.mutate,
+    isRemoving: removeFromCart.isPending,
     updateQuantity: updateQuantity.mutate,
     isGuest: !userId,
   };

@@ -11,7 +11,7 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer = ({ userId, trigger }: CartDrawerProps) => {
-  const { cart, isLoading, removeFromCart, updateQuantity } = useCart(userId);
+  const { cart, isLoading, removeFromCart, updateQuantity, isRemoving } = useCart(userId);
   const navigate = useNavigate();
 
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
@@ -121,6 +121,7 @@ export const CartDrawer = ({ userId, trigger }: CartDrawerProps) => {
                           size="icon"
                           className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => removeFromCart(item.id)}
+                          disabled={isRemoving}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
