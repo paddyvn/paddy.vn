@@ -89,6 +89,11 @@ const CategoryRedirect = () => {
   return <Navigate to={`/collections/${slug}`} replace />;
 };
 
+const OrderConfirmationRedirect = () => {
+  const { orderNumber } = useParams();
+  return <Navigate to={`/xac-nhan-don-hang/${orderNumber}`} replace />;
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
