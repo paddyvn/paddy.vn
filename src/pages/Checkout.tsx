@@ -1250,6 +1250,12 @@ export default function Checkout() {
                       <span>-{formatPrice(td.discountAmount)}₫</span>
                     </div>
                   ))}
+                  {giftCardAmountUsed > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="truncate">Thẻ quà tặng ({appliedGiftCard?.code})</span>
+                      <span>-{formatPrice(giftCardAmountUsed)}₫</span>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
