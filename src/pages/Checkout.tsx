@@ -486,6 +486,16 @@ export default function Checkout() {
         });
       }
 
+      // Redeem gift card
+      if (appliedGiftCard && giftCardAmountUsed > 0) {
+        await supabase.rpc('redeem_gift_card', {
+          p_code: appliedGiftCard.code,
+          p_amount: giftCardAmountUsed,
+          p_order_id: (rpcResult as any)?.order_id || null,
+          p_user_id: userId,
+        });
+      }
+
       // Save new address if requested
       if (useNewAddress && addressForm.fullName) {
         await supabase.from('addresses').insert({
