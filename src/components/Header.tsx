@@ -336,7 +336,7 @@ export const Header = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                           <Settings className="mr-2 h-4 w-4" />
-                          Profile Settings
+                          Cài đặt tài khoản
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
