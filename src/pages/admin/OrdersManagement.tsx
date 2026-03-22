@@ -90,7 +90,7 @@ function applyFilters(
   }
   if (searchQuery) {
     query = query.or(
-      `order_number.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%`
+      `order_number.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%,customer_name.ilike.%${searchQuery}%`
     );
   }
   if (dateFrom) {
