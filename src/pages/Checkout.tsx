@@ -30,7 +30,8 @@ import {
   CheckCircle2,
   Tag,
   X,
-  RefreshCw
+  RefreshCw,
+  Gift
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useProductsPromotions } from "@/hooks/useProductPromotions";
