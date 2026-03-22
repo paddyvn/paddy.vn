@@ -477,7 +477,7 @@ export default function Checkout() {
         });
       }
 
-      navigate(`/order-confirmation/${orderNumber}`);
+      navigate(`/xac-nhan-don-hang/${orderNumber}`);
       
     } catch (error: any) {
       console.error('Order error:', error);
