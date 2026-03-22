@@ -446,35 +446,8 @@ export default function OrdersManagement() {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
-          <Button
-            onClick={() => syncOrders.syncOrders(false)}
-            disabled={syncOrders.isPending}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncOrders.isPending ? "animate-spin" : ""}`} />
-            {syncOrders.isPending ? "Syncing..." : "Sync Orders"}
-          </Button>
-          <Button
-            onClick={() => syncOrders.syncOrders(true)}
-            disabled={syncOrders.isPending}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncOrders.isPending ? "animate-spin" : ""}`} />
-            Full Sync
-          </Button>
         </div>
       </div>
-
-      {syncOrders.isPending && (
-        <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Syncing orders from Shopify...</span>
-            <span className="font-medium">{syncOrders.progress.current} orders synced</span>
-          </div>
-          <Progress value={100} className="h-2 [&>div]:animate-pulse" />
-        </div>
-      )}
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">

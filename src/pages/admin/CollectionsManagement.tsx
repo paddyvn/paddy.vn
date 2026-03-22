@@ -729,26 +729,6 @@ export default function CollectionsManagement() {
         </div>
       )}
 
-      {/* Product-Collection Relationships Section */}
-      <div className="rounded-lg border bg-card p-6">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Product-Collection Relationships</h3>
-            <p className="text-sm text-muted-foreground">
-              After syncing collections and products, sync the relationships between them to see product counts.
-            </p>
-          </div>
-          <Button
-            onClick={() => syncProductCollections.mutate()}
-            disabled={syncProductCollections.isPending}
-            variant="default"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncProductCollections.isPending ? "animate-spin" : ""}`} />
-            {syncProductCollections.isPending ? "Syncing Links..." : "Sync Product-Collection Links"}
-          </Button>
-        </div>
-      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">

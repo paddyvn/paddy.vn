@@ -175,14 +175,6 @@ export default function AbandonedCheckouts() {
               Track and recover abandoned shopping carts
             </p>
           </div>
-          <Button
-            onClick={() => syncAbandonedCheckouts.mutate()}
-            disabled={syncAbandonedCheckouts.isPending}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncAbandonedCheckouts.isPending ? "animate-spin" : ""}`} />
-            {syncAbandonedCheckouts.isPending ? "Syncing..." : "Sync Checkouts"}
-          </Button>
         </div>
 
         <div className="relative">

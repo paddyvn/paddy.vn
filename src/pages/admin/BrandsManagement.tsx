@@ -104,14 +104,6 @@ export default function BrandsManagement() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => syncBrands.mutate()}
-            disabled={syncBrands.isPending}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncBrands.isPending ? "animate-spin" : ""}`} />
-            Sync from Collections
-          </Button>
           <Button onClick={() => navigate("/admin/products/brands/new")}>
             <Plus className="h-4 w-4 mr-2" />
             Add Brand

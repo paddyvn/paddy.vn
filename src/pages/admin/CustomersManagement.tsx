@@ -260,14 +260,6 @@ export default function CustomersManagement() {
               <Download className="h-4 w-4" />
               Export CSV
             </Button>
-            <Button
-              onClick={() => syncCustomers.mutate()}
-              disabled={syncCustomers.isPending}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
-              {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
-            </Button>
           </div>
         </div>
 
