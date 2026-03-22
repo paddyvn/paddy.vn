@@ -293,10 +293,10 @@ export const Header = () => {
               <Button 
                 variant="ghost" 
                 className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
+                onClick={() => navigate('/pages/lien-he')}
               >
                 <HelpCircle className="h-4 w-4" />
-                <span className="text-sm">24/7 Help</span>
-                <ChevronDown className="h-4 w-4" />
+                <span className="text-sm">Hỗ trợ</span>
               </Button>
 
               {/* Desktop Profile */}
