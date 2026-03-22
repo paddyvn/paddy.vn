@@ -280,7 +280,7 @@ export const Header = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
-                        Sign In / Sign Up
+                        Đăng nhập / Đăng ký
                       </DropdownMenuItem>
                     </>
                   )}
