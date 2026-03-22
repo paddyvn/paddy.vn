@@ -591,7 +591,7 @@ export default function Checkout() {
       
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="max-w-3xl mx-auto mb-4">
+        <div className="mb-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -611,7 +611,7 @@ export default function Checkout() {
 
         {/* Email display */}
         {userEmail && (
-          <div className="max-w-3xl mx-auto flex items-center gap-2 text-sm text-muted-foreground mb-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
             <span>Đặt hàng với:</span>
             <span className="font-medium text-foreground">{userEmail}</span>
           </div>
