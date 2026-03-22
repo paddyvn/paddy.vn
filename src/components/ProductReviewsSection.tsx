@@ -58,8 +58,8 @@ export const ProductReviewsSection = ({ productId, userId }: ProductReviewsSecti
         user_id: userId,
         rating,
         title: title || null,
-        body: body || null,
-        status: "pending",
+        comment: comment || null,
+        moderation_status: "pending",
       });
 
       if (error) throw error;
