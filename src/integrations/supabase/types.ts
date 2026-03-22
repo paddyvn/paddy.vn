@@ -742,6 +742,48 @@ export type Database = {
           },
         ]
       }
+      blog_post_products: {
+        Row: {
+          context: string | null
+          created_at: string
+          id: string
+          position: number | null
+          post_id: string
+          product_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          id?: string
+          position?: number | null
+          post_id: string
+          product_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          id?: string
+          position?: number | null
+          post_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_products_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author: string | null
@@ -754,7 +796,9 @@ export type Database = {
           image_url: string | null
           meta_description: string | null
           meta_title: string | null
+          pet_type: string | null
           published: boolean | null
+          reading_time_minutes: number | null
           shopify_article_id: string | null
           shopify_blog_id: string | null
           shopify_created_at: string | null
@@ -764,6 +808,7 @@ export type Database = {
           tags: string | null
           title: string
           updated_at: string
+          view_count: number | null
         }
         Insert: {
           author?: string | null
@@ -776,7 +821,9 @@ export type Database = {
           image_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          pet_type?: string | null
           published?: boolean | null
+          reading_time_minutes?: number | null
           shopify_article_id?: string | null
           shopify_blog_id?: string | null
           shopify_created_at?: string | null
@@ -786,6 +833,7 @@ export type Database = {
           tags?: string | null
           title: string
           updated_at?: string
+          view_count?: number | null
         }
         Update: {
           author?: string | null
@@ -798,7 +846,9 @@ export type Database = {
           image_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          pet_type?: string | null
           published?: boolean | null
+          reading_time_minutes?: number | null
           shopify_article_id?: string | null
           shopify_blog_id?: string | null
           shopify_created_at?: string | null
@@ -808,6 +858,7 @@ export type Database = {
           tags?: string | null
           title?: string
           updated_at?: string
+          view_count?: number | null
         }
         Relationships: [
           {
@@ -860,6 +911,88 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: []
+      }
+      campaign_sends: {
+        Row: {
+          campaign_id: string
+          channel: string
+          clicked_at: string | null
+          context: Json | null
+          conversion_amount: number | null
+          conversion_order_id: string | null
+          converted: boolean | null
+          created_at: string
+          customer_id: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          opened_at: string | null
+          recipient: string
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          channel: string
+          clicked_at?: string | null
+          context?: Json | null
+          conversion_amount?: number | null
+          conversion_order_id?: string | null
+          converted?: boolean | null
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          channel?: string
+          clicked_at?: string | null
+          context?: Json | null
+          conversion_amount?: number | null
+          conversion_order_id?: string | null
+          converted?: boolean | null
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_conversion_order_id_fkey"
+            columns: ["conversion_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cart_items: {
         Row: {
@@ -978,10 +1111,68 @@ export type Database = {
           },
         ]
       }
+      coupon_usage: {
+        Row: {
+          coupon_id: string
+          customer_id: string | null
+          discount_amount: number
+          id: string
+          order_id: string | null
+          used_at: string
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id: string
+          customer_id?: string | null
+          discount_amount: number
+          id?: string
+          order_id?: string | null
+          used_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          customer_id?: string | null
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          used_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
+          applies_to: string | null
+          applies_to_ids: string[] | null
+          auto_apply: boolean | null
+          channels: string[] | null
           code: string
+          coupon_type: string | null
           created_at: string
+          customer_segments: string[] | null
           description: string | null
           discount_type: string
           discount_value: number
@@ -990,14 +1181,24 @@ export type Database = {
           is_active: boolean | null
           max_discount: number | null
           min_purchase: number | null
+          minimum_items: number | null
+          promotion_id: string | null
+          stackable: boolean | null
           starts_at: string | null
           updated_at: string
           usage_limit: number | null
+          usage_limit_per_customer: number | null
           used_count: number | null
         }
         Insert: {
+          applies_to?: string | null
+          applies_to_ids?: string[] | null
+          auto_apply?: boolean | null
+          channels?: string[] | null
           code: string
+          coupon_type?: string | null
           created_at?: string
+          customer_segments?: string[] | null
           description?: string | null
           discount_type: string
           discount_value: number
@@ -1006,14 +1207,24 @@ export type Database = {
           is_active?: boolean | null
           max_discount?: number | null
           min_purchase?: number | null
+          minimum_items?: number | null
+          promotion_id?: string | null
+          stackable?: boolean | null
           starts_at?: string | null
           updated_at?: string
           usage_limit?: number | null
+          usage_limit_per_customer?: number | null
           used_count?: number | null
         }
         Update: {
+          applies_to?: string | null
+          applies_to_ids?: string[] | null
+          auto_apply?: boolean | null
+          channels?: string[] | null
           code?: string
+          coupon_type?: string | null
           created_at?: string
+          customer_segments?: string[] | null
           description?: string | null
           discount_type?: string
           discount_value?: number
@@ -1022,12 +1233,24 @@ export type Database = {
           is_active?: boolean | null
           max_discount?: number | null
           min_purchase?: number | null
+          minimum_items?: number | null
+          promotion_id?: string | null
+          stackable?: boolean | null
           starts_at?: string | null
           updated_at?: string
           usage_limit?: number | null
+          usage_limit_per_customer?: number | null
           used_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coupons_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_roles: {
         Row: {
@@ -2697,6 +2920,81 @@ export type Database = {
           },
         ]
       }
+      inventory_sync_log: {
+        Row: {
+          change_amount: number | null
+          created_at: string
+          discrepancy: number | null
+          id: string
+          location_id: number | null
+          new_stock: number | null
+          note: string | null
+          old_stock: number | null
+          order_id: string | null
+          reference_code: string | null
+          sapo_available: number | null
+          sapo_variant_id: number | null
+          sku: string | null
+          sync_source: string | null
+          sync_type: string
+          variant_id: string | null
+          web_stock_before: number | null
+        }
+        Insert: {
+          change_amount?: number | null
+          created_at?: string
+          discrepancy?: number | null
+          id?: string
+          location_id?: number | null
+          new_stock?: number | null
+          note?: string | null
+          old_stock?: number | null
+          order_id?: string | null
+          reference_code?: string | null
+          sapo_available?: number | null
+          sapo_variant_id?: number | null
+          sku?: string | null
+          sync_source?: string | null
+          sync_type: string
+          variant_id?: string | null
+          web_stock_before?: number | null
+        }
+        Update: {
+          change_amount?: number | null
+          created_at?: string
+          discrepancy?: number | null
+          id?: string
+          location_id?: number | null
+          new_stock?: number | null
+          note?: string | null
+          old_stock?: number | null
+          order_id?: string | null
+          reference_code?: string | null
+          sapo_available?: number | null
+          sapo_variant_id?: number | null
+          sku?: string | null
+          sync_source?: string | null
+          sync_type?: string
+          variant_id?: string | null
+          web_stock_before?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_sync_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_sync_log_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       landing_pages: {
         Row: {
           created_at: string
@@ -3013,6 +3311,93 @@ export type Database = {
           {
             foreignKeyName: "loyalty_transactions_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          body_template: string | null
+          campaign_type: string
+          channel: string
+          clicked_count: number | null
+          converted_count: number | null
+          coupon_id: string | null
+          created_at: string
+          created_by: string | null
+          delivered_count: number | null
+          id: string
+          name: string
+          opened_count: number | null
+          revenue_generated: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string | null
+          target_customer_count: number | null
+          target_segment: string | null
+          updated_at: string
+        }
+        Insert: {
+          body_template?: string | null
+          campaign_type: string
+          channel: string
+          clicked_count?: number | null
+          converted_count?: number | null
+          coupon_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number | null
+          id?: string
+          name: string
+          opened_count?: number | null
+          revenue_generated?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string | null
+          target_customer_count?: number | null
+          target_segment?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body_template?: string | null
+          campaign_type?: string
+          channel?: string
+          clicked_count?: number | null
+          converted_count?: number | null
+          coupon_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number | null
+          id?: string
+          name?: string
+          opened_count?: number | null
+          revenue_generated?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string | null
+          target_customer_count?: number | null
+          target_segment?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaigns_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -3338,6 +3723,74 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          back_in_stock_alerts: boolean | null
+          birthday_offers: boolean | null
+          blog_newsletter: boolean | null
+          created_at: string
+          customer_id: string | null
+          email_marketing: boolean | null
+          id: string
+          order_updates: boolean | null
+          price_drop_alerts: boolean | null
+          promotions_and_deals: boolean | null
+          push_notifications: boolean | null
+          reorder_reminders: boolean | null
+          shipping_updates: boolean | null
+          sms_marketing: boolean | null
+          updated_at: string
+          user_id: string | null
+          zalo_marketing: boolean | null
+        }
+        Insert: {
+          back_in_stock_alerts?: boolean | null
+          birthday_offers?: boolean | null
+          blog_newsletter?: boolean | null
+          created_at?: string
+          customer_id?: string | null
+          email_marketing?: boolean | null
+          id?: string
+          order_updates?: boolean | null
+          price_drop_alerts?: boolean | null
+          promotions_and_deals?: boolean | null
+          push_notifications?: boolean | null
+          reorder_reminders?: boolean | null
+          shipping_updates?: boolean | null
+          sms_marketing?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+          zalo_marketing?: boolean | null
+        }
+        Update: {
+          back_in_stock_alerts?: boolean | null
+          birthday_offers?: boolean | null
+          blog_newsletter?: boolean | null
+          created_at?: string
+          customer_id?: string | null
+          email_marketing?: boolean | null
+          id?: string
+          order_updates?: boolean | null
+          price_drop_alerts?: boolean | null
+          promotions_and_deals?: boolean | null
+          push_notifications?: boolean | null
+          reorder_reminders?: boolean | null
+          shipping_updates?: boolean | null
+          sms_marketing?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+          zalo_marketing?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_events: {
         Row: {
           author: string | null
@@ -3428,40 +3881,55 @@ export type Database = {
       }
       order_items: {
         Row: {
+          compare_at_price: number | null
           created_at: string
+          discount_amount: number | null
+          fulfillment_status: string | null
           id: string
+          image_url: string | null
           order_id: string
           price: number
           product_id: string | null
           product_name: string
           quantity: number
           shopify_line_item_id: string | null
+          sku: string | null
           subtotal: number
           variant_id: string | null
           variant_name: string | null
         }
         Insert: {
+          compare_at_price?: number | null
           created_at?: string
+          discount_amount?: number | null
+          fulfillment_status?: string | null
           id?: string
+          image_url?: string | null
           order_id: string
           price: number
           product_id?: string | null
           product_name: string
           quantity: number
           shopify_line_item_id?: string | null
+          sku?: string | null
           subtotal: number
           variant_id?: string | null
           variant_name?: string | null
         }
         Update: {
+          compare_at_price?: number | null
           created_at?: string
+          discount_amount?: number | null
+          fulfillment_status?: string | null
           id?: string
+          image_url?: string | null
           order_id?: string
           price?: number
           product_id?: string | null
           product_name?: string
           quantity?: number
           shopify_line_item_id?: string | null
+          sku?: string | null
           subtotal?: number
           variant_id?: string | null
           variant_name?: string | null
@@ -3490,8 +3958,223 @@ export type Database = {
           },
         ]
       }
+      order_refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string
+          payment_transaction_id: string | null
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          refund_method: string | null
+          refund_number: string
+          return_id: string | null
+          staff_notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_id: string
+          payment_transaction_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          refund_method?: string | null
+          refund_number: string
+          return_id?: string | null
+          staff_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          payment_transaction_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          refund_method?: string | null
+          refund_number?: string
+          return_id?: string | null
+          staff_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_refunds_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_refunds_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_refunds_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "order_returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_returns: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          order_id: string
+          reason: string
+          reason_detail: string | null
+          received_at: string | null
+          refund_amount: number | null
+          refund_method: string | null
+          refunded_at: string | null
+          requested_at: string
+          return_number: string
+          staff_notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          order_id: string
+          reason: string
+          reason_detail?: string | null
+          received_at?: string | null
+          refund_amount?: number | null
+          refund_method?: string | null
+          refunded_at?: string | null
+          requested_at?: string
+          return_number: string
+          staff_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          order_id?: string
+          reason?: string
+          reason_detail?: string | null
+          received_at?: string | null
+          refund_amount?: number | null
+          refund_method?: string | null
+          refunded_at?: string | null
+          requested_at?: string
+          return_number?: string
+          staff_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_returns_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_returns_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_history: {
+        Row: {
+          change_source: string | null
+          changed_by: string | null
+          created_at: string
+          field_changed: string
+          id: string
+          new_value: string | null
+          note: string | null
+          old_value: string | null
+          order_id: string
+        }
+        Insert: {
+          change_source?: string | null
+          changed_by?: string | null
+          created_at?: string
+          field_changed: string
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          order_id: string
+        }
+        Update: {
+          change_source?: string | null
+          changed_by?: string | null
+          created_at?: string
+          field_changed?: string
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
+          billing_address: Json | null
+          cancel_reason: string | null
           cancelled_at: string | null
           channel: string | null
           closed_at: string | null
@@ -3499,13 +4182,18 @@ export type Database = {
           created_at: string
           currency: string | null
           customer_email: string | null
+          customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          delivered_at: string | null
           delivery_method: string | null
           discount: number | null
+          estimated_delivery_date: string | null
           financial_status: string | null
           fulfillment_status: string | null
+          gift_message: string | null
           id: string
+          is_gift: boolean | null
           notes: string | null
           order_number: string
           payment_gateway: string | null
@@ -3523,6 +4211,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          billing_address?: Json | null
+          cancel_reason?: string | null
           cancelled_at?: string | null
           channel?: string | null
           closed_at?: string | null
@@ -3530,13 +4220,18 @@ export type Database = {
           created_at?: string
           currency?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
           delivery_method?: string | null
           discount?: number | null
+          estimated_delivery_date?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
+          gift_message?: string | null
           id?: string
+          is_gift?: boolean | null
           notes?: string | null
           order_number: string
           payment_gateway?: string | null
@@ -3554,6 +4249,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          billing_address?: Json | null
+          cancel_reason?: string | null
           cancelled_at?: string | null
           channel?: string | null
           closed_at?: string | null
@@ -3561,13 +4258,18 @@ export type Database = {
           created_at?: string
           currency?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delivered_at?: string | null
           delivery_method?: string | null
           discount?: number | null
+          estimated_delivery_date?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
+          gift_message?: string | null
           id?: string
+          is_gift?: boolean | null
           notes?: string | null
           order_number?: string
           payment_gateway?: string | null
@@ -3585,6 +4287,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_promotion_id_fkey"
             columns: ["promotion_id"]
@@ -3705,6 +4414,74 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          error_message: string | null
+          gateway: string
+          gateway_raw_response: Json | null
+          gateway_response_code: string | null
+          gateway_response_message: string | null
+          gateway_transaction_id: string | null
+          id: string
+          ip_address: string | null
+          order_id: string
+          processed_at: string | null
+          status: string
+          transaction_type: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          gateway: string
+          gateway_raw_response?: Json | null
+          gateway_response_code?: string | null
+          gateway_response_message?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          ip_address?: string | null
+          order_id: string
+          processed_at?: string | null
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          gateway?: string
+          gateway_raw_response?: Json | null
+          gateway_response_code?: string | null
+          gateway_response_message?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          ip_address?: string | null
+          order_id?: string
+          processed_at?: string | null
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pets: {
         Row: {
@@ -3955,6 +4732,67 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      price_history: {
+        Row: {
+          change_source: string | null
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_compare_at_price: number | null
+          new_price: number
+          old_compare_at_price: number | null
+          old_price: number | null
+          product_id: string
+          variant_id: string | null
+        }
+        Insert: {
+          change_source?: string | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_compare_at_price?: number | null
+          new_price: number
+          old_compare_at_price?: number | null
+          old_price?: number | null
+          product_id: string
+          variant_id?: string | null
+        }
+        Update: {
+          change_source?: string | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_compare_at_price?: number | null
+          new_price?: number
+          old_compare_at_price?: number | null
+          old_price?: number | null
+          product_id?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_history_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_age_ranges: {
         Row: {
@@ -4340,61 +5178,88 @@ export type Database = {
       }
       product_variants: {
         Row: {
+          backorder_enabled: boolean | null
           barcode: string | null
           compare_at_price: number | null
+          cost_price: number | null
           created_at: string
           id: string
           input_vat_rate: number | null
+          is_active: boolean | null
+          last_stock_sync_at: string | null
+          low_stock_threshold: number | null
           name: string
           option1: string | null
           option2: string | null
           option3: string | null
           output_vat_rate: number | null
+          preorder_enabled: boolean | null
+          preorder_message: string | null
           price: number
           product_id: string
+          sapo_variant_id: number | null
           sku: string | null
           source_variant_id: string | null
           stock_quantity: number | null
+          stock_source: string | null
           taxable: boolean | null
           updated_at: string
           weight: number | null
         }
         Insert: {
+          backorder_enabled?: boolean | null
           barcode?: string | null
           compare_at_price?: number | null
+          cost_price?: number | null
           created_at?: string
           id?: string
           input_vat_rate?: number | null
+          is_active?: boolean | null
+          last_stock_sync_at?: string | null
+          low_stock_threshold?: number | null
           name: string
           option1?: string | null
           option2?: string | null
           option3?: string | null
           output_vat_rate?: number | null
+          preorder_enabled?: boolean | null
+          preorder_message?: string | null
           price: number
           product_id: string
+          sapo_variant_id?: number | null
           sku?: string | null
           source_variant_id?: string | null
           stock_quantity?: number | null
+          stock_source?: string | null
           taxable?: boolean | null
           updated_at?: string
           weight?: number | null
         }
         Update: {
+          backorder_enabled?: boolean | null
           barcode?: string | null
           compare_at_price?: number | null
+          cost_price?: number | null
           created_at?: string
           id?: string
           input_vat_rate?: number | null
+          is_active?: boolean | null
+          last_stock_sync_at?: string | null
+          low_stock_threshold?: number | null
           name?: string
           option1?: string | null
           option2?: string | null
           option3?: string | null
           output_vat_rate?: number | null
+          preorder_enabled?: boolean | null
+          preorder_message?: string | null
           price?: number
           product_id?: string
+          sapo_variant_id?: number | null
           sku?: string | null
           source_variant_id?: string | null
           stock_quantity?: number | null
+          stock_source?: string | null
           taxable?: boolean | null
           updated_at?: string
           weight?: number | null
@@ -4416,15 +5281,19 @@ export type Database = {
           brand_id: string | null
           category_id: string | null
           compare_at_price: number | null
+          cost_price: number | null
           created_at: string
           description: string | null
           feeding_guidelines: string | null
           id: string
           ingredients: string | null
           is_active: boolean | null
+          is_discontinued: boolean | null
           is_featured: boolean | null
+          max_order_quantity: number | null
           meta_description: string | null
           meta_title: string | null
+          min_order_quantity: number | null
           name: string
           nutrition_facts: Json | null
           option1_name: string | null
@@ -4436,6 +5305,7 @@ export type Database = {
           published_at: string | null
           rating: number | null
           rating_count: number | null
+          sapo_product_id: number | null
           short_description: string | null
           show_description: boolean | null
           show_feeding_guidelines: boolean | null
@@ -4457,15 +5327,19 @@ export type Database = {
           brand_id?: string | null
           category_id?: string | null
           compare_at_price?: number | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           feeding_guidelines?: string | null
           id?: string
           ingredients?: string | null
           is_active?: boolean | null
+          is_discontinued?: boolean | null
           is_featured?: boolean | null
+          max_order_quantity?: number | null
           meta_description?: string | null
           meta_title?: string | null
+          min_order_quantity?: number | null
           name: string
           nutrition_facts?: Json | null
           option1_name?: string | null
@@ -4477,6 +5351,7 @@ export type Database = {
           published_at?: string | null
           rating?: number | null
           rating_count?: number | null
+          sapo_product_id?: number | null
           short_description?: string | null
           show_description?: boolean | null
           show_feeding_guidelines?: boolean | null
@@ -4498,15 +5373,19 @@ export type Database = {
           brand_id?: string | null
           category_id?: string | null
           compare_at_price?: number | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           feeding_guidelines?: string | null
           id?: string
           ingredients?: string | null
           is_active?: boolean | null
+          is_discontinued?: boolean | null
           is_featured?: boolean | null
+          max_order_quantity?: number | null
           meta_description?: string | null
           meta_title?: string | null
+          min_order_quantity?: number | null
           name?: string
           nutrition_facts?: Json | null
           option1_name?: string | null
@@ -4518,6 +5397,7 @@ export type Database = {
           published_at?: string | null
           rating?: number | null
           rating_count?: number | null
+          sapo_product_id?: number | null
           short_description?: string | null
           show_description?: boolean | null
           show_feeding_guidelines?: boolean | null
@@ -4815,41 +5695,448 @@ export type Database = {
         }
         Relationships: []
       }
-      reviews: {
+      recently_viewed: {
         Row: {
-          comment: string | null
+          id: string
+          product_id: string
+          session_id: string | null
+          user_id: string | null
+          variant_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          session_id?: string | null
+          user_id?: string | null
+          variant_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          variant_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recently_viewed_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recently_viewed_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          customer_id: string
+          id: string
+          is_active: boolean | null
+          referee_reward_type: string | null
+          referee_reward_value: number | null
+          referrer_reward_type: string | null
+          referrer_reward_value: number | null
+          successful_referrals: number | null
+          total_referrals: number | null
+          total_reward_earned: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_active?: boolean | null
+          referee_reward_type?: string | null
+          referee_reward_value?: number | null
+          referrer_reward_type?: string | null
+          referrer_reward_value?: number | null
+          successful_referrals?: number | null
+          total_referrals?: number | null
+          total_reward_earned?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_active?: boolean | null
+          referee_reward_type?: string | null
+          referee_reward_value?: number | null
+          referrer_reward_type?: string | null
+          referrer_reward_value?: number | null
+          successful_referrals?: number | null
+          total_referrals?: number | null
+          total_reward_earned?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
           created_at: string
           id: string
-          is_verified_purchase: boolean | null
-          product_id: string
-          rating: number
-          title: string | null
-          updated_at: string
+          referee_customer_id: string | null
+          referee_email: string | null
+          referee_order_amount: number | null
+          referee_order_id: string | null
+          referee_phone: string | null
+          referee_reward_amount: number | null
+          referee_rewarded: boolean | null
+          referral_code_id: string
+          referrer_customer_id: string
+          referrer_reward_amount: number | null
+          referrer_rewarded: boolean | null
+          rewarded_at: string | null
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referee_customer_id?: string | null
+          referee_email?: string | null
+          referee_order_amount?: number | null
+          referee_order_id?: string | null
+          referee_phone?: string | null
+          referee_reward_amount?: number | null
+          referee_rewarded?: boolean | null
+          referral_code_id: string
+          referrer_customer_id: string
+          referrer_reward_amount?: number | null
+          referrer_rewarded?: boolean | null
+          rewarded_at?: string | null
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referee_customer_id?: string | null
+          referee_email?: string | null
+          referee_order_amount?: number | null
+          referee_order_id?: string | null
+          referee_phone?: string | null
+          referee_reward_amount?: number | null
+          referee_rewarded?: boolean | null
+          referral_code_id?: string
+          referrer_customer_id?: string
+          referrer_reward_amount?: number | null
+          referrer_rewarded?: boolean | null
+          rewarded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referee_customer_id_fkey"
+            columns: ["referee_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referee_order_id_fkey"
+            columns: ["referee_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_customer_id_fkey"
+            columns: ["referrer_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refund_items: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_item_id: string | null
+          quantity: number
+          refund_id: string
+          restock: boolean | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_item_id?: string | null
+          quantity: number
+          refund_id: string
+          restock?: boolean | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_item_id?: string | null
+          quantity?: number
+          refund_id?: string
+          restock?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_items_refund_id_fkey"
+            columns: ["refund_id"]
+            isOneToOne: false
+            referencedRelation: "order_refunds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      return_items: {
+        Row: {
+          condition: string | null
+          created_at: string
+          id: string
+          order_item_id: string | null
+          price: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+          reason: string | null
+          refund_amount: number | null
+          restock: boolean | null
+          return_id: string
+          sku: string | null
+          variant_id: string | null
+          variant_name: string | null
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string
+          id?: string
+          order_item_id?: string | null
+          price: number
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          reason?: string | null
+          refund_amount?: number | null
+          restock?: boolean | null
+          return_id: string
+          sku?: string | null
+          variant_id?: string | null
+          variant_name?: string | null
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string
+          id?: string
+          order_item_id?: string | null
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          reason?: string | null
+          refund_amount?: number | null
+          restock?: boolean | null
+          return_id?: string
+          sku?: string | null
+          variant_id?: string | null
+          variant_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "order_returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_votes: {
+        Row: {
+          created_at: string
+          id: string
+          is_helpful: boolean
+          review_id: string
           user_id: string
         }
         Insert: {
-          comment?: string | null
           created_at?: string
           id?: string
-          is_verified_purchase?: boolean | null
-          product_id: string
-          rating: number
-          title?: string | null
-          updated_at?: string
+          is_helpful: boolean
+          review_id: string
           user_id: string
         }
         Update: {
-          comment?: string | null
           created_at?: string
           id?: string
-          is_verified_purchase?: boolean | null
-          product_id?: string
-          rating?: number
-          title?: string | null
-          updated_at?: string
+          is_helpful?: boolean
+          review_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "review_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          admin_reply: string | null
+          admin_reply_at: string | null
+          admin_reply_by: string | null
+          comment: string | null
+          created_at: string
+          customer_id: string | null
+          helpful_count: number | null
+          id: string
+          is_verified_purchase: boolean | null
+          moderation_status: string | null
+          not_helpful_count: number | null
+          order_id: string | null
+          pet_breed: string | null
+          pet_name: string | null
+          pet_species: string | null
+          photos: Json | null
+          product_id: string
+          rating: number
+          reviewer_name: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+          variant_id: string | null
+        }
+        Insert: {
+          admin_reply?: string | null
+          admin_reply_at?: string | null
+          admin_reply_by?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_id?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          moderation_status?: string | null
+          not_helpful_count?: number | null
+          order_id?: string | null
+          pet_breed?: string | null
+          pet_name?: string | null
+          pet_species?: string | null
+          photos?: Json | null
+          product_id: string
+          rating: number
+          reviewer_name?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          variant_id?: string | null
+        }
+        Update: {
+          admin_reply?: string | null
+          admin_reply_at?: string | null
+          admin_reply_by?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_id?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          moderation_status?: string | null
+          not_helpful_count?: number | null
+          order_id?: string | null
+          pet_breed?: string | null
+          pet_name?: string | null
+          pet_species?: string | null
+          photos?: Json | null
+          product_id?: string
+          rating?: number
+          reviewer_name?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_admin_reply_by_fkey"
+            columns: ["admin_reply_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_product_id_fkey"
             columns: ["product_id"]
@@ -4862,6 +6149,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -5003,6 +6297,7 @@ export type Database = {
           last_order_on: string | null
           modified_on: string | null
           name: string | null
+          normalized_phone: string | null
           note: string | null
           phone: string | null
           sapo_customer_id: number
@@ -5031,6 +6326,7 @@ export type Database = {
           last_order_on?: string | null
           modified_on?: string | null
           name?: string | null
+          normalized_phone?: string | null
           note?: string | null
           phone?: string | null
           sapo_customer_id: number
@@ -5059,6 +6355,7 @@ export type Database = {
           last_order_on?: string | null
           modified_on?: string | null
           name?: string | null
+          normalized_phone?: string | null
           note?: string | null
           phone?: string | null
           sapo_customer_id?: number
@@ -6693,6 +7990,121 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_alerts: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          email: string | null
+          id: string
+          notified_at: string | null
+          phone: string | null
+          product_id: string
+          status: string
+          user_id: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          notified_at?: string | null
+          phone?: string | null
+          product_id: string
+          status?: string
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          notified_at?: string | null
+          phone?: string | null
+          product_id?: string
+          status?: string
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_alerts_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_reservations: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string | null
+          quantity: number
+          session_id: string | null
+          status: string
+          user_id: string | null
+          variant_id: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string | null
+          quantity: number
+          session_id?: string | null
+          status?: string
+          user_id?: string | null
+          variant_id: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string | null
+          quantity?: number
+          session_id?: string | null
+          status?: string
+          user_id?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_reservations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_reservations_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           address: string
@@ -6707,6 +8119,7 @@ export type Database = {
           name: string
           opening_hours: string | null
           phone: string | null
+          sapo_location_id: number | null
           updated_at: string | null
         }
         Insert: {
@@ -6722,6 +8135,7 @@ export type Database = {
           name: string
           opening_hours?: string | null
           phone?: string | null
+          sapo_location_id?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -6737,6 +8151,7 @@ export type Database = {
           name?: string
           opening_hours?: string | null
           phone?: string | null
+          sapo_location_id?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -7123,20 +8538,31 @@ export type Database = {
       }
     }
     Functions: {
-      backfill_customer_address_fields: { Args: never; Returns: number }
+      backfill_order_all_fields: { Args: never; Returns: number }
+      backfill_order_customer_name: { Args: never; Returns: number }
+      backfill_order_fields: { Args: never; Returns: number }
+      backfill_orders_combined: { Args: never; Returns: undefined }
       backfill_sapo_customer_order_stats: {
         Args: never
         Returns: {
           updated_count: number
         }[]
       }
+      batch_normalize_sapo_phones: {
+        Args: { batch_size?: number }
+        Returns: number
+      }
       calculate_loyalty_tier: { Args: { spent: number }; Returns: string }
       decrement_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
       }
+      expire_stock_reservations: { Args: never; Returns: number }
       generate_pos_order_number: { Args: never; Returns: string }
+      generate_refund_number: { Args: never; Returns: string }
+      generate_return_number: { Args: never; Returns: string }
       generate_web_order_number: { Args: never; Returns: string }
+      get_available_stock: { Args: { p_variant_id: string }; Returns: number }
       get_brand_sales_from_cache: {
         Args: { p_end_month?: string; p_limit?: number; p_start_month?: string }
         Returns: {
@@ -7441,6 +8867,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_sapo_customers_batch: {
+        Args: { batch_size?: number }
+        Returns: number
+      }
       increment_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
@@ -7504,6 +8934,10 @@ export type Database = {
           total_orders: number
           total_spent: number
         }[]
+      }
+      sync_sapo_stock_to_web: {
+        Args: { p_location_id?: number }
+        Returns: Json
       }
       vnd_to_points: { Args: { amount: number }; Returns: number }
     }
