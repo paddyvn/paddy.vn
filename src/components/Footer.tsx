@@ -64,11 +64,11 @@ const FooterLinkList = ({ items }: { items: { id: string; label: string; link: s
       return (
         <li key={item.id}>
           {isExternal ? (
-            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
               {item.label}
             </a>
           ) : (
-            <Link to={item.link} className="text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+            <Link to={item.link} className="text-sm text-muted-foreground hover:text-primary transition-smooth">
               {item.label}
             </Link>
           )}
@@ -99,10 +99,10 @@ const SocialLinks = ({ items }: { items: { id: string; label: string; link: stri
 /* ─── Trust badges ─── */
 const TrustBadges = ({ label, items }: { label: string; items: string[] }) => (
   <div className="flex flex-col gap-2">
-    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{label}</span>
+    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</span>
     <div className="flex gap-2 flex-wrap">
       {items.map((name) => (
-        <div key={name} className="bg-background border border-border rounded-md px-2 py-1 text-[10px] font-bold text-muted-foreground">
+        <div key={name} className="bg-background border border-border rounded-md px-2 py-1 text-[11px] font-bold text-muted-foreground">
           {name}
         </div>
       ))}
@@ -163,16 +163,16 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
             {/* Col 1: Brand + Contact */}
             <div>
               <div className="text-[28px] font-extrabold text-primary leading-none tracking-tight">paddy</div>
-              <p className="text-[13px] text-muted-foreground mt-1.5 mb-4 leading-snug">
+              <p className="text-sm text-muted-foreground mt-1.5 mb-4 leading-snug">
                 Cửa hàng thú cưng online hàng đầu Việt Nam
               </p>
 
               <div className="flex flex-col gap-2 mb-4">
-                <a href="tel:0867677891" className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+                <a href="tel:0867677891" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
                   <Phone className="h-3.5 w-3.5 shrink-0" />
                   <span>Hotline: <strong className="font-bold">0867 677 891</strong></span>
                 </a>
-                <a href="mailto:contact@paddy.vn" className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+                <a href="mailto:contact@paddy.vn" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
                   <Mail className="h-3.5 w-3.5 shrink-0" />
                   <span>contact@paddy.vn</span>
                 </a>
@@ -181,7 +181,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
               {/* Social */}
               {socialMenu && socialMenu.items.length > 0 && (
                 <div className="mt-1">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
                     Theo dõi Paddy
                   </span>
                   <SocialLinks items={socialMenu.items} />
@@ -216,8 +216,8 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
                   {stores.slice(0, 4).map((store) => (
                     <div key={store.id}>
-                      <div className="text-[13px] font-bold text-foreground">{store.name}</div>
-                      <div className="text-[11.5px] text-muted-foreground leading-snug mt-0.5">{store.address}</div>
+                      <div className="text-sm font-bold text-foreground">{store.name}</div>
+                      <div className="text-xs text-muted-foreground leading-snug mt-0.5">{store.address}</div>
                     </div>
                   ))}
                 </div>
@@ -238,10 +238,10 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
             <div className="flex flex-col gap-0.5 text-center md:text-left">
-              <p className="text-[11.5px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 © 2026 Công Ty Cổ Phần TM & DV Paddy. MST: 0316459054.
               </p>
-              <p className="text-[11.5px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 36 Mạc Đĩnh Chi, Phường Tân Định, TP. Hồ Chí Minh, Việt Nam
               </p>
             </div>

@@ -543,21 +543,6 @@ export type Database = {
           },
         ]
       }
-      backfill_cursors: {
-        Row: {
-          last_id: number
-          name: string
-        }
-        Insert: {
-          last_id?: number
-          name: string
-        }
-        Update: {
-          last_id?: number
-          name?: string
-        }
-        Relationships: []
-      }
       banners: {
         Row: {
           background_color: string | null
@@ -1052,15 +1037,23 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number | null
+          hub_display_order: number | null
+          hub_icon_url: string | null
+          hub_image_url: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          is_hub: boolean | null
           meta_description: string | null
           meta_title: string | null
           name: string
           parent_id: string | null
+          pet_type: string | null
           rules: Json | null
           rules_match_type: string | null
+          seo_body_html: string | null
+          seo_faq: Json | null
+          seo_heading: string | null
           shopify_collection_id: string | null
           slug: string
           updated_at: string
@@ -1070,15 +1063,23 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          hub_display_order?: number | null
+          hub_icon_url?: string | null
+          hub_image_url?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_hub?: boolean | null
           meta_description?: string | null
           meta_title?: string | null
           name: string
           parent_id?: string | null
+          pet_type?: string | null
           rules?: Json | null
           rules_match_type?: string | null
+          seo_body_html?: string | null
+          seo_faq?: Json | null
+          seo_heading?: string | null
           shopify_collection_id?: string | null
           slug: string
           updated_at?: string
@@ -1088,15 +1089,23 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          hub_display_order?: number | null
+          hub_icon_url?: string | null
+          hub_image_url?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_hub?: boolean | null
           meta_description?: string | null
           meta_title?: string | null
           name?: string
           parent_id?: string | null
+          pet_type?: string | null
           rules?: Json | null
           rules_match_type?: string | null
+          seo_body_html?: string | null
+          seo_faq?: Json | null
+          seo_heading?: string | null
           shopify_collection_id?: string | null
           slug?: string
           updated_at?: string
@@ -4482,6 +4491,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pet_hub_pages: {
+        Row: {
+          created_at: string | null
+          hero_cta_link: string | null
+          hero_cta_text: string | null
+          hero_image_url: string | null
+          id: string
+          is_active: boolean | null
+          meta_description: string | null
+          meta_title: string | null
+          pet_type: string
+          seo_body_html: string | null
+          seo_faq: Json | null
+          seo_heading: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hero_cta_link?: string | null
+          hero_cta_text?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          pet_type: string
+          seo_body_html?: string | null
+          seo_faq?: Json | null
+          seo_heading?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hero_cta_link?: string | null
+          hero_cta_text?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          pet_type?: string
+          seo_body_html?: string | null
+          seo_faq?: Json | null
+          seo_heading?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       pets: {
         Row: {
@@ -8541,7 +8604,6 @@ export type Database = {
       backfill_order_all_fields: { Args: never; Returns: number }
       backfill_order_customer_name: { Args: never; Returns: number }
       backfill_order_fields: { Args: never; Returns: number }
-      backfill_orders_combined: { Args: never; Returns: undefined }
       backfill_sapo_customer_order_stats: {
         Args: never
         Returns: {
