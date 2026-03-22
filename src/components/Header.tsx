@@ -420,9 +420,9 @@ export const Header = () => {
                 );
               })}
             </div>
-            <div className="text-secondary font-semibold text-sm">
+            <Link to="/pages/uu-dai-tich-luy-thanh-vien-paddier" className="text-secondary font-semibold text-sm hover:underline">
               Tiết kiệm đến 25% khi là thành viên Paddy
-            </div>
+            </Link>
           </nav>
         </div>
 

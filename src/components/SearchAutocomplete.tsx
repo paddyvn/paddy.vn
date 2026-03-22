@@ -24,7 +24,7 @@ interface SearchAutocompleteProps {
 export const SearchAutocomplete = ({
   className = "",
   inputClassName = "",
-  placeholder = "Search products...",
+  placeholder = "Tìm kiếm sản phẩm...",
   isMobile = false,
 }: SearchAutocompleteProps) => {
   const [query, setQuery] = useState("");
