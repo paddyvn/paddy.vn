@@ -388,15 +388,6 @@ export default function CollectionsManagement() {
           <p className="text-muted-foreground">Organize products into collections</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={() => syncCollections.mutate()}
-            disabled={syncCollections.isPending}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncCollections.isPending ? "animate-spin" : ""}`} />
-            {syncCollections.isPending ? "Syncing..." : "Sync Collections"}
-          </Button>
           <Button onClick={handleAddNew}>
             <Plus className="mr-2 h-4 w-4" />
             Add Collection
