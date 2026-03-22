@@ -29,6 +29,8 @@ const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
 const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const StoreLocator = lazy(() => import("./pages/StoreLocator"));
 const PetHub = lazy(() => import("./pages/PetHub"));
+const GiftCard = lazy(() => import("./pages/GiftCard"));
+const GiftCardBalance = lazy(() => import("./pages/GiftCardBalance"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -119,6 +121,8 @@ const App = () => (
           <Route path="/brands-thuong-hieu-thu-cung" element={<Brands />} />
           <Route path="/search" element={<Search />} />
           <Route path="/flash-sale" element={<FlashSale />} />
+          <Route path="/phieu-qua-tang" element={<Suspense fallback={<LoadingFallback />}><GiftCard /></Suspense>} />
+          <Route path="/phieu-qua-tang/kiem-tra" element={<Suspense fallback={<LoadingFallback />}><GiftCardBalance /></Suspense>} />
           <Route path="/promotions" element={<Promotions />} />
           {/* Vietnamese checkout routes */}
           <Route path="/gio-hang" element={<Cart />} />

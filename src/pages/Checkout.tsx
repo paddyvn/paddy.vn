@@ -30,7 +30,8 @@ import {
   CheckCircle2,
   Tag,
   X,
-  RefreshCw
+  RefreshCw,
+  Gift
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useProductsPromotions } from "@/hooks/useProductPromotions";
@@ -121,6 +122,15 @@ export default function Checkout() {
     promotionId: string;
   } | null>(null);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+
+  // Gift Card
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    code: string;
+    balance: number;
+    initial_amount: number;
+  } | null>(null);
+  const [isApplyingGiftCard, setIsApplyingGiftCard] = useState(false);
   
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
@@ -268,7 +278,13 @@ export default function Checkout() {
   const voucherDiscount = calculateVoucherDiscount();
   const subscriptionDiscount = enableSubscription ? Math.round(subtotal * subscriptionDiscountPct / 100) : 0;
   const discount = voucherDiscount + subscriptionDiscount;
-  const total = subtotal + shippingCost - discount - totalDealDiscount;
+  
+  // Gift card: applied after coupon on remaining amount
+  const afterCouponTotal = subtotal + shippingCost - discount - totalDealDiscount;
+  const giftCardAmountUsed = appliedGiftCard 
+    ? Math.min(appliedGiftCard.balance, Math.max(0, afterCouponTotal)) 
+    : 0;
+  const total = afterCouponTotal - giftCardAmountUsed;
 
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) return;
@@ -312,6 +328,37 @@ export default function Checkout() {
 
   const handleRemoveVoucher = () => {
     setAppliedVoucher(null);
+  };
+
+  const handleApplyGiftCard = async () => {
+    if (!giftCardCode.trim()) return;
+    setIsApplyingGiftCard(true);
+    try {
+      const { data, error } = await supabase.rpc("check_gift_card_balance", {
+        p_code: giftCardCode.trim().toUpperCase(),
+      });
+      if (error) throw error;
+      const res = data as any;
+      if (!res?.found) {
+        toast({ title: "Không tìm thấy", description: "Mã thẻ quà tặng không hợp lệ", variant: "destructive" });
+        return;
+      }
+      if (res.balance <= 0) {
+        toast({ title: "Hết số dư", description: "Thẻ quà tặng này đã hết số dư", variant: "destructive" });
+        return;
+      }
+      setAppliedGiftCard({ code: giftCardCode.trim().toUpperCase(), balance: res.balance, initial_amount: res.initial_amount });
+      setGiftCardCode("");
+      toast({ title: "Áp dụng thành công", description: `Thẻ quà tặng có số dư ${formatPrice(res.balance)}₫` });
+    } catch {
+      toast({ title: "Lỗi", description: "Không thể kiểm tra thẻ quà tặng", variant: "destructive" });
+    } finally {
+      setIsApplyingGiftCard(false);
+    }
+  };
+
+  const handleRemoveGiftCard = () => {
+    setAppliedGiftCard(null);
   };
 
   const getSelectedAddress = () => {
@@ -437,6 +484,16 @@ export default function Checkout() {
       if (appliedVoucher?.promotionId) {
         await supabase.rpc('increment_voucher_usage', {
           p_promotion_id: appliedVoucher.promotionId,
+        });
+      }
+
+      // Redeem gift card
+      if (appliedGiftCard && giftCardAmountUsed > 0) {
+        await supabase.rpc('redeem_gift_card', {
+          p_code: appliedGiftCard.code,
+          p_amount: giftCardAmountUsed,
+          p_order_id: (rpcResult as any)?.order_id || null,
+          p_user_id: userId,
         });
       }
 
@@ -1018,7 +1075,7 @@ export default function Checkout() {
                 <div className="space-y-2">
                   <Label className="text-sm flex items-center gap-1">
                     <Tag className="h-3.5 w-3.5" />
-                    Mã giảm giá / Gift Card
+                    Mã giảm giá
                   </Label>
                   {appliedVoucher ? (
                     <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
@@ -1053,6 +1110,59 @@ export default function Checkout() {
                         disabled={isApplyingVoucher || !voucherCode.trim()}
                       >
                         {isApplyingVoucher ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Áp dụng"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Gift Card Input */}
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-1">
+                    <Gift className="h-3.5 w-3.5" />
+                    Thẻ quà tặng
+                  </Label>
+                  {appliedGiftCard ? (
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Gift className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-700 dark:text-green-400 font-mono">
+                            {appliedGiftCard.code}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Sử dụng: {formatPrice(giftCardAmountUsed)}₫ (còn dư: {formatPrice(appliedGiftCard.balance - giftCardAmountUsed)}₫)
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={handleRemoveGiftCard}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="GC-XXXX-XXXX-XXXX"
+                        value={giftCardCode}
+                        onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === "Enter" && handleApplyGiftCard()}
+                        className="flex-1 font-mono"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleApplyGiftCard}
+                        disabled={isApplyingGiftCard || !giftCardCode.trim()}
+                      >
+                        {isApplyingGiftCard ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Áp dụng"
@@ -1140,6 +1250,12 @@ export default function Checkout() {
                       <span>-{formatPrice(td.discountAmount)}₫</span>
                     </div>
                   ))}
+                  {giftCardAmountUsed > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="truncate">Thẻ quà tặng ({appliedGiftCard?.code})</span>
+                      <span>-{formatPrice(giftCardAmountUsed)}₫</span>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
