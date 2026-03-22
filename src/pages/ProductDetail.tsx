@@ -200,8 +200,65 @@ export default function ProductDetail() {
     return idx >= 0 ? idx : undefined;
   };
 
+  // Stock alert handler
+  const handleStockAlert = async () => {
+    const email = stockAlertEmail || session?.user?.email;
+    if (!email) {
+      toast({ title: "Vui lòng nhập email", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("stock_alerts").insert({
+      variant_id: selectedVariant?.id,
+      product_id: product.id,
+      user_id: session?.user?.id || null,
+      email,
+      status: "active",
+    });
+    if (error) {
+      toast({ title: "Có lỗi xảy ra", variant: "destructive" });
+    } else {
+      setStockAlertSubmitted(true);
+      toast({ title: "Chúng tôi sẽ thông báo khi sản phẩm có hàng trở lại!" });
+    }
+  };
+
+  // Product JSON-LD
+  const primaryImage = product.product_images?.find((i: any) => i.is_primary)?.image_url || product.product_images?.[0]?.image_url;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "image": primaryImage,
+    "description": product.meta_description || product.description?.replace(/<[^>]*>/g, "").slice(0, 300),
+    "brand": product.brand ? { "@type": "Brand", "name": product.brand } : undefined,
+    "offers": {
+      "@type": "Offer",
+      "price": currentPrice,
+      "priceCurrency": "VND",
+      "availability": isInStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "url": `https://paddy.vn/products/${product.slug}`
+    }
+  };
+
+  // Breadcrumb JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Trang chủ", "item": "https://paddy.vn" },
+      ...(primaryCategory ? [{ "@type": "ListItem", "position": 2, "name": primaryCategory.name, "item": `https://paddy.vn/collections/${primaryCategory.slug}` }] : []),
+      { "@type": "ListItem", "position": primaryCategory ? 3 : 2, "name": product.name }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <Helmet>
+        <title>{product.meta_title || product.name} | Paddy.vn</title>
+        {product.meta_description && <meta name="description" content={product.meta_description} />}
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
+      </Helmet>
       <Header />
       
       <ProductBreadcrumb
