@@ -124,7 +124,8 @@ const App = () => (
           <Route path="/flash-sale" element={<FlashSale />} />
           <Route path="/phieu-qua-tang" element={<Suspense fallback={<LoadingFallback />}><GiftCard /></Suspense>} />
           <Route path="/phieu-qua-tang/kiem-tra" element={<Suspense fallback={<LoadingFallback />}><GiftCardBalance /></Suspense>} />
-          <Route path="/promotions" element={<Promotions />} />
+          <Route path="/khuyen-mai" element={<Promotions />} />
+          <Route path="/promotions" element={<Navigate to="/khuyen-mai" replace />} />
           {/* Vietnamese checkout routes */}
           <Route path="/gio-hang" element={<Cart />} />
           <Route path="/thanh-toan" element={<Checkout />} />
