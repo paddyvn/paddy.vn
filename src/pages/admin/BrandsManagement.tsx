@@ -38,7 +38,7 @@ export default function BrandsManagement() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const syncBrands = useSyncBrands();
+  
 
   // Fetch brands
   const { data: brands, isLoading } = useQuery({
