@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SyncOptionNamesButton } from "@/components/SyncOptionNamesButton";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -35,7 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, RefreshCw, X, Check, ChevronsUpDown, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, X, Check, ChevronsUpDown, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -44,7 +44,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import { useSyncProducts } from "@/hooks/useSyncProducts";
+
 import { InlineEditCell } from "@/components/admin/InlineEditCell";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -96,7 +96,7 @@ export default function ProductsManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const syncProducts = useSyncProducts();
+  
 
   const ITEMS_PER_PAGE = 50;
 
@@ -614,16 +614,6 @@ export default function ProductsManagement() {
           <Button variant="outline" onClick={exportProductsCSV} className="gap-2">
             <Download className="h-4 w-4" />
             Export CSV
-          </Button>
-          <SyncOptionNamesButton />
-          <Button
-            onClick={() => syncProducts.mutate()}
-            disabled={syncProducts.isPending}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
-            {syncProducts.isPending ? "Syncing..." : "Sync Products"}
           </Button>
           <Button
             onClick={() => navigate("/admin/products/new")}
