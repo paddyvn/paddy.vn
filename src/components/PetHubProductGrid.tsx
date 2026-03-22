@@ -35,7 +35,7 @@ export const PetHubProductGrid = ({
 }: PetHubProductGridProps) => {
   const productIds = (products || []).map((p) => p.id);
   const { data: promotionsMap } = useProductsPromotions(productIds);
-  const { data: vouchersMap } = useAllProductVouchers(productIds);
+  const { data: vouchersMap } = useAllProductVouchers();
 
   const totalPages = Math.ceil(total / PRODUCTS_PER_PAGE);
 
@@ -76,7 +76,7 @@ export const PetHubProductGrid = ({
             <ProductCard
               key={product.id}
               product={product}
-              promotions={promotionsMap?.[product.id]}
+              promotion={promotionsMap?.[product.id]}
               vouchers={vouchersMap?.[product.id]}
             />
           ))}
