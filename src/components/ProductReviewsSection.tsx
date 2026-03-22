@@ -124,8 +124,8 @@ export const ProductReviewsSection = ({ productId, userId }: ProductReviewsSecti
         />
         <Textarea
           placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
           rows={3}
           className="mb-4"
         />
