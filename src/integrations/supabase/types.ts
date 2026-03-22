@@ -5654,6 +5654,7 @@ export type Database = {
           rating: number | null
           rating_count: number | null
           sapo_product_id: number | null
+          search_text: string | null
           short_description: string | null
           show_description: boolean | null
           show_feeding_guidelines: boolean | null
@@ -5700,6 +5701,7 @@ export type Database = {
           rating?: number | null
           rating_count?: number | null
           sapo_product_id?: number | null
+          search_text?: string | null
           short_description?: string | null
           show_description?: boolean | null
           show_feeding_guidelines?: boolean | null
@@ -5746,6 +5748,7 @@ export type Database = {
           rating?: number | null
           rating_count?: number | null
           sapo_product_id?: number | null
+          search_text?: string | null
           short_description?: string | null
           show_description?: boolean | null
           show_feeding_guidelines?: boolean | null
@@ -9414,6 +9417,21 @@ export type Database = {
         Args: never
         Returns: undefined
       }
+      search_products: {
+        Args: { p_limit?: number; p_offset?: number; p_query: string }
+        Returns: {
+          brand_name: string
+          compare_price: number
+          id: string
+          in_stock: boolean
+          min_price: number
+          name: string
+          primary_image: string
+          product_type: string
+          relevance: number
+          slug: string
+        }[]
+      }
       search_sapo_customers: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
@@ -9425,10 +9443,20 @@ export type Database = {
           total_spent: number
         }[]
       }
+      search_suggestions: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          image_url: string
+          slug: string
+          suggestion: string
+          type: string
+        }[]
+      }
       sync_sapo_stock_to_web: {
         Args: { p_location_id?: number }
         Returns: Json
       }
+      unaccent: { Args: { "": string }; Returns: string }
       validate_coupon: {
         Args: {
           p_code: string
