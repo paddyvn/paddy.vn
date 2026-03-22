@@ -47,7 +47,7 @@ export const PetHubCategories = ({
             </span>
           </button>
 
-          {categories.map((cat) => {
+          {categories.slice(0, 10).map((cat) => {
             const isActive = activeSlug === cat.slug;
             const isDeals = cat.icon === "deals";
 
