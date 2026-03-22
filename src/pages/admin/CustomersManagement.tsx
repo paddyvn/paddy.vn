@@ -85,7 +85,7 @@ export default function CustomersManagement() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateCustomer = useUpdateCustomer();
-  const syncCustomers = useSyncCustomers();
+  
   
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
