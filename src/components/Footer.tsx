@@ -1,4 +1,5 @@
 import { Phone, Mail, Facebook, Instagram, ChevronDown } from "lucide-react";
+import paddyLogo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -162,7 +163,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
 
             {/* Col 1: Brand + Contact */}
             <div>
-              <div className="text-[28px] font-extrabold text-primary leading-none tracking-tight">paddy</div>
+              <img src={paddyLogo} alt="Paddy.vn" className="h-9 w-auto" />
               <p className="text-sm text-muted-foreground mt-1.5 mb-4 leading-snug">
                 Cửa hàng thú cưng online hàng đầu Việt Nam
               </p>
