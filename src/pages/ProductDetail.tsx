@@ -76,6 +76,24 @@ export default function ProductDetail() {
     setQuantity(1);
   }, [selectedVariant?.id]);
 
+  // Track recently viewed (delete+insert pattern for partial unique index)
+  useEffect(() => {
+    if (!product?.id || !session?.user?.id) return;
+    const trackView = async () => {
+      const userId = session.user.id;
+      const productId = product.id;
+      await supabase
+        .from("recently_viewed")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_id", productId);
+      await supabase
+        .from("recently_viewed")
+        .insert({ user_id: userId, product_id: productId, viewed_at: new Date().toISOString() });
+    };
+    trackView();
+  }, [product?.id, session?.user?.id]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
