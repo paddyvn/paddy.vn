@@ -86,20 +86,20 @@ const usePetCategories = (petType: "dog" | "cat") => {
       const { data: brands } = await supabase.from("brands").select("slug");
       const brandSlugs = new Set((brands || []).map((b) => b.slug));
 
-      // Get product counts per collection
-      const { data: pcRows } = await supabase
-        .from("product_collections")
-        .select("collection_id")
-        .limit(50000);
+      // Filter out brands first
+      const filtered = (categories || []).filter((c) => !brandSlugs.has(c.slug));
 
-      const countMap = new Map<string, number>();
-      (pcRows || []).forEach((r) => {
-        countMap.set(r.collection_id, (countMap.get(r.collection_id) || 0) + 1);
+      // Get product counts for each category in parallel
+      const countsPromises = filtered.map(async (c) => {
+        const { count } = await supabase
+          .from("product_collections")
+          .select("*", { count: "exact", head: true })
+          .eq("collection_id", c.id);
+        return { ...c, productCount: count || 0 };
       });
 
-      return (categories || [])
-        .filter((c) => !brandSlugs.has(c.slug) && (countMap.get(c.id) || 0) > 0)
-        .map((c) => ({ ...c, productCount: countMap.get(c.id) || 0 })) as CategoryWithCount[];
+      const withCounts = await Promise.all(countsPromises);
+      return withCounts.filter((c) => c.productCount > 0) as CategoryWithCount[];
     },
     staleTime: 5 * 60 * 1000,
   });
