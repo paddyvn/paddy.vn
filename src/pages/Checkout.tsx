@@ -611,7 +611,7 @@ export default function Checkout() {
 
         {/* Email display */}
         {userEmail && (
-          <div className="max-w-3xl mx-auto flex items-center gap-2 text-sm text-muted-foreground mb-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
             <span>Đặt hàng với:</span>
             <span className="font-medium text-foreground">{userEmail}</span>
           </div>
