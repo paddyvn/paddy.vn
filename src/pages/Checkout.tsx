@@ -1189,39 +1189,9 @@ export default function Checkout() {
           <div className="hidden lg:block">
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle>Tổng đơn hàng</CardTitle>
+                <CardTitle>Thanh toán</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="max-h-64 overflow-y-auto space-y-3">
-                  {cart.map((item) => {
-                    const basePrice = getItemBasePrice(item);
-                    const promotion = promotionsMap?.[item.product_id];
-                    const { effectivePrice, hasDiscount, originalPrice } = getEffectivePrice(basePrice, promotion);
-                    return (
-                      <div key={item.id} className="flex gap-2">
-                        <img
-                          src={getPrimaryImage(item.products?.product_images)}
-                          alt=""
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium line-clamp-1">{item.products?.name}</p>
-                          <p className="text-xs text-muted-foreground">x{item.quantity}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{formatPrice(effectivePrice * item.quantity)}₫</p>
-                          {hasDiscount && (
-                            <p className="text-xs text-muted-foreground line-through">
-                              {formatPrice(originalPrice * item.quantity)}₫
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <Separator />
 
                 {/* Voucher Input */}
                 <div className="space-y-2">
