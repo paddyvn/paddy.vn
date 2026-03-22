@@ -67,7 +67,7 @@ export const ProductReviewsSection = ({ productId, userId }: ProductReviewsSecti
       toast.success("Cảm ơn bạn đã đánh giá! Đánh giá sẽ được duyệt trước khi hiển thị.");
       setRating(0);
       setTitle("");
-      setBody("");
+      setComment("");
       refetch();
     } catch (err) {
       toast.error("Có lỗi xảy ra, vui lòng thử lại");
