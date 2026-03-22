@@ -437,6 +437,10 @@ export default function CollectionDetails() {
         collection_type: formData.collection_type,
         rules: rules.length > 0 ? rules : null,
         rules_match_type: formData.rules_match_type,
+        pet_type: formData.pet_type || null,
+        is_hub: formData.is_hub,
+        hub_display_order: formData.is_hub ? formData.hub_display_order : 0,
+        hub_icon_url: formData.hub_icon_url.trim() || null,
       };
 
       if (isNewCollection) {
