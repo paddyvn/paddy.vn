@@ -215,6 +215,13 @@ const BlogPostDetail = () => {
   // Always use category-based URLs for better SEO
   const canonicalUrl = `/blogs/${postCategorySlug}/${handle}`;
 
+  // Increment view count on page load (must be before early returns)
+  useEffect(() => {
+    if (post?.id) {
+      supabase.rpc('increment_blog_view', { p_post_id: post.id } as any).then(() => {});
+    }
+  }, [post?.id]);
+
   if (postLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
@@ -254,13 +261,6 @@ const BlogPostDetail = () => {
 
   const tags = post.tags?.split(",").map(t => t.trim()).filter(Boolean) || [];
   const categoryTag = tags[0] || "Chăm Sóc Thú Cưng";
-
-  // Increment view count on page load
-  useEffect(() => {
-    if (post?.id) {
-      supabase.rpc('increment_blog_view', { p_post_id: post.id }).catch(() => {});
-    }
-  }, [post?.id]);
 
   // JSON-LD structured data
   const articleJsonLd = post ? {
