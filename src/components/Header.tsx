@@ -251,7 +251,7 @@ export const Header = () => {
                     <>
                       <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
                         <Package className="mr-2 h-4 w-4" />
-                        My Orders
+                        Đơn hàng của tôi
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/profile?tab=rewards')} className="cursor-pointer">
                         <Gift className="mr-2 h-4 w-4" />
