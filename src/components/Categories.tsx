@@ -47,7 +47,7 @@ export const Categories = () => {
             return (
               <Link
                 key={cat.slug}
-                to={cat.icon === "deals" ? "/promotions" : `/collections/${cat.slug}`}
+                to={cat.icon === "deals" ? "/khuyen-mai" : `/collections/${cat.slug}`}
                 className={cn(
                   "flex flex-col items-center px-1 py-2.5 sm:px-2 sm:py-4 bg-background rounded-2xl transition-all duration-250 cursor-pointer group",
                   "hover:border-primary hover:shadow-hover hover:-translate-y-1 active:translate-y-0 active:scale-[0.97]",

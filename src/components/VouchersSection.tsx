@@ -198,7 +198,7 @@ export const VouchersSection = () => {
             <h2 className="text-lg font-bold">Mã giảm giá</h2>
           </div>
           <Link
-            to="/promotions"
+            to="/khuyen-mai"
             className="text-sm text-primary hover:underline flex items-center gap-1"
           >
             Xem thêm

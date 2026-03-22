@@ -107,7 +107,7 @@ export const DealsGrid = ({ hideViewAll = false }: DealsGridProps) => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl md:text-2xl font-bold text-primary">Ưu đãi tại Paddy</h2>
             <Link
-              to="/promotions"
+              to="/khuyen-mai"
               className="flex items-center gap-1 text-primary font-medium hover:opacity-80 transition-opacity"
             >
               Xem tất cả
