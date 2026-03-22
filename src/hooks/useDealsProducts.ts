@@ -36,6 +36,29 @@ export const useDealsProducts = (
           { count: "exact" }
         );
 
+      // Category/collection filter — must fetch matching product IDs first
+      if (filters.categorySlug) {
+        const { data: catRow } = await supabase
+          .from("categories")
+          .select("id")
+          .eq("slug", filters.categorySlug)
+          .single();
+
+        if (catRow) {
+          const { data: pcRows } = await supabase
+            .from("product_collections")
+            .select("product_id")
+            .eq("collection_id", catRow.id)
+            .limit(500);
+
+          const ids = (pcRows || []).map((r) => r.product_id);
+          if (ids.length === 0) {
+            return { products: [], total: 0 };
+          }
+          query = query.in("id", ids);
+        }
+      }
+
       // Discount filter
       if (filters.minDiscount > 0) {
         query = query.gte("discount_percent", filters.minDiscount);
