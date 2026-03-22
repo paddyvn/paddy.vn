@@ -321,10 +321,26 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* All variants OOS banner */}
+            {/* All variants OOS banner + stock alert */}
             {allVariantsOOS && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
                 <p className="text-sm font-medium text-destructive">Sản phẩm này đã hết hàng</p>
+                {!stockAlertSubmitted ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={session?.user?.email || "Email của bạn"}
+                      value={stockAlertEmail}
+                      onChange={(e) => setStockAlertEmail(e.target.value)}
+                      className="flex-1 h-9"
+                    />
+                    <Button size="sm" variant="outline" onClick={handleStockAlert}>
+                      <Bell className="h-4 w-4 mr-1" />
+                      Thông báo
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-green-600">✓ Đã đăng ký nhận thông báo</p>
+                )}
               </div>
             )}
 
