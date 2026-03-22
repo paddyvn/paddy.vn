@@ -216,8 +216,8 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
                   {stores.slice(0, 4).map((store) => (
                     <div key={store.id}>
-                      <div className="text-[13px] font-bold text-foreground">{store.name}</div>
-                      <div className="text-[11.5px] text-muted-foreground leading-snug mt-0.5">{store.address}</div>
+                      <div className="text-sm font-bold text-foreground">{store.name}</div>
+                      <div className="text-xs text-muted-foreground leading-snug mt-0.5">{store.address}</div>
                     </div>
                   ))}
                 </div>
