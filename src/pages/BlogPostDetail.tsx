@@ -215,6 +215,13 @@ const BlogPostDetail = () => {
   // Always use category-based URLs for better SEO
   const canonicalUrl = `/blogs/${postCategorySlug}/${handle}`;
 
+  // Increment view count on page load (must be before early returns)
+  useEffect(() => {
+    if (post?.id) {
+      supabase.rpc('increment_blog_view', { p_post_id: post.id } as any).then(() => {});
+    }
+  }, [post?.id]);
+
   if (postLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
@@ -255,6 +262,29 @@ const BlogPostDetail = () => {
   const tags = post.tags?.split(",").map(t => t.trim()).filter(Boolean) || [];
   const categoryTag = tags[0] || "Chăm Sóc Thú Cưng";
 
+  // JSON-LD structured data
+  const articleJsonLd = post ? {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": (post as any).meta_title || post.title,
+    "description": (post as any).meta_description || post.summary_html?.replace(/<[^>]*>/g, "").slice(0, 160),
+    "image": post.image_url,
+    "author": {
+      "@type": "Organization",
+      "name": post.author || "Paddy.vn"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Paddy.vn",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://paddy.vn/logo.png"
+      }
+    },
+    "datePublished": post.shopify_published_at || post.created_at,
+    "dateModified": post.updated_at
+  } : null;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
@@ -266,6 +296,11 @@ const BlogPostDetail = () => {
           />
         )}
         <link rel="canonical" href={canonicalUrl} />
+        {articleJsonLd && (
+          <script type="application/ld+json">
+            {JSON.stringify(articleJsonLd)}
+          </script>
+        )}
       </Helmet>
 
       <Header />

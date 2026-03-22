@@ -7,11 +7,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Heart, Ticket, Copy, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ShoppingCart, Heart, Ticket, Copy, CheckCircle, Bell } from "lucide-react";
 import { ProductTrustBadges } from "@/components/ProductTrustBadges";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { RelatedProducts } from "@/components/RelatedProducts";
+import { ProductReviewsSection } from "@/components/ProductReviewsSection";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductBreadcrumb } from "@/components/ProductBreadcrumb";
@@ -19,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { useProductPromotion } from "@/hooks/useProductPromotions";
 import { useProductVouchers } from "@/hooks/useProductVouchers";
+import { Helmet } from "react-helmet-async";
 
 function sanitizeDescription(html: string): string {
   return html
@@ -39,6 +42,8 @@ export default function ProductDetail() {
     ingredients: false,
     feeding: false,
   });
+  const [stockAlertEmail, setStockAlertEmail] = useState("");
+  const [stockAlertSubmitted, setStockAlertSubmitted] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -70,6 +75,24 @@ export default function ProductDetail() {
   useEffect(() => {
     setQuantity(1);
   }, [selectedVariant?.id]);
+
+  // Track recently viewed (delete+insert pattern for partial unique index)
+  useEffect(() => {
+    if (!product?.id || !session?.user?.id) return;
+    const trackView = async () => {
+      const userId = session.user.id;
+      const productId = product.id;
+      await supabase
+        .from("recently_viewed")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_id", productId);
+      await supabase
+        .from("recently_viewed")
+        .insert({ user_id: userId, product_id: productId, viewed_at: new Date().toISOString() });
+    };
+    trackView();
+  }, [product?.id, session?.user?.id]);
 
   if (isLoading) {
     return (
@@ -177,8 +200,65 @@ export default function ProductDetail() {
     return idx >= 0 ? idx : undefined;
   };
 
+  // Stock alert handler
+  const handleStockAlert = async () => {
+    const email = stockAlertEmail || session?.user?.email;
+    if (!email) {
+      toast({ title: "Vui lòng nhập email", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("stock_alerts").insert({
+      variant_id: selectedVariant?.id,
+      product_id: product.id,
+      user_id: session?.user?.id || null,
+      email,
+      status: "active",
+    });
+    if (error) {
+      toast({ title: "Có lỗi xảy ra", variant: "destructive" });
+    } else {
+      setStockAlertSubmitted(true);
+      toast({ title: "Chúng tôi sẽ thông báo khi sản phẩm có hàng trở lại!" });
+    }
+  };
+
+  // Product JSON-LD
+  const primaryImage = product.product_images?.find((i: any) => i.is_primary)?.image_url || product.product_images?.[0]?.image_url;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "image": primaryImage,
+    "description": product.meta_description || product.description?.replace(/<[^>]*>/g, "").slice(0, 300),
+    "brand": product.brand ? { "@type": "Brand", "name": product.brand } : undefined,
+    "offers": {
+      "@type": "Offer",
+      "price": currentPrice,
+      "priceCurrency": "VND",
+      "availability": isInStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "url": `https://paddy.vn/products/${product.slug}`
+    }
+  };
+
+  // Breadcrumb JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Trang chủ", "item": "https://paddy.vn" },
+      ...(primaryCategory ? [{ "@type": "ListItem", "position": 2, "name": primaryCategory.name, "item": `https://paddy.vn/collections/${primaryCategory.slug}` }] : []),
+      { "@type": "ListItem", "position": primaryCategory ? 3 : 2, "name": product.name }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <Helmet>
+        <title>{product.meta_title || product.name} | Paddy.vn</title>
+        {product.meta_description && <meta name="description" content={product.meta_description} />}
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
+      </Helmet>
       <Header />
       
       <ProductBreadcrumb
@@ -241,10 +321,26 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* All variants OOS banner */}
+            {/* All variants OOS banner + stock alert */}
             {allVariantsOOS && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
                 <p className="text-sm font-medium text-destructive">Sản phẩm này đã hết hàng</p>
+                {!stockAlertSubmitted ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={session?.user?.email || "Email của bạn"}
+                      value={stockAlertEmail}
+                      onChange={(e) => setStockAlertEmail(e.target.value)}
+                      className="flex-1 h-9"
+                    />
+                    <Button size="sm" variant="outline" onClick={handleStockAlert}>
+                      <Bell className="h-4 w-4 mr-1" />
+                      Thông báo
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-green-600">✓ Đã đăng ký nhận thông báo</p>
+                )}
               </div>
             )}
 
@@ -532,6 +628,12 @@ export default function ProductDetail() {
             </div>
           );
         })()}
+
+        {/* Reviews Section */}
+        <ProductReviewsSection
+          productId={product.id}
+          userId={session?.user?.id}
+        />
 
         {/* Related Products - using collection */}
         <RelatedProducts
