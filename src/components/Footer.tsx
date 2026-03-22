@@ -68,7 +68,7 @@ const FooterLinkList = ({ items }: { items: { id: string; label: string; link: s
               {item.label}
             </a>
           ) : (
-            <Link to={item.link} className="text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+            <Link to={item.link} className="text-sm text-muted-foreground hover:text-primary transition-smooth">
               {item.label}
             </Link>
           )}
