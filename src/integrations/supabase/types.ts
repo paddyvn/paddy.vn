@@ -9347,6 +9347,7 @@ export type Database = {
         Args: { batch_size?: number }
         Returns: number
       }
+      increment_blog_view: { Args: { p_post_id: string }; Returns: undefined }
       increment_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
