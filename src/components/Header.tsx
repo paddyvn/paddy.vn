@@ -374,7 +374,7 @@ export const Header = () => {
                         {cartCount}
                       </span>
                     )}
-                    <span className="hidden md:inline ml-1 text-sm">Cart</span>
+                    <span className="hidden md:inline ml-1 text-sm">Giỏ hàng</span>
                     <ChevronDown className="hidden md:inline h-4 w-4 ml-1" />
                   </Button>
                 }
