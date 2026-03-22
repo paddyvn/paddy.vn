@@ -135,8 +135,8 @@ const PetHub = ({ petType }: PetHubProps) => {
 
         <PetHubHero hubPage={hubPage} petType={petType} />
         <PetHubCategories
-          categories={hubCategories}
-          activeCategory={filters.categoryId}
+          petType={petType}
+          activeSlug={filters.categorySlug}
           onSelect={handleCategorySelect}
         />
 
