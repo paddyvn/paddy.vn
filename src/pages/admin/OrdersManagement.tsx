@@ -90,7 +90,7 @@ function applyFilters(
   }
   if (searchQuery) {
     query = query.or(
-      `order_number.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%`
+      `order_number.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%,customer_name.ilike.%${searchQuery}%`
     );
   }
   if (dateFrom) {
@@ -691,10 +691,13 @@ export default function OrdersManagement() {
                         );
                       }
                       if (col.id === "customer") {
+                        const displayName = order.customer_name 
+                          || order.shipping_address?.full_name
+                          || [order.shipping_address?.first_name, order.shipping_address?.last_name].filter(Boolean).join(" ")
+                          || "-";
                         return (
                           <TableCell key={col.id}>
-                            {order.shipping_address?.first_name}{" "}
-                            {order.shipping_address?.last_name}
+                            {displayName}
                           </TableCell>
                         );
                       }
