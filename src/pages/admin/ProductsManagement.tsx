@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SyncOptionNamesButton } from "@/components/SyncOptionNamesButton";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
