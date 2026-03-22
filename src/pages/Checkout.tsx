@@ -1064,7 +1064,7 @@ export default function Checkout() {
                 <div className="space-y-2">
                   <Label className="text-sm flex items-center gap-1">
                     <Tag className="h-3.5 w-3.5" />
-                    Mã giảm giá / Gift Card
+                    Mã giảm giá
                   </Label>
                   {appliedVoucher ? (
                     <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
@@ -1099,6 +1099,59 @@ export default function Checkout() {
                         disabled={isApplyingVoucher || !voucherCode.trim()}
                       >
                         {isApplyingVoucher ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Áp dụng"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Gift Card Input */}
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-1">
+                    <Gift className="h-3.5 w-3.5" />
+                    Thẻ quà tặng
+                  </Label>
+                  {appliedGiftCard ? (
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Gift className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-700 dark:text-green-400 font-mono">
+                            {appliedGiftCard.code}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Sử dụng: {formatPrice(giftCardAmountUsed)}₫ (còn dư: {formatPrice(appliedGiftCard.balance - giftCardAmountUsed)}₫)
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={handleRemoveGiftCard}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="GC-XXXX-XXXX-XXXX"
+                        value={giftCardCode}
+                        onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === "Enter" && handleApplyGiftCard()}
+                        className="flex-1 font-mono"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleApplyGiftCard}
+                        disabled={isApplyingGiftCard || !giftCardCode.trim()}
+                      >
+                        {isApplyingGiftCard ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Áp dụng"
