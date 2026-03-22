@@ -568,7 +568,7 @@ export default function Checkout() {
     { number: 3, title: "Xác nhận", icon: Package },
   ];
 
-  if (cartLoading || deliveryMethodsLoading) {
+  if (!userId || cartLoading || deliveryMethodsLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
