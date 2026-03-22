@@ -8,7 +8,7 @@ import { PetHubSidebar } from "@/components/PetHubSidebar";
 import { PetHubProductGrid } from "@/components/PetHubProductGrid";
 import { PetHubSeoContent } from "@/components/PetHubSeoContent";
 import { usePetHubPage } from "@/hooks/usePetHubPage";
-import { usePetHubCategories } from "@/hooks/usePetHubCategories";
+import { usePetHubCategories, PetHubCategory } from "@/hooks/usePetHubCategories";
 import { usePetHubProducts, PetHubFilterState } from "@/hooks/usePetHubProducts";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
