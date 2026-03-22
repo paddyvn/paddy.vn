@@ -88,7 +88,7 @@ export const useProduct = (slug: string) => {
           product_origins (name, name_vi),
           reviews (
             *,
-            profiles (full_name, avatar_url)
+            profiles!reviews_user_id_fkey (full_name, avatar_url)
           )
         `)
         .eq("slug", slug)
