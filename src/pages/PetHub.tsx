@@ -45,8 +45,8 @@ const PetHub = ({ petType }: PetHubProps) => {
     setPage(1);
   };
 
-  const handleCategorySelect = (categoryId: string | null) => {
-    setFilters((prev) => ({ ...prev, categoryId }));
+  const handleCategorySelect = (slug: string | null) => {
+    setFilters((prev) => ({ ...prev, categorySlug: slug }));
     setPage(1);
   };
 
