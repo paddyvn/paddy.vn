@@ -99,8 +99,6 @@ export default function CollectionsManagement() {
   const [isBulkTypeDialogOpen, setIsBulkTypeDialogOpen] = useState(false);
   const [bulkCollectionType, setBulkCollectionType] = useState<string>("");
   const { toast } = useToast();
-  const syncCollections = useSyncCollections();
-  const syncProductCollections = useSyncProductCollections();
   const navigate = useNavigate();
 
   const handleSort = (column: SortColumn) => {
