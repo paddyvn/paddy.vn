@@ -242,7 +242,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                 © 2026 Công Ty Cổ Phần TM & DV Paddy. MST: 0316459054.
               </p>
               <p className="text-[11.5px] text-muted-foreground">
-                36 Mạc Đĩnh Chi, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh, Việt Nam
+                36 Mạc Đĩnh Chi, Phường Tân Định, TP. Hồ Chí Minh, Việt Nam
               </p>
             </div>
             <div className="flex items-center">
