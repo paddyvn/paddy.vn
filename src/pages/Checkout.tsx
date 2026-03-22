@@ -672,38 +672,76 @@ export default function Checkout() {
                         <div className="space-y-2">
                           <Label>Tỉnh/Thành phố *</Label>
                           <Select 
-                            value={addressForm.city} 
-                            onValueChange={(value) => setAddressForm(prev => ({ ...prev, city: value }))}
+                            value={selectedProvinceCode?.toString() || ""}
+                            onValueChange={(val) => {
+                              const code = Number(val);
+                              setSelectedProvinceCode(code);
+                              setSelectedDistrictCode(null);
+                              setSelectedWardCode(null);
+                              const prov = provinces.find(p => p.code === code);
+                              setAddressForm(prev => ({ ...prev, city: prov?.name || "", district: "", ward: "" }));
+                            }}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn tỉnh/thành" />
+                              <SelectValue placeholder={provincesLoading ? "Đang tải..." : "Chọn tỉnh/thành"} />
                             </SelectTrigger>
                             <SelectContent>
-                              {PROVINCES.map((province) => (
-                                <SelectItem key={province} value={province}>
-                                  {province}
+                              {provinces.map((p) => (
+                                <SelectItem key={p.code} value={p.code.toString()}>
+                                  {p.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="district">Quận/Huyện</Label>
-                          <Input
-                            id="district"
-                            value={addressForm.district}
-                            onChange={(e) => setAddressForm(prev => ({ ...prev, district: e.target.value }))}
-                            placeholder="Quận/Huyện"
-                          />
+                          <Label>Quận/Huyện *</Label>
+                          <Select
+                            value={selectedDistrictCode?.toString() || ""}
+                            onValueChange={(val) => {
+                              const code = Number(val);
+                              setSelectedDistrictCode(code);
+                              setSelectedWardCode(null);
+                              const dist = districts.find(d => d.code === code);
+                              setAddressForm(prev => ({ ...prev, district: dist?.name || "", ward: "" }));
+                            }}
+                            disabled={!selectedProvinceCode}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn quận/huyện" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {districts.map((d) => (
+                                <SelectItem key={d.code} value={d.code.toString()}>
+                                  {d.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="ward">Phường/Xã</Label>
-                          <Input
-                            id="ward"
-                            value={addressForm.ward}
-                            onChange={(e) => setAddressForm(prev => ({ ...prev, ward: e.target.value }))}
-                            placeholder="Phường/Xã"
-                          />
+                          <Label>Phường/Xã *</Label>
+                          <Select
+                            value={selectedWardCode?.toString() || ""}
+                            onValueChange={(val) => {
+                              const code = Number(val);
+                              setSelectedWardCode(code);
+                              const w = wards.find(w => w.code === code);
+                              setAddressForm(prev => ({ ...prev, ward: w?.name || "" }));
+                            }}
+                            disabled={!selectedDistrictCode}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Chọn phường/xã" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {wards.map((w) => (
+                                <SelectItem key={w.code} value={w.code.toString()}>
+                                  {w.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
