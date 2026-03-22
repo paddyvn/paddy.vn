@@ -117,7 +117,7 @@ export default function OrdersManagement() {
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const syncOrders = useSyncOrders();
+  
   const { columns, setColumns, isColumnVisible, visibleColumns } = useOrderColumns();
 
   // Debounce search input
