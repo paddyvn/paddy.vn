@@ -251,7 +251,7 @@ export const Header = () => {
                     <>
                       <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
                         <Package className="mr-2 h-4 w-4" />
-                        My Orders
+                        Đơn hàng của tôi
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/profile?tab=rewards')} className="cursor-pointer">
                         <Gift className="mr-2 h-4 w-4" />
@@ -263,12 +263,12 @@ export const Header = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
-                        Profile Settings
+                        Cài đặt tài khoản
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                         <LogOut className="mr-2 h-4 w-4" />
-                        Sign Out
+                        Đăng xuất
                       </DropdownMenuItem>
                     </>
                   ) : (
@@ -280,7 +280,7 @@ export const Header = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
-                        Sign In / Sign Up
+                        Đăng nhập / Đăng ký
                       </DropdownMenuItem>
                     </>
                   )}
@@ -293,10 +293,10 @@ export const Header = () => {
               <Button 
                 variant="ghost" 
                 className="hidden lg:flex items-center gap-1 text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 h-10"
+                onClick={() => navigate('/pages/lien-he')}
               >
                 <HelpCircle className="h-4 w-4" />
-                <span className="text-sm">24/7 Help</span>
-                <ChevronDown className="h-4 w-4" />
+                <span className="text-sm">Hỗ trợ</span>
               </Button>
 
               {/* Desktop Profile */}
@@ -310,10 +310,10 @@ export const Header = () => {
                       <User className="h-4 w-4" />
                       <div className="flex flex-col items-start text-left">
                         {userId && userName && (
-                          <span className="text-xs opacity-80">Hi, {userName.split(' ')[0]}</span>
+                          <span className="text-xs opacity-80">Xin chào, {userName.split(' ')[0]}</span>
                         )}
                         <span className="text-sm">
-                          {userId ? 'Account' : 'Sign In'}
+                          {userId ? 'Tài khoản' : 'Đăng nhập'}
                         </span>
                       </div>
                       <ChevronDown className="h-4 w-4" />
@@ -324,7 +324,7 @@ export const Header = () => {
                       <>
                         <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
                           <Package className="mr-2 h-4 w-4" />
-                          My Orders
+                          Đơn hàng của tôi
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/profile?tab=rewards')} className="cursor-pointer">
                           <Gift className="mr-2 h-4 w-4" />
@@ -336,12 +336,12 @@ export const Header = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                           <Settings className="mr-2 h-4 w-4" />
-                          Profile Settings
+                          Cài đặt tài khoản
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                           <LogOut className="mr-2 h-4 w-4" />
-                          Sign Out
+                          Đăng xuất
                         </DropdownMenuItem>
                       </>
                     ) : (
@@ -353,7 +353,7 @@ export const Header = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/auth')} className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
-                          Sign In / Sign Up
+                          Đăng nhập / Đăng ký
                         </DropdownMenuItem>
                       </>
                     )}
@@ -374,7 +374,7 @@ export const Header = () => {
                         {cartCount}
                       </span>
                     )}
-                    <span className="hidden md:inline ml-1 text-sm">Cart</span>
+                    <span className="hidden md:inline ml-1 text-sm">Giỏ hàng</span>
                     <ChevronDown className="hidden md:inline h-4 w-4 ml-1" />
                   </Button>
                 }
@@ -420,9 +420,9 @@ export const Header = () => {
                 );
               })}
             </div>
-            <div className="text-secondary font-semibold text-sm">
+            <Link to="/pages/uu-dai-tich-luy-thanh-vien-paddier" className="text-secondary font-semibold text-sm hover:underline">
               Tiết kiệm đến 25% khi là thành viên Paddy
-            </div>
+            </Link>
           </nav>
         </div>
 
@@ -499,16 +499,6 @@ export const Header = () => {
             >
               <X className="h-4 w-4" />
             </button>
-          </div>
-        ) : !activeAnnouncement ? (
-          <div className="bg-background">
-            <div className="container mx-auto px-4">
-              <div className="bg-muted rounded-lg py-2 text-center">
-                <p className="text-sm font-medium">
-                  Miễn phí giao hàng cho đơn hàng đầu tiên trên 500.000đ 🎉
-                </p>
-              </div>
-            </div>
           </div>
         ) : null}
       </div>
