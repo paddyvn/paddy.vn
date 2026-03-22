@@ -310,10 +310,10 @@ export const Header = () => {
                       <User className="h-4 w-4" />
                       <div className="flex flex-col items-start text-left">
                         {userId && userName && (
-                          <span className="text-xs opacity-80">Hi, {userName.split(' ')[0]}</span>
+                          <span className="text-xs opacity-80">Xin chào, {userName.split(' ')[0]}</span>
                         )}
                         <span className="text-sm">
-                          {userId ? 'Account' : 'Sign In'}
+                          {userId ? 'Tài khoản' : 'Đăng nhập'}
                         </span>
                       </div>
                       <ChevronDown className="h-4 w-4" />
