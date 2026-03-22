@@ -43,7 +43,6 @@ import {
   Tag,
   FileText,
   User,
-  RefreshCw,
   Download,
 } from "lucide-react";
 
