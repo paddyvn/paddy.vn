@@ -172,7 +172,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
                   <Phone className="h-3.5 w-3.5 shrink-0" />
                   <span>Hotline: <strong className="font-bold">0867 677 891</strong></span>
                 </a>
-                <a href="mailto:contact@paddy.vn" className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+                <a href="mailto:contact@paddy.vn" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
                   <Mail className="h-3.5 w-3.5 shrink-0" />
                   <span>contact@paddy.vn</span>
                 </a>
