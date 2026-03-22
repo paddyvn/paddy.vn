@@ -9,23 +9,25 @@ import { useComboDeals } from "@/hooks/useComboDeals";
 import { useTieredDeals } from "@/hooks/useTieredDeals";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Trash2, Plus, Minus, ShoppingBag, Truck, Tag, ArrowRight, Loader2 } from "lucide-react";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Trash2, Plus, Minus, ShoppingBag, Truck, Tag, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useProductsPromotions } from "@/hooks/useProductPromotions";
 import { getEffectivePrice, getItemBasePrice } from "@/lib/promotion-price-utils";
-import { useDeliveryMethods } from "@/hooks/useDeliveryMethods";
-import { useProvinces, useDistricts, useWards } from "@/hooks/useVietnamAddress";
+import { useCartRecommendations } from "@/hooks/useCartRecommendations";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ProductCard } from "@/components/ProductCard";
 
 const FREE_SHIPPING_THRESHOLD = 500000;
 
@@ -42,23 +44,12 @@ export default function Cart() {
   } | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
-  // Cascading address
-  const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
-  const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
-  const [selectedWardCode, setSelectedWardCode] = useState<number | null>(null);
-  const { provinces, loading: provincesLoading } = useProvinces();
-  const { districts } = useDistricts(selectedProvinceCode);
-  const { wards } = useWards(selectedDistrictCode);
-
-  // Delivery
-  const [selectedDelivery, setSelectedDelivery] = useState<string>("");
-  const { data: deliveryMethods = [], isLoading: deliveryMethodsLoading } = useDeliveryMethods(true);
-
   const { cart, isLoading, removeFromCart, updateQuantity } = useCart(userId);
   const cartProductIds = (cart || [])
     .map((item) => item.product_id)
     .filter((id): id is string => !!id);
   const { data: promotionsMap } = useProductsPromotions(cartProductIds);
+  const { data: recommendations = [] } = useCartRecommendations(cartProductIds);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -67,13 +58,6 @@ export default function Cart() {
       setUserId(session?.user?.id);
     });
   }, []);
-
-  // Set default delivery method
-  useEffect(() => {
-    if (deliveryMethods.length > 0 && !selectedDelivery) {
-      setSelectedDelivery(deliveryMethods[0].id);
-    }
-  }, [deliveryMethods, selectedDelivery]);
 
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
     if (!images || images.length === 0) {
@@ -94,8 +78,8 @@ export default function Cart() {
 
   const subtotal = calculateSubtotal();
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
-  const shippingCost = isFreeShipping ? 0 : (deliveryMethod?.price || 0);
+  const progressPercent = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
 
   // Combo & Tiered deal hooks
   const dealCartItems = (cart || []).map((item) => {
@@ -118,7 +102,7 @@ export default function Cart() {
   ].reduce((sum, d) => sum + d, 0);
 
   const discount = appliedCoupon?.discount || 0;
-  const total = subtotal + shippingCost - discount - totalDealDiscount;
+  const total = subtotal - discount - totalDealDiscount;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -190,7 +174,38 @@ export default function Cart() {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Giỏ hàng của bạn</h1>
+        {/* Fix 4: Breadcrumb */}
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Giỏ hàng</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        {/* Fix 3: Title with item count + continue shopping link */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">
+            Giỏ hàng của bạn
+            {cart.length > 0 && (
+              <span className="text-muted-foreground font-normal ml-2">({cart.length})</span>
+            )}
+          </h1>
+          {cart.length > 0 && (
+            <Button
+              variant="link"
+              onClick={() => navigate("/")}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Tiếp tục mua sắm
+            </Button>
+          )}
+        </div>
 
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -309,140 +324,24 @@ export default function Cart() {
               </Card>
             </div>
 
-            {/* Order Summary */}
+            {/* Order Summary Column */}
             <div className="space-y-4">
-              {/* Shipping Calculator */}
+              {/* Fix 2: Free Shipping Progress Bar */}
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
-                    Vận chuyển
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Province */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Tỉnh/Thành phố</label>
-                    <Select
-                      value={selectedProvinceCode?.toString() || ""}
-                      onValueChange={(val) => {
-                        setSelectedProvinceCode(Number(val));
-                        setSelectedDistrictCode(null);
-                        setSelectedWardCode(null);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={provincesLoading ? "Đang tải..." : "Chọn tỉnh/thành phố"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map((p) => (
-                          <SelectItem key={p.code} value={p.code.toString()}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck className="h-4 w-4 text-primary" />
+                    {isFreeShipping ? (
+                      <span className="text-sm font-medium text-green-600">
+                        Bạn được miễn phí vận chuyển! 🎉
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Mua thêm <span className="font-semibold text-primary">{formatPrice(remaining)}₫</span> để được freeship
+                      </span>
+                    )}
                   </div>
-
-                  {/* District */}
-                  {selectedProvinceCode && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Quận/Huyện</label>
-                      <Select
-                        value={selectedDistrictCode?.toString() || ""}
-                        onValueChange={(val) => {
-                          setSelectedDistrictCode(Number(val));
-                          setSelectedWardCode(null);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn quận/huyện" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {districts.map((d) => (
-                            <SelectItem key={d.code} value={d.code.toString()}>
-                              {d.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Ward */}
-                  {selectedDistrictCode && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Phường/Xã</label>
-                      <Select
-                        value={selectedWardCode?.toString() || ""}
-                        onValueChange={(val) => setSelectedWardCode(Number(val))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn phường/xã" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {wards.map((w) => (
-                            <SelectItem key={w.code} value={w.code.toString()}>
-                              {w.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Free shipping badge */}
-                  {isFreeShipping && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-700 w-full justify-center py-1.5">
-                      🎉 Miễn phí vận chuyển cho đơn từ {formatPrice(FREE_SHIPPING_THRESHOLD)}₫
-                    </Badge>
-                  )}
-                  {!isFreeShipping && (
-                    <p className="text-xs text-muted-foreground text-center">
-                      Mua thêm {formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)}₫ để được miễn phí vận chuyển
-                    </p>
-                  )}
-
-                  {/* Delivery methods from DB */}
-                  {selectedProvinceCode && !deliveryMethodsLoading && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium mb-2 block">Phương thức giao hàng</label>
-                      {deliveryMethods.map((method) => (
-                        <div
-                          key={method.id}
-                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors ${
-                            selectedDelivery === method.id
-                              ? "border-primary bg-primary/5"
-                              : "hover:border-primary/50"
-                          }`}
-                          onClick={() => setSelectedDelivery(method.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 ${
-                              selectedDelivery === method.id
-                                ? "border-primary bg-primary"
-                                : "border-muted-foreground"
-                            }`}>
-                              {selectedDelivery === method.id && (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{method.name}</p>
-                              {method.description && (
-                                <p className="text-xs text-muted-foreground">{method.description}</p>
-                              )}
-                            </div>
-                          </div>
-                          <span className="font-semibold text-sm">
-                            {isFreeShipping ? "Miễn phí" : `${formatPrice(method.price)}₫`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <Progress value={progressPercent} className="h-2" />
                 </CardContent>
               </Card>
 
@@ -508,15 +407,15 @@ export default function Cart() {
                     <span>{formatPrice(subtotal)}₫</span>
                   </div>
                   
+                  {/* Fix 1: Simplified shipping line */}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Phí vận chuyển</span>
                     <span>
-                      {!selectedProvinceCode
-                        ? "Chưa tính"
-                        : shippingCost === 0
-                          ? <span className="text-green-600 font-medium">Miễn phí</span>
-                          : `${formatPrice(shippingCost)}₫`
-                      }
+                      {isFreeShipping ? (
+                        <span className="text-green-600 font-medium">Miễn phí</span>
+                      ) : (
+                        "Tính khi thanh toán"
+                      )}
                     </span>
                   </div>
                   
@@ -547,25 +446,40 @@ export default function Cart() {
                     <span className="text-primary">{formatPrice(total)}₫</span>
                   </div>
                   
+                  {/* Fix 1: No disabled gate */}
                   <Button 
                     className="w-full mt-4" 
                     size="lg"
                     onClick={() => navigate("/thanh-toan", {
                       state: appliedCoupon ? { voucher: appliedCoupon } : undefined,
                     })}
-                    disabled={!selectedProvinceCode}
                   >
                     Tiến hành thanh toán
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                  
-                  {!selectedProvinceCode && (
-                    <p className="text-xs text-center text-muted-foreground">
-                      Vui lòng chọn địa chỉ giao hàng
-                    </p>
-                  )}
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Fix 5: Product Recommendations */}
+        {recommendations.length > 0 && cart.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xl font-bold mb-6">Có thể bạn cũng thích</h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {recommendations.slice(0, 10).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    base_price: product.base_price,
+                    product_images: product.product_images,
+                  }}
+                />
+              ))}
             </div>
           </div>
         )}

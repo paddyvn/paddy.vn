@@ -1871,6 +1871,228 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_card_denominations: {
+        Row: {
+          amount: number
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          label: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+        }
+        Relationships: []
+      }
+      gift_card_designs: {
+        Row: {
+          category: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gift_card_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string | null
+          gift_card_id: string
+          id: string
+          note: string | null
+          order_id: string | null
+          performed_by: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string | null
+          gift_card_id: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          performed_by?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string | null
+          gift_card_id?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          performed_by?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_transactions_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_cards: {
+        Row: {
+          balance: number
+          code: string
+          created_at: string | null
+          currency: string | null
+          delivered_at: string | null
+          delivery_method: string | null
+          delivery_status: string | null
+          design_id: string | null
+          expires_at: string | null
+          first_used_at: string | null
+          id: string
+          initial_amount: number
+          last_used_at: string | null
+          personal_message: string | null
+          purchase_order_id: string | null
+          purchased_at: string | null
+          purchased_by: string | null
+          recipient_email: string
+          recipient_name: string
+          recipient_phone: string | null
+          redeemed_by: string | null
+          scheduled_delivery_at: string | null
+          sender_email: string | null
+          sender_name: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          balance: number
+          code: string
+          created_at?: string | null
+          currency?: string | null
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
+          design_id?: string | null
+          expires_at?: string | null
+          first_used_at?: string | null
+          id?: string
+          initial_amount: number
+          last_used_at?: string | null
+          personal_message?: string | null
+          purchase_order_id?: string | null
+          purchased_at?: string | null
+          purchased_by?: string | null
+          recipient_email: string
+          recipient_name: string
+          recipient_phone?: string | null
+          redeemed_by?: string | null
+          scheduled_delivery_at?: string | null
+          sender_email?: string | null
+          sender_name: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number
+          code?: string
+          created_at?: string | null
+          currency?: string | null
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
+          design_id?: string | null
+          expires_at?: string | null
+          first_used_at?: string | null
+          id?: string
+          initial_amount?: number
+          last_used_at?: string | null
+          personal_message?: string | null
+          purchase_order_id?: string | null
+          purchased_at?: string | null
+          purchased_by?: string | null
+          recipient_email?: string
+          recipient_name?: string
+          recipient_phone?: string | null
+          redeemed_by?: string | null
+          scheduled_delivery_at?: string | null
+          sender_email?: string | null
+          sender_name?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_cards_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homepage_categories: {
         Row: {
           created_at: string
@@ -8805,11 +9027,13 @@ export type Database = {
         Returns: number
       }
       calculate_loyalty_tier: { Args: { spent: number }; Returns: string }
+      check_gift_card_balance: { Args: { p_code: string }; Returns: Json }
       decrement_comment_likes: {
         Args: { comment_id_param: string }
         Returns: undefined
       }
       expire_stock_reservations: { Args: never; Returns: number }
+      generate_gift_card_code: { Args: never; Returns: string }
       generate_pos_order_number: { Args: never; Returns: string }
       generate_refund_number: { Args: never; Returns: string }
       generate_return_number: { Args: never; Returns: string }
@@ -9159,6 +9383,15 @@ export type Database = {
       }
       recalculate_customer_metrics: { Args: never; Returns: undefined }
       recalculate_loyalty_spending: { Args: never; Returns: undefined }
+      redeem_gift_card: {
+        Args: {
+          p_amount: number
+          p_code: string
+          p_order_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       refresh_paddy_customers_monthly_counts_cache: {
         Args: never
         Returns: undefined
