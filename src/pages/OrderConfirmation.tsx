@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import {
   CheckCircle2,
   ClipboardCheck,
@@ -33,7 +33,7 @@ export default function OrderConfirmation() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
   const { toast } = useToast();
 
-  const { data: order, isLoading, error } = useQuery({
+  const { data: order, isLoading } = useQuery({
     queryKey: ["order-confirmation", orderNumber],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -208,11 +208,10 @@ export default function OrderConfirmation() {
           </CardContent>
         </Card>
 
-        {/* 4. Order summary card — two columns */}
+        {/* 4. Order summary card */}
         <Card className="mb-6">
           <CardContent className="p-4 md:p-6">
             <div className="grid md:grid-cols-2 gap-6">
-              {/* Shipping address */}
               <div>
                 <h3 className="font-semibold mb-2">Địa chỉ giao hàng</h3>
                 {shippingAddress ? (
@@ -235,7 +234,6 @@ export default function OrderConfirmation() {
                 )}
               </div>
 
-              {/* Payment & delivery */}
               <div>
                 <h3 className="font-semibold mb-2">Thanh toán & giao hàng</h3>
                 <div className="text-sm text-muted-foreground space-y-1">
@@ -272,10 +270,10 @@ export default function OrderConfirmation() {
                       <p className="text-muted-foreground text-xs">{item.variant_name}</p>
                     )}
                     <p className="text-muted-foreground">
-                      {formatCurrency(item.price)} × {item.quantity}
+                      {formatPrice(item.price)}₫ × {item.quantity}
                     </p>
                   </div>
-                  <p className="font-medium">{formatCurrency(item.subtotal)}</p>
+                  <p className="font-medium">{formatPrice(item.subtotal)}₫</p>
                 </div>
               ))}
             </div>
@@ -285,24 +283,24 @@ export default function OrderConfirmation() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tạm tính</span>
-                <span>{formatCurrency(order.subtotal)}</span>
+                <span>{formatPrice(order.subtotal)}₫</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Phí vận chuyển</span>
                 <span>
-                  {order.shipping_fee ? formatCurrency(order.shipping_fee) : "Miễn phí"}
+                  {order.shipping_fee ? `${formatPrice(order.shipping_fee)}₫` : "Miễn phí"}
                 </span>
               </div>
               {order.discount && order.discount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Giảm giá</span>
-                  <span>-{formatCurrency(order.discount)}</span>
+                  <span>-{formatPrice(order.discount)}₫</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between text-base font-bold">
                 <span>Tổng cộng</span>
-                <span className="text-primary">{formatCurrency(order.total)}</span>
+                <span className="text-primary">{formatPrice(order.total)}₫</span>
               </div>
             </div>
           </CardContent>
