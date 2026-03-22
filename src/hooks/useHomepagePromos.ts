@@ -7,6 +7,7 @@ export interface HomepagePromo {
   eyebrow: string | null;
   cta_text: string;
   image_url: string | null;
+  mobile_image_url: string | null;
   bg_color: string;
   layout_slot: string;
   link_url: string | null;
