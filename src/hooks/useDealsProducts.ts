@@ -6,6 +6,7 @@ export interface DealsFilterState {
   petType: string | null;
   brands: string[];
   priceRange: [number, number];
+  categorySlug: string | null;
 }
 
 export const DEFAULT_DEALS_FILTERS: DealsFilterState = {
@@ -13,6 +14,7 @@ export const DEFAULT_DEALS_FILTERS: DealsFilterState = {
   petType: null,
   brands: [],
   priceRange: [0, 10000000],
+  categorySlug: null,
 };
 
 const PRODUCTS_PER_PAGE = 20;
@@ -33,6 +35,29 @@ export const useDealsProducts = (
            option1_name, option2_name, option3_name`,
           { count: "exact" }
         );
+
+      // Category/collection filter — must fetch matching product IDs first
+      if (filters.categorySlug) {
+        const { data: catRow } = await supabase
+          .from("categories")
+          .select("id")
+          .eq("slug", filters.categorySlug)
+          .single();
+
+        if (catRow) {
+          const { data: pcRows } = await supabase
+            .from("product_collections")
+            .select("product_id")
+            .eq("collection_id", catRow.id)
+            .limit(500);
+
+          const ids = (pcRows || []).map((r) => r.product_id);
+          if (ids.length === 0) {
+            return { products: [], total: 0 };
+          }
+          query = query.in("id", ids);
+        }
+      }
 
       // Discount filter
       if (filters.minDiscount > 0) {

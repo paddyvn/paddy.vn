@@ -62,6 +62,7 @@ export const DealsSidebar = ({ filters, onFiltersChange }: DealsSidebarProps) =>
       petType: null,
       brands: [],
       priceRange: [0, DEFAULT_MAX_PRICE],
+      categorySlug: null,
     });
   };
 
