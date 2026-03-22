@@ -30,7 +30,7 @@ const PetHub = ({ petType }: PetHubProps) => {
   const [filters, setFilters] = useState<PetHubFilterState>({
     brands: [],
     priceRange: [0, DEFAULT_MAX_PRICE],
-    categoryId: null,
+    categorySlug: null,
   });
 
   const { data: productsData, isLoading } = usePetHubProducts(
