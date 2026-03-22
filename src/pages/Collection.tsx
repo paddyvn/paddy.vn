@@ -337,13 +337,20 @@ const Collection = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    syncFiltersToUrl(filters, sortBy, page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
     setCurrentPage(1);
+    syncFiltersToUrl(newFilters, sortBy, 1);
   };
+
+  // Sync sort changes to URL
+  useEffect(() => {
+    syncFiltersToUrl(filters, sortBy, currentPage);
+  }, [sortBy]);
 
   const activeFilterCount =
     filters.productTypes.length +
