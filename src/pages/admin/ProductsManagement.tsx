@@ -96,7 +96,7 @@ export default function ProductsManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const syncProducts = useSyncProducts();
+  
 
   const ITEMS_PER_PAGE = 50;
 
