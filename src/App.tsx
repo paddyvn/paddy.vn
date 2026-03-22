@@ -29,6 +29,8 @@ const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
 const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const StoreLocator = lazy(() => import("./pages/StoreLocator"));
 const PetHub = lazy(() => import("./pages/PetHub"));
+const GiftCard = lazy(() => import("./pages/GiftCard"));
+const GiftCardBalance = lazy(() => import("./pages/GiftCardBalance"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
