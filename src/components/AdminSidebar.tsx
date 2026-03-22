@@ -77,6 +77,7 @@ const mainItems = [
       { title: "Buy More Save More", url: "/admin/promotions/buy-more-save-more" },
       
       { title: "Subscription Deals", url: "/admin/promotions/subscription-deals" },
+      { title: "Gift Cards", url: "/admin/gift-cards" },
     ],
   },
   {
