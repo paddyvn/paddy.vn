@@ -317,6 +317,7 @@ export const useCart = (userId?: string) => {
     addToCart: addToCart.mutateAsync,
     addToCartMutation: addToCart,
     removeFromCart: removeFromCart.mutate,
+    isRemoving: removeFromCart.isPending,
     updateQuantity: updateQuantity.mutate,
     isGuest: !userId,
   };
