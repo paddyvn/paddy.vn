@@ -189,6 +189,7 @@ const App = () => (
             <Route path="promotions/free-shipping/:id/edit" element={<FreeShippingEdit />} />
             <Route path="promotions/subscription-deals/:id/edit" element={<SubscriptionDealsEdit />} />
             <Route path="promotions/clearance/:id/edit" element={<ClearanceEdit />} />
+            <Route path="gift-cards" element={<GiftCardsManagement />} />
             <Route path="analytics/sales" element={<SalesAnalytics />} />
             <Route path="analytics/traffic" element={<TrafficAnalytics />} />
             <Route path="settings/delivery-methods" element={<DeliveryMethods />} />
