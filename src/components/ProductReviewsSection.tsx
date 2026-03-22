@@ -161,7 +161,7 @@ export const ProductReviewsSection = ({ productId, userId }: ProductReviewsSecti
                 </span>
               </div>
               {review.title && <p className="font-medium mb-1">{review.title}</p>}
-              {review.body && <p className="text-sm text-muted-foreground">{review.body}</p>}
+              {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
             </div>
           ))}
         </div>
