@@ -64,7 +64,7 @@ const FooterLinkList = ({ items }: { items: { id: string; label: string; link: s
       return (
         <li key={item.id}>
           {isExternal ? (
-            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
               {item.label}
             </a>
           ) : (
