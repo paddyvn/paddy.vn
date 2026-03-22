@@ -122,7 +122,6 @@ const App = () => (
           {/* Legacy redirects */}
           <Route path="/cart" element={<Navigate to="/gio-hang" replace />} />
           <Route path="/checkout" element={<Navigate to="/thanh-toan" replace />} />
-          <Route path="/order-confirmation/:orderNumber" element={<Navigate to="/xac-nhan-don-hang/:orderNumber" replace />} />
           <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
           <Route path="/orders/:orderNumber" element={<Suspense fallback={<LoadingFallback />}><CustomerOrderDetail /></Suspense>} />
           <Route path="/profile" element={<Profile />} />

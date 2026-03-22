@@ -769,7 +769,7 @@ export default function Checkout() {
                               <p className="text-sm text-muted-foreground">{method.description}</p>
                             </div>
                           </div>
-                          <span className="font-semibold">{formatPrice(method.price)}₫</span>
+                          <span className="font-semibold">{isFreeShipping ? "Miễn phí" : `${formatPrice(method.price)}₫`}</span>
                         </div>
                       ))}
                     </RadioGroup>
