@@ -28,6 +28,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
 const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const StoreLocator = lazy(() => import("./pages/StoreLocator"));
+const PetHub = lazy(() => import("./pages/PetHub"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
