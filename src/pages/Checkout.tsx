@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,14 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import {
   Select,
   SelectContent,
@@ -27,11 +36,12 @@ import {
   Truck,
   Building2,
   Wallet,
-  CheckCircle2,
   Tag,
   X,
   RefreshCw,
-  Gift
+  Gift,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useProductsPromotions } from "@/hooks/useProductPromotions";
@@ -46,9 +56,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { validateVoucher, calculateVoucherDiscount as calcVoucherDiscount } from "@/lib/voucher-utils";
+import { validateVoucher } from "@/lib/voucher-utils";
 
 const FREE_SHIPPING_THRESHOLD = 500000;
+
+const isValidPhone = (phone: string) => /^0\d{9}$/.test(phone.trim());
 
 const PAYMENT_METHODS = [
   { 
@@ -135,6 +147,13 @@ export default function Checkout() {
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<SubscriptionFrequency>("monthly");
+
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Mobile summary
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
+
   // Cascading address for new address form
   const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
   const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
@@ -178,7 +197,6 @@ export default function Checkout() {
       setUserId(session.user.id);
       setUserEmail(session.user.email || null);
       
-      // Fetch user profile for pre-filling
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, phone")
@@ -193,7 +211,6 @@ export default function Checkout() {
         }));
       }
       
-      // Fetch saved addresses
       const { data: addresses } = await supabase
         .from("addresses")
         .select("*")
@@ -258,7 +275,6 @@ export default function Checkout() {
     ...tieredDiscounts.map((d) => d.discountAmount),
   ].reduce((sum, d) => sum + d, 0);
   
-  // Calculate discount (voucher + subscription)
   const subscriptionDiscountPct = subscriptionDeal?.discountPercentage || 0;
 
   const calculateVoucherDiscount = () => {
@@ -279,7 +295,6 @@ export default function Checkout() {
   const subscriptionDiscount = enableSubscription ? Math.round(subtotal * subscriptionDiscountPct / 100) : 0;
   const discount = voucherDiscount + subscriptionDiscount;
   
-  // Gift card: applied after coupon on remaining amount
   const afterCouponTotal = subtotal + shippingCost - discount - totalDealDiscount;
   const giftCardAmountUsed = appliedGiftCard 
     ? Math.min(appliedGiftCard.balance, Math.max(0, afterCouponTotal)) 
@@ -369,29 +384,37 @@ export default function Checkout() {
   };
 
   const validateAddress = () => {
-    const address = getSelectedAddress();
-    if (!address) return false;
-    
-    if (useNewAddress) {
-      return (
-        addressForm.fullName.trim() !== "" &&
-        addressForm.phone.trim() !== "" &&
-        addressForm.addressLine1.trim() !== "" &&
-        addressForm.city.trim() !== ""
-      );
+    if (!useNewAddress) return true;
+
+    const errors: Record<string, string> = {};
+
+    if (!addressForm.fullName.trim()) errors.fullName = "Vui lòng nhập họ tên";
+    if (!addressForm.phone.trim()) {
+      errors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!isValidPhone(addressForm.phone)) {
+      errors.phone = "Số điện thoại 10 chữ số, bắt đầu bằng 0";
+    }
+    if (!addressForm.addressLine1.trim()) errors.addressLine1 = "Vui lòng nhập địa chỉ";
+    if (!addressForm.city.trim()) errors.city = "Vui lòng chọn tỉnh/thành phố";
+    if (!addressForm.district.trim()) errors.district = "Vui lòng chọn quận/huyện";
+    if (!addressForm.ward.trim()) errors.ward = "Vui lòng chọn phường/xã";
+
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: "Vui lòng điền đầy đủ thông tin",
+        description: "Các trường đánh dấu * là bắt buộc",
+        variant: "destructive",
+      });
+      return false;
     }
     return true;
   };
 
   const handleNextStep = () => {
-    if (currentStep === 1 && !validateAddress()) {
-      toast({
-        title: "Vui lòng điền đầy đủ thông tin",
-        description: "Họ tên, số điện thoại, địa chỉ và thành phố là bắt buộc",
-        variant: "destructive",
-      });
-      return;
-    }
+    setFormErrors({});
+    if (currentStep === 1 && !validateAddress()) return;
     setCurrentStep(prev => Math.min(prev + 1, 3));
   };
 
@@ -406,11 +429,9 @@ export default function Checkout() {
     try {
       const address = getSelectedAddress();
 
-      // Generate sequential order number via DB
       const { data: orderNumber, error: numError } = await supabase.rpc('generate_web_order_number');
       if (numError || !orderNumber) throw new Error('Không thể tạo mã đơn hàng');
 
-      // Build shipping address object
       const shippingAddress = useNewAddress
         ? {
             full_name: addressForm.fullName,
@@ -431,7 +452,6 @@ export default function Checkout() {
             ward: address.ward,
           };
 
-      // Build order items with promotion-adjusted prices
       const orderItems = cart.map(item => {
         const basePrice = getItemBasePrice(item);
         const promotion = promotionsMap?.[item.product_id];
@@ -447,7 +467,6 @@ export default function Checkout() {
         };
       });
 
-      // Atomic order placement via RPC
       const { data: result, error: rpcError } = await supabase.rpc('place_order', {
         p_user_id: userId,
         p_order_number: orderNumber,
@@ -468,7 +487,6 @@ export default function Checkout() {
 
       if (rpcError) throw rpcError;
 
-      // Handle stock validation errors from RPC
       const rpcResult = result as Record<string, unknown> | null;
       if (!rpcResult?.success) {
         const errors = (rpcResult?.errors as string[]) || ['Đã có lỗi xảy ra khi đặt hàng'];
@@ -480,14 +498,12 @@ export default function Checkout() {
         return;
       }
 
-      // Increment voucher usage
       if (appliedVoucher?.promotionId) {
         await supabase.rpc('increment_voucher_usage', {
           p_promotion_id: appliedVoucher.promotionId,
         });
       }
 
-      // Redeem gift card
       if (appliedGiftCard && giftCardAmountUsed > 0) {
         await supabase.rpc('redeem_gift_card', {
           p_code: appliedGiftCard.code,
@@ -497,7 +513,6 @@ export default function Checkout() {
         });
       }
 
-      // Save new address if requested
       if (useNewAddress && addressForm.fullName) {
         await supabase.from('addresses').insert({
           user_id: userId,
@@ -512,7 +527,6 @@ export default function Checkout() {
         });
       }
 
-      // Create subscription if enabled
       if (enableSubscription) {
         await createSubscription.mutateAsync({
           user_id: userId,
@@ -550,7 +564,7 @@ export default function Checkout() {
 
   const steps = [
     { number: 1, title: "Địa chỉ", icon: MapPin },
-    { number: 2, title: "Thanh toán", icon: CreditCard },
+    { number: 2, title: "Giao hàng & Thanh toán", icon: CreditCard },
     { number: 3, title: "Xác nhận", icon: Package },
   ];
 
@@ -576,6 +590,33 @@ export default function Checkout() {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="max-w-3xl mx-auto mb-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild><Link to="/">Trang chủ</Link></BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild><Link to="/gio-hang">Giỏ hàng</Link></BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Thanh toán</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+
+        {/* Email display */}
+        {userEmail && (
+          <div className="max-w-3xl mx-auto flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <span>Đặt hàng với:</span>
+            <span className="font-medium text-foreground">{userEmail}</span>
+          </div>
+        )}
+
         {/* Progress Steps */}
         <div className="max-w-3xl mx-auto mb-8">
           <div className="flex items-center justify-between">
@@ -595,7 +636,7 @@ export default function Checkout() {
                       <step.icon className="h-5 w-5" />
                     )}
                   </div>
-                  <span className={`text-sm mt-2 ${
+                  <span className={`text-xs sm:text-sm mt-2 text-center ${
                     currentStep >= step.number ? "text-foreground font-medium" : "text-muted-foreground"
                   }`}>
                     {step.title}
@@ -603,7 +644,7 @@ export default function Checkout() {
                 </div>
                 {index < steps.length - 1 && (
                   <div 
-                    className={`flex-1 h-0.5 mx-4 transition-colors ${
+                    className={`flex-1 h-0.5 mx-2 sm:mx-4 transition-colors ${
                       currentStep > step.number ? "bg-primary" : "bg-muted"
                     }`}
                     style={{ width: "80px" }}
@@ -614,10 +655,72 @@ export default function Checkout() {
           </div>
         </div>
 
+        {/* Mobile-only collapsible order summary */}
+        <div className="lg:hidden mb-4">
+          <button
+            onClick={() => setShowMobileSummary(!showMobileSummary)}
+            className="w-full flex items-center justify-between p-4 bg-muted/50 rounded-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                Đơn hàng ({cart.length} sản phẩm)
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-primary">
+                {formatPrice(total)}₫
+              </span>
+              {showMobileSummary ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+          </button>
+          
+          {showMobileSummary && (
+            <Card className="mt-2">
+              <CardContent className="pt-4 space-y-3">
+                {cart.map((item) => {
+                  const basePrice = getItemBasePrice(item);
+                  const promotion = promotionsMap?.[item.product_id];
+                  const { effectivePrice } = getEffectivePrice(basePrice, promotion);
+                  return (
+                    <div key={item.id} className="flex gap-2 text-sm">
+                      <img src={getPrimaryImage(item.products?.product_images)} className="w-10 h-10 rounded object-cover" alt="" />
+                      <div className="flex-1 min-w-0">
+                        <p className="line-clamp-1 font-medium">{item.products?.name}</p>
+                        <p className="text-muted-foreground">x{item.quantity}</p>
+                      </div>
+                      <span className="font-medium">{formatPrice(effectivePrice * item.quantity)}₫</span>
+                    </div>
+                  );
+                })}
+                <Separator />
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tạm tính</span>
+                  <span>{formatPrice(subtotal)}₫</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Giảm giá</span>
+                    <span>-{formatPrice(discount)}₫</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold">
+                  <span>Tổng cộng</span>
+                  <span className="text-primary">{formatPrice(total)}₫</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Step 1: Address */}
+            {/* Step 1: Address (no delivery method here) */}
             {currentStep === 1 && (
               <Card>
                 <CardHeader>
@@ -638,6 +741,7 @@ export default function Checkout() {
                           } else {
                             setUseNewAddress(false);
                             setSelectedAddressId(value);
+                            setFormErrors({});
                           }
                         }}
                       >
@@ -652,6 +756,7 @@ export default function Checkout() {
                             onClick={() => {
                               setUseNewAddress(false);
                               setSelectedAddressId(address.id);
+                              setFormErrors({});
                             }}
                           >
                             <RadioGroupItem value={address.id} id={address.id} />
@@ -690,18 +795,37 @@ export default function Checkout() {
                           <Input
                             id="fullName"
                             value={addressForm.fullName}
-                            onChange={(e) => setAddressForm(prev => ({ ...prev, fullName: e.target.value }))}
+                            onChange={(e) => {
+                              setAddressForm(prev => ({ ...prev, fullName: e.target.value }));
+                              if (formErrors.fullName) setFormErrors(prev => ({ ...prev, fullName: "" }));
+                            }}
                             placeholder="Nguyễn Văn A"
+                            className={formErrors.fullName ? "border-destructive" : ""}
                           />
+                          {formErrors.fullName && (
+                            <p className="text-xs text-destructive">{formErrors.fullName}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="phone">Số điện thoại *</Label>
                           <Input
                             id="phone"
                             value={addressForm.phone}
-                            onChange={(e) => setAddressForm(prev => ({ ...prev, phone: e.target.value }))}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                              setAddressForm(prev => ({ ...prev, phone: value }));
+                              if (formErrors.phone) setFormErrors(prev => ({ ...prev, phone: "" }));
+                            }}
                             placeholder="0912 345 678"
+                            maxLength={10}
+                            inputMode="tel"
+                            className={formErrors.phone ? "border-destructive" : ""}
                           />
+                          {formErrors.phone ? (
+                            <p className="text-xs text-destructive">{formErrors.phone}</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Số điện thoại 10 chữ số</p>
+                          )}
                         </div>
                       </div>
                       
@@ -710,9 +834,16 @@ export default function Checkout() {
                         <Input
                           id="addressLine1"
                           value={addressForm.addressLine1}
-                          onChange={(e) => setAddressForm(prev => ({ ...prev, addressLine1: e.target.value }))}
+                          onChange={(e) => {
+                            setAddressForm(prev => ({ ...prev, addressLine1: e.target.value }));
+                            if (formErrors.addressLine1) setFormErrors(prev => ({ ...prev, addressLine1: "" }));
+                          }}
                           placeholder="Số nhà, tên đường"
+                          className={formErrors.addressLine1 ? "border-destructive" : ""}
                         />
+                        {formErrors.addressLine1 && (
+                          <p className="text-xs text-destructive">{formErrors.addressLine1}</p>
+                        )}
                       </div>
                       
                       <div className="space-y-2">
@@ -737,9 +868,10 @@ export default function Checkout() {
                               setSelectedWardCode(null);
                               const prov = provinces.find(p => p.code === code);
                               setAddressForm(prev => ({ ...prev, city: prov?.name || "", district: "", ward: "" }));
+                              if (formErrors.city) setFormErrors(prev => ({ ...prev, city: "" }));
                             }}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className={formErrors.city ? "border-destructive" : ""}>
                               <SelectValue placeholder={provincesLoading ? "Đang tải..." : "Chọn tỉnh/thành"} />
                             </SelectTrigger>
                             <SelectContent>
@@ -750,6 +882,9 @@ export default function Checkout() {
                               ))}
                             </SelectContent>
                           </Select>
+                          {formErrors.city && (
+                            <p className="text-xs text-destructive">{formErrors.city}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>Quận/Huyện *</Label>
@@ -761,10 +896,11 @@ export default function Checkout() {
                               setSelectedWardCode(null);
                               const dist = districts.find(d => d.code === code);
                               setAddressForm(prev => ({ ...prev, district: dist?.name || "", ward: "" }));
+                              if (formErrors.district) setFormErrors(prev => ({ ...prev, district: "" }));
                             }}
                             disabled={!selectedProvinceCode}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className={formErrors.district ? "border-destructive" : ""}>
                               <SelectValue placeholder="Chọn quận/huyện" />
                             </SelectTrigger>
                             <SelectContent>
@@ -775,6 +911,9 @@ export default function Checkout() {
                               ))}
                             </SelectContent>
                           </Select>
+                          {formErrors.district && (
+                            <p className="text-xs text-destructive">{formErrors.district}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>Phường/Xã *</Label>
@@ -785,10 +924,11 @@ export default function Checkout() {
                               setSelectedWardCode(code);
                               const w = wards.find(w => w.code === code);
                               setAddressForm(prev => ({ ...prev, ward: w?.name || "" }));
+                              if (formErrors.ward) setFormErrors(prev => ({ ...prev, ward: "" }));
                             }}
                             disabled={!selectedDistrictCode}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className={formErrors.ward ? "border-destructive" : ""}>
                               <SelectValue placeholder="Chọn phường/xã" />
                             </SelectTrigger>
                             <SelectContent>
@@ -799,15 +939,30 @@ export default function Checkout() {
                               ))}
                             </SelectContent>
                           </Select>
+                          {formErrors.ward && (
+                            <p className="text-xs text-destructive">{formErrors.ward}</p>
+                          )}
                         </div>
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
 
-                  {/* Shipping Method */}
-                  <Separator />
+            {/* Step 2: Delivery & Payment */}
+            {currentStep === 2 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Giao hàng & Thanh toán
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Delivery methods — moved from Step 1 */}
                   <div className="space-y-3">
-                    <Label>Phương thức giao hàng</Label>
+                    <Label className="text-base font-semibold">Phương thức giao hàng</Label>
                     <RadioGroup value={selectedDelivery} onValueChange={setSelectedDelivery}>
                       {deliveryMethods.map((method) => (
                         <div
@@ -831,42 +986,35 @@ export default function Checkout() {
                       ))}
                     </RadioGroup>
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Step 2: Payment */}
-            {currentStep === 2 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Phương thức thanh toán
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <RadioGroup value={selectedPayment} onValueChange={setSelectedPayment}>
-                    {PAYMENT_METHODS.map((method) => (
-                      <div
-                        key={method.id}
-                        className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
-                          selectedPayment === method.id 
-                            ? "border-primary bg-primary/5" 
-                            : "hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedPayment(method.id)}
-                      >
-                        <RadioGroupItem value={method.id} id={method.id} className="mt-1" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <method.icon className="h-5 w-5 text-primary" />
-                            <p className="font-medium">{method.name}</p>
+                  <Separator />
+
+                  {/* Payment methods */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Phương thức thanh toán</Label>
+                    <RadioGroup value={selectedPayment} onValueChange={setSelectedPayment}>
+                      {PAYMENT_METHODS.map((method) => (
+                        <div
+                          key={method.id}
+                          className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
+                            selectedPayment === method.id 
+                              ? "border-primary bg-primary/5" 
+                              : "hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedPayment(method.id)}
+                        >
+                          <RadioGroupItem value={method.id} id={method.id} className="mt-1" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <method.icon className="h-5 w-5 text-primary" />
+                              <p className="font-medium">{method.name}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{method.description}</p>
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">{method.description}</p>
                         </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                      ))}
+                    </RadioGroup>
+                  </div>
 
                   <Separator />
 
@@ -923,10 +1071,10 @@ export default function Checkout() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5" />
-                      Thanh toán
+                      Giao hàng & Thanh toán
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-2">
                     <div className="flex items-center gap-2">
                       {(() => {
                         const method = PAYMENT_METHODS.find(m => m.id === selectedPayment);
@@ -939,8 +1087,12 @@ export default function Checkout() {
                         );
                       })()}
                     </div>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="text-foreground">Giao hàng:</span>{" "}
+                      {deliveryMethod?.name} — {isFreeShipping ? "Miễn phí" : `${formatPrice(deliveryMethod?.price)}₫`}
+                    </p>
                     {orderNotes && (
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-sm text-muted-foreground">
                         Ghi chú: {orderNotes}
                       </p>
                     )}
@@ -1034,7 +1186,7 @@ export default function Checkout() {
           </div>
 
           {/* Order Summary Sidebar */}
-          <div>
+          <div className="hidden lg:block">
             <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle>Tổng đơn hàng</CardTitle>
@@ -1180,7 +1332,7 @@ export default function Checkout() {
                         <div className="flex items-center gap-2">
                           <RefreshCw className="h-4 w-4 text-primary" />
                           <Label htmlFor="subscription" className="text-sm font-medium cursor-pointer">
-                            Subscribe & Save {subscriptionDiscountPct}%
+                            Đặt hàng định kỳ — tiết kiệm {subscriptionDiscountPct}%
                           </Label>
                         </div>
                         <Switch
@@ -1226,6 +1378,12 @@ export default function Checkout() {
                     <span className="text-muted-foreground">Phí vận chuyển</span>
                     <span>{isFreeShipping ? <span className="text-green-600 font-medium">Miễn phí</span> : `${formatPrice(shippingCost)}₫`}</span>
                   </div>
+                  {deliveryMethod && (
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{deliveryMethod.name}</span>
+                      <span>{deliveryMethod.description}</span>
+                    </div>
+                  )}
                   {voucherDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Giảm giá voucher</span>
@@ -1234,7 +1392,7 @@ export default function Checkout() {
                   )}
                   {subscriptionDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Subscribe & Save ({subscriptionDiscountPct}%)</span>
+                      <span>Đặt hàng định kỳ ({subscriptionDiscountPct}%)</span>
                       <span>-{formatPrice(subscriptionDiscount)}₫</span>
                     </div>
                   )}
