@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,21 +20,58 @@ const PRODUCTS_PER_PAGE = 20;
 const DEFAULT_MAX_PRICE = 10000000;
 const FILTER_THRESHOLD = 0.2; // 20% of products must have data
 
+// Parse URL search params into FilterState
+const parseFiltersFromParams = (params: URLSearchParams): Partial<FilterState> => {
+  const result: Partial<FilterState> = {};
+  const types = params.get("type");
+  if (types) result.productTypes = types.split(",");
+  const brands = params.get("brand");
+  if (brands) result.brands = brands.split(",");
+  const price = params.get("price");
+  if (price) {
+    const [min, max] = price.split("-").map(Number);
+    if (!isNaN(min) && !isNaN(max)) result.priceRange = [min, max];
+  }
+  const stock = params.get("stock");
+  if (stock === "in_stock" || stock === "out_of_stock") result.stockStatus = stock;
+  if (params.get("sale") === "1") result.onSale = true;
+  return result;
+};
+
 const Collection = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState("default");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize state from URL params
+  const initialFilters = parseFiltersFromParams(searchParams);
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get("page")) || 1);
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "default");
   const [gridCols, setGridCols] = useState<4 | 5>(5);
   const [filters, setFilters] = useState<FilterState>({
-    productTypes: [],
-    brands: [],
-    priceRange: [0, DEFAULT_MAX_PRICE],
-    stockStatus: "all",
-    onSale: false,
+    productTypes: initialFilters.productTypes || [],
+    brands: initialFilters.brands || [],
+    priceRange: initialFilters.priceRange || [0, DEFAULT_MAX_PRICE],
+    stockStatus: initialFilters.stockStatus || "all",
+    onSale: initialFilters.onSale || false,
     ageRanges: [],
     sizes: [],
     healthConditions: [],
   });
+
+  // Sync filters to URL
+  const syncFiltersToUrl = useCallback((f: FilterState, sort: string, page: number) => {
+    const params = new URLSearchParams();
+    if (f.productTypes.length) params.set("type", f.productTypes.join(","));
+    if (f.brands.length) params.set("brand", f.brands.join(","));
+    if (f.priceRange[0] > 0 || f.priceRange[1] < DEFAULT_MAX_PRICE) {
+      params.set("price", `${f.priceRange[0]}-${f.priceRange[1]}`);
+    }
+    if (f.stockStatus !== "all") params.set("stock", f.stockStatus);
+    if (f.onSale) params.set("sale", "1");
+    if (sort !== "default") params.set("sort", sort);
+    if (page > 1) params.set("page", String(page));
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
 
   // Fetch collection details
   const { data: collection, isLoading: collectionLoading } = useQuery({
