@@ -65,7 +65,11 @@ function BentoCard({ promo, slot }: { promo: HomepagePromo | null; slot: string 
   );
 }
 
-export const DealsGrid = () => {
+interface DealsGridProps {
+  hideViewAll?: boolean;
+}
+
+export const DealsGrid = ({ hideViewAll = false }: DealsGridProps) => {
   const { data: promos, isLoading } = useActiveHomepagePromos();
 
   if (isLoading) {
