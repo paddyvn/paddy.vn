@@ -46,7 +46,7 @@ import {
   RefreshCw,
   Download,
 } from "lucide-react";
-import { useSyncCustomers } from "@/hooks/useSyncCustomers";
+
 import {
   Select,
   SelectContent,
