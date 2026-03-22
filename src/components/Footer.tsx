@@ -102,7 +102,7 @@ const TrustBadges = ({ label, items }: { label: string; items: string[] }) => (
     <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</span>
     <div className="flex gap-2 flex-wrap">
       {items.map((name) => (
-        <div key={name} className="bg-background border border-border rounded-md px-2 py-1 text-[10px] font-bold text-muted-foreground">
+        <div key={name} className="bg-background border border-border rounded-md px-2 py-1 text-[11px] font-bold text-muted-foreground">
           {name}
         </div>
       ))}
