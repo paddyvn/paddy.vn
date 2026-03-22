@@ -9127,6 +9127,10 @@ export type Database = {
         Args: { comment_id_param: string }
         Returns: undefined
       }
+      increment_coupon_usage: {
+        Args: { p_coupon_id: string }
+        Returns: undefined
+      }
       increment_voucher_usage: {
         Args: { p_promotion_id: string }
         Returns: undefined
@@ -9189,6 +9193,15 @@ export type Database = {
       }
       sync_sapo_stock_to_web: {
         Args: { p_location_id?: number }
+        Returns: Json
+      }
+      validate_coupon: {
+        Args: {
+          p_code: string
+          p_item_count?: number
+          p_subtotal?: number
+          p_user_id?: string
+        }
         Returns: Json
       }
       vnd_to_points: { Args: { amount: number }; Returns: number }
