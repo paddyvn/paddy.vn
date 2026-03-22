@@ -615,16 +615,6 @@ export default function ProductsManagement() {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
-          <SyncOptionNamesButton />
-          <Button
-            onClick={() => syncProducts.mutate()}
-            disabled={syncProducts.isPending}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncProducts.isPending ? "animate-spin" : ""}`} />
-            {syncProducts.isPending ? "Syncing..." : "Sync Products"}
-          </Button>
           <Button
             onClick={() => navigate("/admin/products/new")}
             className="gap-2"
