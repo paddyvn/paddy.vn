@@ -21,7 +21,7 @@ export const PetHubCategories = ({
   return (
     <section className="container mx-auto px-4 pb-6">
       <ScrollArea className="w-full">
-        <div className="flex gap-3 pb-3">
+        <div className="flex gap-3 py-2 px-1">
           {/* "All" pill */}
           <button
             onClick={() => onSelect(null)}
