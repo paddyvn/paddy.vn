@@ -181,7 +181,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
               {/* Social */}
               {socialMenu && socialMenu.items.length > 0 && (
                 <div className="mt-1">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
                     Theo dõi Paddy
                   </span>
                   <SocialLinks items={socialMenu.items} />
