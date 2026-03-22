@@ -191,9 +191,9 @@ export default function TrackOrder() {
 
               {!isLoggedIn && (
                 <p className="text-center text-sm text-muted-foreground mt-4">
-                  Đã có tài khoản?{" "}
+                  Chưa có tài khoản?{" "}
                   <Link to="/auth" className="text-primary hover:underline font-medium">
-                    Đăng nhập
+                    Đăng ký
                   </Link>
                 </p>
               )}
