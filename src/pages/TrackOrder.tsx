@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -93,6 +93,13 @@ export default function TrackOrder() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TrackOrderData | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,12 +189,14 @@ export default function TrackOrder() {
                 </Button>
               </form>
 
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Đã có tài khoản?{" "}
-                <Link to="/auth" className="text-primary hover:underline font-medium">
-                  Đăng nhập
-                </Link>
-              </p>
+              {!isLoggedIn && (
+                <p className="text-center text-sm text-muted-foreground mt-4">
+                  Đã có tài khoản?{" "}
+                  <Link to="/auth" className="text-primary hover:underline font-medium">
+                    Đăng nhập
+                  </Link>
+                </p>
+              )}
             </CardContent>
           </Card>
         </main>
