@@ -546,6 +546,7 @@ export type Database = {
       banners: {
         Row: {
           background_color: string | null
+          badge_text: string | null
           created_at: string | null
           display_order: number | null
           ends_at: string | null
@@ -554,6 +555,7 @@ export type Database = {
           is_active: boolean | null
           link_text: string | null
           link_url: string | null
+          mobile_image_url: string | null
           starts_at: string | null
           subtitle: string | null
           text_color: string | null
@@ -563,6 +565,7 @@ export type Database = {
         }
         Insert: {
           background_color?: string | null
+          badge_text?: string | null
           created_at?: string | null
           display_order?: number | null
           ends_at?: string | null
@@ -571,6 +574,7 @@ export type Database = {
           is_active?: boolean | null
           link_text?: string | null
           link_url?: string | null
+          mobile_image_url?: string | null
           starts_at?: string | null
           subtitle?: string | null
           text_color?: string | null
@@ -580,6 +584,7 @@ export type Database = {
         }
         Update: {
           background_color?: string | null
+          badge_text?: string | null
           created_at?: string | null
           display_order?: number | null
           ends_at?: string | null
@@ -588,6 +593,7 @@ export type Database = {
           is_active?: boolean | null
           link_text?: string | null
           link_url?: string | null
+          mobile_image_url?: string | null
           starts_at?: string | null
           subtitle?: string | null
           text_color?: string | null
@@ -2210,6 +2216,7 @@ export type Database = {
           is_active: boolean
           layout_slot: string
           link_url: string | null
+          mobile_image_url: string | null
           position: number
           title: string
           updated_at: string
@@ -2224,6 +2231,7 @@ export type Database = {
           is_active?: boolean
           layout_slot: string
           link_url?: string | null
+          mobile_image_url?: string | null
           position?: number
           title: string
           updated_at?: string
@@ -2238,6 +2246,7 @@ export type Database = {
           is_active?: boolean
           layout_slot?: string
           link_url?: string | null
+          mobile_image_url?: string | null
           position?: number
           title?: string
           updated_at?: string
