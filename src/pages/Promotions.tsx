@@ -1,133 +1,150 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { usePromotions } from "@/hooks/usePromotions";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tag } from "lucide-react";
-import { DogIcon, CatIcon, DogFace2Icon, CatFace2Icon, PawIcon, BoneIcon, FishIcon } from "@/components/PaddyIconPatterns";
+import { DealsGrid } from "@/components/DealsGrid";
+import { VouchersSection } from "@/components/VouchersSection";
+import { DealsSidebar } from "@/components/DealsSidebar";
+import { DealsProductGrid } from "@/components/DealsProductGrid";
+import { useDealsProducts, DEFAULT_DEALS_FILTERS, DealsFilterState } from "@/hooks/useDealsProducts";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { SlidersHorizontal } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
-// Map icon_type to icon components
-const iconTypeMap: Record<string, { TopIcon: React.FC<{ className?: string }>; BottomIcon: React.FC<{ className?: string }> }> = {
-  dog_cat: { TopIcon: DogIcon, BottomIcon: CatIcon },
-  cat_dog: { TopIcon: CatIcon, BottomIcon: DogIcon },
-  dog_face_2: { TopIcon: DogFace2Icon, BottomIcon: CatFace2Icon },
-  paw_bone: { TopIcon: PawIcon, BottomIcon: BoneIcon },
-  bone_paw: { TopIcon: BoneIcon, BottomIcon: PawIcon },
-  fish_paw: { TopIcon: FishIcon, BottomIcon: PawIcon },
-};
-
-// Fallback cycling for promotions without icon_type
-const iconPatterns = [
-  { TopIcon: DogIcon, BottomIcon: CatIcon },
-  { TopIcon: CatIcon, BottomIcon: DogIcon },
-  { TopIcon: DogFace2Icon, BottomIcon: CatFace2Icon },
-  { TopIcon: PawIcon, BottomIcon: BoneIcon },
+const DISCOUNT_CHIPS = [
+  { value: 0, label: "Tất cả" },
+  { value: 10, label: "10%+" },
+  { value: 20, label: "20%+" },
+  { value: 30, label: "30%+" },
+  { value: 50, label: "50%+" },
 ];
 
 const Promotions = () => {
-  const { data: promotions, isLoading } = usePromotions();
+  const [filters, setFilters] = useState<DealsFilterState>(DEFAULT_DEALS_FILTERS);
+  const [sortBy, setSortBy] = useState("discount_desc");
+  const [page, setPage] = useState(1);
 
-  // Filter only active promotions within date range
-  const now = new Date();
-  const activePromotions = promotions?.filter((promo) => {
-    if (!promo.is_active) return false;
-    if (promo.start_date && new Date(promo.start_date) > now) return false;
-    if (promo.end_date && new Date(promo.end_date) < now) return false;
-    return true;
-  });
+  const { data: productsData, isLoading } = useDealsProducts(filters, sortBy, page);
 
-  const getLink = (promo: { promo_type: string; link_type: string; link_destination: string }) => {
-    // Special promo types with dedicated pages
-    if (promo.promo_type === "flash_sale") return "/flash-sale";
-    if (promo.promo_type === "subscription_deals") return "/subscription-deals";
+  const handleFiltersChange = (newFilters: DealsFilterState) => {
+    setFilters(newFilters);
+    setPage(1);
+  };
 
-    // Other types use collections
-    if (promo.link_destination) {
-      return `/collections/${promo.link_destination}`;
-    }
-
-    // Fallback to collections with promo_type slug
-    return `/collections/${promo.promo_type.replace("_", "-")}`;
+  const handleSortChange = (newSort: string) => {
+    setSortBy(newSort);
+    setPage(1);
   };
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Khuyến Mãi & Giảm Giá | Paddy.vn</title>
+        <meta
+          name="description"
+          content="Khám phá 300+ sản phẩm đang giảm giá tại Paddy.vn. Thức ăn, đồ chơi, phụ kiện cho chó mèo giá tốt. Freeship đơn từ 500K."
+        />
+      </Helmet>
+
       <Header />
-      
-      <main className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-primary/10 rounded-xl">
-            <Tag className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Khuyến mãi đang diễn ra
-            </h1>
-            <p className="text-muted-foreground">
-              Khám phá các ưu đãi hấp dẫn dành cho thú cưng của bạn
-            </p>
-          </div>
+
+      <main>
+        {/* Breadcrumb */}
+        <div className="container mx-auto px-4 pt-4 pb-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Khuyến mãi</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
 
-        {/* Promotions Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {[...Array(10)].map((_, i) => (
-              <Skeleton key={i} className="aspect-square rounded-2xl" />
-            ))}
-          </div>
-        ) : activePromotions && activePromotions.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {activePromotions.map((promo) => (
-              <Link
-                key={promo.id}
-                to={getLink(promo)}
-                className="group relative aspect-square rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-                style={{
-                  background: `linear-gradient(135deg, ${promo.gradient_from}, ${promo.gradient_to})`,
-                }}
-              >
-                {/* Decorative brand pattern icons */}
-                {(() => {
-                  // Use icon_type from database if set, otherwise fallback to cycling
-                  const iconConfig = promo.icon_type && iconTypeMap[promo.icon_type]
-                    ? iconTypeMap[promo.icon_type]
-                    : iconPatterns[(activePromotions?.indexOf(promo) ?? 0) % iconPatterns.length];
-                  const { TopIcon, BottomIcon } = iconConfig;
-                  return (
-                    <>
-                      <TopIcon className="absolute -top-3 -right-3 w-24 h-24 text-white/15 rotate-12" />
-                      <BottomIcon className="absolute -bottom-4 -left-4 w-20 h-20 text-white/10 -rotate-12" />
-                    </>
-                  );
-                })()}
-                
-                {/* Content */}
-                <div className="relative z-10 h-full flex flex-col items-center justify-center p-4 text-center">
-                  <p className="text-white text-lg md:text-xl font-bold whitespace-pre-line leading-tight drop-shadow-lg">
-                    {promo.title}
-                  </p>
-                  {promo.subtitle && (
-                    <p className="text-white/90 text-sm md:text-base mt-2 drop-shadow-md">
-                      {promo.subtitle}
-                    </p>
-                  )}
-                </div>
+        {/* Page title */}
+        <div className="container mx-auto px-4 pb-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            Khuyến Mãi & Ưu Đãi
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {productsData?.total
+              ? `${productsData.total} sản phẩm đang giảm giá tại Paddy`
+              : "Khám phá các ưu đãi hấp dẫn dành cho thú cưng"}
+          </p>
+        </div>
 
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              </Link>
-            ))}
+        {/* Section A: Promo bento banner */}
+        <DealsGrid hideViewAll />
+
+        {/* Section B: Voucher strip */}
+        <VouchersSection />
+
+        {/* Section C: Products grid with sidebar */}
+        <div className="container mx-auto px-4 py-6">
+          {/* Mobile: discount chips + filter button */}
+          <div className="flex items-center gap-2 mb-4 md:hidden">
+            <div className="flex-1 flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+              {DISCOUNT_CHIPS.map((chip) => (
+                <button
+                  key={chip.value}
+                  onClick={() => handleFiltersChange({ ...filters, minDiscount: chip.value })}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    filters.minDiscount === chip.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-shrink-0">
+                  <SlidersHorizontal className="h-4 w-4 mr-1" />
+                  Bộ lọc
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px]">
+                <SheetHeader>
+                  <SheetTitle>Bộ lọc</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 overflow-y-auto max-h-[calc(100vh-100px)]">
+                  <DealsSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
-        ) : (
-          <div className="text-center py-16">
-            <Tag className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground text-lg">
-              Hiện không có chương trình khuyến mãi nào đang diễn ra
-            </p>
+
+          <div className="flex gap-6">
+            {/* Desktop sidebar */}
+            <div className="hidden md:block w-[220px] flex-shrink-0">
+              <DealsSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+            </div>
+
+            {/* Product grid */}
+            <DealsProductGrid
+              products={productsData?.products}
+              total={productsData?.total || 0}
+              isLoading={isLoading}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              page={page}
+              onPageChange={setPage}
+            />
           </div>
-        )}
+        </div>
       </main>
 
       <Footer />
