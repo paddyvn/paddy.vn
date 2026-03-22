@@ -11,7 +11,7 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer = ({ userId, trigger }: CartDrawerProps) => {
-  const { cart, isLoading, removeFromCart, updateQuantity } = useCart(userId);
+  const { cart, isLoading, removeFromCart, updateQuantity, isRemoving } = useCart(userId);
   const navigate = useNavigate();
 
   const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }> | undefined) => {
