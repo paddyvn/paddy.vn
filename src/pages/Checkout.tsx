@@ -329,6 +329,37 @@ export default function Checkout() {
     setAppliedVoucher(null);
   };
 
+  const handleApplyGiftCard = async () => {
+    if (!giftCardCode.trim()) return;
+    setIsApplyingGiftCard(true);
+    try {
+      const { data, error } = await supabase.rpc("check_gift_card_balance", {
+        p_code: giftCardCode.trim().toUpperCase(),
+      });
+      if (error) throw error;
+      const res = data as any;
+      if (!res?.found) {
+        toast({ title: "Không tìm thấy", description: "Mã thẻ quà tặng không hợp lệ", variant: "destructive" });
+        return;
+      }
+      if (res.balance <= 0) {
+        toast({ title: "Hết số dư", description: "Thẻ quà tặng này đã hết số dư", variant: "destructive" });
+        return;
+      }
+      setAppliedGiftCard({ code: giftCardCode.trim().toUpperCase(), balance: res.balance, initial_amount: res.initial_amount });
+      setGiftCardCode("");
+      toast({ title: "Áp dụng thành công", description: `Thẻ quà tặng có số dư ${formatPrice(res.balance)}₫` });
+    } catch {
+      toast({ title: "Lỗi", description: "Không thể kiểm tra thẻ quà tặng", variant: "destructive" });
+    } finally {
+      setIsApplyingGiftCard(false);
+    }
+  };
+
+  const handleRemoveGiftCard = () => {
+    setAppliedGiftCard(null);
+  };
+
   const getSelectedAddress = () => {
     if (useNewAddress) {
       return addressForm;
