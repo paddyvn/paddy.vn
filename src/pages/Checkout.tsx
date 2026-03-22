@@ -121,6 +121,15 @@ export default function Checkout() {
     promotionId: string;
   } | null>(null);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+
+  // Gift Card
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    code: string;
+    balance: number;
+    initial_amount: number;
+  } | null>(null);
+  const [isApplyingGiftCard, setIsApplyingGiftCard] = useState(false);
   
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
