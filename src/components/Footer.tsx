@@ -168,7 +168,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
               </p>
 
               <div className="flex flex-col gap-2 mb-4">
-                <a href="tel:0867677891" className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-primary transition-smooth">
+                <a href="tel:0867677891" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-smooth">
                   <Phone className="h-3.5 w-3.5 shrink-0" />
                   <span>Hotline: <strong className="font-bold">0867 677 891</strong></span>
                 </a>
