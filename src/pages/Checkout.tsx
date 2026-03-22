@@ -277,7 +277,13 @@ export default function Checkout() {
   const voucherDiscount = calculateVoucherDiscount();
   const subscriptionDiscount = enableSubscription ? Math.round(subtotal * subscriptionDiscountPct / 100) : 0;
   const discount = voucherDiscount + subscriptionDiscount;
-  const total = subtotal + shippingCost - discount - totalDealDiscount;
+  
+  // Gift card: applied after coupon on remaining amount
+  const afterCouponTotal = subtotal + shippingCost - discount - totalDealDiscount;
+  const giftCardAmountUsed = appliedGiftCard 
+    ? Math.min(appliedGiftCard.balance, Math.max(0, afterCouponTotal)) 
+    : 0;
+  const total = afterCouponTotal - giftCardAmountUsed;
 
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) return;
