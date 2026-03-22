@@ -22,7 +22,7 @@ import {
 import { Plus, Search, Image, ChevronLeft, ChevronRight, Pencil, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useSyncBrands } from "@/hooks/useSyncBrands";
+
 
 interface Brand {
   id: string;
