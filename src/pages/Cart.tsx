@@ -471,11 +471,13 @@ export default function Cart() {
               {recommendations.slice(0, 10).map((product) => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={product.base_price}
-                  image={product.product_images?.find(i => i.is_primary)?.image_url || product.product_images?.[0]?.image_url || ""}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    base_price: product.base_price,
+                    product_images: product.product_images,
+                  }}
                 />
               ))}
             </div>
