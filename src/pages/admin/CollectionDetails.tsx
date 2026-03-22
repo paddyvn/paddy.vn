@@ -323,6 +323,10 @@ export default function CollectionDetails() {
         meta_description: collection.meta_description || "",
         collection_type: collection.collection_type || "custom",
         rules_match_type: collection.rules_match_type || "all",
+        pet_type: collection.pet_type || "",
+        is_hub: collection.is_hub || false,
+        hub_display_order: collection.hub_display_order || 0,
+        hub_icon_url: collection.hub_icon_url || "",
       });
       setSeoFormData({
         meta_title: collection.meta_title || "",
