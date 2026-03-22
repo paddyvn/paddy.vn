@@ -125,7 +125,13 @@ export default function Checkout() {
   // Subscribe & Save
   const [enableSubscription, setEnableSubscription] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<SubscriptionFrequency>("monthly");
-  
+  // Cascading address for new address form
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
+  const [selectedWardCode, setSelectedWardCode] = useState<number | null>(null);
+  const { provinces, loading: provincesLoading } = useProvinces();
+  const { districts } = useDistricts(selectedProvinceCode);
+  const { wards } = useWards(selectedDistrictCode);
   
   const { cart, isLoading: cartLoading } = useCart(userId);
   const cartProductIds = (cart || [])
