@@ -44,7 +44,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import { useSyncProducts } from "@/hooks/useSyncProducts";
+
 import { InlineEditCell } from "@/components/admin/InlineEditCell";
 import { Checkbox } from "@/components/ui/checkbox";
 
