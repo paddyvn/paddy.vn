@@ -9,22 +9,23 @@ export interface Banner {
   title: string;
   subtitle: string | null;
   image_url: string | null;
+  mobile_image_url: string | null;
+  badge_text: string | null;
   link_url: string | null;
   link_text: string | null;
-  background_color: string;
-  text_color: string;
-  display_order: number;
+  background_color: string | null;
+  text_color: string | null;
+  display_order: number | null;
   starts_at: string | null;
   ends_at: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export type BannerInsert = Omit<Banner, 'id' | 'created_at' | 'updated_at'>;
 export type BannerUpdate = Partial<BannerInsert>;
 
-// Fetch all banners for admin (includes inactive and scheduled)
 export const useBanners = (type?: BannerType) => {
   return useQuery({
     queryKey: ["banners", type],
@@ -45,7 +46,6 @@ export const useBanners = (type?: BannerType) => {
   });
 };
 
-// Fetch only active banners within schedule (for public display)
 export const useActiveBanners = (type: BannerType) => {
   return useQuery({
     queryKey: ["banners", "active", type],
@@ -142,18 +142,16 @@ export const useReorderBanners = () => {
   });
 };
 
-// Upload banner image to storage
-export const uploadBannerImage = async (file: File): Promise<string> => {
+export const uploadBannerImage = async (file: File, folder: string = "hero"): Promise<string> => {
   const fileExt = file.name.split(".").pop();
-  const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  const filePath = `${fileName}`;
+  const fileName = `${folder}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}.${fileExt}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { data, error: uploadError } = await supabase.storage
     .from("banners")
-    .upload(filePath, file);
+    .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
   if (uploadError) throw uploadError;
 
-  const { data } = supabase.storage.from("banners").getPublicUrl(filePath);
-  return data.publicUrl;
+  const { data: urlData } = supabase.storage.from("banners").getPublicUrl(data.path);
+  return urlData.publicUrl;
 };
