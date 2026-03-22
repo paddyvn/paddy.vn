@@ -40,17 +40,14 @@ import { useCreateSubscription, type SubscriptionFrequency } from "@/hooks/useSu
 import { useComboDeals } from "@/hooks/useComboDeals";
 import { useTieredDeals } from "@/hooks/useTieredDeals";
 import { useSubscriptionDeal } from "@/hooks/useSubscriptionDeal";
+import { useProvinces, useDistricts, useWards } from "@/hooks/useVietnamAddress";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { validateVoucher, calculateVoucherDiscount as calcVoucherDiscount } from "@/lib/voucher-utils";
 
-const PROVINCES = [
-  "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
-  "An Giang", "Bà Rịa - Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
-  "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
-];
+const FREE_SHIPPING_THRESHOLD = 500000;
 
 const PAYMENT_METHODS = [
   { 
