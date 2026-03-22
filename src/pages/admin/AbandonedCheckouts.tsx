@@ -42,9 +42,8 @@ import {
   ShoppingCart,
   Calendar,
   DollarSign,
-  RefreshCw,
 } from "lucide-react";
-import { useSyncAbandonedCheckouts } from "@/hooks/useSyncAbandonedCheckouts";
+
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -72,7 +71,7 @@ function applyCheckoutFilters(query: any, searchQuery: string) {
 export default function AbandonedCheckouts() {
   const deleteCheckout = useDeleteAbandonedCheckout();
   const sendRecoveryEmail = useSendRecoveryEmail();
-  const syncAbandonedCheckouts = useSyncAbandonedCheckouts();
+  
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -175,14 +174,6 @@ export default function AbandonedCheckouts() {
               Track and recover abandoned shopping carts
             </p>
           </div>
-          <Button
-            onClick={() => syncAbandonedCheckouts.mutate()}
-            disabled={syncAbandonedCheckouts.isPending}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncAbandonedCheckouts.isPending ? "animate-spin" : ""}`} />
-            {syncAbandonedCheckouts.isPending ? "Syncing..." : "Sync Checkouts"}
-          </Button>
         </div>
 
         <div className="relative">

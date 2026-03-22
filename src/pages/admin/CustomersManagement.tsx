@@ -43,10 +43,9 @@ import {
   Tag,
   FileText,
   User,
-  RefreshCw,
   Download,
 } from "lucide-react";
-import { useSyncCustomers } from "@/hooks/useSyncCustomers";
+
 import {
   Select,
   SelectContent,
@@ -85,7 +84,7 @@ export default function CustomersManagement() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateCustomer = useUpdateCustomer();
-  const syncCustomers = useSyncCustomers();
+  
   
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -259,14 +258,6 @@ export default function CustomersManagement() {
             <Button variant="outline" onClick={exportCustomersCSV} className="gap-2">
               <Download className="h-4 w-4" />
               Export CSV
-            </Button>
-            <Button
-              onClick={() => syncCustomers.mutate()}
-              disabled={syncCustomers.isPending}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncCustomers.isPending ? "animate-spin" : ""}`} />
-              {syncCustomers.isPending ? "Syncing..." : "Sync Customers"}
             </Button>
           </div>
         </div>

@@ -36,12 +36,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight, Tags, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, MoreVertical, Pencil, Trash2, Plus, Filter, Image as ImageIcon, ChevronLeft, ChevronRight, Tags, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { z } from "zod";
-import { useSyncCollections } from "@/hooks/useSyncCollections";
-import { useSyncProductCollections } from "@/hooks/useSyncProductCollections";
 import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
@@ -101,8 +99,6 @@ export default function CollectionsManagement() {
   const [isBulkTypeDialogOpen, setIsBulkTypeDialogOpen] = useState(false);
   const [bulkCollectionType, setBulkCollectionType] = useState<string>("");
   const { toast } = useToast();
-  const syncCollections = useSyncCollections();
-  const syncProductCollections = useSyncProductCollections();
   const navigate = useNavigate();
 
   const handleSort = (column: SortColumn) => {
@@ -392,15 +388,6 @@ export default function CollectionsManagement() {
           <p className="text-muted-foreground">Organize products into collections</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={() => syncCollections.mutate()}
-            disabled={syncCollections.isPending}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncCollections.isPending ? "animate-spin" : ""}`} />
-            {syncCollections.isPending ? "Syncing..." : "Sync Collections"}
-          </Button>
           <Button onClick={handleAddNew}>
             <Plus className="mr-2 h-4 w-4" />
             Add Collection
@@ -742,26 +729,6 @@ export default function CollectionsManagement() {
         </div>
       )}
 
-      {/* Product-Collection Relationships Section */}
-      <div className="rounded-lg border bg-card p-6">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Product-Collection Relationships</h3>
-            <p className="text-sm text-muted-foreground">
-              After syncing collections and products, sync the relationships between them to see product counts.
-            </p>
-          </div>
-          <Button
-            onClick={() => syncProductCollections.mutate()}
-            disabled={syncProductCollections.isPending}
-            variant="default"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncProductCollections.isPending ? "animate-spin" : ""}`} />
-            {syncProductCollections.isPending ? "Syncing Links..." : "Sync Product-Collection Links"}
-          </Button>
-        </div>
-      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
