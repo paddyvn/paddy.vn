@@ -791,6 +791,7 @@ export type Database = {
           pet_type: string | null
           published: boolean | null
           reading_time_minutes: number | null
+          search_text: string | null
           shopify_article_id: string | null
           shopify_blog_id: string | null
           shopify_created_at: string | null
@@ -816,6 +817,7 @@ export type Database = {
           pet_type?: string | null
           published?: boolean | null
           reading_time_minutes?: number | null
+          search_text?: string | null
           shopify_article_id?: string | null
           shopify_blog_id?: string | null
           shopify_created_at?: string | null
@@ -841,6 +843,7 @@ export type Database = {
           pet_type?: string | null
           published?: boolean | null
           reading_time_minutes?: number | null
+          search_text?: string | null
           shopify_article_id?: string | null
           shopify_blog_id?: string | null
           shopify_created_at?: string | null
@@ -1482,6 +1485,7 @@ export type Database = {
           rfm_recency: number | null
           rfm_segment: string | null
           sapo_customer_id: number | null
+          search_text: string | null
           shopify_created_at: string | null
           shopify_customer_id: string | null
           shopify_updated_at: string | null
@@ -1534,6 +1538,7 @@ export type Database = {
           rfm_recency?: number | null
           rfm_segment?: string | null
           sapo_customer_id?: number | null
+          search_text?: string | null
           shopify_created_at?: string | null
           shopify_customer_id?: string | null
           shopify_updated_at?: string | null
@@ -1586,6 +1591,7 @@ export type Database = {
           rfm_recency?: number | null
           rfm_segment?: string | null
           sapo_customer_id?: number | null
+          search_text?: string | null
           shopify_created_at?: string | null
           shopify_customer_id?: string | null
           shopify_updated_at?: string | null
@@ -2361,6 +2367,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           position_id: string | null
+          search_text: string | null
           social_insurance_number: string | null
           start_date: string | null
           status: string
@@ -2389,6 +2396,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           position_id?: string | null
+          search_text?: string | null
           social_insurance_number?: string | null
           start_date?: string | null
           status?: string
@@ -2417,6 +2425,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           position_id?: string | null
+          search_text?: string | null
           social_insurance_number?: string | null
           start_date?: string | null
           status?: string
@@ -4451,6 +4460,7 @@ export type Database = {
           payment_gateway: string | null
           processed_at: string | null
           promotion_id: string | null
+          search_text: string | null
           shipping_address: Json
           shipping_fee: number | null
           shopify_order_id: string | null
@@ -4489,6 +4499,7 @@ export type Database = {
           payment_gateway?: string | null
           processed_at?: string | null
           promotion_id?: string | null
+          search_text?: string | null
           shipping_address: Json
           shipping_fee?: number | null
           shopify_order_id?: string | null
@@ -4527,6 +4538,7 @@ export type Database = {
           payment_gateway?: string | null
           processed_at?: string | null
           promotion_id?: string | null
+          search_text?: string | null
           shipping_address?: Json
           shipping_fee?: number | null
           shopify_order_id?: string | null
@@ -9016,6 +9028,49 @@ export type Database = {
       }
     }
     Functions: {
+      admin_search_blog_posts: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          author: string
+          handle: string
+          id: string
+          published: boolean
+          shopify_published_at: string
+          title: string
+          view_count: number
+        }[]
+      }
+      admin_search_customers: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          city: string
+          email: string
+          full_name: string
+          id: string
+          lifecycle_stage: string
+          normalized_phone: string
+          phone: string
+          rfm_segment: string
+          total_orders_all: number
+          total_spent_all: number
+        }[]
+      }
+      admin_search_orders: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          channel: string
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          delivery_method: string
+          financial_status: string
+          id: string
+          order_number: string
+          status: string
+          total: number
+        }[]
+      }
       backfill_order_all_fields: { Args: never; Returns: number }
       backfill_order_customer_name: { Args: never; Returns: number }
       backfill_order_fields: { Args: never; Returns: number }

@@ -173,7 +173,7 @@ export default function Brands() {
       
       <main className="flex-1">
         {/* Fix 3 & 4: Page title + Featured Brands Carousel */}
-        <section className="pb-8 border-b">
+        <section className="pb-8">
           <div className="container mx-auto px-4 pt-6 pb-4">
             <h1 className="text-2xl md:text-3xl font-bold">Thương Hiệu Thú Cưng</h1>
             <p className="text-muted-foreground mt-1">
@@ -239,7 +239,7 @@ export default function Brands() {
         </section>
 
         {/* Breadcrumb, Search & Alphabet Filter */}
-        <section className="py-6 border-b sticky top-0 bg-background z-20">
+        <section className="py-6 sticky top-0 bg-background z-20">
           <div className="container mx-auto px-4">
             <Breadcrumb className="mb-4">
               <BreadcrumbList>
