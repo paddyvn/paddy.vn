@@ -1109,6 +1109,50 @@ export type Database = {
           },
         ]
       }
+      customer_channel_ids: {
+        Row: {
+          channel: string
+          created_at: string
+          customer_id: string
+          first_order_at: string | null
+          id: string
+          last_order_at: string | null
+          orders_count: number | null
+          source_customer_id: string
+          total_spent: number | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          customer_id: string
+          first_order_at?: string | null
+          id?: string
+          last_order_at?: string | null
+          orders_count?: number | null
+          source_customer_id: string
+          total_spent?: number | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          customer_id?: string
+          first_order_at?: string | null
+          id?: string
+          last_order_at?: string | null
+          orders_count?: number | null
+          source_customer_id?: string
+          total_spent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_channel_ids_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_segments: {
         Row: {
           created_at: string | null
@@ -1142,15 +1186,41 @@ export type Database = {
       customers: {
         Row: {
           accepts_marketing: boolean | null
+          avg_order_value: number | null
+          birthday: string | null
+          channels: string[] | null
+          churn_risk: string | null
+          city: string | null
+          clv: number | null
           created_at: string
+          district: string | null
           email: string | null
+          facebook_id: string | null
+          favorite_brands: Json | null
+          first_channel: string | null
           first_name: string | null
+          full_name: string | null
+          gender: string | null
           id: string
           last_name: string | null
+          last_order_at: string | null
+          last_purchased_products: Json | null
+          lifecycle_stage: string | null
           marketing_opt_in_level: string | null
+          normalized_phone: string | null
           note: string | null
           orders_count: number | null
           phone: string | null
+          preferred_categories: Json | null
+          profile_id: string | null
+          purchase_frequency_days: number | null
+          referral_source: string | null
+          replenishment_cycle_days: number | null
+          rfm_frequency: number | null
+          rfm_monetary: number | null
+          rfm_recency: number | null
+          rfm_segment: string | null
+          sapo_customer_id: number | null
           shopify_created_at: string | null
           shopify_customer_id: string | null
           shopify_updated_at: string | null
@@ -1158,21 +1228,51 @@ export type Database = {
           state: string | null
           tags: string | null
           tax_exempt: boolean | null
+          total_orders_all: number | null
           total_spent: number | null
+          total_spent_all: number | null
           updated_at: string
           verified_email: boolean | null
+          ward: string | null
+          zalo_id: string | null
         }
         Insert: {
           accepts_marketing?: boolean | null
+          avg_order_value?: number | null
+          birthday?: string | null
+          channels?: string[] | null
+          churn_risk?: string | null
+          city?: string | null
+          clv?: number | null
           created_at?: string
+          district?: string | null
           email?: string | null
+          facebook_id?: string | null
+          favorite_brands?: Json | null
+          first_channel?: string | null
           first_name?: string | null
+          full_name?: string | null
+          gender?: string | null
           id?: string
           last_name?: string | null
+          last_order_at?: string | null
+          last_purchased_products?: Json | null
+          lifecycle_stage?: string | null
           marketing_opt_in_level?: string | null
+          normalized_phone?: string | null
           note?: string | null
           orders_count?: number | null
           phone?: string | null
+          preferred_categories?: Json | null
+          profile_id?: string | null
+          purchase_frequency_days?: number | null
+          referral_source?: string | null
+          replenishment_cycle_days?: number | null
+          rfm_frequency?: number | null
+          rfm_monetary?: number | null
+          rfm_recency?: number | null
+          rfm_segment?: string | null
+          sapo_customer_id?: number | null
           shopify_created_at?: string | null
           shopify_customer_id?: string | null
           shopify_updated_at?: string | null
@@ -1180,21 +1280,51 @@ export type Database = {
           state?: string | null
           tags?: string | null
           tax_exempt?: boolean | null
+          total_orders_all?: number | null
           total_spent?: number | null
+          total_spent_all?: number | null
           updated_at?: string
           verified_email?: boolean | null
+          ward?: string | null
+          zalo_id?: string | null
         }
         Update: {
           accepts_marketing?: boolean | null
+          avg_order_value?: number | null
+          birthday?: string | null
+          channels?: string[] | null
+          churn_risk?: string | null
+          city?: string | null
+          clv?: number | null
           created_at?: string
+          district?: string | null
           email?: string | null
+          facebook_id?: string | null
+          favorite_brands?: Json | null
+          first_channel?: string | null
           first_name?: string | null
+          full_name?: string | null
+          gender?: string | null
           id?: string
           last_name?: string | null
+          last_order_at?: string | null
+          last_purchased_products?: Json | null
+          lifecycle_stage?: string | null
           marketing_opt_in_level?: string | null
+          normalized_phone?: string | null
           note?: string | null
           orders_count?: number | null
           phone?: string | null
+          preferred_categories?: Json | null
+          profile_id?: string | null
+          purchase_frequency_days?: number | null
+          referral_source?: string | null
+          replenishment_cycle_days?: number | null
+          rfm_frequency?: number | null
+          rfm_monetary?: number | null
+          rfm_recency?: number | null
+          rfm_segment?: string | null
+          sapo_customer_id?: number | null
           shopify_created_at?: string | null
           shopify_customer_id?: string | null
           shopify_updated_at?: string | null
@@ -1202,11 +1332,23 @@ export type Database = {
           state?: string | null
           tags?: string | null
           tax_exempt?: boolean | null
+          total_orders_all?: number | null
           total_spent?: number | null
+          total_spent_all?: number | null
           updated_at?: string
           verified_email?: boolean | null
+          ward?: string | null
+          zalo_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       delivery_methods: {
         Row: {
@@ -3551,12 +3693,18 @@ export type Database = {
       }
       pets: {
         Row: {
+          activity_level: string | null
           age_months: number | null
           age_years: number | null
           breed: string | null
           created_at: string
+          customer_id: string | null
+          date_of_birth: string | null
+          dietary_restrictions: Json | null
           gender: string | null
+          health_conditions: Json | null
           id: string
+          is_neutered: boolean | null
           name: string
           photo_url: string | null
           species: string
@@ -3565,12 +3713,18 @@ export type Database = {
           weight_kg: number | null
         }
         Insert: {
+          activity_level?: string | null
           age_months?: number | null
           age_years?: number | null
           breed?: string | null
           created_at?: string
+          customer_id?: string | null
+          date_of_birth?: string | null
+          dietary_restrictions?: Json | null
           gender?: string | null
+          health_conditions?: Json | null
           id?: string
+          is_neutered?: boolean | null
           name: string
           photo_url?: string | null
           species: string
@@ -3579,12 +3733,18 @@ export type Database = {
           weight_kg?: number | null
         }
         Update: {
+          activity_level?: string | null
           age_months?: number | null
           age_years?: number | null
           breed?: string | null
           created_at?: string
+          customer_id?: string | null
+          date_of_birth?: string | null
+          dietary_restrictions?: Json | null
           gender?: string | null
+          health_conditions?: Json | null
           id?: string
+          is_neutered?: boolean | null
           name?: string
           photo_url?: string | null
           species?: string
@@ -3593,6 +3753,13 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pets_user_id_fkey"
             columns: ["user_id"]
@@ -6469,6 +6636,7 @@ export type Database = {
       sapo_sync_history: {
         Row: {
           completed_at: string | null
+          customers_synced: number | null
           date_range_end: string | null
           date_range_start: string | null
           error_message: string | null
@@ -6482,6 +6650,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          customers_synced?: number | null
           date_range_end?: string | null
           date_range_start?: string | null
           error_message?: string | null
@@ -6495,6 +6664,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          customers_synced?: number | null
           date_range_end?: string | null
           date_range_start?: string | null
           error_message?: string | null
@@ -6938,6 +7108,7 @@ export type Database = {
       }
     }
     Functions: {
+      backfill_customer_address_fields: { Args: never; Returns: undefined }
       backfill_sapo_customer_order_stats: {
         Args: never
         Returns: {
@@ -6967,6 +7138,44 @@ export type Database = {
           marketplace: string
           month: number
           revenue: number
+        }[]
+      }
+      get_dashboard_channel_performance: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          channel_key: string
+          orders: number
+          revenue: number
+        }[]
+      }
+      get_dashboard_customer_metrics: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_dashboard_revenue_by_day: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          date: string
+          orders: number
+          revenue: number
+        }[]
+      }
+      get_dashboard_sales_overview: {
+        Args: {
+          p_from: string
+          p_prev_from: string
+          p_prev_to: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_dashboard_top_products: {
+        Args: { p_from: string; p_limit?: number; p_to: string }
+        Returns: {
+          name: string
+          quantity: number
+          revenue: number
+          sku: string
         }[]
       }
       get_inventory_health_metrics: {
@@ -7247,6 +7456,7 @@ export type Database = {
         }
         Returns: Json
       }
+      recalculate_customer_metrics: { Args: never; Returns: undefined }
       recalculate_loyalty_spending: { Args: never; Returns: undefined }
       refresh_paddy_customers_monthly_counts_cache: {
         Args: never
