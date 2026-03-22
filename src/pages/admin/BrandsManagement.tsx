@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Image, ChevronLeft, ChevronRight, Pencil, RefreshCw } from "lucide-react";
+import { Plus, Search, Image, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
