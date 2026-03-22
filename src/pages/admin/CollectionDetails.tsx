@@ -254,6 +254,10 @@ export default function CollectionDetails() {
     meta_description: "",
     collection_type: "manual",
     rules_match_type: "all",
+    pet_type: "" as string,
+    is_hub: false,
+    hub_display_order: 0,
+    hub_icon_url: "",
   });
   const [rules, setRules] = useState<CollectionRule[]>([]);
   const [productsPage, setProductsPage] = useState(1);
