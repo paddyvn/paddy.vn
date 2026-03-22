@@ -46,13 +46,13 @@ export const PetHubSidebar = ({
     filters.brands.length > 0 ||
     filters.priceRange[0] > 0 ||
     filters.priceRange[1] < DEFAULT_MAX_PRICE ||
-    filters.categoryId !== null;
+    filters.categorySlug !== null;
 
   const clearFilters = () => {
     onFiltersChange({
       brands: [],
       priceRange: [0, DEFAULT_MAX_PRICE],
-      categoryId: null,
+      categorySlug: null,
     });
   };
 
@@ -85,11 +85,11 @@ export const PetHubSidebar = ({
               <div className="space-y-1">
                 <button
                   onClick={() =>
-                    onFiltersChange({ ...filters, categoryId: null })
+                    onFiltersChange({ ...filters, categorySlug: null })
                   }
                   className={cn(
                     "w-full text-left text-sm py-1.5 px-2 rounded-md transition-colors",
-                    !filters.categoryId
+                    !filters.categorySlug
                       ? "bg-primary/10 text-primary font-semibold"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
@@ -102,13 +102,13 @@ export const PetHubSidebar = ({
                     onClick={() =>
                       onFiltersChange({
                         ...filters,
-                        categoryId:
-                          filters.categoryId === cat.id ? null : cat.id,
+                        categorySlug:
+                          filters.categorySlug === cat.slug ? null : cat.slug,
                       })
                     }
                     className={cn(
                       "w-full text-left text-sm py-1.5 px-2 rounded-md transition-colors",
-                      filters.categoryId === cat.id
+                      filters.categorySlug === cat.slug
                         ? "bg-primary/10 text-primary font-semibold"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
