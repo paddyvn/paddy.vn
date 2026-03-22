@@ -500,16 +500,6 @@ export const Header = () => {
               <X className="h-4 w-4" />
             </button>
           </div>
-        ) : !activeAnnouncement ? (
-          <div className="bg-background">
-            <div className="container mx-auto px-4">
-              <div className="bg-muted rounded-lg py-2 text-center">
-                <p className="text-sm font-medium">
-                  Miễn phí giao hàng cho đơn hàng đầu tiên trên 500.000đ 🎉
-                </p>
-              </div>
-            </div>
-          </div>
         ) : null}
       </div>
 
