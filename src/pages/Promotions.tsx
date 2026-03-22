@@ -7,9 +7,12 @@ import { VouchersSection } from "@/components/VouchersSection";
 import { DealsSidebar } from "@/components/DealsSidebar";
 import { DealsProductGrid } from "@/components/DealsProductGrid";
 import { useDealsProducts, DEFAULT_DEALS_FILTERS, DealsFilterState } from "@/hooks/useDealsProducts";
+import { useActiveHomepageCategories } from "@/hooks/useHomepageCategories";
+import { CategoryIllustration } from "@/components/CategoryIllustrations";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,11 +30,18 @@ const DISCOUNT_CHIPS = [
   { value: 50, label: "50%+" },
 ];
 
+const PET_TABS = [
+  { id: "dog" as const, label: "Chó", emoji: "🐕" },
+  { id: "cat" as const, label: "Mèo", emoji: "🐈" },
+];
+
 const Promotions = () => {
   const [filters, setFilters] = useState<DealsFilterState>(DEFAULT_DEALS_FILTERS);
   const [sortBy, setSortBy] = useState("discount_desc");
   const [page, setPage] = useState(1);
+  const [activePet, setActivePet] = useState<"dog" | "cat">("dog");
 
+  const { data: categories = [] } = useActiveHomepageCategories(activePet);
   const { data: productsData, isLoading } = useDealsProducts(filters, sortBy, page);
 
   const handleFiltersChange = (newFilters: DealsFilterState) => {
@@ -42,6 +52,11 @@ const Promotions = () => {
   const handleSortChange = (newSort: string) => {
     setSortBy(newSort);
     setPage(1);
+  };
+
+  const handleCategoryClick = (slug: string) => {
+    const newSlug = filters.categorySlug === slug ? null : slug;
+    handleFiltersChange({ ...filters, categorySlug: newSlug });
   };
 
   return (
@@ -89,6 +104,73 @@ const Promotions = () => {
 
         {/* Section B: Voucher strip */}
         <VouchersSection />
+
+        {/* Category circle filters */}
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Lọc theo danh mục
+            </h3>
+            <div className="flex gap-1 bg-muted rounded-xl p-[3px]">
+              {PET_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActivePet(tab.id);
+                    handleFiltersChange({ ...filters, categorySlug: null });
+                  }}
+                  className={cn(
+                    "px-3 py-1 rounded-[9px] text-xs font-bold transition-all duration-200 flex items-center gap-1",
+                    activePet === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="text-xs">{tab.emoji}</span>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {categories
+              .filter((cat) => cat.icon !== "deals")
+              .map((cat) => {
+                const isActive = filters.categorySlug === cat.slug;
+                return (
+                  <button
+                    key={cat.slug}
+                    onClick={() => handleCategoryClick(cat.slug)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] sm:w-[84px] py-2 rounded-xl transition-all duration-200",
+                      isActive
+                        ? "bg-primary/10 ring-2 ring-primary"
+                        : "hover:bg-muted/60"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center p-1.5 transition-transform",
+                        isActive
+                          ? "bg-primary/15 scale-105"
+                          : "bg-gradient-to-br from-[hsl(235,67%,95%)] to-muted"
+                      )}
+                    >
+                      <CategoryIllustration type={cat.icon} />
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[10px] sm:text-xs font-medium text-center leading-tight line-clamp-2",
+                        isActive ? "text-primary font-bold" : "text-foreground"
+                      )}
+                    >
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
 
         {/* Section C: Products grid with sidebar */}
         <div className="container mx-auto px-4 py-6">
