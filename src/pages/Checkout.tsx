@@ -510,7 +510,7 @@ export default function Checkout() {
   }
 
   if (cart.length === 0) {
-    navigate("/cart");
+    navigate("/gio-hang");
     return null;
   }
 
