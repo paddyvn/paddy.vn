@@ -163,7 +163,7 @@ export const Footer = ({ hideNewsletter = false }: FooterProps) => {
 
             {/* Col 1: Brand + Contact */}
             <div>
-              <img src={paddyLogo} alt="Paddy.vn" className="h-11 w-auto" />
+              <img src={paddyLogo} alt="Paddy.vn" className="h-10 w-auto" />
               <p className="text-sm text-muted-foreground mt-1.5 mb-4 leading-snug">
                 Cửa hàng thú cưng online hàng đầu Việt Nam
               </p>
