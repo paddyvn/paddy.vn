@@ -239,7 +239,7 @@ export default function Brands() {
         </section>
 
         {/* Breadcrumb, Search & Alphabet Filter */}
-        <section className="py-6 border-b sticky top-0 bg-background z-20">
+        <section className="py-6 sticky top-0 bg-background z-20">
           <div className="container mx-auto px-4">
             <Breadcrumb className="mb-4">
               <BreadcrumbList>
