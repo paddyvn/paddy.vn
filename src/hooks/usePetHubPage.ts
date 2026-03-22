@@ -29,7 +29,11 @@ export const usePetHubPage = (petType: "dog" | "cat") => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as PetHubPage | null;
+      if (!data) return null;
+      return {
+        ...data,
+        seo_faq: data.seo_faq as unknown as PetHubPage["seo_faq"],
+      } as PetHubPage;
     },
     staleTime: 5 * 60 * 1000,
   });
