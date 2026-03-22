@@ -8,7 +8,7 @@ import { PetHubSidebar } from "@/components/PetHubSidebar";
 import { PetHubProductGrid } from "@/components/PetHubProductGrid";
 import { PetHubSeoContent } from "@/components/PetHubSeoContent";
 import { usePetHubPage } from "@/hooks/usePetHubPage";
-import { usePetHubCategories } from "@/hooks/usePetHubCategories";
+import { usePetHubCategories, PetHubCategory } from "@/hooks/usePetHubCategories";
 import { usePetHubProducts, PetHubFilterState } from "@/hooks/usePetHubProducts";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
@@ -30,7 +30,7 @@ const PetHub = ({ petType }: PetHubProps) => {
   const [filters, setFilters] = useState<PetHubFilterState>({
     brands: [],
     priceRange: [0, DEFAULT_MAX_PRICE],
-    categoryId: null,
+    categorySlug: null,
   });
 
   const { data: productsData, isLoading } = usePetHubProducts(
@@ -45,8 +45,8 @@ const PetHub = ({ petType }: PetHubProps) => {
     setPage(1);
   };
 
-  const handleCategorySelect = (categoryId: string | null) => {
-    setFilters((prev) => ({ ...prev, categoryId }));
+  const handleCategorySelect = (slug: string | null) => {
+    setFilters((prev) => ({ ...prev, categorySlug: slug }));
     setPage(1);
   };
 
@@ -135,8 +135,8 @@ const PetHub = ({ petType }: PetHubProps) => {
 
         <PetHubHero hubPage={hubPage} petType={petType} />
         <PetHubCategories
-          categories={hubCategories}
-          activeCategory={filters.categoryId}
+          petType={petType}
+          activeSlug={filters.categorySlug}
           onSelect={handleCategorySelect}
         />
 
