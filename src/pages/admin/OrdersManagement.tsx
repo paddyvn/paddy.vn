@@ -46,7 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Search, Eye, Package, Truck, CheckCircle, XCircle, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, X, CalendarIcon, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSyncOrders } from "@/hooks/useSyncOrders";
+
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
