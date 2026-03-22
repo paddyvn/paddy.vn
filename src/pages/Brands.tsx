@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useRef, useState, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,7 +27,6 @@ interface Brand {
 
 const ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'];
 
-// Helper to create slug from brand name
 const createSlug = (name: string) => {
   return name
     .toLowerCase()
@@ -38,11 +39,11 @@ const createSlug = (name: string) => {
 export default function Brands() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: brands, isLoading } = useQuery({
     queryKey: ['all-brands-from-products'],
     queryFn: async () => {
-      // Get all unique brands from products
       const { data: productsData } = await supabase
         .from('products')
         .select('brand')
@@ -52,7 +53,6 @@ export default function Brands() {
       
       if (!productsData) return [];
 
-      // Count occurrences and create unique brand list
       const brandCounts: Record<string, number> = {};
       productsData.forEach((product) => {
         const brand = product.brand?.trim();
@@ -61,32 +61,27 @@ export default function Brands() {
         }
       });
 
-      // Fetch brand logos from brands table
       const { data: brandsData } = await supabase
         .from('brands')
         .select('name, logo_url')
         .eq('is_active', true);
 
-      // Fetch brand collections from categories table
       const { data: brandCollections } = await supabase
         .from('categories')
         .select('name, slug')
         .eq('collection_type', 'brand')
         .eq('is_active', true);
 
-      // Create a map of brand name to logo
       const logoMap: Record<string, string | null> = {};
       brandsData?.forEach((b) => {
         logoMap[b.name.toLowerCase()] = b.logo_url;
       });
 
-      // Create a map of brand name to collection slug
       const slugMap: Record<string, string> = {};
       brandCollections?.forEach((c) => {
         slugMap[c.name.toLowerCase()] = c.slug;
       });
 
-      // Convert to array and sort
       const brandsArray: Brand[] = Object.entries(brandCounts)
         .map(([name, count]) => ({
           name,
@@ -100,15 +95,15 @@ export default function Brands() {
     }
   });
 
-  // Get top brands by product count for carousel
+  // Fix 5: Only brands with logos in carousel
   const featuredBrands = useMemo(() => {
     if (!brands) return [];
     return [...brands]
+      .filter(b => b.logo_url)
       .sort((a, b) => b.productCount - a.productCount)
       .slice(0, 20);
   }, [brands]);
 
-  // Group brands by first letter
   const groupedBrands = useMemo(() => {
     if (!brands) return {};
     
@@ -126,6 +121,25 @@ export default function Brands() {
     
     return groups;
   }, [brands]);
+
+  // Fix 1: Filter brands by search
+  const filteredGroupedBrands = useMemo(() => {
+    if (!searchQuery.trim()) return groupedBrands;
+    
+    const query = searchQuery.toLowerCase();
+    const filtered: Record<string, Brand[]> = {};
+    
+    Object.entries(groupedBrands).forEach(([letter, letterBrands]) => {
+      const matching = letterBrands.filter(b => 
+        b.name.toLowerCase().includes(query)
+      );
+      if (matching.length > 0) {
+        filtered[letter] = matching;
+      }
+    });
+    
+    return filtered;
+  }, [groupedBrands, searchQuery]);
 
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
@@ -147,12 +161,28 @@ export default function Brands() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Helmet>
+        <title>Thương Hiệu Thú Cưng | Paddy.vn</title>
+        <meta 
+          name="description" 
+          content="Khám phá 200+ thương hiệu thức ăn, đồ chơi và phụ kiện cho chó mèo tại Paddy.vn. Royal Canin, Pedigree, CattyMan và nhiều hơn nữa." 
+        />
+      </Helmet>
+
       <Header />
       
       <main className="flex-1">
-        {/* Featured Brands Carousel */}
-        <section className="py-8 border-b">
+        {/* Fix 3 & 4: Page title + Featured Brands Carousel */}
+        <section className="pb-8 border-b">
+          <div className="container mx-auto px-4 pt-6 pb-4">
+            <h1 className="text-2xl md:text-3xl font-bold">Thương Hiệu Thú Cưng</h1>
+            <p className="text-muted-foreground mt-1">
+              {brands?.length || 200}+ thương hiệu chính hãng tại Paddy
+            </p>
+          </div>
+
           <div className="container mx-auto px-4">
+            <h2 className="text-lg font-semibold mb-4">Thương hiệu nổi bật</h2>
             <div className="relative">
               <Button
                 variant="outline"
@@ -178,21 +208,15 @@ export default function Brands() {
                   featuredBrands?.map((brand) => (
                     <Link
                       key={brand.name}
-                      to={`/search?brand=${encodeURIComponent(brand.name)}`}
+                      to={`/collections/${brand.slug}`}
                       className="flex-shrink-0 w-48 border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition-all bg-background"
                     >
                       <div className="h-16 flex items-center justify-center mb-2">
-                        {brand.logo_url ? (
-                          <img 
-                            src={brand.logo_url} 
-                            alt={brand.name}
-                            className="max-h-14 max-w-full object-contain"
-                          />
-                        ) : (
-                          <span className="text-lg font-semibold text-center">
-                            {brand.name}
-                          </span>
-                        )}
+                        <img 
+                          src={brand.logo_url!} 
+                          alt={brand.name}
+                          className="max-h-14 max-w-full object-contain"
+                        />
                       </div>
                       <p className="text-sm text-center text-muted-foreground">
                         {brand.productCount} sản phẩm
@@ -214,7 +238,7 @@ export default function Brands() {
           </div>
         </section>
 
-        {/* Breadcrumb & Alphabet Filter */}
+        {/* Breadcrumb, Search & Alphabet Filter */}
         <section className="py-6 border-b sticky top-0 bg-background z-20">
           <div className="container mx-auto px-4">
             <Breadcrumb className="mb-4">
@@ -229,6 +253,27 @@ export default function Brands() {
               </BreadcrumbList>
             </Breadcrumb>
 
+            {/* Fix 1: Brand search bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm thương hiệu..."
+                className="pl-10 h-10"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
             <div className="flex flex-wrap gap-1">
               <Button
                 variant={activeLetter === null ? "default" : "ghost"}
@@ -236,6 +281,7 @@ export default function Brands() {
                 className="px-3 py-1 h-8 text-xs font-medium"
                 onClick={() => {
                   setActiveLetter(null);
+                  setSearchQuery("");
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
@@ -248,7 +294,7 @@ export default function Brands() {
                   size="sm"
                   className="px-3 py-1 h-8 text-xs font-medium min-w-[32px]"
                   onClick={() => scrollToLetter(letter)}
-                  disabled={!groupedBrands[letter]}
+                  disabled={!filteredGroupedBrands[letter]}
                 >
                   {letter}
                 </Button>
@@ -276,7 +322,7 @@ export default function Brands() {
             ) : (
               <div className="space-y-10">
                 {ALPHABET.map((letter) => {
-                  const letterBrands = groupedBrands[letter];
+                  const letterBrands = filteredGroupedBrands[letter];
                   if (!letterBrands || letterBrands.length === 0) return null;
 
                   return (
@@ -309,6 +355,12 @@ export default function Brands() {
             {!isLoading && brands?.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">Chưa có thương hiệu nào.</p>
+              </div>
+            )}
+
+            {!isLoading && searchQuery && Object.keys(filteredGroupedBrands).length === 0 && brands && brands.length > 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Không tìm thấy thương hiệu "{searchQuery}"</p>
               </div>
             )}
           </div>
