@@ -28,6 +28,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const CustomerOrderDetail = lazy(() => import("./pages/CustomerOrderDetail"));
 const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const StoreLocator = lazy(() => import("./pages/StoreLocator"));
+const PetHub = lazy(() => import("./pages/PetHub"));
 
 // Admin pages - lazy loaded (only downloaded when admin navigates there)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -103,6 +104,8 @@ const App = () => (
       <TooltipProvider delayDuration={0}>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/cho" element={<Suspense fallback={<LoadingFallback />}><PetHub petType="dog" /></Suspense>} />
+          <Route path="/meo" element={<Suspense fallback={<LoadingFallback />}><PetHub petType="cat" /></Suspense>} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/reset-password" element={<Suspense fallback={<LoadingFallback />}><ResetPassword /></Suspense>} />
           <Route path="/products/:slug" element={<ProductDetail />} />
