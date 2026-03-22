@@ -72,7 +72,7 @@ function applyCheckoutFilters(query: any, searchQuery: string) {
 export default function AbandonedCheckouts() {
   const deleteCheckout = useDeleteAbandonedCheckout();
   const sendRecoveryEmail = useSendRecoveryEmail();
-  const syncAbandonedCheckouts = useSyncAbandonedCheckouts();
+  
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
