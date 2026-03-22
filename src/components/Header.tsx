@@ -397,14 +397,15 @@ export const Header = () => {
 
                 if (menuSlug) {
                   return (
-                    <button
+                    <Link
                       key={item.id}
+                      to={item.link_url || '#'}
                       className="flex items-center gap-1 hover:text-primary transition-smooth"
                       onMouseEnter={() => setActiveMegaMenu(menuSlug)}
                     >
                       {item.label}
                       <ChevronDown className="h-4 w-4" />
-                    </button>
+                    </Link>
                   );
                 }
 
