@@ -225,7 +225,8 @@ export default function Checkout() {
 
   const subtotal = calculateSubtotal();
   const deliveryMethod = deliveryMethods.find(m => m.id === selectedDelivery);
-  const shippingCost = deliveryMethod?.price || 0;
+  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const shippingCost = isFreeShipping ? 0 : (deliveryMethod?.price || 0);
 
   // Combo & Tiered deal hooks
   const dealCartItems = (cart || []).map((item) => {
