@@ -132,7 +132,7 @@ const Promotions = () => {
               ))}
             </div>
           </div>
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+          <div className="flex gap-2 sm:gap-3 flex-wrap">
             {categories
               .filter((cat) => cat.icon !== "deals")
               .map((cat) => {
