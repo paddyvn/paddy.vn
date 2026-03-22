@@ -18,7 +18,7 @@ export const ProductReviewsSection = ({ productId, userId }: ProductReviewsSecti
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const { data: reviews, refetch } = useQuery({
@@ -26,9 +26,9 @@ export const ProductReviewsSection = ({ productId, userId }: ProductReviewsSecti
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("id, rating, title, body, created_at, profiles!reviews_user_id_fkey(full_name)")
+        .select("id, rating, title, comment, created_at, profiles!reviews_user_id_fkey(full_name)")
         .eq("product_id", productId)
-        .eq("status", "approved")
+        .eq("moderation_status", "approved")
         .order("created_at", { ascending: false })
         .limit(20);
 
