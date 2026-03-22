@@ -254,6 +254,10 @@ export default function CollectionDetails() {
     meta_description: "",
     collection_type: "manual",
     rules_match_type: "all",
+    pet_type: "" as string,
+    is_hub: false,
+    hub_display_order: 0,
+    hub_icon_url: "",
   });
   const [rules, setRules] = useState<CollectionRule[]>([]);
   const [productsPage, setProductsPage] = useState(1);
@@ -319,6 +323,10 @@ export default function CollectionDetails() {
         meta_description: collection.meta_description || "",
         collection_type: collection.collection_type || "custom",
         rules_match_type: collection.rules_match_type || "all",
+        pet_type: collection.pet_type || "",
+        is_hub: collection.is_hub || false,
+        hub_display_order: collection.hub_display_order || 0,
+        hub_icon_url: collection.hub_icon_url || "",
       });
       setSeoFormData({
         meta_title: collection.meta_title || "",
@@ -429,6 +437,10 @@ export default function CollectionDetails() {
         collection_type: formData.collection_type,
         rules: rules.length > 0 ? rules : null,
         rules_match_type: formData.rules_match_type,
+        pet_type: formData.pet_type || null,
+        is_hub: formData.is_hub,
+        hub_display_order: formData.is_hub ? formData.hub_display_order : 0,
+        hub_icon_url: formData.hub_icon_url.trim() || null,
       };
 
       if (isNewCollection) {
@@ -1282,6 +1294,116 @@ export default function CollectionDetails() {
                 }
               }}
             />
+          </Card>
+
+          {/* Pet Hub Settings */}
+          <Card className="p-6 space-y-4">
+            <h3 className="font-semibold">Cài đặt Hub</h3>
+            <p className="text-xs text-muted-foreground">
+              Hiển thị danh mục này trên trang /cho hoặc /meo
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="pet_type">Loại thú cưng</Label>
+              <Select
+                value={formData.pet_type || "none"}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    pet_type: value === "none" ? "" : value,
+                    is_hub: value === "none" ? false : formData.is_hub,
+                  })
+                }
+              >
+                <SelectTrigger id="pet_type">
+                  <SelectValue placeholder="Chọn loại" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Không chọn —</SelectItem>
+                  <SelectItem value="dog">🐕 Chó</SelectItem>
+                  <SelectItem value="cat">🐈 Mèo</SelectItem>
+                  <SelectItem value="both">🐾 Cả hai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="is_hub">Hiện trên trang Hub</Label>
+                <p className="text-xs text-muted-foreground">
+                  Hiển thị dưới dạng vòng tròn danh mục ở đầu trang
+                </p>
+              </div>
+              <Checkbox
+                id="is_hub"
+                checked={formData.is_hub}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_hub: !!checked })
+                }
+                disabled={!formData.pet_type}
+              />
+            </div>
+
+            {formData.is_hub && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="hub_order">Thứ tự hiển thị</Label>
+                  <Input
+                    id="hub_order"
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={formData.hub_display_order}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        hub_display_order: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-24"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Số nhỏ hơn hiển thị trước (0 = đầu tiên)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hub_icon">Icon URL</Label>
+                  <Input
+                    id="hub_icon"
+                    type="url"
+                    placeholder="https://..."
+                    value={formData.hub_icon_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, hub_icon_url: e.target.value })
+                    }
+                  />
+                  {formData.hub_icon_url && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        <img
+                          src={formData.hub_icon_url}
+                          alt="Hub icon"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setFormData({ ...formData, hub_icon_url: "" })
+                        }
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Ảnh tròn hiển thị trên hub page. Nên dùng 200×200px.
+                  </p>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       </div>
